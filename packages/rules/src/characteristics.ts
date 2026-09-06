@@ -81,6 +81,10 @@ export interface ManaAbility {
   readonly sacrificesCreatures?: { readonly amount: number | "X"; readonly subtype?: string };
   /** The amount of mana/life is the number of creatures sacrificed. */
   readonly amountFromSacrifice?: boolean;
+  /** A single creature you control exiled as this ability's activation cost (Food Chain). */
+  readonly exilesCreature?: boolean;
+  /** The amount of mana is 1 plus the exiled creature's own mana value. */
+  readonly amountFromExiledManaValuePlusOne?: boolean;
   readonly gainLifeFromAmount?: boolean;
   /** Some mana abilities have a small immediate side effect (CR 605). */
   readonly gainLife?: number;
@@ -1474,6 +1478,19 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
         index: abilities.length, produces: [...MANA_COLORS], amount: 0, requiresTap, lifeCost: 0,
         sacrificesCreatures: { amount: "X", subtype: variableSacrifice[1]!.replace(/s$/i, "") },
         amountFromSacrifice: true, gainLifeFromAmount: true, text: line.trim()
+      });
+      continue;
+    }
+    // "Exile a creature you control: Add X mana of any one color, where X is
+    // 1 plus the exiled creature's mana value" (Food Chain): the amount is
+    // read from the exiled permanent's own characteristics at activation
+    // time, not chosen by the player or fixed on the card.
+    const exilesCreatureCost = /^exile\s+a\s+creature\s+you\s+control$/i.test(costText.trim().replace(/,\s*$/, ""));
+    if (exilesCreatureCost && /^add\s+X\s+mana\s+of\s+any\s+one\s+color,\s*where\s+X\s+is\s+1\s+plus\s+the\s+exiled\s+creature['’]s\s+mana\s+value\.?\s*Spend\s+this\s+mana\s+only\s+to\s+cast\s+creature\s+spells\.?$/i.test(effectText.trim())) {
+      abilities.push({
+        index: abilities.length, produces: [...MANA_COLORS], amount: 0, requiresTap: false, lifeCost: 0,
+        exilesCreature: true, amountFromExiledManaValuePlusOne: true,
+        manaRestriction: { kind: "creature-spell" }, text: line.trim()
       });
       continue;
     }
@@ -4552,7 +4569,11 @@ function recognizeText(text: string): RecognizedText {
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
       const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+(?:a\s+legendary\s+spell|creature\s+spells)/i.test(manaLine[2]!)
         && Boolean(parseAddClause(manaLine[2]!.split(/[.!?]/, 1)[0] ?? ""));
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
+      // Food Chain: the amount is read from the exiled creature at
+      // activation time, so it never matches `parseAddClause`'s fixed shapes.
+      const exiledManaValueLine = /^exile\s+a\s+creature\s+you\s+control$/i.test(manaLine[1]!.trim())
+        && /^add\s+X\s+mana\s+of\s+any\s+one\s+color,\s*where\s+X\s+is\s+1\s+plus\s+the\s+exiled\s+creature['’]s\s+mana\s+value\.?\s*Spend\s+this\s+mana\s+only\s+to\s+cast\s+creature\s+spells\.?$/i.test(manaLine[2]!.trim());
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine && !exiledManaValueLine) unimplementedText.push(line);
       continue;
     }
 

@@ -11125,6 +11125,61 @@ describe("Somberwald Sage's creature-spell-restricted triple mana", () => {
   });
 });
 
+describe("Food Chain's exile-a-creature mana ability", () => {
+  const FOOD_CHAIN = () => make({
+    name: "Food Chain", type_line: "Enchantment", mana_cost: "{2}{G}", cmc: 3,
+    oracle_text: "Exile a creature you control: Add X mana of any one color, where X is 1 plus the exiled creature's mana value. Spend this mana only to cast creature spells.",
+    produced_mana: ["B", "C", "G", "R", "U", "W"]
+  });
+
+  it("recognizes the exile-a-creature ability with a mana-value-derived amount and creature-spell restriction", () => {
+    const profile = profileOf(FOOD_CHAIN());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.manaAbilities[0]).toMatchObject({
+      produces: ["W", "U", "B", "R", "G"], exilesCreature: true, amountFromExiledManaValuePlusOne: true,
+      manaRestriction: { kind: "creature-spell" }
+    });
+  });
+
+  it("exiles the chosen creature, adds mana equal to 1 plus its mana value, and only creature spells may spend it", () => {
+    const noncreatureSpell = make({ name: "Ordinary Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1 });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [noncreatureSpell]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [FOOD_CHAIN(), BEAR()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Food Chain")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === source.instance_id && entry.action.exileId === bear.instance_id && entry.action.mana === "R")!;
+    expect(activate).toBeDefined();
+    game = applyAction(game, 0, activate.action);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.restrictedMana).toMatchObject([
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } },
+      { type: "R", restriction: { kind: "creature-spell" } }
+    ]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")).toBe(false);
+
+    let allowed = twoSeatGame([], []);
+    const creatureSpell = make({ name: "Ordinary Elf", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2" });
+    allowed = stage(allowed, 0, () => ({ hand: toHand(0, [creatureSpell]), autoPass: false }));
+    allowed = putOnBattlefield(allowed, 0, [FOOD_CHAIN(), BEAR()]);
+    allowed = passUntil(allowed, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    const allowedSource = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === "Food Chain")!;
+    const allowedBear = allowed.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const allowedActivate = legalActions(allowed, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.action.sourceId === allowedSource.instance_id && entry.action.exileId === allowedBear.instance_id && entry.action.mana === "G")!;
+    allowed = applyAction(allowed, 0, allowedActivate.action);
+    expect(allowed.players[0]!.manaPool.G).toBe(0);
+    const cast = legalActions(allowed, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0")!;
+    expect(cast).toBeDefined();
+    allowed = applyAction(allowed, 0, cast.action);
+    expect(allowed.stack.some((entry) => entry.card.name === "Ordinary Elf")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,565** · cobertura: **31.3%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,572** · cobertura: **31.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -72,7 +72,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 1999-08-04 | World Championship Promos (`PWOR`) | promos | championship-1999 | other | 2 | 0 | 2 | 0.0% |
 | 1999-09-04 | Wizards of the Coast Online Store (`PWOS`) | promos | wizards-of-the-coast-online-store | other | 1 | 1 | 0 | 100.0% |
 | 1999-09-25 | Mercadian Masques Promos (`PMMQ`) | promos | mercadian-masques | other | 1 | 0 | 1 | 0.0% |
-| 1999-10-04 | Mercadian Masques (`MMQ`) | expansion | masques | main | 335 | 101 | 234 | 30.1% |
+| 1999-10-04 | Mercadian Masques (`MMQ`) | expansion | masques | main | 335 | 102 | 233 | 30.4% |
 | 1999-11-12 | Battle Royale Box Set (`BRB`) | boxed-products | battle-royale-box-set | other | 105 | 59 | 46 | 56.2% |
 | 2000-01-01 | Arena League 2000 (`PAL00`) | promos | arena-2000 | other | 11 | 7 | 4 | 63.6% |
 | 2000-01-01 | Friday Night Magic 2000 (`FNM`) | promos | fnm-2000 | other | 11 | 10 | 1 | 90.9% |
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 196 | 146 | 57.3% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 123 | 168 | 42.3% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 614 | 2075 | 22.8% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 615 | 2074 | 22.9% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -398,7 +398,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2017-11-24 | From the Vault: Transform (`V17`) | from-the-vault | 2010s | other | 16 | 0 | 16 | 0.0% |
 | 2017-11-24 | XLN Treasure Chest (`PXTC`) | promos | xln-treasure-chest | other | 10 | 0 | 10 | 0.0% |
 | 2017-12-08 | Unstable Promos (`PUST`) | promos | unstable | other | 1 | 0 | 1 | 0.0% |
-| 2018-01-01 | Judge Gift Cards 2018 (`J18`) | promos | judge-2018 | other | 8 | 4 | 4 | 50.0% |
+| 2018-01-01 | Judge Gift Cards 2018 (`J18`) | promos | judge-2018 | other | 8 | 5 | 3 | 62.5% |
 | 2018-01-19 | Rivals of Ixalan (`RIX`) | expansion | ixalan | main | 205 | 66 | 139 | 32.2% |
 | 2018-01-19 | Rivals of Ixalan Promos (`PRIX`) | promos | rivals-of-ixalan | other | 63 | 4 | 59 | 6.3% |
 | 2018-01-25 | Nationals Promos (`PNAT`) | promos | nationals | other | 1 | 1 | 0 | 100.0% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1610 | 3611 | 30.8% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1611 | 3610 | 30.9% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 443 | 1253 | 26.1% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 444 | 1252 | 26.2% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 63 | 210 | 23.1% |
@@ -530,7 +530,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2022-06-10 | Battle for Baldur's Gate Promos (`PCLB`) | promos | battle-for-baldur-s-gate | other | 99 | 7 | 92 | 7.1% |
 | 2022-06-10 | Commander Legends: Battle for Baldur's Gate (`CLB`) | commander | 2022 | other | 651 | 136 | 515 | 20.9% |
 | 2022-07-01 | Love Your LGS 2022 (`PLG22`) | promos | lgs-2022 | other | 2 | 2 | 0 | 100.0% |
-| 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | double-masters-2022 | other | 332 | 100 | 232 | 30.1% |
+| 2022-07-08 | Double Masters 2022 (`2X2`) | masters-remastered | double-masters-2022 | other | 332 | 101 | 231 | 30.4% |
 | 2022-07-09 | Store Championships (`SCH`) | promos | store-championships | other | 50 | 10 | 40 | 20.0% |
 | 2022-07-28 | Explorer Anthology 1 (`EA1`) | anthologies | explorer-anthology-1 | other | 20 | 6 | 14 | 30.0% |
 | 2022-07-28 | Historic Anthology 6 (`HA6`) | anthologies | historic-anthology-6 | other | 20 | 14 | 6 | 70.0% |
@@ -677,7 +677,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | 2026-01-23 | Lorwyn Eclipsed Promos (`PECL`) | promos | lorwyn-eclipsed | other | 80 | 6 | 74 | 7.5% |
 | 2026-02-17 | Year of the Horse 2026 (`PL26`) | promos | year-of-the-horse-2026 | other | 4 | 1 | 3 | 25.0% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles (`TMT`) | expansion | 2020s | main | 195 | 33 | 162 | 16.9% |
-| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 41 | 76 | 35.0% |
+| 2026-03-06 | Teenage Mutant Ninja Turtles Eternal (`TMC`) | eternal | 2020s | other | 117 | 42 | 75 | 35.9% |
 | 2026-03-06 | Teenage Mutant Ninja Turtles Source Material (`PZA`) | masterpieces | teenage-mutant-ninja-turtles-source-material | other | 20 | 2 | 18 | 10.0% |
 | 2026-04-13 | MagicFest 2026 (`PF26`) | promos | magicfest-2026 | other | 13 | 8 | 5 | 61.5% |
 | 2026-04-24 | Secrets of Strixhaven (`SOS`) | expansion | strixhaven | main | 271 | 66 | 205 | 24.4% |
@@ -791,7 +791,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | duel-decks | duel-decks-speed-vs-cunning | 1 | 71 | 33 | 38 | 46.5% |
 | duel-decks | duel-decks-venser-vs-koth | 1 | 70 | 36 | 34 | 51.4% |
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
-| eternal | 2020s | 6 | 537 | 147 | 390 | 27.4% |
+| eternal | 2020s | 6 | 537 | 148 | 389 | 27.6% |
 | expansion | 1990s | 11 | 1573 | 378 | 1195 | 24.0% |
 | expansion | 2000s | 19 | 3082 | 716 | 2366 | 23.2% |
 | expansion | 2010s | 14 | 2735 | 751 | 1984 | 27.5% |
@@ -810,7 +810,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | expansion | kaldheim | 1 | 323 | 55 | 268 | 17.0% |
 | expansion | kamigawa | 4 | 925 | 124 | 801 | 13.4% |
 | expansion | lorwyn | 2 | 559 | 132 | 427 | 23.6% |
-| expansion | masques | 1 | 335 | 101 | 234 | 30.1% |
+| expansion | masques | 1 | 335 | 102 | 233 | 30.4% |
 | expansion | mirage | 1 | 335 | 89 | 246 | 26.6% |
 | expansion | mirrodin | 3 | 675 | 254 | 421 | 37.6% |
 | expansion | odyssey | 1 | 335 | 109 | 226 | 32.5% |
@@ -874,7 +874,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | masters-remastered | deckmasters | 1 | 44 | 20 | 24 | 45.5% |
 | masters-remastered | dominaria-remastered | 1 | 266 | 107 | 159 | 40.2% |
 | masters-remastered | double-masters | 1 | 337 | 106 | 231 | 31.5% |
-| masters-remastered | double-masters-2022 | 1 | 332 | 100 | 232 | 30.1% |
+| masters-remastered | double-masters-2022 | 1 | 332 | 101 | 231 | 30.4% |
 | masters-remastered | eternal-masters | 1 | 249 | 121 | 128 | 48.6% |
 | masters-remastered | iconic-masters | 1 | 249 | 104 | 145 | 41.8% |
 | masters-remastered | innistrad-remastered | 1 | 300 | 73 | 227 | 24.3% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | masters-remastered | shadows-of-the-past | 1 | 76 | 30 | 46 | 39.5% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 58 | 226 | 20.4% |
 | masters-remastered | tempest-remastered | 1 | 254 | 104 | 150 | 40.9% |
-| masters-remastered | the-list | 1 | 5221 | 1610 | 3611 | 30.8% |
+| masters-remastered | the-list | 1 | 5221 | 1611 | 3610 | 30.9% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 115 | 298 | 27.8% |
 | masters-remastered | ultimate-masters | 1 | 254 | 94 | 160 | 37.0% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1042,7 +1042,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | promos | judge-2015 | 1 | 8 | 2 | 6 | 25.0% |
 | promos | judge-2016 | 1 | 8 | 3 | 5 | 37.5% |
 | promos | judge-2017 | 1 | 9 | 1 | 8 | 11.1% |
-| promos | judge-2018 | 1 | 8 | 4 | 4 | 50.0% |
+| promos | judge-2018 | 1 | 8 | 5 | 3 | 62.5% |
 | promos | judge-2019 | 1 | 8 | 2 | 6 | 25.0% |
 | promos | judge-2020 | 1 | 10 | 4 | 6 | 40.0% |
 | promos | judge-2021 | 1 | 10 | 0 | 10 | 0.0% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 614 | 2075 | 22.8% |
+| promos | magic-online | 1 | 2689 | 615 | 2074 | 22.9% |
 | promos | magic-origins | 1 | 43 | 7 | 36 | 16.3% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 11 | 73 | 13.1% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 14 | 44 | 24.1% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 443 | 1253 | 26.1% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 444 | 1252 | 26.2% |
 | secret-lair | secret-lair-promo | 1 | 52 | 18 | 34 | 34.6% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -6465,7 +6465,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Flailing Manticore — `044a169e-32ae-464a-a642-8d3409e82d9f`
 - [ ] Flailing Ogre — `e81fe764-8b26-40b3-8e17-741ab5e231b4`
 - [ ] Flailing Soldier — `2c1dd6f4-2db5-449d-9ed8-579d98cfcfb8`
-- [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
 - [ ] Forced March — `457dc141-bc72-42ad-b482-c78183462e34`
 - [ ] Fountain of Cho — `0799df10-b489-4f79-bf98-7a0c500b46a1`
 - [ ] Fountain Watch — `e6527ba3-3293-4a29-a2f9-7a81f8f27b7c`
@@ -9610,7 +9609,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Fleshbag Marauder — `4b1bf05e-753e-4350-a913-894cf3cecc0c`
 - [ ] Flumph — `bc328acc-8521-4581-88c3-99a7cb2c1cdb`
 - [ ] Foe-Razer Regent — `e7dd3e2c-34a5-4097-b6d1-2ccd097fe57f`
-- [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
 - [ ] Forbid — `6e26a525-2584-490d-b106-621c1a30e1fd`
 - [ ] Force of Nature — `e3c4c27d-f263-4c69-a4fe-2928136ff68b`
 - [ ] Force of Negation — `ac2173f9-f223-440a-9231-fd98762bdc6f`
@@ -26461,7 +26459,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 
 ### promos / judge-2018 · Judge Gift Cards 2018 (`J18`)
 
-- [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
 - [ ] Lord of Atlantis — `cc7f290f-ca00-4285-9bdb-4b4402444f30`
 - [ ] Nin, the Pain Artist — `ec439630-e18b-45f6-8034-2ecbea27772f`
 - [ ] Teferi's Protection — `0d4ecdb1-ec90-497f-a7a4-1c68092b8757`
@@ -31368,7 +31365,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Fogwalker — `c597cfae-3f92-4d31-8bc1-5a2da995f1bf`
 - [ ] Foil — `7dde4eb6-e9d7-4259-abc2-3af738e0f00f`
 - [ ] Font of Mythos — `7194a262-5e7a-4c12-b271-2bc5e0799477`
-- [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
 - [ ] Fool's Tome — `65589538-d3c1-4dfd-a328-71f57f556212`
 - [ ] Footbottom Feast — `0a35df9d-80a0-4b6f-91d5-dad980af47e1`
 - [ ] Footfall Crater — `ca4fdf89-a74e-4086-8109-b0f9dd91710e`
@@ -34176,7 +34172,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Fog — `27e9db49-7af7-4bef-ad4c-bf5dfb92030d`
 - [ ] Folio of Fancies — `9030d508-5cfe-46ed-954b-21d970bc3b5a`
 - [ ] Font of Mythos — `7194a262-5e7a-4c12-b271-2bc5e0799477`
-- [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
 - [ ] Food Coma — `aab3774c-4ec3-4946-a09b-af0fab7cacb7`
 - [ ] Force of Despair — `0f2d038e-6dab-4352-9ba7-ed9e063bb304`
 - [ ] Force of Vigor — `5f627e45-deee-4a4f-8128-57b0d8ebc553`
@@ -43700,7 +43695,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Fireblade Artist — `52630eaf-995e-4d08-be99-888a38b598b2`
 - [ ] Firemind Vessel — `d8afd7b0-7cd0-4caf-ac43-a0e24a93ca09`
 - [ ] Firesong and Sunspeaker — `fffaa634-42a0-4038-b027-24f28754fec7`
-- [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
 - [ ] Force of Negation — `ac2173f9-f223-440a-9231-fd98762bdc6f`
 - [ ] Ghave, Guru of Spores — `e579a72f-4933-40fe-9e57-96f8d65370bc`
 - [ ] Gifts Ungiven — `58aec411-167d-4709-8560-793eaaed62c5`
@@ -59721,7 +59715,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,56
 - [ ] Exploding Barrel — `82800275-1edf-4aa0-af9e-59dea82d7c6a`
 - [ ] Fast Forward — `c92f78c4-c8ec-4bdb-85f4-3a206b709f0f`
 - [ ] Foe-liage — `017cadd8-55ee-497a-84d4-6535173bc1eb`
-- [ ] Food Chain — `5c8e5092-962e-49ef-ab82-8434e475e4e7`
 - [ ] Foot Chopper — `1eed017a-342a-47a8-9395-890ef0bd1eb2`
 - [ ] Game Over — `e326b5a1-f8ce-471b-8663-ec1ba649b24f`
 - [ ] Here Comes a New Hero! — `c4fb12cb-05e1-4df2-b62e-3391621a601b`

@@ -703,7 +703,7 @@ export type GameAction =
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
-  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
+  | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly exileId?: string }
   | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number; readonly manaAlreadyPaid?: boolean }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
@@ -1083,6 +1083,11 @@ function manaSacrificeCandidates(player: PlayerState, source: Permanent, ability
     && candidate.instance_id !== source.instance_id);
 }
 
+/** Creatures that can be paid for an "exile a creature you control" mana-ability cost (Food Chain). */
+function exileCreatureCandidates(player: PlayerState, source: Permanent): Permanent[] {
+  return player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card)) && candidate.instance_id !== source.instance_id);
+}
+
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility, state?: GameState): boolean {
   if (ability.requiresTap && permanent.tapped) return false;
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
@@ -1100,6 +1105,7 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
     const available = manaSacrificeCandidates(player, permanent, ability).length;
     if (available < (ability.sacrificesCreatures.amount === "X" ? 1 : ability.sacrificesCreatures.amount)) return false;
   }
+  if (ability.exilesCreature && !exileCreatureCandidates(player, permanent).length) return false;
   if (ability.manaCost && !planManaPayment(ability.manaCost, player, { state })) return false;
   return true;
 }
@@ -1196,7 +1202,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
       if (ability.manaRestriction && !sourceOptions.allowedRestrictions?.includes(ability.manaRestriction.kind)) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
-      if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures) continue;
+      if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures || ability.exilesCreature) continue;
       if (!canUseManaAbility(player, permanent, ability)) continue;
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
@@ -7413,6 +7419,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         }
         continue;
       }
+      if (ability.exilesCreature) {
+        for (const candidate of exileCreatureCandidates(player, permanent)) {
+          const amount = 1 + cardProfile(candidate.card).manaValue;
+          for (const mana of options) actions.push({
+            action: { type: "activate-mana", sourceId: permanent.instance_id, abilityIndex: ability.index, mana, exileId: candidate.instance_id },
+            label: `${permanent.card.name}: Exile ${candidate.card.name} — Add ${amount} {${mana}}`,
+            cardId: permanent.instance_id
+          });
+        }
+        continue;
+      }
       if (ability.variableAmountCounter) {
         const available = permanent.counters[ability.variableAmountCounter] ?? 0;
         for (let amount = 1; amount <= available; amount += 1) {
@@ -7833,6 +7850,18 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     currentSource = currentPlayer.battlefield.find((permanent) => permanent.instance_id === source.instance_id);
     if (!currentSource) throw new Error("Ese permanente ya no está bajo tu control.");
   }
+  let exiledManaValue = 0;
+  if (ability.exilesCreature) {
+    const candidates = exileCreatureCandidates(currentPlayer, currentSource);
+    const chosen = candidates.find((candidate) => candidate.instance_id === action.exileId);
+    if (!chosen) throw new Error("Debes elegir una criatura válida para exiliar.");
+    exiledManaValue = cardProfile(chosen.card).manaValue;
+    activationState = movePermanentToZone(activationState, chosen, "exile");
+    activationState = logged(activationState, seat, `${player.name} exilia ${chosen.card.name}.`);
+    currentPlayer = playerAt(activationState, seat);
+    currentSource = currentPlayer.battlefield.find((permanent) => permanent.instance_id === source.instance_id);
+    if (!currentSource) throw new Error("Ese permanente ya no está bajo tu control.");
+  }
   const sourceProfile = cardProfile(currentSource.card);
   const landBonus = currentPlayer.battlefield.some((permanent) => {
     const grant = cardProfile(permanent.card).staticLandManaBonus;
@@ -7842,7 +7871,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     && cardProfile(candidate.card).doublesLandMana) ? options : [];
   const manaBonus = action.manaBonus ?? (manaBonusOptions[0]);
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
-  const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amount;
+  const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amountFromExiledManaValuePlusOne ? 1 + exiledManaValue : ability.amount;
   const lifeGain = ability.gainLifeFromAmount ? sacrificedCount : (ability.gainLife ?? 0);
   const auraBonusTypes = isLand(sourceProfile) ? auraLandManaBonusTypes(activationState, currentSource) : [];
   const outputTypes = ability.fixedProduces

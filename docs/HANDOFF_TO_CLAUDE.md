@@ -4626,3 +4626,53 @@ across all four workspaces, `npx vitest run services/match-server/src`
 
 Prossh decklist status after this pass: **78 of 97 unique cards fully
 implemented (80.4%)**.
+
+Food Chain ("Exile a creature you control: Add X mana of any one
+color, where X is 1 plus the exiled creature's mana value. Spend this
+mana only to cast creature spells.") is the second, genuinely-separate
+primitive that same restriction generalization was blocking. Added two
+new `ManaAbility` fields — `exilesCreature?: boolean` (the activation
+cost: exile a single creature you control, no subtype restriction) and
+`amountFromExiledManaValuePlusOne?: boolean` (the produced amount is
+read from the EXILED permanent's own `manaValue` at activation time,
+not chosen by the player or fixed on the card) — mirroring the shape of
+the pre-existing `sacrificesCreatures`/`amountFromSacrifice` pair
+(Springjack Pasture) as closely as the mechanic allows, but exiling
+exactly one unrestricted creature rather than a variable count of a
+matching subtype. Added a matching `exilesCreatureCost` branch to
+`parseManaAbilities` in `characteristics.ts` and, separately, an
+`exiledManaValueLine` branch to the `restrictedManaLine`-style
+coverage-recognition check inside `recognizeText` (the same two-site
+pattern the Somberwald Sage pass above needed — missing the second
+site again would have left the card correctly playable but flagged as
+not fully implemented). In `engine.ts`: a new `exileCreatureCandidates`
+helper (parallel to `manaSacrificeCandidates` but with no subtype
+filter and using the exile zone), a `canUseManaAbility` gate requiring
+at least one legal exile candidate, a `legalActions` branch enumerating
+one action per (candidate creature × mana color choice) — the amount
+is not a player choice, so unlike the Springjack `sacrificesCreatures`
+"X" case there is no outer amount loop, just one action per creature
+per color — a new `exileId?: string` field on the `activate-mana`
+action, and `applyActivateMana` reading `cardProfile(chosen.card)
+.manaValue` from the chosen creature BEFORE moving it to exile (a
+card's mana value is a printed characteristic, unaffected by which
+zone holds it, so computing it after the move would have worked too,
+but before matches the order every other cost-then-effect ability in
+this function already uses) and threading that through the existing
+`amount`/`restrictedOutput` computation via the new
+`amountFromExiledManaValuePlusOne` branch. Also excluded
+`exilesCreature` abilities from the "automatic tap source" list in
+`manaSources` (same reasoning as `sacrificesCreatures`: choosing WHICH
+creature to exile is a real player decision that cannot be silently
+resolved while paying an unrelated cost). Verified **+1** in the export
+count (10,216 → 10,217); set coverage holds at 31.3%. Scenario-tested:
+exiling a 2-mana-value Grizzly Bears adds exactly 3 mana of the chosen
+color as `creature-spell`-restricted, removes the Bears from the
+battlefield into exile (not the graveyard), an instant in hand cannot
+be cast with that mana, and a same-cost creature spell can and resolves
+onto the stack. Validation: **793 rules tests** (2 new), `npm run check`
+across all four workspaces, `npx vitest run services/match-server/src`
+(5 passed), 10,217 global profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **79 of 97 unique cards fully
+implemented (81.4%)**.
