@@ -8599,6 +8599,22 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Sek'Kuar, Deathkeeper")).toBe(true);
   });
 
+  it("restricts Reciprocate to a creature that dealt damage to the caster this turn", () => {
+    const reciprocate = make({ name: "Reciprocate", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Exile target creature that dealt damage to you this turn." });
+    const untouchedBear = make({ name: "Untouched Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
+    const profile = profileOf(reciprocate);
+    expect(profile).toMatchObject({ targetKind: "creature-dealt-damage-to-you", fullyImplemented: true });
+    let game = readyToCast([reciprocate], [PLAINS(), PLAINS()], [BEAR(), untouchedBear]);
+    const attacker = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const other = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Untouched Bear")!;
+    game = { ...game, dealtDamageToPlayerThisTurn: [{ permanentId: attacker.instance_id, victim: 0 }] };
+    expect(legalTargets(game, 0, "creature-dealt-damage-to-you").map((target) => target.kind === "permanent" ? target.instanceId : null)).toEqual([attacker.instance_id]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: attacker.instance_id }] });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === other.instance_id)).toBe(true);
+  });
+
   it("pumps Towashi Songshaper when another artifact its controller controls enters", () => {
     const songshaper = make({ name: "Towashi Songshaper", type_line: "Creature — Human Samurai", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever another artifact you control enters, this creature gets +1/+0 until end of turn." });
     const artifact = make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });

@@ -425,6 +425,8 @@ export interface GameState {
   readonly triggeredOncePerTurnKeys: readonly string[];
   /** Seats that have had a permanent they controlled leave the battlefield this turn — powers Revolt (CR 702.129a). */
   readonly revoltSeatsThisTurn: readonly SeatId[];
+  /** Permanents that dealt damage to a given player this turn (Reciprocate, CR 603.2). */
+  readonly dealtDamageToPlayerThisTurn: readonly { readonly permanentId: string; readonly victim: SeatId }[];
   /** Creature cards that entered their owner's graveyard from the battlefield this turn. */
   readonly creatureCardsDiedThisTurn: readonly GameCard[];
   /** War Cadence-style generic mana taxes, one entry per resolved activation, until cleanup. */
@@ -1897,7 +1899,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     creaturesDiedThisTurn: 0,
     creatureCardsDiedThisTurn: [],
     triggeredOncePerTurnKeys: [],
-    revoltSeatsThisTurn: []
+    revoltSeatsThisTurn: [],
+    dealtDamageToPlayerThisTurn: []
   };
   const opened = logged(base, null, `Partida creada con ${players.length} jugadores · ${startingLife} vidas · mano inicial de ${openingHand}.`);
   return settle(opened);
@@ -2523,6 +2526,12 @@ function raiseEvent(
   // returnPermanentToOwnersHand, put-under-library-top, ...) automatically
   // powers it, rather than needing its own update at each call site.
   const revoltSeat = event.kind === "leaves-battlefield" && !state.revoltSeatsThisTurn.includes(event.controller) ? event.controller : null;
+  // Reciprocate: tracked centrally here (only two raise sites exist) so it
+  // powers any future "dealt damage to you this turn" card too.
+  const damageDealer = (event.kind === "deals-damage-to-player" || event.kind === "deals-combat-damage-to-player")
+    && !state.dealtDamageToPlayerThisTurn.some((entry) => entry.permanentId === event.permanentId && entry.victim === event.victim)
+    ? { permanentId: event.permanentId, victim: event.victim }
+    : null;
   const queued: TriggerInstance[] = [];
   const newOncePerTurnKeys: string[] = [];
   // Pontiff of Blight: "Other creatures you control have extort" (CR 702.39, 613).
@@ -2590,12 +2599,13 @@ function raiseEvent(
       }
     }
   }
-  return queued.length || newOncePerTurnKeys.length || revoltSeat !== null
+  return queued.length || newOncePerTurnKeys.length || revoltSeat !== null || damageDealer !== null
     ? {
         ...state,
         triggerQueue: [...state.triggerQueue, ...queued],
         ...(newOncePerTurnKeys.length ? { triggeredOncePerTurnKeys: [...state.triggeredOncePerTurnKeys, ...newOncePerTurnKeys] } : {}),
-        ...(revoltSeat !== null ? { revoltSeatsThisTurn: [...state.revoltSeatsThisTurn, revoltSeat] } : {})
+        ...(revoltSeat !== null ? { revoltSeatsThisTurn: [...state.revoltSeatsThisTurn, revoltSeat] } : {}),
+        ...(damageDealer !== null ? { dealtDamageToPlayerThisTurn: [...state.dealtDamageToPlayerThisTurn, damageDealer] } : {})
       }
     : state;
 }
@@ -7128,7 +7138,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 
   switch (step) {
     case "untap": {
-      next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [], triggeredOncePerTurnKeys: [], revoltSeatsThisTurn: [] };
+      next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [], triggeredOncePerTurnKeys: [], revoltSeatsThisTurn: [], dealtDamageToPlayerThisTurn: [] };
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,
@@ -8399,6 +8409,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">, sourceProfile?: CardProfile): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "opponent") return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
+  if (kind === "creature-dealt-damage-to-you") {
+    const dealers = new Set(state.dealtDamageToPlayerThisTurn.filter((entry) => entry.victim === seat).map((entry) => entry.permanentId));
+    return allPermanents(state)
+      .filter((permanent) => dealers.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))
+      .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
+  }
   if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard" || kind === "instant-or-sorcery-card-in-your-graveyard") {
     const sources = kind === "card-in-a-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-a-graveyard" ? state.players : [playerAt(state, seat)];
     return sources.flatMap((player) => player.graveyard

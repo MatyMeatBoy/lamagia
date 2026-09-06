@@ -6583,3 +6583,35 @@ battlefield, `legalTargets` for the new kind offers only the Bear;
 casting Cast Down at it destroys it while Sek'Kuar survives
 untouched. Validation: full **916** rules tests green (1 new), `npm
 run check` across all four workspaces, 200/200 simulated games.
+
+## Reciprocate: a new per-turn "dealt damage to you" tracker (2026-09-06)
+
+Reciprocate ("Exile target creature that dealt damage to you this
+turn.") needed a genuinely new dynamic target restriction — nothing
+tracked which permanent dealt damage to which specific player this
+turn. Checked how many sites raise the relevant events first (the
+"check before assuming a new mechanic needs per-site plumbing" lesson
+from Revolt, applied again): only TWO — `deals-damage-to-player` and
+`deals-combat-damage-to-player` — so this was cheap, exactly like
+Revolt. Added `GameState.dealtDamageToPlayerThisTurn: readonly
+{permanentId, victim}[]`, updated in ONE place inside `raiseEvent`
+(keyed off either event kind), reset alongside the other per-turn
+trackers at the untap step. Added a new `creature-dealt-damage-to-you`
+`TargetKind`, filtered directly in `legalTargets` against the
+tracker (scoped to the CASTER's own `victim` seat, not any player's).
+Confirmed via a `legalTargets` call-site audit that this single
+function is the sole source of truth for target legality everywhere
+(casting, activating, final validation all funnel through it), so no
+second duplicated filter site needed updating this time — unlike the
+repeated two-site drift seen for `search-library` and
+`controlled-subtype-at-least` earlier this session. Verified **+1**
+in the export count (11,093 → 11,094); `docs/SET_COVERAGE.md` holds
+at its stale 33.2%/true-33.7% split. Scenario-tested: directly
+recording that an opponent's Grizzly Bears dealt damage to the caster
+this turn (bypassing a full combat sequence, matching the established
+"set the tracker directly" pattern already used for
+`creaturesDiedThisTurn`), `legalTargets` for the new kind correctly
+offers only that Bear and excludes an untouched second Bear;
+resolving Reciprocate exiles the marked Bear while the other survives
+untouched. Validation: full **917** rules tests green (1 new), `npm
+run check` across all four workspaces, 200/200 simulated games.
