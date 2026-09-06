@@ -4533,3 +4533,36 @@ library.
 
 Prossh decklist status after this pass: **76 of 97 unique cards fully
 implemented (78.4%)**.
+
+Protean Hulk ("When this creature dies, search your library for any
+number of creature cards with total mana value 6 or less, put them onto
+the battlefield, then shuffle.") needed an open-ended sibling of the
+existing `search-library-multi` family: every prior template there
+picks a FIXED count (`destinations: readonly (...)[]` sized to the
+exact number of slots, auto-finishing once `selectedIds.length`
+reaches `destinations.length`). This card's pick count is unbounded,
+capped only by a running mana-value BUDGET, so it needed a new
+`maxTotalManaValue?: number` field and a different stopping rule: the
+player accepts or rejects each pick against the remaining budget and
+explicitly calls the ALREADY-GENERIC `finish-library-search` action
+when satisfied (that action already existed for cutting a multi-search
+short, so no new action type was needed, only a new field-driven
+branch in `applyChooseMultiLibraryCard` and `finishMultiLibrarySearch`
+to skip the per-slot `destinations[index]` bookkeeping and put every
+selected card onto the battlefield untapped). Also extends the
+Pattern-of-Rebirth-era triggered-search wiring in `resolveTop`
+(`triggerSearch`) with a sibling `triggerSearchMulti` branch, since this
+is ALSO a dies-triggered search, not a spell/activated one. Found via
+`tools/rules/identify_near_complete_cards.py`'s "reuse-existing"
+flag against the same `search-library-multi` family. Verified **+1**
+in the export count (10,214 → 10,215) and set coverage 31.2% → 31.3%.
+Scenario-tested: killing Protean Hulk with two 2-mana-value creatures
+and one 4-mana-value creature in the library lets the controller pick
+BOTH 2-drops (running total 4, under budget), throws when a THIRD pick
+would push the total over 6, and puts exactly the two picked creatures
+onto the battlefield untapped once the search is explicitly finished.
+Validation: **789 rules tests**, `npm run check`, 10,215 global
+profiles.
+
+Prossh decklist status after this pass: **77 of 97 unique cards fully
+implemented (79.4%)**.

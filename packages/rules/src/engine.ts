@@ -5571,6 +5571,39 @@ function resolveTop(state: GameState): GameState {
         }
       };
     }
+    // Same reuse for a triggered multi-card search (Protean Hulk's
+    // dies-triggered "any number of creature cards, total mana value N").
+    const triggerSearchMulti = object.trigger.definition.effect.kind === "search-library-multi" ? object.trigger.definition.effect : null;
+    if (triggerSearchMulti) {
+      const multiOptions = playerAt(next, object.controller).library
+        .filter((card) => {
+          const candidateProfile = cardProfile(card);
+          const typeMatches = triggerSearchMulti.types.some((type) => candidateProfile.types.includes(type));
+          const subtypeMatches = triggerSearchMulti.subtypes?.every((subtype) => subtype.toLowerCase() === "basic"
+            ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
+            : candidateProfile.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase())) ?? true;
+          return typeMatches && subtypeMatches;
+        })
+        .map((card) => card.instance_id);
+      if (!multiOptions.length) {
+        return logged(shuffleLibrary(next, object.controller, playerAt(next, object.controller).library), object.controller,
+          `${object.trigger.sourceCard.name}: no hay una carta válida en la biblioteca.`);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "search-library-multi",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          optionIds: multiOptions,
+          selectedIds: [],
+          sourceCard: object.trigger.sourceCard,
+          search: triggerSearchMulti,
+          returnSourceToGraveyard: false,
+          exileSourceAfterResolution: false
+        }
+      };
+    }
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -8942,7 +8975,11 @@ function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extrac
   const selectedSet = new Set(selected.map((card) => card.instance_id));
   let next = shuffleLibrary({ ...state, pendingChoice: null }, seat, player.library.filter((card) => !selectedSet.has(card.instance_id)));
   const shuffledLibrary = playerAt(next, seat).library;
-  const handCards = selected.filter((_, index) => choice.search.destinations[index] === "hand");
+  // "Any number, total mana value" (Protean Hulk): every selected card goes
+  // to the battlefield untapped, unlike the fixed per-slot destinations
+  // array every other `search-library-multi` template uses.
+  const anyTotal = choice.search.maxTotalManaValue !== undefined;
+  const handCards = anyTotal ? [] : selected.filter((_, index) => choice.search.destinations[index] === "hand");
   next = withPlayer(next, seat, (current) => ({
     ...current,
     library: shuffledLibrary,
@@ -8953,8 +8990,12 @@ function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extrac
     ],
     exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
   }));
-  for (const [index, card] of selected.entries()) {
-    if (choice.search.destinations[index] === "battlefield-tapped") next = putOntoBattlefield(next, seat, card, false, true);
+  if (anyTotal) {
+    for (const card of selected) next = putOntoBattlefield(next, seat, card, false, false);
+  } else {
+    for (const [index, card] of selected.entries()) {
+      if (choice.search.destinations[index] === "battlefield-tapped") next = putOntoBattlefield(next, seat, card, false, true);
+    }
   }
   const names = selected.map((card) => card.name).join(", ");
   return logged(next, seat, `${player.name} ${selected.length ? `elige ${names} y baraja su biblioteca` : "termina la búsqueda y baraja su biblioteca"}.`);
@@ -8973,6 +9014,15 @@ function applyChooseMultiLibraryCard(
   const selected = playerAt(state, seat).library.find((card) => choice.optionIds.includes(card.instance_id)
     && !selectedSet.has(card.instance_id) && card.name.trim().toLocaleLowerCase() === query);
   if (!selected) throw new Error("La carta elegida ya no está en la biblioteca o ya fue elegida.");
+  if (choice.search.maxTotalManaValue !== undefined) {
+    const alreadySelected = playerAt(state, seat).library.filter((card) => selectedSet.has(card.instance_id));
+    const runningTotal = alreadySelected.reduce((sum, card) => sum + cardProfile(card).manaValue, 0);
+    if (runningTotal + cardProfile(selected).manaValue > choice.search.maxTotalManaValue) {
+      throw new Error(`Elegir ${selected.name} superaría el valor de maná total permitido.`);
+    }
+    const selectedIds = [...choice.selectedIds, selected.instance_id];
+    return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${selected.name}.`);
+  }
   const selectedIds = [...choice.selectedIds, selected.instance_id];
   if (selectedIds.length >= choice.search.destinations.length) return finishMultiLibrarySearch(state, seat, choice, selectedIds);
   return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${selected.name}.`);

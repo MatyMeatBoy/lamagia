@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,555** · cobertura: **31.2%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,561** · cobertura: **31.3%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -161,7 +161,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2006-02-03 | Guildpact (`GPT`) | expansion | 2000s | main | 165 | 46 | 119 | 27.9% |
 | 2006-03-18 | Champs and States (`PCMP`) | promos | champs-and-states | other | 12 | 5 | 7 | 41.7% |
 | 2006-04-22 | Dissension Promos (`PDIS`) | promos | dissension | other | 2 | 0 | 2 | 0.0% |
-| 2006-05-05 | Dissension (`DIS`) | expansion | 2000s | main | 180 | 46 | 134 | 25.6% |
+| 2006-05-05 | Dissension (`DIS`) | expansion | 2000s | main | 180 | 47 | 133 | 26.1% |
 | 2006-07-08 | Coldsnap Promos (`PCSP`) | promos | coldsnap | other | 1 | 0 | 1 | 0.0% |
 | 2006-07-21 | Coldsnap (`CSP`) | expansion | 2000s | main | 155 | 30 | 125 | 19.4% |
 | 2006-07-21 | Coldsnap Theme Decks (`CST`) | deck-products | coldsnap-theme-decks | other | 52 | 17 | 35 | 32.7% |
@@ -254,7 +254,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2011-04-01 | Duel Decks: Knights vs. Dragons (`DDG`) | duel-decks | duel-decks-knights-vs-dragons | other | 72 | 36 | 36 | 50.0% |
 | 2011-05-12 | New Phyrexia Promos (`PNPH`) | promos | new-phyrexia | other | 4 | 1 | 3 | 25.0% |
 | 2011-05-13 | New Phyrexia (`NPH`) | expansion | phyrexia | main | 170 | 48 | 122 | 28.2% |
-| 2011-05-14 | Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`) | duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | other | 80 | 39 | 41 | 48.8% |
+| 2011-05-14 | Duel Decks: Mirrodin Pure vs. New Phyrexia (`TD2`) | duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | other | 80 | 40 | 40 | 50.0% |
 | 2011-06-17 | Commander 2011 (`CMD`) | commander | 2011 | commander | 303 | 143 | 160 | 47.2% |
 | 2011-07-14 | Magic 2012 Promos (`PM12`) | promos | magic-2012 | other | 3 | 0 | 3 | 0.0% |
 | 2011-07-15 | Magic 2012 (`M12`) | core | 2010s | main | 234 | 115 | 119 | 49.1% |
@@ -402,7 +402,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2018-01-19 | Rivals of Ixalan (`RIX`) | expansion | ixalan | main | 205 | 66 | 139 | 32.2% |
 | 2018-01-19 | Rivals of Ixalan Promos (`PRIX`) | promos | rivals-of-ixalan | other | 63 | 4 | 59 | 6.3% |
 | 2018-01-25 | Nationals Promos (`PNAT`) | promos | nationals | other | 1 | 1 | 0 | 100.0% |
-| 2018-03-16 | Masters 25 (`A25`) | masters-remastered | masters-25 | other | 249 | 107 | 142 | 43.0% |
+| 2018-03-16 | Masters 25 (`A25`) | masters-remastered | masters-25 | other | 249 | 108 | 141 | 43.4% |
 | 2018-04-06 | Duel Decks: Elves vs. Inventors (`DDU`) | duel-decks | duel-decks-elves-vs-inventors | other | 71 | 36 | 35 | 50.7% |
 | 2018-04-27 | Dominaria (`DOM`) | expansion | dominaria | main | 265 | 84 | 181 | 31.7% |
 | 2018-04-27 | Dominaria Promos (`PDOM`) | promos | dominaria | other | 93 | 19 | 74 | 20.4% |
@@ -432,7 +432,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2019-01-01 | MagicFest 2019 (`PF19`) | promos | magicfest-2019 | other | 7 | 7 | 0 | 100.0% |
 | 2019-01-25 | Ravnica Allegiance (`RNA`) | expansion | ravnica | main | 268 | 78 | 190 | 29.1% |
 | 2019-01-25 | Ravnica Allegiance Promos (`PRNA`) | promos | ravnica-allegiance | other | 59 | 9 | 50 | 15.3% |
-| 2019-02-15 | RNA Guild Kit (`GK2`) | boxed-products | rna-guild-kit | other | 128 | 43 | 85 | 33.6% |
+| 2019-02-15 | RNA Guild Kit (`GK2`) | boxed-products | rna-guild-kit | other | 128 | 44 | 84 | 34.4% |
 | 2019-02-16 | RNA Ravnica Weekend (`PRW2`) | promos | rna-ravnica-weekend | other | 5 | 5 | 0 | 100.0% |
 | 2019-04-10 | Judge Gift Cards 2019 (`J19`) | promos | judge-2019 | other | 8 | 2 | 6 | 25.0% |
 | 2019-05-03 | War of the Spark (`WAR`) | expansion | 2010s | main | 266 | 66 | 200 | 24.8% |
@@ -454,7 +454,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1610 | 3611 | 30.8% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 442 | 1254 | 26.1% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 443 | 1253 | 26.1% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 63 | 210 | 23.1% |
@@ -596,7 +596,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2023-11-17 | The Lost Caverns of Ixalan (`LCI`) | expansion | ixalan | main | 292 | 43 | 249 | 14.7% |
 | 2023-11-17 | The Lost Caverns of Ixalan Commander (`LCC`) | commander | 2023 | commander | 313 | 93 | 220 | 29.7% |
 | 2023-11-17 | The Lost Caverns of Ixalan Promos (`PLCI`) | promos | the-lost-caverns-of-ixalan | other | 68 | 1 | 67 | 1.5% |
-| 2024-01-12 | Ravnica Remastered (`RVR`) | masters-remastered | ravnica-remastered | other | 313 | 92 | 221 | 29.4% |
+| 2024-01-12 | Ravnica Remastered (`RVR`) | masters-remastered | ravnica-remastered | other | 313 | 93 | 220 | 29.7% |
 | 2024-02-08 | Year of the Dragon 2024 (`PL24`) | promos | year-of-the-dragon-2024 | other | 6 | 2 | 4 | 33.3% |
 | 2024-02-09 | Commander Legends Promos (`PCMR`) | promos | 2024 | other | 6 | 1 | 5 | 16.7% |
 | 2024-02-09 | Murders at Karlov Manor (`MKM`) | expansion | 2020s | main | 279 | 35 | 244 | 12.5% |
@@ -733,7 +733,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | boxed-products | m19-gift-pack | 1 | 5 | 1 | 4 | 20.0% |
 | boxed-products | multiverse-gift-box | 1 | 10 | 3 | 7 | 30.0% |
 | boxed-products | rivals-quick-start-set | 1 | 56 | 30 | 26 | 53.6% |
-| boxed-products | rna-guild-kit | 1 | 128 | 43 | 85 | 33.6% |
+| boxed-products | rna-guild-kit | 1 | 128 | 44 | 84 | 34.4% |
 | boxed-products | salvat-2005 | 1 | 285 | 101 | 184 | 35.4% |
 | boxed-products | salvat-2011 | 1 | 209 | 131 | 78 | 62.7% |
 | boxed-products | sega-dreamcast-cards | 1 | 10 | 0 | 10 | 0.0% |
@@ -784,7 +784,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | duel-decks | duel-decks-knights-vs-dragons | 1 | 72 | 36 | 36 | 50.0% |
 | duel-decks | duel-decks-merfolk-vs-goblins | 1 | 57 | 22 | 35 | 38.6% |
 | duel-decks | duel-decks-mind-vs-might | 1 | 56 | 26 | 30 | 46.4% |
-| duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | 1 | 80 | 39 | 41 | 48.8% |
+| duel-decks | duel-decks-mirrodin-pure-vs-new-phyrexia | 1 | 80 | 40 | 40 | 50.0% |
 | duel-decks | duel-decks-nissa-vs-ob-nixilis | 1 | 62 | 30 | 32 | 48.4% |
 | duel-decks | duel-decks-phyrexia-vs-the-coalition | 1 | 67 | 34 | 33 | 50.7% |
 | duel-decks | duel-decks-sorin-vs-tibalt | 1 | 71 | 34 | 37 | 47.9% |
@@ -793,7 +793,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 147 | 390 | 27.4% |
 | expansion | 1990s | 11 | 1573 | 378 | 1195 | 24.0% |
-| expansion | 2000s | 19 | 3082 | 715 | 2367 | 23.2% |
+| expansion | 2000s | 19 | 3082 | 716 | 2366 | 23.2% |
 | expansion | 2010s | 14 | 2735 | 750 | 1985 | 27.4% |
 | expansion | 2020s | 17 | 3739 | 635 | 3104 | 17.0% |
 | expansion | alara | 2 | 379 | 155 | 224 | 40.9% |
@@ -880,7 +880,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | masters-remastered | innistrad-remastered | 1 | 300 | 72 | 228 | 24.0% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 61 | 231 | 20.9% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
-| masters-remastered | masters-25 | 1 | 249 | 107 | 142 | 43.0% |
+| masters-remastered | masters-25 | 1 | 249 | 108 | 141 | 43.4% |
 | masters-remastered | masters-edition | 1 | 185 | 52 | 133 | 28.1% |
 | masters-remastered | masters-edition-ii | 1 | 245 | 70 | 175 | 28.6% |
 | masters-remastered | masters-edition-iii | 1 | 220 | 94 | 126 | 42.7% |
@@ -890,7 +890,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | masters-remastered | modern-masters-2017 | 1 | 249 | 116 | 133 | 46.6% |
 | masters-remastered | mystery-booster-2 | 1 | 384 | 79 | 305 | 20.6% |
 | masters-remastered | pioneer-masters | 1 | 398 | 83 | 315 | 20.9% |
-| masters-remastered | ravnica-remastered | 1 | 313 | 92 | 221 | 29.4% |
+| masters-remastered | ravnica-remastered | 1 | 313 | 93 | 220 | 29.7% |
 | masters-remastered | renaissance | 1 | 122 | 37 | 85 | 30.3% |
 | masters-remastered | rinascimento | 1 | 60 | 12 | 48 | 20.0% |
 | masters-remastered | shadows-of-the-past | 1 | 76 | 29 | 47 | 38.2% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 11 | 73 | 13.1% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 14 | 44 | 24.1% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 442 | 1254 | 26.1% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 443 | 1253 | 26.1% |
 | secret-lair | secret-lair-promo | 1 | 52 | 18 | 34 | 34.6% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -12735,7 +12735,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Pride of the Clouds — `7d595158-73a8-4ebf-aac5-0b5193cef9b7`
 - [ ] Proclamation of Rebirth — `e1e5592c-3605-4069-89d0-b462dec83516`
 - [ ] Proper Burial — `e5bf77c2-a9b2-4366-8412-e263160403c1`
-- [ ] Protean Hulk — `10180e2f-90c5-4d41-ba44-16b14948f923`
 - [ ] Psychic Possession — `d2458d63-c627-4e75-8bda-23bca38cae93`
 - [ ] Psychotic Fury — `1bf982e9-5868-46bf-81e3-f29ada33d169`
 - [ ] Pure // Simple — `e119ba58-85e4-49ec-a2f8-3d094187c99d`
@@ -17393,7 +17392,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Phyrexian Juggernaut — `009fcd1e-5c5f-435b-afc1-099f1622e45c`
 - [ ] Plague Myr — `2f328e05-5edf-4b21-9c2a-50dcf1e7b3ec`
 - [ ] Platinum Angel — `b148578c-c0bf-4785-b97c-4b6f83028008`
-- [ ] Protean Hulk — `10180e2f-90c5-4d41-ba44-16b14948f923`
 - [ ] Purge — `d06f0f7c-0270-44be-991a-a5ebbddb0900`
 - [ ] Reprocess — `27177cb0-1670-488e-82be-4610da5a7de3`
 - [ ] Rot Wolf — `7409906d-7111-48fa-bfea-8b95e0fdb7dc`
@@ -26777,7 +26775,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Plague Wind — `18ec721f-c1ac-4581-a61d-2f0b09d6bf92`
 - [ ] Primal Clay — `dccf2ca8-8c87-41c9-8373-351859396d05`
 - [ ] Promise of Bunrei — `6158ab85-a929-472c-9618-8e76d2d4b228`
-- [ ] Protean Hulk — `10180e2f-90c5-4d41-ba44-16b14948f923`
 - [ ] Quicksand — `ef2bb4fa-f292-4d19-aaa4-cfbe445caf45`
 - [ ] Quicksilver Dagger — `5c77bf76-bb0f-4e44-babe-0e7b7b555e1f`
 - [ ] Ravenous Chupacabra — `7b459306-149b-4f43-abc1-2dd70c748c0e`
@@ -28732,7 +28729,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Plaxcaster Frogling — `8c1ea1a5-5966-4d14-8361-ffc6a8d1bd79`
 - [ ] Pride of the Clouds — `7d595158-73a8-4ebf-aac5-0b5193cef9b7`
 - [ ] Progenitor Mimic — `88929ea9-900f-4dbb-b16c-cf3bad4e410c`
-- [ ] Protean Hulk — `10180e2f-90c5-4d41-ba44-16b14948f923`
 - [ ] Rakdos Cackler — `763a2d27-52a8-43d9-b649-0f6c0cf87a07`
 - [ ] Rakdos Charm — `5e62b51d-faec-4aa0-9504-cf2c282d08ea`
 - [ ] Rakdos Keyrune — `3986b284-f943-4570-ba26-3419910feeef`
@@ -34626,7 +34622,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Professional Face-Breaker — `04152e7a-969c-4858-841b-0a569a9fc1bf`
 - [ ] Progenitus — `2d7e00b6-12f0-4b03-82a6-50e3d1b5395e`
 - [ ] Prosper, Tome-Bound — `1e9b0fd6-5aae-401a-8df5-d94ce6442696`
-- [ ] Protean Hulk — `10180e2f-90c5-4d41-ba44-16b14948f923`
 - [ ] Psionic Sliver — `ea79d4ee-c7b5-4687-9e33-22f98e46e8ec`
 - [ ] Puca's Mischief — `a8e6655c-e63f-4a60-98f6-9d5bf8631488`
 - [ ] Pulmonic Sliver — `f578465d-f3a5-48da-bcab-cffbbdd88be8`
@@ -50792,7 +50787,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Plaguecrafter — `2e3ee458-fa3f-4452-ab95-5a7fb5a0483b`
 - [ ] Priest of Forgotten Gods — `2ad8ff62-d090-4835-9274-3b755ba0f8e6`
 - [ ] Prime Speaker Zegana — `311e9368-696a-47e7-aa2f-3ef1b1a92e2b`
-- [ ] Protean Hulk — `10180e2f-90c5-4d41-ba44-16b14948f923`
 - [ ] Pteramander — `00187de2-bc48-4137-97d8-a9a0fafc76c1`
 - [ ] Quasiduplicate — `76b709ae-5765-4b7a-99c9-89eade7c8cb8`
 - [ ] Quicken — `cf188dd3-1927-481b-b8c0-93b1222dbf53`

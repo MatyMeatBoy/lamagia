@@ -752,8 +752,10 @@ export type SpellEffect =
       readonly kind: "search-library-multi";
       readonly types: readonly CardType[];
       readonly subtypes?: readonly string[];
-      readonly destinations: readonly ("hand" | "battlefield-tapped")[];
+      readonly destinations: readonly ("hand" | "battlefield-tapped" | "battlefield")[];
       readonly reveal: boolean;
+      /** "any number of ... cards with total mana value N or less" (Protean Hulk): the pick count is open-ended, capped by the running total instead of `destinations.length`. */
+      readonly maxTotalManaValue?: number;
     }
   /** Partner with <name> (CR 702.124f): a deterministic, name-exact search — no candidate choice, unlike `search-library`. */
   | { readonly kind: "partner-with-search"; readonly cardName: string }
@@ -2387,6 +2389,23 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       ...(multi[3] ? { tapped: true } : {}),
       reveal: false,
       count
+    };
+  }
+  // "search your library for any number of ... cards with total mana value N
+  // or less, put them onto the battlefield, then shuffle" (Protean Hulk): an
+  // open-ended pick count capped by the running total of the cards already
+  // chosen, not a fixed slot count like the other `search-library-multi`
+  // templates (which all come from a fixed "up to N" or per-slot shape).
+  const anyNumberTotalMv = /^Search your library for any number of (.+?) cards with total mana value (\d+) or less, put them onto the battlefield, then shuffle\.?$/i.exec(text);
+  if (anyNumberTotalMv) {
+    const criterion = searchCriterion(anyNumberTotalMv[1]!);
+    return {
+      kind: "search-library-multi",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      destinations: ["battlefield"],
+      reveal: false,
+      maxTotalManaValue: Number(anyNumberTotalMv[2])
     };
   }
   // "...card with mana value X or less, put it onto the battlefield, then

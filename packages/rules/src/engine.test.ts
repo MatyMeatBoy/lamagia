@@ -11034,6 +11034,48 @@ describe("Beseech the Queen's land-count-capped tutor", () => {
   });
 });
 
+describe("Protean Hulk's any-number total-mana-value reanimation", () => {
+  const PROTEAN_HULK = () => make({
+    name: "Protean Hulk", type_line: "Creature — Shapeshifter", mana_cost: "{4}{G}{G}", cmc: 6, power: "6", toughness: "1",
+    oracle_text: "When this creature dies, search your library for any number of creature cards with total mana value 6 or less, put them onto the battlefield, then shuffle."
+  });
+
+  it("recognizes the dies trigger as an open-ended total-mana-value search", () => {
+    const profile = profileOf(PROTEAN_HULK());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "dies", subject: "self",
+      effect: { kind: "search-library-multi", types: ["Creature"], destinations: ["battlefield"], maxTotalManaValue: 6 }
+    });
+  });
+
+  it("lets the controller pick multiple creatures under the budget, rejects exceeding it, and battlefields them untapped", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PROTEAN_HULK(), MOUNTAIN()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BOLT()], "hulk-hand"),
+      library: [...toHand(0, [BEAR(), BEAR(), TRAMPLER()], "hulk-library"), ...player.library],
+      autoPass: false
+    }));
+    const hulk = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Protean Hulk")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hulk-hand-0", targets: [{ kind: "permanent", instanceId: hulk.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library-multi");
+
+    let choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library-multi" }>;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Grizzly Bears" });
+    choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library-multi" }>;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Grizzly Bears" });
+
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Big Stomper" })).toThrow();
+
+    game = applyAction(game, 0, { type: "finish-library-search", sourceId: choice.sourceId });
+    const bears = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    expect(bears).toHaveLength(2);
+    expect(bears.every((bear) => !bear.tapped)).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(false);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
