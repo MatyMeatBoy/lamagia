@@ -4132,6 +4132,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
     }
+    case "animate-target-artifact-mana-value": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const profile = cardProfile(permanent.card);
+      if (!profile.types.includes("Artifact") || isCreature(profile) || permanent.temporaryAnimation) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, temporaryAnimation: { power: profile.manaValue, toughness: profile.manaValue, colors: profile.colors, types: ["Artifact", "Creature"], subtypes: profile.subtypes, keywords: [] } }
+          : candidate)
+      }));
+    }
     case "modify-triggered-creature": {
       const targetId = object.trigger?.eventPermanentId;
       if (!targetId) return state;
@@ -8254,6 +8268,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "land") return isLand(profile);
     if (kind === "artifact-enchantment-or-land") return profile.types.includes("Artifact") || profile.types.includes("Enchantment") || isLand(profile);
     if (kind === "artifact") return profile.types.includes("Artifact");
+    if (kind === "noncreature-artifact") return profile.types.includes("Artifact") && !isCreature(profile) && !permanent.temporaryAnimation;
     if (kind.startsWith("subtype:")) {
       const subtype = kind.slice("subtype:".length).toLowerCase();
       return hasPermanentSubtype(state, permanent, subtype);
