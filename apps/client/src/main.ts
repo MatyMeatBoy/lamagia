@@ -337,7 +337,23 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
       ? "El servidor de partidas devolvió una página HTML en vez de JSON. Revisa la URL del match-server."
       : "La web pública está publicada, pero GitHub Pages no ejecuta el match-server. Inicia `npm run dev:server` para jugar contra la IA o configura un backend público en `__PROSSH_API_BASE__`.");
   }
-  if (!response.ok) throw new Error(payload?.error ?? `La petición falló (${response.status}).`);
+  if (!response.ok) {
+    const message = payload?.error ?? `La petición falló (${response.status}).`;
+    if (/stabil|loop|bucle|reglas/i.test(message)) {
+      const debug = {
+        at: new Date().toISOString(), path, status: response.status,
+        message, matchId: session?.matchId ?? null,
+        view: view ? {
+          version: view.version, turn: view.turn, step: view.step,
+          activeSeat: view.activeSeat, prioritySeat: view.prioritySeat,
+          stack: view.stack.map((entry) => ({ id: entry.id, name: entry.name, kind: entry.kind, targets: entry.targets })),
+          waitingOn: view.waitingOn, pendingSearch: Boolean(view.librarySearch), log: view.log.slice(-8)
+        } : null
+      };
+      window.localStorage.setItem("prossh.last-debug", JSON.stringify(debug));
+    }
+    throw new Error(message);
+  }
   if (!payload) throw new Error("El servidor devolvió una respuesta inválida.");
   return payload;
 }
