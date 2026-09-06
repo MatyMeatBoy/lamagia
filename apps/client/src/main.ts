@@ -485,6 +485,10 @@ function isStackTargetable(stackId: string): boolean {
   return Boolean(ui.pendingTarget?.options.some((target) => target.kind === "spell" && target.stackId === stackId));
 }
 
+function pendingTargetIncludes(target: Target): boolean {
+  return Boolean(ui.pendingTarget?.options.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
+}
+
 /** Every card the viewer can currently see, for preview lookups and log linking. */
 function visibleCards(): Map<string, CardView> {
   const index = new Map<string, CardView>();
@@ -1491,7 +1495,8 @@ function wireBoard(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-stack-id]").forEach((button) =>
     button.addEventListener("click", () => {
       const stackId = button.dataset.stackId!;
-      if (isStackTargetable(stackId)) chooseTarget({ kind: "spell", stackId });
+      const target = { kind: "spell", stackId } as const;
+      if (pendingTargetIncludes(target) || isStackTargetable(stackId)) chooseTarget(target);
       else { ui.stackDetail = stackId; render(); }
     }));
   document.querySelectorAll<HTMLButtonElement>("[data-zone]").forEach((button) =>
