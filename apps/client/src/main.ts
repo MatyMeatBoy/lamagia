@@ -390,6 +390,12 @@ function cardActionEntriesForCard(cardId: string): LegalAction[] {
     .sort((left, right) => (right.manaValue ?? 0) - (left.manaValue ?? 0));
 }
 
+function cardActionMenuEntries(cardId: string): LegalAction[] {
+  const entries = cardActionEntriesForCard(cardId);
+  const yieldEntries = triggerYieldActionsFor(cardId);
+  return [...entries, ...yieldEntries];
+}
+
 function cardActionsForCard(cardId: string): LegalAction[] {
   return cardActionEntriesForCard(cardId);
 }
@@ -502,14 +508,15 @@ function runAction(entry: LegalAction, subject: string): void {
 }
 
 function onCardClick(cardId: string, forcedAction?: LegalAction): void {
-  const choices = cardActionsForCard(cardId);
+  const choices = cardActionMenuEntries(cardId);
   const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === cardId);
   const hasCycleOnly = choices.some((entry) => entry.action.type === "cycle") && !choices.some((entry) => entry.action.type === "cast");
   const hasManaAbility = choices.some((entry) => entry.action.type === "activate-mana");
+  const hasYieldToggle = choices.some((entry) => entry.action.type === "toggle-trigger-yield");
   // Never guess between printed modes. This is especially important for
   // hand-based mana abilities (e.g. Simian Spirit Guide): a normal click must
   // open the general menu, where casting and exiling for mana are separate.
-  if (!forcedAction && (choices.length > 1 || hasManaAbility || (hasCycleOnly && Boolean(card)))) {
+  if (!forcedAction && (choices.length > 1 || hasManaAbility || hasYieldToggle || (hasCycleOnly && Boolean(card)))) {
     ui.cardActionMenu = ui.cardActionMenu === cardId ? null : cardId;
     ui.notice = "Elige qué hacer con esta carta.";
     render();
@@ -993,7 +1000,7 @@ function actionMenuHtml(): string {
 function cardActionMenuHtml(): string {
   if (!ui.cardActionMenu) return "";
   const card = visibleCards().get(ui.cardActionMenu);
-  const entries = cardActionEntriesForCard(ui.cardActionMenu);
+  const entries = cardActionMenuEntries(ui.cardActionMenu);
   if (!card) return "";
   const hasCast = entries.some((entry) => entry.action.type === "cast");
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
@@ -1006,7 +1013,8 @@ function cardActionMenuHtml(): string {
       const description = entry.action.type === "cycle"
         ? (entry.note ?? "Cicla esta carta, paga su coste y roba una carta.")
         : entry.note ?? entry.label;
-      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
+      const choiceClass = entry.action.type === "toggle-trigger-yield" ? "choice-action trigger-yield-action" : "choice-action";
+      return `<button class="action-row ${choiceClass}" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
         <span><b>${escapeHtml(entry.label)}</b><small>${escapeHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}<button id="card-action-info" class="action-row" type="button"><span><b>Ver información</b><small>Texto de reglas, tipo, coste y rulings.</small></span></button></div>
   </section>`;
