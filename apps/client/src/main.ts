@@ -319,7 +319,20 @@ function returnToMain(): void {
 
 async function refresh(): Promise<void> {
   if (!session) return;
-  try { applyView(await api<GameView>(`/api/matches/${session.matchId}?token=${encodeURIComponent(session.token)}`)); }
+  try {
+    const next = await api<GameView>(`/api/matches/${session.matchId}?token=${encodeURIComponent(session.token)}`);
+    applyView(next);
+    // A phase stopper is a local presentation preference. Re-apply the
+    // authoritative auto-pass setting only when this phase is not stopped;
+    // never overwrite a server response merely because the client refreshed.
+    if (!next.finished && autoPassForPhase() && next.waitingOn === next.viewerSeat && !next.priorityOpen) {
+      const settled = await api<GameView>(`/api/matches/${session.matchId}/settings`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: session.token, autoPass: true })
+      });
+      applyView(settled);
+    }
+  }
   catch { session = null; window.sessionStorage.removeItem("prossh.match"); render(); }
 }
 
