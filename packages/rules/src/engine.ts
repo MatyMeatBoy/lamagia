@@ -3869,6 +3869,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!hand.length) return state;
       return discardCards(state, target.seat, hand);
     }
+    case "discard-damage-victim-hand": {
+      const seat = object.trigger?.eventPlayer;
+      if (seat === undefined) return state;
+      const hand = playerAt(state, seat).hand;
+      if (!hand.length) return state;
+      return discardCards(state, seat, hand);
+    }
     case "modify-and-grant-target-creature": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

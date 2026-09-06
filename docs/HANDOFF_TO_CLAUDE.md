@@ -3894,3 +3894,9 @@ damage does not qualify) and reuses the existing temporary source P/T pump;
 the scenario activates a permanent damage source and verifies +3/+0 (CR
 603.2, 120.2a). Current validation: **722 rules tests**, `npm run check`, and
 `git diff --check` pass.
+
+The next near-complete rescan closed Nicol Bolas's damage-victim hand clause:
+`discard-damage-victim-hand` binds "that player" to the damaged seat captured
+by the event, rather than the source controller, and reuses the existing hand
+discard executor (CR 603.3d, 701.8). Current validation: **723 rules tests**,
+`npm run check`, and `git diff --check` pass.

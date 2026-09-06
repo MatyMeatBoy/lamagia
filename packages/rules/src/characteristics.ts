@@ -449,6 +449,8 @@ export type SpellEffect =
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-or-planeswalker"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
+  /** Discard the player who was damaged by the triggering event (CR 603.3d). */
+  | { readonly kind: "discard-damage-victim-hand" }
   | { readonly kind: "discard-target-player-then-draw-same"; readonly amount: number }
   /** Curse of Chaos: the attacking player may discard one, then draws one. */
   | { readonly kind: "discard-event-controller-then-draw"; readonly amount: number }
@@ -3485,6 +3487,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "each-player-draws-then-discards" }, target: "none" };
   }
   if (/^Target player discards their hand$/i.test(text)) return { effect: { kind: "discard-target-player-hand" }, target: "player" };
+  if (/^(?:That player|They) discard(?:s)? their hand$/i.test(text)) return { effect: { kind: "discard-damage-victim-hand" }, target: "none" };
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z -]*) counter(?:s)? on (?:~|this (?:artifact|enchantment|creature|permanent|land))$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-source", counter: match[2]!.trim().toLowerCase(), amount }, target: "none" };
