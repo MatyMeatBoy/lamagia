@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,109** · cobertura: **30.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,114** · cobertura: **30.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -28,7 +28,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 1995-06-03 | Ice Age (`ICE`) | expansion | ice-age | main | 373 | 76 | 297 | 20.4% |
 | 1995-07-01 | Chronicles (`CHR`) | masters-remastered | chronicles | other | 116 | 28 | 88 | 24.1% |
 | 1995-07-01 | Chronicles Foreign Black Border (`BCHR`) | masters-remastered | chronicles-foreign-black-border | other | 116 | 28 | 88 | 24.1% |
-| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 94 | 42 | 52 | 44.7% |
+| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 94 | 43 | 51 | 45.7% |
 | 1995-08-01 | Renaissance (`REN`) | masters-remastered | renaissance | other | 122 | 37 | 85 | 30.3% |
 | 1995-08-01 | Rinascimento (`RIN`) | masters-remastered | rinascimento | other | 60 | 12 | 48 | 20.0% |
 | 1995-10-01 | Homelands (`HML`) | expansion | 1990s | main | 115 | 33 | 82 | 28.7% |
@@ -168,7 +168,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2006-09-23 | Time Spiral Promos (`PTSP`) | promos | time-spiral | other | 3 | 1 | 2 | 33.3% |
 | 2006-10-06 | Time Spiral (`TSP`) | expansion | time-spiral | main | 286 | 66 | 220 | 23.1% |
 | 2006-10-06 | Time Spiral Timeshifted (`TSB`) | expansion | time-spiral | main | 121 | 38 | 83 | 31.4% |
-| 2006-10-20 | Pro Tour Promos (`PPRO`) | promos | pro-tour | other | 18 | 4 | 14 | 22.2% |
+| 2006-10-20 | Pro Tour Promos (`PPRO`) | promos | pro-tour | other | 18 | 5 | 13 | 27.8% |
 | 2006-10-31 | DCI Promos (`DCI`) | promos | dci | other | 67 | 28 | 39 | 41.8% |
 | 2006-12-01 | Happy Holidays (`HHO`) | funny-special | happy-holidays | other | 20 | 0 | 20 | 0.0% |
 | 2007-01-01 | Friday Night Magic 2007 (`F07`) | promos | fnm-2007 | other | 12 | 6 | 6 | 50.0% |
@@ -633,7 +633,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2024-12-10 | Pioneer Masters (`PIO`) | masters-remastered | pioneer-masters | other | 398 | 80 | 318 | 20.1% |
 | 2025-01-01 | MagicFest 2025 (`PF25`) | promos | magicfest-2025 | other | 19 | 5 | 14 | 26.3% |
 | 2025-01-01 | Wizards Play Network 2025 (`PW25`) | promos | wpn-2025 | other | 16 | 4 | 12 | 25.0% |
-| 2025-01-03 | Spotlight Series (`PSPL`) | promos | spotlight-series | other | 13 | 1 | 12 | 7.7% |
+| 2025-01-03 | Spotlight Series (`PSPL`) | promos | spotlight-series | other | 13 | 2 | 11 | 15.4% |
 | 2025-01-24 | Innistrad Remastered (`INR`) | masters-remastered | innistrad-remastered | other | 300 | 68 | 232 | 22.7% |
 | 2025-02-09 | Japan Standard Cup (`PJSC`) | promos | japan-standard-cup | other | 4 | 0 | 4 | 0.0% |
 | 2025-02-14 | Aetherdrift (`DFT`) | expansion | 2020s | main | 276 | 44 | 232 | 15.9% |
@@ -646,9 +646,9 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | 2025-04-11 | Tarkir: Dragonstorm Promos (`PTDM`) | promos | tarkir-dragonstorm | other | 80 | 2 | 78 | 2.5% |
 | 2025-05-05 | Pioneer Anthology 1 (`PA1`) | anthologies | pioneer-anthology-1 | other | 11 | 2 | 9 | 18.2% |
 | 2025-06-13 | FIN Standard Showdown (`PSS5`) | promos | standard-showdown-2025 | other | 2 | 0 | 2 | 0.0% |
-| 2025-06-13 | Final Fantasy (`FIN`) | expansion | 2020s | main | 313 | 62 | 251 | 19.8% |
+| 2025-06-13 | Final Fantasy (`FIN`) | expansion | 2020s | main | 313 | 63 | 250 | 20.1% |
 | 2025-06-13 | Final Fantasy Commander (`FIC`) | commander | 2025 | commander | 339 | 116 | 223 | 34.2% |
-| 2025-06-13 | Final Fantasy Promos (`PFIN`) | promos | final-fantasy | other | 94 | 8 | 86 | 8.5% |
+| 2025-06-13 | Final Fantasy Promos (`PFIN`) | promos | final-fantasy | other | 94 | 9 | 85 | 9.6% |
 | 2025-06-13 | Final Fantasy Regional Promos (`RFIN`) | promos | final-fantasy-regional | other | 2 | 1 | 1 | 50.0% |
 | 2025-06-13 | Final Fantasy: Through the Ages (`FCA`) | masterpieces | final-fantasy-through-the-ages | other | 65 | 13 | 52 | 20.0% |
 | 2025-08-01 | Edge of Eternities (`EOE`) | expansion | 2020s | main | 266 | 34 | 232 | 12.8% |
@@ -795,7 +795,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | expansion | 1990s | 11 | 1573 | 373 | 1200 | 23.7% |
 | expansion | 2000s | 19 | 3082 | 698 | 2384 | 22.6% |
 | expansion | 2010s | 14 | 2735 | 734 | 2001 | 26.8% |
-| expansion | 2020s | 17 | 3738 | 640 | 3098 | 17.1% |
+| expansion | 2020s | 17 | 3738 | 641 | 3097 | 17.1% |
 | expansion | alara | 2 | 379 | 154 | 225 | 40.6% |
 | expansion | amonkhet | 1 | 272 | 100 | 172 | 36.8% |
 | expansion | bloomburrow | 1 | 280 | 43 | 237 | 15.4% |
@@ -981,7 +981,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | promos | exodus | 1 | 1 | 0 | 1 | 0.0% |
 | promos | fate-reforged | 1 | 33 | 1 | 32 | 3.0% |
 | promos | fifth-dawn | 1 | 1 | 0 | 1 | 0.0% |
-| promos | final-fantasy | 1 | 94 | 8 | 86 | 8.5% |
+| promos | final-fantasy | 1 | 94 | 9 | 85 | 9.6% |
 | promos | final-fantasy-regional | 1 | 2 | 1 | 1 | 50.0% |
 | promos | fnm-2000 | 1 | 11 | 10 | 1 | 90.9% |
 | promos | fnm-2001 | 1 | 7 | 2 | 5 | 28.6% |
@@ -1091,7 +1091,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | promos | march-of-the-machine-the-aftermath | 1 | 8 | 0 | 8 | 0.0% |
 | promos | marvel-legends-series-inserts | 1 | 4 | 0 | 4 | 0.0% |
 | promos | marvel-s-spider-man | 1 | 68 | 1 | 67 | 1.5% |
-| promos | media-and-collaboration | 1 | 94 | 42 | 52 | 44.7% |
+| promos | media-and-collaboration | 1 | 94 | 43 | 51 | 45.7% |
 | promos | mercadian-masques | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin-besieged | 1 | 4 | 1 | 3 | 25.0% |
@@ -1123,7 +1123,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | promos | player-rewards-2010 | 1 | 13 | 9 | 4 | 69.2% |
 | promos | player-rewards-2011 | 1 | 7 | 3 | 4 | 42.9% |
 | promos | portal-three-kingdoms | 1 | 1 | 0 | 1 | 0.0% |
-| promos | pro-tour | 1 | 18 | 4 | 14 | 22.2% |
+| promos | pro-tour | 1 | 18 | 5 | 13 | 27.8% |
 | promos | prophecy | 1 | 1 | 0 | 1 | 0.0% |
 | promos | ravnica-allegiance | 1 | 59 | 9 | 50 | 15.3% |
 | promos | ravnica-city-of-guilds | 1 | 2 | 0 | 2 | 0.0% |
@@ -1141,7 +1141,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 | promos | shadowmoor | 1 | 2 | 0 | 2 | 0.0% |
 | promos | shadows-over-innistrad | 1 | 79 | 10 | 69 | 12.7% |
 | promos | shards-of-alara | 1 | 2 | 1 | 1 | 50.0% |
-| promos | spotlight-series | 1 | 13 | 1 | 12 | 7.7% |
+| promos | spotlight-series | 1 | 13 | 2 | 11 | 15.4% |
 | promos | standard-showdown-2017 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | standard-showdown-2018 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | standard-showdown-2024 | 1 | 5 | 5 | 0 | 100.0% |
@@ -3797,7 +3797,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Chandra's Outrage — `47437865-0032-4f47-b0ab-034cc841bb84`
 - [ ] Chandra's Spitfire — `5a0eb270-b142-45da-87a2-2f1c4e25db17`
 - [ ] Chrome Host Seedshark — `837c5d0e-0a33-4f9d-ae25-68a687bdf640`
-- [ ] Cloud, Midgar Mercenary — `33d2584b-bf29-4c22-bd45-14ba2fb98c0e`
 - [ ] Cloud, Planet's Champion — `8512bd08-ecba-4e0e-b65c-8209764a65e5`
 - [ ] Daxos, Blessed by the Sun — `9d3c7c96-056f-408e-a834-fa45a430d3d4`
 - [ ] Duress — `33d405ea-7a9a-4970-b70f-9c05d90dd6f0`
@@ -13348,7 +13347,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Ajani Goldmane — `dfb5f660-fd8b-4b7b-934c-6a71cd182f15`
 - [ ] Arcbound Ravager — `62e7e7b1-9887-4d15-b0e5-a8ddc711bd88`
 - [ ] Avatar of Woe — `2da5aa33-3794-4f83-936c-9d8640833d86`
-- [ ] Cloud, Midgar Mercenary — `33d2584b-bf29-4c22-bd45-14ba2fb98c0e`
 - [ ] Cryptic Command — `a3e51a35-09df-4189-b131-08a21e6a557d`
 - [ ] Emrakul, the Aeons Torn — `900ca697-ad38-4b2b-bc74-2ff7eb6ea951`
 - [ ] Liliana of the Veil — `0ba134d8-ee7d-48ec-8dc6-57942b8e9261`
@@ -56095,7 +56093,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 
 ### promos / spotlight-series · Spotlight Series (`PSPL`)
 
-- [ ] Cloud, Midgar Mercenary — `33d2584b-bf29-4c22-bd45-14ba2fb98c0e`
 - [ ] Day of Black Sun — `dc857129-533c-41d1-8e8b-1c0443030d69`
 - [ ] Elektra, Daughter of the Hand — `b46647a1-0c91-451b-8c0b-be8fe02faee2`
 - [ ] Get Lost — `522dd417-364b-44ab-8ca9-fb55db5f26a6`
@@ -57370,7 +57367,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Clive's Hideaway — `283f743f-6e79-49de-b7ed-08e6ffb64cc6`
 - [ ] Clive, Ifrit's Dominant // Ifrit, Warden of Inferno — `ceba3d03-be5a-4dd7-b829-7db216a0f44e`
 - [ ] Cloud of Darkness — `525f57df-7d4d-4089-9003-4b01005558dc`
-- [ ] Cloud, Midgar Mercenary — `33d2584b-bf29-4c22-bd45-14ba2fb98c0e`
 - [ ] Cloud, Planet's Champion — `8512bd08-ecba-4e0e-b65c-8209764a65e5`
 - [ ] Coeurl — `00d1596a-c3e2-4109-86da-388934a0c652`
 - [ ] Combat Tutorial — `2a483d95-ff99-40b4-9071-6e78585090d5`
@@ -57827,7 +57823,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,10
 - [ ] Choco, Seeker of Paradise — `7979bf83-5091-4e62-8885-ca1833a97306`
 - [ ] Clive's Hideaway — `283f743f-6e79-49de-b7ed-08e6ffb64cc6`
 - [ ] Clive, Ifrit's Dominant // Ifrit, Warden of Inferno — `ceba3d03-be5a-4dd7-b829-7db216a0f44e`
-- [ ] Cloud, Midgar Mercenary — `33d2584b-bf29-4c22-bd45-14ba2fb98c0e`
 - [ ] Dark Confidant — `2068185c-1b50-47d0-aa3f-bf505d199428`
 - [ ] Dion, Bahamut's Dominant // Bahamut, Warden of Light — `4a0cc2a2-3711-473a-b2c5-b1e52b34e4fb`
 - [ ] Edgar, King of Figaro — `264efed9-65ab-40ad-877f-c6c25ca0281e`

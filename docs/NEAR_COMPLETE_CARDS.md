@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,147**
-- Cards with a reusable existing primitive hint: **11,438**
+- One-line cards: **15,146**
+- Cards with a reusable existing primitive hint: **11,437**
 - Cards needing new primitive review: **3,709**
-- Templates: **11,987**
+- Templates: **11,986**
 
 ## Worker rule
 
@@ -26,7 +26,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Arden Angel | `82d51c8a-d42b-48b3-a726-3a8d28d057e5` | return | trigger / ETB | At the beginning of your upkeep, if ~ is in your graveyard, roll a four-sided die. If the result is 1, return ~ from your graveyard to the battlefield. |
 | needs-new-primitive | Hapato's Might | `b819990c-802c-4847-9857-756dd66ec74a` | pump | new primitive review | Target creature gets +X/+0 until end of turn, where X is a number from 0 to 6 chosen at random. |
 | reuse-existing | Laquatus's Champion | `693ddb18-00d2-4784-90a0-701a64195034` | gain-life | damage / life | When ~ leaves the battlefield, that player gains 6 life. |
-| reuse-existing | Cloud, Midgar Mercenary | `33d2584b-bf29-4c22-bd45-14ba2fb98c0e` | static-continuous | activated ability / mana | As long as ~ is equipped, if a triggered ability of ~ or an Equipment attached to it triggers, that ability triggers an additional time. |
 | reuse-existing | Yidaro, Wandering Monster | `6c0e22f2-f0f3-43e6-87c5-c543032112d8` | activated | search / library | When you cycle ~, shuffle it into your library from your graveyard. If you've cycled a card named ~ four or more times this game, put it onto the battlefield from your graveyard instead. |
 | reuse-existing | Luminous Broodmoth | `28c7c816-07e7-42fb-923c-bf149ba28b38` | counters | trigger / ETB | Whenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it. |
 | reuse-existing | Mysterious Egg | `d3b62851-6013-49e5-8808-fa61b1bdfe98` | counters | trigger / ETB | Whenever ~ mutates, put a +1/+1 counter on it. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Headless Rider | `d4fdacd7-3101-44e2-a880-dde7326137a4` | token | trigger / ETB | Whenever ~ or another nontoken Zombie you control dies, create a 2/2 black Zombie creature token. |
 | reuse-existing | Angelfire Ignition | `29e1c6e3-d76e-4388-b4e9-f732fdec4338` | activated | damage / life | It gains vigilance, trample, lifelink, indestructible, and haste until end of turn. |
 | reuse-existing | Unnatural Growth | `7324abaa-48da-439d-9339-b0ea5eea612e` | activated | trigger / ETB | At the beginning of each combat, double the power and toughness of each creature you control until end of turn. |
+| reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
 
-The JSON contains the remaining 14,647 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,646 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
