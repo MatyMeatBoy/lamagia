@@ -278,6 +278,7 @@ const C13_MARATH = () => make({ name: "Marath, Will of the Wild", type_line: "Le
 const C13_PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Creature — Insect", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter on this creature.", oracle_id: "0951b529-646c-4dfd-88ad-84ee117ce722", scryfall_id: "0951b529-646c-4dfd-88ad-84ee117ce722" });
 const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3, oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, Furnace Celebration deals 2 damage to any target.", oracle_id: "af6d6844-c612-4731-86da-59a8fa02956b", scryfall_id: "af6d6844-c612-4731-86da-59a8fa02956b" });
 const C13_THRAXIMUNDAR = () => make({ name: "Thraximundar", type_line: "Legendary Creature — Zombie Assassin", mana_cost: "{4}{U}{B}{R}", cmc: 7, power: "6", toughness: "6", keywords: ["Haste"], oracle_text: "Haste\nWhenever Thraximundar attacks, defending player sacrifices a creature of their choice.\nWhenever a player sacrifices a creature, you may put a +1/+1 counter on Thraximundar.", oracle_id: "9e0e4217-fefe-48dd-9153-032460192b19", scryfall_id: "9e0e4217-fefe-48dd-9153-032460192b19" });
+const C13_JAR_OF_EYEBALLS = () => make({ name: "Jar of Eyeballs", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Whenever a creature you control dies, put two eyeball counters on this artifact.\n{3}, {T}, Remove all eyeball counters from this artifact: Look at the top X cards of your library, where X is the number of eyeball counters removed this way. Put one of them into your hand and the rest on the bottom of your library in any order.", oracle_id: "3075dadd-240f-4455-9286-9f1d48f53a3f", scryfall_id: "3075dadd-240f-4455-9286-9f1d48f53a3f" });
 const C13_UYO = () => make({ name: "Uyo, Silent Prophet", type_line: "Legendary Creature — Moonfolk Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "4", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\n{2}{U}{U}, Return two lands you control to their owner's hand: Copy target instant or sorcery spell. You may choose new targets for the copy.", oracle_id: "93da1e63-54d6-4b05-af91-f13e7e111176", scryfall_id: "93da1e63-54d6-4b05-af91-f13e7e111176" });
 const C13_NIVIX_GUILDMAGE = () => make({ name: "Nivix Guildmage", type_line: "Creature — Human Wizard", mana_cost: "{U}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{1}{U}{R}: Draw a card, then discard a card.\n{2}{U}{R}: Copy target instant or sorcery spell you control. You may choose new targets for the copy.", oracle_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936", scryfall_id: "603e7dd3-c361-4e66-9df5-4b24f40734e8" });
 const C13_WILD_RICOCHET = () => make({ name: "Wild Ricochet", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "You may choose new targets for target instant or sorcery spell. Then copy that spell. You may choose new targets for the copy.", oracle_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9", scryfall_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9" });
@@ -3258,6 +3259,37 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
     const thraximundar = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Thraximundar")!;
     expect(thraximundar.counters["+1/+1"]).toBe(1);
+  });
+
+  it("reuses source counters for Jar of Eyeballs' private library review", () => {
+    const profile = profileOf(C13_JAR_OF_EYEBALLS());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ event: "dies", subject: "creature-you-control", effect: { kind: "add-counter-source", counter: "eyeball", amount: 2 } }]
+    });
+    expect(profile.activatedAbilities[0]).toMatchObject({ removeAllCounters: "eyeball", requiresTap: true, effect: { kind: "look-top-select", amount: "source-counter" } });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [C13_JAR_OF_EYEBALLS()]);
+    const jar = game.players[0]!.battlefield[0]!;
+    game = stage(game, 0, (player) => ({
+      manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 3 },
+      library: toHand(0, [FOREST(), BOLT(), BEAR(), ISLAND()], "jar-library"),
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === jar.instance_id
+        ? { ...permanent, summoningSick: false, counters: { eyeball: 3 } }
+        : permanent)
+    }));
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === jar.instance_id)!;
+    if (activation.action.type !== "activate") throw new Error("Jar of Eyeballs activation was not offered.");
+    game = applyAction(game, 0, activation.action);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === jar.instance_id)!.counters.eyeball).toBe(0);
+    expect(game.pendingChoice).toMatchObject({ type: "look-top-select", lookedCount: 3 });
+    const sourceId = (game.pendingChoice as Extract<GameState["pendingChoice"], { type: "look-top-select" }>).sourceId;
+    game = applyAction(game, 0, { type: "choose-look-top", sourceId, ordinal: 1 });
+    while (game.pendingChoice?.type === "look-top-select") {
+      game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId, ordinal: 0 });
+    }
+    expect(game.players[0]!.hand.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.players[0]!.library.slice(-2).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears"]);
   });
 
   it("pays Uyo's two-land return cost before copying a spell", () => {

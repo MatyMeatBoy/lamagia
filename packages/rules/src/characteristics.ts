@@ -131,6 +131,8 @@ export interface ActivatedAbility {
   readonly removeCounters?: readonly CounterCost[];
   /** Variable-X counter cost removed from the source as an activation cost. */
   readonly removeVariableCounter?: string;
+  /** Remove all counters of the named kind from the source as an activation cost. */
+  readonly removeAllCounters?: string;
   /** Lands returned to their owners' hands as an activation cost (Uyo, CR 602.2b). */
   readonly returnLands?: number;
   readonly lifeCost: number;
@@ -457,7 +459,7 @@ export type SpellEffect =
   /** Surveil N (CR 701.42): look at the top N, put any number in the graveyard, the rest on top in any order. */
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
-  | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
+  | { readonly kind: "look-top-select"; readonly amount: number | "source-counter"; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -2163,6 +2165,23 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     if (manaCost && count !== null && copied) return {
       index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost,
       returnLands: count, effect: copied.effect, targetKind: copied.target, text: line.trim()
+    };
+  }
+  // Jar of Eyeballs: the number reviewed is the counter total removed as a
+  // cost, so activation snapshots it before the source is emptied (CR 602.2b,
+  // 121.1).  Reuse the normal private top-library selection flow.
+  const counterLookTop = /^(.+?),\s*Remove all ([A-Za-z][A-Za-z'’/-]*) counters from (?:this artifact|~):\s*Look at the top X cards of your library, where X is the number of \2 counters removed this way\.\s*Put one of them into your hand and the rest on the bottom of your library in any order\.?$/i.exec(line.trim());
+  if (counterLookTop) {
+    const symbols = counterLookTop[1]!.match(/\{[^}]+\}/g) ?? [];
+    const manaSymbols = symbols.filter((symbol) => !/^\{[TQE]\}$/i.test(symbol));
+    const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+    if (manaSymbols.length && !manaCost) return null;
+    const counter = counterLookTop[2]!.toLowerCase();
+    return {
+      index, requiresTap: symbols.some((symbol) => symbol.toUpperCase() === "{T}"), sacrificesSelf: false,
+      lifeCost: 0, manaCost, removeAllCounters: counter,
+      effect: { kind: "look-top-select", amount: "source-counter", types: [...CARD_TYPES], destination: "hand" },
+      targetKind: "none", text: line.trim()
     };
   }
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.

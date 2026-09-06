@@ -5639,7 +5639,7 @@ function resolveTop(state: GameState): GameState {
     const triggerSurveil = object.trigger.definition.effect.kind === "surveil" ? object.trigger.definition.effect : null;
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
-    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep);
+    if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount === "source-counter" ? object.variableValue : triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep);
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -5725,9 +5725,12 @@ function resolveTop(state: GameState): GameState {
     }
     return beginScry(next, object.controller, object.id, object.card, surveil.amount, !object.activated, Boolean(object.flashback), 0, "graveyard");
   }
-  const lookTop = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-top-select" }> => effect.kind === "look-top-select");
+  const lookTop = activatedEffect?.kind === "look-top-select"
+    ? activatedEffect
+    : profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-top-select" }> => effect.kind === "look-top-select");
   if (lookTop) {
-    return beginLookTopSelection(next, object.controller, object.id, object.card, lookTop.amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback));
+    const amount = lookTop.amount === "source-counter" ? object.variableValue : lookTop.amount;
+    return beginLookTopSelection(next, object.controller, object.id, object.card, amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback));
   }
   const viewHand = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-at-target-players-hand" }> => effect.kind === "look-at-target-players-hand");
   if (viewHand) {
@@ -8062,6 +8065,9 @@ function activatableAbility(
   if (ability.removeVariableCounter && (variableValue < 1 || (permanent.counters[ability.removeVariableCounter] ?? 0) < variableValue)) {
     return { legal: false };
   }
+  if (ability.removeAllCounters && (permanent.counters[ability.removeAllCounters] ?? 0) <= 0) {
+    return { legal: false };
+  }
   if (ability.returnLands !== undefined
     && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.returnLands) return { legal: false };
   if (ability.manaCost && ability.manaCost.symbols.length) {
@@ -8149,6 +8155,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }
   const check = activatableAbility(state, seat, source, ability, action.variableValue ?? 0);
   if (!check.legal) throw new Error(`No puedes activar la habilidad de ${source.card.name} ahora.`);
+  const removedAllCounterValue = ability.removeAllCounters ? (source.counters[ability.removeAllCounters] ?? 0) : 0;
 
   // Targets are chosen while the ability is announced, before any cost is paid
   // (rule 601.2c applied to activations through 602.2b).
@@ -8323,6 +8330,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
         : permanent)
     }));
   }
+  if (ability.removeAllCounters) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+        ? { ...permanent, counters: { ...permanent.counters, [ability.removeAllCounters!]: 0 } }
+        : permanent)
+    }));
+  }
 
   if (ability.sacrificesSelf) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
@@ -8400,7 +8415,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
   const effectVariable = ability.manaCost?.hasVariable ? abilityX
     : ability.effect.kind === "gain-life-equal-sacrificed-toughness" ? sacrificedToughness
-    : sacrificedPower || sacrificedArtifactMv;
+    : removedAllCounterValue || sacrificedPower || sacrificedArtifactMv;
   const counterValue = ability.effect.kind === "destroy-n-creatures" && ability.effect.counter
     ? source.counters[ability.effect.counter] ?? 0
     : 0;
