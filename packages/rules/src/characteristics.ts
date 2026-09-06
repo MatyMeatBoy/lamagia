@@ -443,6 +443,7 @@ export type SpellEffect =
   /** Baleful Mastery: "if the {cost} was paid, an opponent draws a card" — reads whether this cast used its own alternative cost (CR 601.2b). */
   | { readonly kind: "opponent-draws-if-cast-via-alternative-cost" }
   | { readonly kind: "discard-target-player"; readonly amount: number | "X" }
+  | { readonly kind: "discard-target-player-or-planeswalker"; readonly amount: number | "X" }
   | { readonly kind: "discard-target-player-hand" }
   | { readonly kind: "discard-target-player-then-draw-same"; readonly amount: number }
   /** Curse of Chaos: the attacking player may discard one, then draws one. */
@@ -499,6 +500,7 @@ export type SpellEffect =
   | { readonly kind: "return-random-creature-from-graveyard-to-hand" }
   | { readonly kind: "modify-all-attacking-creatures"; readonly power: number; readonly toughness: number }
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
+  | { readonly kind: "target-player-sacrifice-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
   /** Peer into the Abyss: both halves are rounded up and computed independently at resolution (CR 107.1a). */
   | { readonly kind: "draw-half-library-then-lose-half-life-target-player" }
@@ -522,6 +524,8 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X" }
+  /** Damage equal to the power of the creature paid for this spell's additional cost (CR 608.2h). */
+  | { readonly kind: "damage-any-target-equal-sacrificed-creature-power" }
   /** Amass N (CR 701.44): put N +1/+1 counters on an Army you control, or create a 0/0 black [tokenType] Army token with them if you control none. */
   | { readonly kind: "amass"; readonly amount: number; readonly tokenType: string }
   /** Target two creatures; they deal damage equal to their power to each other (CR 701.12). */
@@ -933,7 +937,7 @@ export type MagicColor = "W" | "U" | "B" | "R" | "G";
 export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
-  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment"
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
@@ -2965,6 +2969,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
   }
+  if (/^~ deals damage equal to the sacrificed creature's power to any target$/i.test(text)) {
+    return { effect: { kind: "damage-any-target-equal-sacrificed-creature-power" }, target: "any" };
+  }
   if (/^~ deals damage equal to its power to any target$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "any" };
   }
@@ -3171,6 +3178,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "discard-target-player", amount }, target: "player" };
   }
+  if ((match = /^That player or that planeswalker['’]s controller discards (a|an|one|two|three|four|five|\d+) cards?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "discard-target-player-or-planeswalker", amount }, target: "none" };
+  }
   if (/^Discard a card\. If the player does, they draw a card$/i.test(text)) {
     return { effect: { kind: "discard-event-controller-then-draw", amount: 1 }, target: "none" };
   }
@@ -3329,6 +3340,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
+  if (/^Target player sacrifices a creature of their choice$/i.test(text)) {
+    return { effect: { kind: "target-player-sacrifice-creature" }, target: "player" };
+  }
+  if (/^Target opponent sacrifices a creature of their choice$/i.test(text)) {
+    return { effect: { kind: "target-player-sacrifice-creature" }, target: "opponent" };
   }
   if (/^tap all nonblue creatures\.\s*Those creatures don't untap during their controllers' next untap steps?$/i.test(text)) {
     return { effect: { kind: "tap-all-nonblue-skip-untap" }, target: "none" };
@@ -3597,6 +3614,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
   if (/^Exile target creature or planeswalker$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-or-planeswalker" };
+  if (/^Exile target black or red permanent$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "black-or-red-permanent" };
   if (/^Destroy target artifact, enchantment, or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-enchantment-or-land" };
   if (/^Destroy target permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "permanent" };
   if (/^Choose target nonland permanent you control and up to two target nonland permanents you don't control\. Destroy one of them at random$/i.test(text)) {

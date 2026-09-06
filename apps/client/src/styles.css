@@ -560,10 +560,10 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .scry-card small { color: var(--text-faint); font-size: .52rem; }
 .scry-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
 
-.stack-strip { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 7px; overflow-x: auto; padding: 5px 0; }
+.stack-strip { display: flex; align-items: stretch; flex-wrap: nowrap; gap: 7px; overflow-x: auto; padding: 7px 0; border-top: 1px solid #b9973e55; border-bottom: 1px solid #b9973e33; }
 .stack-strip > b { color: var(--gold); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; }
 .stack-order-hint { align-self: center; min-width: 0; max-width: min(250px, 32vw); overflow: hidden; color: var(--text-faint); font-size: .54rem; text-overflow: ellipsis; white-space: nowrap; }
-.stack-chip { position: relative; display: flex; align-items: center; gap: 6px; min-width: 150px; max-width: 235px; padding: 4px 8px 4px 4px; border: 1px solid var(--gold-dim); border-radius: 8px; background: linear-gradient(145deg, #1b180d, #0d160f); box-shadow: 0 3px 9px #0008; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.stack-chip { position: relative; display: flex; align-items: center; gap: 6px; min-width: 170px; max-width: 255px; padding: 5px 8px 5px 5px; border: 1px solid var(--gold-dim); border-radius: 8px; background: linear-gradient(145deg, #1b180d, #0d160f); box-shadow: 0 3px 9px #0008; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .stack-chip:hover, .stack-chip:focus-visible { border-color: var(--gold); outline: 1px solid var(--gold-dim); transform: translateY(-1px); }
 .stack-chip.targetable { border-color: #7fd6a6; box-shadow: 0 0 0 2px #7fd6a666, 0 4px 14px #000b; }
 .stack-chip:first-of-type { border-color: var(--gold); box-shadow: 0 0 0 1px #d9b64b66, 0 4px 12px #000b; }

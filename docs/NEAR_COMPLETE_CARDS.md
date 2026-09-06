@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,181**
-- Cards with a reusable existing primitive hint: **11,476**
+- One-line cards: **15,176**
+- Cards with a reusable existing primitive hint: **11,471**
 - Cards needing new primitive review: **3,705**
-- Templates: **11,998**
+- Templates: **11,994**
 
 ## Worker rule
 
@@ -40,10 +40,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Reciprocate | `ebdd29c0-2c33-4410-a05c-80ced58c7b81` | damage | damage / life | Exile target creature that dealt damage to you this turn. |
 | needs-new-primitive | Nameless Inversion | `d6911456-42cb-4b23-a560-dc98784530f5` | pump | new primitive review | Target creature gets +3/-3 and loses all creature types until end of turn. |
 | needs-new-primitive | Bituminous Blast | `d291d8f7-bb67-470c-8794-cd553c91e5cc` | activated | new primitive review | Cascade |
-| reuse-existing | Celestial Purge | `ec1f6188-2516-46ac-8a03-7b7285b23a62` | exile | exile | Exile target black or red permanent. |
 | reuse-existing | Hinder | `c9db6b94-a7b1-4b93-b454-4dead8f85e34` | counters | counter | If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard. |
-| reuse-existing | Cruel Edict | `10c585c4-bf5b-4d8f-94a9-e9a5036a688f` | sacrifice | sacrifice | Target opponent sacrifices a creature of their choice. |
-| reuse-existing | Blightning | `a6496440-dc0c-4d9b-bf37-f537b6f0187b` | discard | draw / discard | That player or that planeswalker's controller discards two cards. |
 | reuse-existing | Incinerate | `d8fd7a34-8418-4e98-b79b-119c4348c667` | damage | damage / life | A creature dealt damage this way can't be regenerated this turn. |
 | needs-new-primitive | Brave the Elements | `9d73a51a-1c8e-40cd-8124-aeff406a0884` | activated | new primitive review | White creatures you control gain protection from the chosen color until end of turn. |
 | reuse-existing | Strategic Betrayal | `0127c13f-7b0f-44c3-8b35-97f306c5f239` | exile | exile | Target opponent exiles a creature they control and their graveyard. |
@@ -68,7 +65,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Fae of Wishes // Granted | `c0abbed2-d213-47ef-8d6c-4a21efb9a55f` | discard | draw / discard | {1}{U}, Discard two cards: Return ~ to its owner's hand. |
 | reuse-existing | Voltaic Key | `09aeea91-b1dc-443f-a509-4758f052c0a7` | activated | activated ability / mana | {1}, {T}: Untap target artifact. |
 | reuse-existing | Lava Coil | `fa71db44-5181-4c51-8b24-7fbedf36e3ca` | exile | exile | If that creature would die this turn, exile it instead. |
-| reuse-existing | Diabolic Edict | `058917c1-21ab-488a-9f9c-591c55f3c596` | sacrifice | sacrifice | Target player sacrifices a creature of their choice. |
 | reuse-existing | Tibalt, Rakish Instigator | `0b768f8f-2213-45b9-bced-8fb1bbb441c3` | gain-life | damage / life | Your opponents can't gain life. |
 | reuse-existing | Jiang Yanggu, Wildcrafter | `04f2c320-dfcc-440a-9e24-3c2083d74e7c` | counters | activated ability / mana | Each creature you control with a +1/+1 counter on it has "{T}: Add one mana of any color." |
 | needs-new-primitive | Kaya, Bane of the Dead | `29d58aa4-9a7e-4052-9b0d-fc282f1be40e` | activated | new primitive review | Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof. |
@@ -218,5 +214,9 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Temporal Manipulation | `6b6ac99a-7548-4cad-9fe5-ea611618ab9e` | activated | new primitive review | Take an extra turn after this one. |
 | reuse-existing | Abrupt Decay | `1c747fe2-289e-492a-a846-aa77707e2dc3` | destroy | activated ability / mana | Destroy target nonland permanent with mana value 3 or less. |
 | reuse-existing | The Tabernacle at Pendrell Vale | `69b409b3-fa16-4c79-8b46-215a7036ed46` | destroy | trigger / ETB | All creatures have "At the beginning of your upkeep, destroy ~ unless you pay {1}." |
+| reuse-existing | Hanna, Ship's Navigator | `3b008c71-e2a0-4f56-83d3-655c5dd58e0e` | return | activated ability / mana | {1}{W}{U}, {T}: Return target artifact or enchantment card from your graveyard to your hand. |
+| reuse-existing | Rise from the Tides | `390b862a-2a85-44bd-832c-f5bbd3eb4ea0` | token | create / token | Create a tapped 2/2 black Zombie creature token for each instant and sorcery card in your graveyard. |
+| reuse-existing | Rishadan Port | `f3e8dc56-2810-474e-a6a7-9c3555f94ae9` | activated | activated ability / mana | {1}, {T}: Tap target land. |
+| reuse-existing | Identity Thief | `a200daec-983c-4ea6-ae98-1c963b50fbb1` | exile | trigger / ETB | Whenever ~ attacks, you may exile another target nontoken creature. If you do, ~ becomes a copy of that creature until end of turn. Return the exiled card to the battlefield under its owner's control at the beginning of the next end step. |
 
-The JSON contains the remaining 14,981 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,976 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
