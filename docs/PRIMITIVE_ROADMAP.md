@@ -9,8 +9,8 @@ primitive finishes the most cards next?* A clause that appears in thousands of
 cards but never completes one is correctly ranked low.
 
 - Catalog cards: **38,711**
-- Fully implemented: **10,126**
-- Unfinished: **28,585**, of which **15,143** are a single line away
+- Fully implemented: **10,127**
+- Unfinished: **28,584**, of which **15,142** are a single line away
 - This queue's 40 entries would finish **778** more cards
 
 ## Queue

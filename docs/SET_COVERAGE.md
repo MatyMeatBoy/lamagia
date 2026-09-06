@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,142** · cobertura: **30.8%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,148** · cobertura: **30.8%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -28,7 +28,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | 1995-06-03 | Ice Age (`ICE`) | expansion | ice-age | main | 373 | 77 | 296 | 20.6% |
 | 1995-07-01 | Chronicles (`CHR`) | masters-remastered | chronicles | other | 116 | 28 | 88 | 24.1% |
 | 1995-07-01 | Chronicles Foreign Black Border (`BCHR`) | masters-remastered | chronicles-foreign-black-border | other | 116 | 28 | 88 | 24.1% |
-| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 94 | 44 | 50 | 46.8% |
+| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 94 | 45 | 49 | 47.9% |
 | 1995-08-01 | Renaissance (`REN`) | masters-remastered | renaissance | other | 122 | 37 | 85 | 30.3% |
 | 1995-08-01 | Rinascimento (`RIN`) | masters-remastered | rinascimento | other | 60 | 12 | 48 | 20.0% |
 | 1995-10-01 | Homelands (`HML`) | expansion | 1990s | main | 115 | 33 | 82 | 28.7% |
@@ -72,7 +72,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | 1999-08-04 | World Championship Promos (`PWOR`) | promos | championship-1999 | other | 2 | 0 | 2 | 0.0% |
 | 1999-09-04 | Wizards of the Coast Online Store (`PWOS`) | promos | wizards-of-the-coast-online-store | other | 1 | 1 | 0 | 100.0% |
 | 1999-09-25 | Mercadian Masques Promos (`PMMQ`) | promos | mercadian-masques | other | 1 | 0 | 1 | 0.0% |
-| 1999-10-04 | Mercadian Masques (`MMQ`) | expansion | masques | main | 335 | 102 | 233 | 30.4% |
+| 1999-10-04 | Mercadian Masques (`MMQ`) | expansion | masques | main | 335 | 103 | 232 | 30.7% |
 | 1999-11-12 | Battle Royale Box Set (`BRB`) | boxed-products | battle-royale-box-set | other | 105 | 58 | 47 | 55.2% |
 | 2000-01-01 | Arena League 2000 (`PAL00`) | promos | arena-2000 | other | 11 | 7 | 4 | 63.6% |
 | 2000-01-01 | Friday Night Magic 2000 (`FNM`) | promos | fnm-2000 | other | 11 | 10 | 1 | 90.9% |
@@ -357,7 +357,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | 2016-04-08 | Shadows over Innistrad (`SOI`) | expansion | innistrad | main | 287 | 62 | 225 | 21.6% |
 | 2016-04-08 | Shadows over Innistrad Promos (`PSOI`) | promos | shadows-over-innistrad | other | 79 | 10 | 69 | 12.7% |
 | 2016-04-08 | Welcome Deck 2016 (`W16`) | starter | 2010s | other | 16 | 9 | 7 | 56.2% |
-| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 115 | 134 | 46.2% |
+| 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 116 | 133 | 46.6% |
 | 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 42 | 166 | 20.2% |
 | 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 3 | 61 | 4.7% |
 | 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 0 | 15 | 0.0% |
@@ -451,7 +451,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 13 | 107 | 10.8% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1587 | 3634 | 30.4% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1588 | 3633 | 30.4% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 13 | 7 | 65.0% |
 | 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 421 | 1275 | 24.8% |
@@ -459,7 +459,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 62 | 211 | 22.7% |
 | 2020-01-24 | Theros Beyond Death Promos (`PTHB`) | promos | theros-beyond-death | other | 68 | 8 | 60 | 11.8% |
-| 2020-03-12 | Historic Anthology 2 (`HA2`) | anthologies | historic-anthology-2 | other | 25 | 11 | 14 | 44.0% |
+| 2020-03-12 | Historic Anthology 2 (`HA2`) | anthologies | historic-anthology-2 | other | 25 | 12 | 13 | 48.0% |
 | 2020-04-17 | Commander 2020 (`C20`) | commander | 2020 | commander | 322 | 124 | 198 | 38.5% |
 | 2020-04-24 | Ikoria: Lair of Behemoths (`IKO`) | expansion | 2020s | main | 266 | 74 | 192 | 27.8% |
 | 2020-04-24 | Ikoria: Lair of Behemoths Promos (`PIKO`) | promos | ikoria-lair-of-behemoths | other | 68 | 8 | 60 | 11.8% |
@@ -585,7 +585,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | 2023-09-08 | Magic × Duel Masters Promos (`PMDA`) | masters-remastered | magic-duel-masters | other | 4 | 3 | 1 | 75.0% |
 | 2023-09-08 | Time Spiral Remastered Promos (`PTSR`) | masters-remastered | time-spiral-remastered | other | 3 | 0 | 3 | 0.0% |
 | 2023-09-08 | Wilds of Eldraine (`WOE`) | expansion | eldraine | main | 281 | 51 | 230 | 18.1% |
-| 2023-09-08 | Wilds of Eldraine Commander (`WOC`) | commander | 2023 | commander | 143 | 45 | 98 | 31.5% |
+| 2023-09-08 | Wilds of Eldraine Commander (`WOC`) | commander | 2023 | commander | 143 | 46 | 97 | 32.2% |
 | 2023-09-08 | Wilds of Eldraine Promos (`PWOE`) | promos | wilds-of-eldraine | other | 80 | 5 | 75 | 6.2% |
 | 2023-09-08 | Wilds of Eldraine: Enchanting Tales (`WOT`) | masterpieces | wilds-of-eldraine-enchanting-tales | other | 63 | 11 | 52 | 17.5% |
 | 2023-10-01 | Wizards Play Network 2024 (`PW24`) | promos | wpn-2024 | other | 18 | 6 | 12 | 33.3% |
@@ -710,7 +710,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | anthologies | explorer-anthology-2 | 1 | 25 | 3 | 22 | 12.0% |
 | anthologies | explorer-anthology-3 | 1 | 25 | 11 | 14 | 44.0% |
 | anthologies | historic-anthology-1 | 1 | 20 | 13 | 7 | 65.0% |
-| anthologies | historic-anthology-2 | 1 | 25 | 11 | 14 | 44.0% |
+| anthologies | historic-anthology-2 | 1 | 25 | 12 | 13 | 48.0% |
 | anthologies | historic-anthology-3 | 1 | 27 | 9 | 18 | 33.3% |
 | anthologies | historic-anthology-4 | 1 | 25 | 4 | 21 | 16.0% |
 | anthologies | historic-anthology-5 | 1 | 25 | 7 | 18 | 28.0% |
@@ -750,7 +750,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | commander | 2020 | 4 | 1001 | 361 | 640 | 36.1% |
 | commander | 2021 | 5 | 1022 | 362 | 660 | 35.4% |
 | commander | 2022 | 7 | 1802 | 531 | 1271 | 29.5% |
-| commander | 2023 | 6 | 1597 | 527 | 1070 | 33.0% |
+| commander | 2023 | 6 | 1597 | 528 | 1069 | 33.1% |
 | commander | 2024 | 7 | 1887 | 667 | 1220 | 35.3% |
 | commander | 2025 | 4 | 1046 | 408 | 638 | 39.0% |
 | commander | 2026 | 6 | 1265 | 358 | 907 | 28.3% |
@@ -810,7 +810,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | expansion | kaldheim | 1 | 323 | 53 | 270 | 16.4% |
 | expansion | kamigawa | 4 | 925 | 122 | 803 | 13.2% |
 | expansion | lorwyn | 2 | 559 | 132 | 427 | 23.6% |
-| expansion | masques | 1 | 335 | 102 | 233 | 30.4% |
+| expansion | masques | 1 | 335 | 103 | 232 | 30.7% |
 | expansion | mirage | 1 | 335 | 89 | 246 | 26.6% |
 | expansion | mirrodin | 3 | 675 | 251 | 424 | 37.2% |
 | expansion | odyssey | 1 | 335 | 108 | 227 | 32.2% |
@@ -875,7 +875,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | masters-remastered | dominaria-remastered | 1 | 266 | 105 | 161 | 39.5% |
 | masters-remastered | double-masters | 1 | 337 | 105 | 232 | 31.2% |
 | masters-remastered | double-masters-2022 | 1 | 332 | 99 | 233 | 29.8% |
-| masters-remastered | eternal-masters | 1 | 249 | 115 | 134 | 46.2% |
+| masters-remastered | eternal-masters | 1 | 249 | 116 | 133 | 46.6% |
 | masters-remastered | iconic-masters | 1 | 249 | 105 | 144 | 42.2% |
 | masters-remastered | innistrad-remastered | 1 | 300 | 68 | 232 | 22.7% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 60 | 232 | 20.5% |
@@ -896,7 +896,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | masters-remastered | shadows-of-the-past | 1 | 76 | 28 | 48 | 36.8% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 57 | 227 | 20.1% |
 | masters-remastered | tempest-remastered | 1 | 254 | 101 | 153 | 39.8% |
-| masters-remastered | the-list | 1 | 5221 | 1587 | 3634 | 30.4% |
+| masters-remastered | the-list | 1 | 5221 | 1588 | 3633 | 30.4% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 111 | 302 | 26.9% |
 | masters-remastered | ultimate-masters | 1 | 254 | 87 | 167 | 34.3% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
@@ -1091,7 +1091,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 | promos | march-of-the-machine-the-aftermath | 1 | 8 | 0 | 8 | 0.0% |
 | promos | marvel-legends-series-inserts | 1 | 4 | 0 | 4 | 0.0% |
 | promos | marvel-s-spider-man | 1 | 68 | 1 | 67 | 1.5% |
-| promos | media-and-collaboration | 1 | 94 | 44 | 50 | 46.8% |
+| promos | media-and-collaboration | 1 | 94 | 45 | 49 | 47.9% |
 | promos | mercadian-masques | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin-besieged | 1 | 4 | 1 | 3 | 25.0% |
@@ -3778,7 +3778,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 ### promos / media-and-collaboration · Media and Collaboration Promos (`PMEI`)
 
 - [ ] Ajani, Mentor of Heroes — `a612bd38-069f-4bdc-9aa6-c172435e3841`
-- [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
 - [ ] Appa, Aang's Companion — `215215b8-6ddc-4e94-8640-6d324ff65f9c`
 - [ ] Ascendant Evincar — `e32c0de7-132d-4a39-85fb-da0ed1132878`
 - [ ] Avengers Tower — `c5fc8e7c-a87e-4586-a13c-d30e0a3aafbf`
@@ -6417,7 +6416,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 - [ ] Aerial Caravan — `d13aff7c-f0ee-44e2-ae1c-62cd86ad46a6`
 - [ ] Alabaster Wall — `f9f52651-cc64-48c5-bc18-cd5f646dfb1f`
 - [ ] Alley Grifters — `399af8ea-7a6f-4f43-bd39-dc29a6e75e06`
-- [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
 - [ ] Armistice — `da103316-2a85-4de9-8531-ac2cd2859d6f`
 - [ ] Arrest — `81728b98-8cf9-4734-a318-69184bb4d15c`
 - [ ] Assembly Hall — `8da9f975-519d-455a-80c1-2b468cad79a1`
@@ -23450,7 +23448,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 ### masters-remastered / eternal-masters · Eternal Masters (`EMA`)
 
 - [ ] Abundant Growth — `947a2665-2f4d-4193-8768-118f85334549`
-- [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
 - [ ] Animate Dead — `c0d8fef4-65f4-4769-982d-b397d2b7e977`
 - [ ] Arcanis the Omnipotent — `8a7183cc-161c-444d-a889-a17519c8061b`
 - [ ] Argothian Enchantress — `11f17f85-ca97-4551-838f-7cb32f0e5f10`
@@ -30468,7 +30465,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 - [ ] Ancestor Dragon — `60b03a44-a7bd-48fa-8c8f-1704aed02cd7`
 - [ ] Ancestor's Prophet — `274ce6b0-af29-4afc-873b-b4126a67bd81`
 - [ ] Ancestral Blade — `ab28a801-6ab1-4db2-8ae2-c24bb4c10ebb`
-- [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
 - [ ] Ancestral Memories — `95a2802a-2621-40c3-84f8-51e8aad7b6f0`
 - [ ] Ancient Excavation — `46db3dc2-9eb1-4be3-96f9-0013119fcd97`
 - [ ] Ancient Hydra — `8e1d3722-9bd1-4ab7-b4a5-9265fca3aba9`
@@ -35623,7 +35619,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 
 ### anthologies / historic-anthology-2 · Historic Anthology 2 (`HA2`)
 
-- [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
 - [ ] Brain Maggot — `419b5b4f-cac7-44bf-b1e2-655b5a5d37b1`
 - [ ] Dragonmaster Outcast — `b6fb79c3-cd32-4045-8177-e52841eea65b`
 - [ ] Knight of the Reliquary — `393e5331-4456-4ba3-b410-bb630bb053db`
@@ -49824,7 +49819,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,14
 
 - [ ] Ajani's Chosen — `9c77eb0a-543a-41db-ba1f-aa0163837ae0`
 - [ ] Alela, Cunning Conqueror — `1cae5752-b4af-4a8f-8c8c-2493e163083b`
-- [ ] Ancestral Mask — `db5380ed-ba28-4ea2-abc3-4998e2022903`
 - [ ] Angelic Destiny — `8ba36878-0816-44c7-b543-8ebfc28c2ecd`
 - [ ] Archmage of Echoes — `f1ecb3d7-5ea0-45b2-b1b0-d7ae304db2a1`
 - [ ] Archon of Sun's Grace — `48a99dce-0aa9-4aac-81df-cec5f94c639d`

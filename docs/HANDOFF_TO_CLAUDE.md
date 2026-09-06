@@ -18,14 +18,15 @@ rider, and opponent-life-gain-prevention
 primitives, Ruby's reusable attack-power threshold, Hinder's countered-spell
 library placement, Cut Down's total-power/toughness target filter, and Cloud's
 equipped self-and-attached-Equipment trigger doubler, event-controller life-gain
-trigger, and Aura-enchanted-land mana bonus; verify the
+trigger, Aura-enchanted-land mana bonus, and counted-enchantment Aura scaling;
+verify the
 Pages run before reporting
 a new client asset as live.
 Coverage numbers have two deliberate units:
 
-- **Unique engine profiles:** 10,126 / 38,711 fully implemented. These are
+- **Unique engine profiles:** 10,127 / 38,711 fully implemented. These are
   deduplicated by stable `oracle_id`; one implementation covers every printing.
-- **Edition memberships:** 26,142 / 84,990 implemented (30.8%) across 685
+- **Edition memberships:** 26,148 / 84,990 implemented (30.8%) across 685
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
@@ -39,15 +40,16 @@ catalog and the current rules tree. The refreshed artifacts are
 `data/rules/engine-card-profiles.json`, `data/rules/set-coverage.json`,
 `site/coverage.json`, `docs/SET_COVERAGE.md`, the C13 roadmap/dictionary/worker
 plan, and both near-complete queues. C13 is now **292/341 (85.6%)**, with
-one one-line candidate: Sudden Spoiling. The global queue is now 15,143
-one-line profiles, 11,434 of them reusable, after the Fling, Incinerate, Voltaic
+one one-line candidate: Sudden Spoiling. The global queue is now 15,142
+one-line profiles, 11,433 of them reusable, after the Fling, Incinerate, Voltaic
 Key, Lava Coil, kicker damage-replacement, mana-ability counter-rider, temporary
 creature-type removal, you-cast-noncreature trigger, delayed creature-return,
 keyword-counter, multi-land alternative-cost, dynamic Plains-count target,
 target-controller-rider, opponent-life-gain-prevention, attack-power-threshold,
 countered-spell-library-placement, total-power-toughness-target, Cloud's
 equipped self-and-attached-Equipment trigger-doubler, event-controller
-life-gain, and Aura-enchanted-land mana-bonus primitives
+life-gain, Aura-enchanted-land mana-bonus, and counted-enchantment Aura-scaling
+primitives
 were added;
 the C13
 dictionary remains 341 profiles with 292 complete.

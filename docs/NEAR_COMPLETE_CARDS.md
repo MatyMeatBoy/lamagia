@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,143**
-- Cards with a reusable existing primitive hint: **11,434**
+- One-line cards: **15,142**
+- Cards with a reusable existing primitive hint: **11,433**
 - Cards needing new primitive review: **3,709**
-- Templates: **11,985**
+- Templates: **11,984**
 
 ## Worker rule
 
@@ -39,7 +39,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Monstrous Rage | `646a2371-54c0-4492-ac2f-20f109d6108c` | token | create / token | Create a Monster Role token attached to it. |
 | reuse-existing | Nissa, Resurgent Animist | `c1fc5923-c3cd-448a-98d1-c154661c2812` | activated | activated ability / mana | Landfall — Whenever a land you control enters, add one mana of any color. Then if this is the second time this ability has resolved this turn, reveal cards from the top of your library until you reveal an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in a random order. |
 | reuse-existing | Tishana's Tidebinder | `2993dc7d-723d-4a9b-94bd-4bb02a9f7243` | counters | activated ability / mana | When ~ enters, counter up to one target activated or triggered ability. If an ability of an artifact, creature, or planeswalker is countered this way, that permanent loses all abilities for as long as ~ remains on the battlefield. |
-| reuse-existing | Ancestral Mask | `db5380ed-ba28-4ea2-abc3-4998e2022903` | static-continuous | static / continuous | Enchanted creature gets +2/+2 for each other enchantment on the battlefield. |
 | reuse-existing | Braids, Arisen Nightmare | `e0445c80-fa53-4c3e-881e-940e9fce7f57` | draw | sacrifice | At the beginning of your end step, you may sacrifice an artifact, creature, enchantment, land, or planeswalker. If you do, each opponent may sacrifice a permanent of their choice that shares a card type with it. For each opponent who doesn't, that player loses 2 life and you draw a card. |
 | needs-new-primitive | Gingerbrute | `10b8d4c7-7553-4d76-b643-d98b80701e13` | activated | new primitive review | {1}: ~ can't be blocked this turn except by creatures with haste. |
 | needs-new-primitive | Frantic Search | `16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c` | activated | new primitive review | Untap up to three lands. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
 | reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
+| reuse-existing | Somberwald Beastmaster | `df35bf19-4cbf-4624-925d-ceca6bff596e` | activated | create / token | Creature tokens you control have deathtouch. |
 
-The JSON contains the remaining 14,643 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,642 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
