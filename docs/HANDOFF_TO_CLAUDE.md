@@ -4798,3 +4798,69 @@ it touches no `services/match-server` code), 10,265 global profiles,
 
 Prossh decklist status after this pass: **81 of 97 unique cards fully
 implemented (83.5%)**.
+
+Sidisi, Undead Vizier ("Deathtouch\nExploit (When this creature
+enters, you may sacrifice a creature.)\nWhen Sidisi exploits a
+creature, you may search your library for a card, put it into your
+hand, then shuffle.") required implementing Exploit (CR 702.126) as a
+genuinely new keyword mechanic — the first new keyword this session,
+after four passes of reusing existing infrastructure. Modeled it the
+same way Undying/Persist/Prowess/Exalted/Graft are already
+"synthesised from the keyword" in `characteristics.ts` (a bare
+`if (lowerKeywords.includes(...)) synthesizedTriggers.push({...})`
+entry, since the printed line is just the keyword name plus reminder
+text, not a spelled-out trigger) rather than trying to parse the
+reminder text: `exploit` in a card's keyword list synthesizes an
+`enters-battlefield`/`self` trigger with a new `{kind: "exploit"}`
+effect. Deliberately kept this trigger's own `optional: false`, even
+though the ability offers a "may": CR 702.126a's "you may sacrifice a
+creature" is the EFFECT's own internal choice (which creature, or
+none), not the accept/decline flow the engine's `optional: true`
+already means for a whole trigger — conflating the two would have
+lost the "which creature" decision entirely. That effect resolves via
+a brand new `PendingChoice` type, `"exploit"` (offering "sacrifice
+none" plus one action per creature the controller controls, INCLUDING
+the exploiter itself — CR 702.126a explicitly allows exploiting
+itself), added as its own special-cased branch in `resolveTop`'s
+`if (object.trigger)` block, positioned the same way the existing
+`triggerScry`/`triggerSearch`/`triggerSearchMulti` special cases
+already are, ahead of the generic `optional` branch check. A new
+`applyChooseExploit` handler sacrifices the chosen creature (or does
+nothing when declined) and then raises a brand new `"exploits"`
+`TriggerEvent`/`GameEvent` — CR 702.126b's second half needs a
+narrower signal than any sacrifice: "When Sidisi exploits a creature"
+must fire only from ITS OWN Exploit sacrifice, not any creature dying
+to any cause. Followed the exact `"taps-for-mana"` playbook from
+earlier this session for wiring a new `TriggerEvent` through: the
+`TriggerEvent` union, `TRIGGER_EVENT_LABELS`, a new `TRIGGER_TEMPLATES`
+entry matching `"When ~ exploits a creature, ..."`, the `GameEvent`
+union, and `apps/client/src/abilities.ts`'s exhaustive `TRIGGER_GLYPHS`
+map — confirmed once again that `matchesSubject`'s generic
+`eventObject()` extraction (anything with a `permanentId` field)
+needed no extra code for `subject: "self"` to just work. The
+`exploits` event carries the exploiter's identity from the
+`PendingChoice` itself rather than re-finding the permanent on the
+battlefield afterward, specifically so a card that exploits (sacrifices)
+ITSELF still correctly fires its own second trigger with last-known
+information (CR 608.2h), matching this codebase's established pattern
+for `sacrificedPower`/`sacrificedManaValue`. Two smaller but necessary
+additions: `bot.ts` needed an explicit handler for the new `"exploit"`
+`PendingChoice` (a conservative "always decline" default) because its
+final fallback only ever looks for a `"pass"` action, which this choice
+type never offers — without it, a bot-controlled Exploit creature
+would have stalled `runBots`/the 200-game simulator outright. Verified
+**+11** in the export count (10,265 → 10,276, since Exploit is printed
+on several catalog cards beyond Sidisi) and set coverage holds at
+31.4%. Scenario-tested: declining the sacrifice leaves the creature on
+the battlefield and closes the choice with no further effect;
+sacrificing a chosen creature moves it to the graveyard and opens
+Sidisi's own search (for literally "a card," no type restriction,
+unlike every other tutor built this session) which finds and hands
+back the chosen card. Validation: **800 rules tests** (3 new), `npm
+run check` across all four workspaces (including `apps/client`, which
+depends on the new exhaustive `TRIGGER_GLYPHS` entry), `npx vitest run
+services/match-server/src` (5 passed), 10,276 global profiles, 200/200
+simulated games.
+
+Prossh decklist status after this pass: **82 of 97 unique cards fully
+implemented (84.5%)**.

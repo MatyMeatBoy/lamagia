@@ -11261,6 +11261,58 @@ describe("Birthing Pod's sacrifice-scaled creature tutor", () => {
   });
 });
 
+describe("Sidisi, Undead Vizier's Exploit ETB and its own exploited-creature trigger", () => {
+  const SIDISI = () => make({
+    name: "Sidisi, Undead Vizier", type_line: "Legendary Creature — Zombie Snake", mana_cost: "{3}{B}{B}", cmc: 5, power: "4", toughness: "5",
+    keywords: ["Deathtouch", "Exploit"],
+    oracle_text: "Deathtouch\nExploit (When this creature enters, you may sacrifice a creature.)\nWhen Sidisi exploits a creature, you may search your library for a card, put it into your hand, then shuffle."
+  });
+
+  it("recognizes both the synthesized Exploit ETB and its own exploited-creature search trigger", () => {
+    const profile = profileOf(SIDISI());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.keywords).toContain("deathtouch");
+    expect(profile.triggers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ event: "enters-battlefield", subject: "self", effect: { kind: "exploit" } }),
+      expect.objectContaining({ event: "exploits", subject: "self", effect: { kind: "search-library", types: [], destination: "hand", reveal: false } })
+    ]));
+  });
+
+  it("lets the controller decline the sacrifice, offering no search", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [SIDISI()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [BEAR(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "exploit");
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-exploit", sourceId: choice.sourceId });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.pendingChoice).toBeNull();
+  });
+
+  it("exploiting a creature raises the search for Sidisi's own exploited-creature trigger", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [SIDISI()], "sidisi-hand"),
+      library: [...toHand(0, [SOL_RING()], "sidisi-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [BEAR(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "sidisi-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "exploit");
+    const exploitChoice = game.pendingChoice!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-exploit", sourceId: exploitChoice.sourceId, sacrificeId: bear.instance_id });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+    const searchChoice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: searchChoice.sourceId, query: "Sol Ring" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

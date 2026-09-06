@@ -487,6 +487,8 @@ export type SpellEffect =
   | { readonly kind: "return-creatures-died-this-turn-to-hand" }
   | { readonly kind: "look-put-one-in-hand"; readonly amount: number; readonly restDestination?: "bottom" | "graveyard" }
   | { readonly kind: "undying-return"; readonly counter: "+1/+1" | "-1/-1" }
+  /** Exploit's own ETB effect (CR 702.126a): the controller may sacrifice any creature they control, including this one, opening a dedicated choice. */
+  | { readonly kind: "exploit" }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -802,7 +804,9 @@ export type TriggerEvent =
   /** The action of playing a land (CR 305.1), distinct from that land's own "enters the battlefield" event (City of Traitors). */
   | "play-land"
   /** Specifically a mana ability's activation (Forbidden Orchard), narrower than the general "becomes-tapped" (a non-mana tap effect must not trigger this). */
-  | "taps-for-mana";
+  | "taps-for-mana"
+  /** This permanent's own Exploit ability actually sacrificed a creature (CR 702.126b), narrower than any sacrifice. */
+  | "exploits";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -857,7 +861,8 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "class-level-up": "habilidad de nivel de Clase",
   "first-main-phase": "habilidad de la primera fase principal",
   "play-land": "habilidad de jugar una tierra",
-  "taps-for-mana": "habilidad de girar por maná"
+  "taps-for-mana": "habilidad de girar por maná",
+  exploits: "habilidad de explotar"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -2846,7 +2851,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i },
   // Specifically a mana ability's activation (Forbidden Orchard), narrower than
   // the general "becomes-tapped" — a non-mana tap effect must not trigger this.
-  { event: "taps-for-mana", subject: "self", pattern: /^whenever\s+you\s+tap\s+~\s+for\s+mana,?\s*(.+)$/i }
+  { event: "taps-for-mana", subject: "self", pattern: /^whenever\s+you\s+tap\s+~\s+for\s+mana,?\s*(.+)$/i },
+  // Exploit's own follow-up (CR 702.126b): fires only when ~ itself actually
+  // sacrificed a creature via its Exploit ability, not any sacrifice.
+  { event: "exploits", subject: "self", pattern: /^when\s+~\s+exploits\s+a\s+creature,?\s*(.+)$/i }
 ];
 
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
@@ -4569,6 +4577,8 @@ function recognizeText(text: string): RecognizedText {
     // Undying / Persist (CR 702.93/702.92) are synthesised from the keyword below.
     if (/^undying\.?$/i.test(line)) continue;
     if (/^persist\.?$/i.test(line)) continue;
+    // Exploit (CR 702.126) is synthesised from the keyword below.
+    if (/^exploit\.?$/i.test(line)) continue;
     // Changeling is represented by `profile.changeling` and enforced by
     // `hasSubtype` in every zone (CR 702.73a); consume the keyword line only
     // after that semantic representation has been built.
@@ -5131,6 +5141,12 @@ export function cardProfile(card: CardData): CardProfile {
   const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
   if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
   if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
+  // Exploit (CR 702.126): "When this creature enters, you may sacrifice a
+  // creature." The trigger itself always fires; the sacrifice it offers is
+  // the effect's own internal "may" choice (a dedicated PendingChoice),
+  // distinct from the accept/decline flow `optional: true` gives a whole
+  // trigger, so this stays `optional: false`.
+  if (lowerKeywords.includes("exploit")) synthesizedTriggers.push({ event: "enters-battlefield", subject: "self", effect: { kind: "exploit" }, optional: false, targetKind: "none", sourceText: "Exploit" });
   // Prowess (CR 702.108): a noncreature spell cast by this creature's
   // controller creates a temporary +1/+1 self-trigger. Keep it on the same
   // event/effect path used by ordinary triggered card text.

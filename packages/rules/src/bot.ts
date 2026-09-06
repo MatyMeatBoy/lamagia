@@ -215,6 +215,13 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       ?? available.find((entry) => entry.action.type === "choose-draw");
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "exploit" && state.pendingChoice.seat === seat) {
+    // Conservative default: never sacrifice a creature the bot doesn't
+    // understand the value of losing (declining is always legal for CR
+    // 702.126a's "you may").
+    const decline = available.find((entry) => entry.action.type === "choose-exploit" && !entry.action.sacrificeId);
+    if (decline) return { action: decline.action, label: decline.label };
+  }
   if (state.pendingChoice?.type === "proliferate" && state.pendingChoice.seat === seat) {
     const target = available.find((entry) => entry.action.type === "choose-proliferate-target");
     if (target) return { action: target.action, label: target.label };

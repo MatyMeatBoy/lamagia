@@ -357,7 +357,9 @@ export type GameEvent =
   | { readonly kind: "upkeep" | "draw-step" | "end-step" | "first-main-phase"; readonly activeSeat: SeatId }
   | { readonly kind: "life-gained" | "life-lost"; readonly seat: SeatId; readonly amount: number }
   | { readonly kind: "play-land"; readonly seat: SeatId; readonly card: GameCard }
-  | { readonly kind: "taps-for-mana"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard };
+  | { readonly kind: "taps-for-mana"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  /** This permanent's own Exploit ability actually sacrificed a creature (CR 702.126b). */
+  | { readonly kind: "exploits"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly exploitedCard: GameCard };
 
 export interface AttackerDeclaration { readonly instanceId: string; readonly defender: SeatId }
 export interface BlockerDeclaration { readonly instanceId: string; readonly attackerId: string }
@@ -697,6 +699,15 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly options: readonly Target[];
       readonly selectedTargets: readonly Target[];
+    }
+  | {
+      /** Exploit's own "you may sacrifice a creature" choice (CR 702.126a), including the exploiter itself. */
+      readonly type: "exploit";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly sourcePermanentId: string;
+      readonly candidateIds: readonly string[];
     };
 
 export type GameAction =
@@ -739,6 +750,7 @@ export type GameAction =
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-proliferate"; readonly sourceId: string }
+  | { readonly type: "choose-exploit"; readonly sourceId: string; readonly sacrificeId?: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -2341,6 +2353,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "first-main-phase": return `comienza la ${STEP_LABELS["precombat-main"]} de ${playerAt(state, event.activeSeat).name}`;
     case "play-land": return `${playerAt(state, event.seat).name} juega ${event.card.name}`;
     case "taps-for-mana": return `${playerAt(state, event.controller).name} gira ${event.card.name} por maná`;
+    case "exploits": return `${event.card.name} explota a ${event.exploitedCard.name}`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
 }
@@ -5621,6 +5634,30 @@ function resolveTop(state: GameState): GameState {
         }
       };
     }
+    // Exploit's own ETB effect (CR 702.126a): the sacrifice it offers is a
+    // real player decision (which creature, or none), not a plain optional
+    // accept/decline, so it gets its own dedicated PendingChoice here.
+    const triggerExploit = object.trigger.definition.effect.kind === "exploit" ? object.trigger.definition.effect : null;
+    if (triggerExploit) {
+      const sourcePermanentId = object.trigger.sourcePermanentId;
+      const candidateIds = playerAt(next, object.controller).battlefield
+        .filter((candidate) => isCreature(cardProfile(candidate.card)))
+        .map((candidate) => candidate.instance_id);
+      if (!candidateIds.length) {
+        return logged(next, object.controller, `${object.trigger.sourceCard.name}: no hay ninguna criatura para explotar.`);
+      }
+      return {
+        ...next,
+        pendingChoice: {
+          type: "exploit",
+          seat: object.controller,
+          sourceId: object.trigger.id,
+          sourceCard: object.trigger.sourceCard,
+          sourcePermanentId,
+          candidateIds
+        }
+      };
+    }
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -7085,6 +7122,24 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         label: choice.selectedTargets.length ? "Terminar proliferación" : "No proliferar",
         note: "Puedes elegir cualquier cantidad de jugadores y permanentes elegibles."
       });
+      return actions;
+    }
+    if (choice.type === "exploit") {
+      actions.push({
+        action: { type: "choose-exploit", sourceId: choice.sourceId },
+        label: "No sacrificar ninguna criatura",
+        note: `${choice.sourceCard.name}: puedes declinar el sacrificio de Exploit.`
+      });
+      for (const candidateId of choice.candidateIds) {
+        const candidate = findPermanent(state, candidateId);
+        if (!candidate) continue;
+        actions.push({
+          action: { type: "choose-exploit", sourceId: choice.sourceId, sacrificeId: candidateId },
+          label: `Explotar ${candidate.card.name}`,
+          cardId: candidateId,
+          note: `${choice.sourceCard.name}: sacrifica ${candidate.card.name} para Exploit.`
+        });
+      }
       return actions;
     }
     if (choice.type === "discard-cards") {
@@ -9814,6 +9869,27 @@ function applyFinishProliferate(state: GameState, seat: SeatId, action: Extract<
     : `${playerAt(next, seat).name} no prolifera ningún objetivo.`);
 }
 
+/** Resolves Exploit's own "you may sacrifice a creature" choice (CR 702.126a). */
+function applyChooseExploit(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-exploit" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "exploit" || choice.seat !== seat) throw new Error("No tienes una explotación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa explotación ya no corresponde a la partida.");
+  let next: GameState = { ...state, pendingChoice: null };
+  if (!action.sacrificeId) {
+    return logged(next, seat, `${playerAt(next, seat).name} no sacrifica ninguna criatura para explotar.`);
+  }
+  if (!choice.candidateIds.includes(action.sacrificeId)) throw new Error("Esa criatura no es válida para explotar.");
+  const sacrificed = findPermanent(next, action.sacrificeId);
+  if (!sacrificed) throw new Error("Esa criatura ya no está en el campo de batalla.");
+  const sacrificedCard = sacrificed.card;
+  next = movePermanentToZone(next, sacrificed, "graveyard");
+  next = logged(next, seat, `${playerAt(next, seat).name} sacrifica ${sacrificedCard.name} para explotar.`);
+  // The exploited card and the exploiter's own last-known identity are read
+  // from the pending choice, not re-found on the battlefield: Exploit
+  // permits sacrificing the exploiter itself (CR 702.126a).
+  return raiseEvent(next, { kind: "exploits", permanentId: choice.sourcePermanentId, controller: seat, card: choice.sourceCard, exploitedCard: sacrificedCard });
+}
+
 /** Applies one action for one seat, then settles the game to its next decision point. */
 export function applyAction(state: GameState, seat: SeatId, action: GameAction): GameState {
   if (state.finished) throw new Error("La partida ya terminó.");
@@ -9859,6 +9935,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;
     case "finish-proliferate": next = applyFinishProliferate(state, seat, action); break;
+    case "choose-exploit": next = applyChooseExploit(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {
