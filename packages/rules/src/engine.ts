@@ -590,6 +590,8 @@ export type PendingChoice =
       readonly remaining: number;
       /** Forget: after all discards resolve, the same player draws this many cards. */
       readonly thenDrawSame?: boolean;
+      /** After the discard resolves, the same player draws this fixed amount. */
+      readonly thenDraw?: number;
       /** Geier Reach Sanitarium: seats still owed their own discard choice, in APNAP order. */
       readonly nextSeats?: readonly SeatId[];
     }
@@ -3000,6 +3002,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           amount,
           remaining: amount,
           thenDrawSame: true
+        }
+      };
+    }
+    case "discard-then-draw": {
+      const amount = Math.min(effect.discard, playerAt(state, controller).hand.length);
+      if (amount <= 0) return drawCards(state, controller, effect.draw);
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount,
+          remaining: amount,
+          thenDraw: effect.draw
         }
       };
     }
@@ -9358,8 +9377,8 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
       : null
   };
   let next = discardCard(stateWithChoice, seat, card);
-  if (remaining <= 0 && choice.thenDrawSame) {
-    next = drawCards(next, seat, choice.amount);
+  if (remaining <= 0 && nextSeat === undefined && (choice.thenDrawSame || choice.thenDraw !== undefined)) {
+    next = drawCards(next, seat, choice.thenDraw ?? choice.amount);
   }
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }

@@ -353,6 +353,8 @@ const HOMEWARD_PATH = () => make({ name: "Homeward Path", type_line: "Land", ora
 const AZORIUS_KEYRUNE = () => make({ name: "Azorius Keyrune", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{T}: Add {W} or {U}.\n{W}{U}: This artifact becomes a 2/2 white and blue Bird artifact creature with flying until end of turn.", scryfall_id: "7266b491-54e6-4393-a448-d5ae99d965c6" });
 const VOLTAIC_KEY = () => make({ name: "Voltaic Key", type_line: "Artifact", mana_cost: "{1}", cmc: 1, oracle_text: "{1}, {T}: Untap target artifact.", oracle_id: "09aeea91-b1dc-443f-a509-4758f052c0a7", scryfall_id: "09aeea91-b1dc-443f-a509-4758f052c0a7" });
 const ANNIHILATE = () => make({ name: "Annihilate", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target nonblack creature. Draw a card." });
+const FAITHLESS_SALVAGING = () => make({ name: "Faithless Salvaging", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Discard a card, then draw a card.\nRebound", oracle_id: "0366ccfd-c717-4ea2-8176-86e184f920f4" });
+const FAST_DISCARD_DRAW = () => make({ name: "Fast", type_line: "Instant", mana_cost: "{1}{R}", cmc: 2, oracle_text: "Discard a card, then draw two cards." });
 const FAMINE = () => make({ name: "Famine", type_line: "Sorcery", mana_cost: "{3}{B}{B}", cmc: 5, oracle_text: "Famine deals 3 damage to each creature and each player." });
 const ALL_PLAYER_DAMAGE = () => make({ name: "Shared Scorch", type_line: "Sorcery", mana_cost: "{2}{R}", cmc: 3, oracle_text: "This spell deals 2 damage to each player." });
 const DEATH_GRASP = () => make({ name: "Death Grasp", type_line: "Sorcery", mana_cost: "{X}{W}{B}", cmc: 2, oracle_text: "Death Grasp deals X damage to any target. You gain X life." });
@@ -1383,6 +1385,26 @@ describe("casting", () => {
     if (opponentBoard.length) game = putOnBattlefield(game, 1, opponentBoard);
     return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
   }
+
+  it("reuses discard-then-draw for Faithless Salvaging and Fast", () => {
+    expect(profileOf(FAITHLESS_SALVAGING())).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "discard-then-draw", discard: 1, draw: 1 }],
+      hasRebound: true
+    });
+    expect(profileOf(FAST_DISCARD_DRAW())).toMatchObject({
+      fullyImplemented: true,
+      effects: [{ kind: "discard-then-draw", discard: 1, draw: 2 }]
+    });
+
+    let game = readyToCast([FAITHLESS_SALVAGING(), BEAR()], [MOUNTAIN(), MOUNTAIN()]);
+    game = stage(game, 0, (player) => ({ library: toHand(0, [FLIER()], "faithless-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice?.type).toBe("discard-cards");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "discard-cards" }>;
+    game = applyAction(game, 0, { type: "choose-discard", sourceId: choice.sourceId, cardId: "hand-1" });
+    expect(game.players[0]!.hand.map((card) => card.name)).toEqual(["Storm Crow"]);
+  });
 
   it("taps the right mana and resolves a creature onto the battlefield", () => {
     let game = readyToCast([BEAR()], [FOREST(), FOREST()]);

@@ -4002,3 +4002,9 @@ cost. Coverage verifies both token generation metadata and activation (CR
 and **11,433 reusable** until the integrator regenerates profiles from the
 catalog database. Current validation: **737 rules tests**, `npm run check`,
 near-complete unit tests, and `git diff --check` pass.
+
+The next MH2 cluster adds the parameterized `discard-then-draw` primitive:
+Faithless Salvaging and the Fast face shape now queue the discard choice and
+draw the printed amount afterward, preserving the existing hand privacy and
+rebound handling (CR 701.8, 121.1). Current validation: **738 rules tests**,
+`npm run check`, near-complete unit tests, and `git diff --check` pass.

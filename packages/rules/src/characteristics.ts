@@ -473,6 +473,8 @@ export type SpellEffect =
   | { readonly kind: "discard-target-player-then-draw-same"; readonly amount: number }
   /** Curse of Chaos: the attacking player may discard one, then draws one. */
   | { readonly kind: "discard-event-controller-then-draw"; readonly amount: number }
+  /** Discard from the controller's hand, then draw a printed amount. */
+  | { readonly kind: "discard-then-draw"; readonly discard: number; readonly draw: number }
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
   | { readonly kind: "draw-then-put-back-on-top"; readonly draw: number; readonly putBack: number }
   | { readonly kind: "exile-self" }
@@ -3211,6 +3213,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Discard a card\. If the player does, they draw a card$/i.test(text)) {
     return { effect: { kind: "discard-event-controller-then-draw", amount: 1 }, target: "none" };
+  }
+  if ((match = /^Discard (a|an|one|two|three|four|five|\d+) cards?, then draw (a|an|one|two|three|four|five|\d+) cards?$/i.exec(text))) {
+    const discard = toNumber(match[1]);
+    const draw = toNumber(match[2]);
+    if (discard !== null && discard > 0 && draw !== null && draw > 0) {
+      return { effect: { kind: "discard-then-draw", discard, draw }, target: "none" };
+    }
   }
   if ((match = /^Target player discards X cards?$/i.exec(text))) return { effect: { kind: "discard-target-player", amount: "X" }, target: "player" };
   if ((match = /^Target player discards (\w+) cards?, then draws as many cards as they discarded this way$/i.exec(text))) {
