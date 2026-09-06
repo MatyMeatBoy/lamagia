@@ -582,6 +582,8 @@ export type SpellEffect =
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
+  /** "{cost}: ~ gains KEYWORD until end of turn" — a self-targeting keyword pump (CR 613). */
+  | { readonly kind: "grant-source-keyword"; readonly keyword: EnforcedKeyword }
   /** Mirror Entity: set base P/T and grant every creature type until cleanup. */
   | { readonly kind: "set-creatures-you-control-base-pt-all-types"; readonly power: number | "X"; readonly toughness: number | "X" }
   /** Temporary characteristic-setting animation for artifact manlands (CR 613.6). */
@@ -3454,6 +3456,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       toughness: Number(triggeredCombined[2]),
       keyword: triggeredCombined[3]!.toLowerCase() as EnforcedKeyword
     },
+    target: "none"
+  };
+  const selfKeyword = /^~ gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text);
+  if (selfKeyword) return {
+    effect: { kind: "grant-source-keyword", keyword: selfKeyword[1]!.toLowerCase() as EnforcedKeyword },
     target: "none"
   };
   const triggeredSelfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text);

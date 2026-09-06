@@ -7240,6 +7240,28 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("grants the source a keyword until end of turn from its own activated ability", () => {
+    const kestrel = make({
+      name: "Test Kestrel", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "{U}: This creature gains flying until end of turn."
+    });
+    expect(profileOf(kestrel).activatedAbilities[0]).toMatchObject({ effect: { kind: "grant-source-keyword", keyword: "flying" } });
+    let game = readyToCast([], [kestrel, ISLAND()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Kestrel")!;
+    const island = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Island")!;
+    expect(projectGame(game, 0).players[0]!.battlefield.find((p) => p.name === "Test Kestrel")?.keywords).not.toContain("flying");
+
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: island.instance_id, abilityIndex: 0, mana: "U" });
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(projectGame(game, 0).players[0]!.battlefield.find((p) => p.name === "Test Kestrel")?.keywords).toContain("flying");
+
+    // Cleared at cleanup.
+    game = passUntil(game, (state) => state.turn === 3);
+    expect(projectGame(game, 0).players[0]!.battlefield.find((p) => p.name === "Test Kestrel")?.keywords).not.toContain("flying");
+  });
+
   it("mills the controller's own library from an ETB 'mill two cards' trigger", () => {
     const skullkeeper = make({
       name: "Test Skullkeeper", type_line: "Creature — Human Rogue", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",

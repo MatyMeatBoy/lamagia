@@ -6,6 +6,15 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **`grant-source-keyword`** — `{cost}: ~ gains KEYWORD until end of turn`, a
+  self-targeting keyword pump. Parsed in `recognizeSentence`
+  (`characteristics.ts`), executed in `engine.ts` by adding the keyword to the
+  source's `temporaryKeywords` (already cleared at cleanup). Covers the whole
+  "{U}: gains flying / {B}: gains deathtouch / {2}{W}: gains first strike"
+  family. Export **10,238 → 10,362** (+124: Skyship Stalker, Reaper of the
+  Wilds, Clickslither, Knight of Stromgald, Order of the White Shield, …).
+  Test: `engine.test.ts` › "grants the source a keyword until end of turn…".
+
 Two reusable one-shot primitives added to `packages/rules`:
 
 - **`mill`** — "Mill N cards" with no subject: the controller mills their own
