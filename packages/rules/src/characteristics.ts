@@ -984,6 +984,8 @@ export interface TriggerDefinition {
   /** Maximum cards for a delayed/up-to draw trigger; the player chooses 0..N on resolution. */
   readonly drawUpTo?: number;
   readonly condition?:
+    /** "This ability triggers only once each turn" (CR 603.3, Bident of Thassa): blocks re-triggering, per source permanent instance and trigger definition, for the rest of the turn once it has fired. */
+    | { readonly kind: "once-per-turn" }
     | { readonly kind: "no-controlled-subtype"; readonly subtype: string }
     | { readonly kind: "controlled-creature-power-at-least"; readonly amount: number }
     | { readonly kind: "controlled-subtype-at-least"; readonly subtype: string; readonly amount: number }
@@ -5394,8 +5396,17 @@ function recognizeText(text: string): RecognizedText {
     // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
     const triggerLine = (leavesLine !== line ? leavesLine : line)
       .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
-    const triggered = matchTriggerLine(triggerLine);
-    if (triggered) {
+    const triggeredRaw = matchTriggerLine(triggerLine);
+    if (triggeredRaw) {
+      // "This ability triggers only once each turn." (Bident of Thassa and
+      // ~139 catalog cards): a trailing rider on the trigger's own effect
+      // text, stripped the same way other trailing riders are extracted
+      // below, then modeled as a `condition` checked/recorded once the
+      // trigger actually fires (CR 603.3, "once each turn" refers to
+      // triggering, not resolving).
+      const oncePerTurnMatch = /^(.+?)\.\s*This ability triggers only once each turn\.?$/i.exec(triggeredRaw.effectText);
+      const oncePerTurn = Boolean(oncePerTurnMatch);
+      const triggered = oncePerTurnMatch ? { ...triggeredRaw, effectText: oncePerTurnMatch[1]! } : triggeredRaw;
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
@@ -5479,6 +5490,7 @@ function recognizeText(text: string): RecognizedText {
           ...(unlessPayment && payCost ? { paymentBy: "opponent" as const } : {}),
           ...(eventControllerChoice ? { choiceBy: "event-controller" as const } : {}),
           ...(triggered.condition ? { condition: triggered.condition } : {}),
+          ...(oncePerTurn ? { condition: { kind: "once-per-turn" as const } } : {}),
           ...(subtypeCondition ? { condition: { kind: "no-controlled-subtype" as const, subtype: subtypeCondition[1]! } } : {}),
           ...(powerCondition ? { condition: { kind: "controlled-creature-power-at-least" as const, amount: Number(powerCondition[1]) } } : {}),
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),

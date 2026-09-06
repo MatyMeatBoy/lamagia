@@ -421,6 +421,8 @@ export interface GameState {
   readonly pendingChoice: PendingChoice | null;
   /** Creatures that died (battlefield → graveyard) this turn — powers Morbid (CR 702.66). */
   readonly creaturesDiedThisTurn: number;
+  /** Keys (`${sourceInstanceId}:${triggerIndex}`) of "once each turn" triggers (CR 603.3) that have already fired this turn. */
+  readonly triggeredOncePerTurnKeys: readonly string[];
   /** Creature cards that entered their owner's graveyard from the battlefield this turn. */
   readonly creatureCardsDiedThisTurn: readonly GameCard[];
   /** War Cadence-style generic mana taxes, one entry per resolved activation, until cleanup. */
@@ -1861,7 +1863,8 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     startingSeat: 0,
     pendingChoice: null,
     creaturesDiedThisTurn: 0,
-    creatureCardsDiedThisTurn: []
+    creatureCardsDiedThisTurn: [],
+    triggeredOncePerTurnKeys: []
   };
   const opened = logged(base, null, `Partida creada con ${players.length} jugadores · ${startingLife} vidas · mano inicial de ${openingHand}.`);
   return settle(opened);
@@ -2471,6 +2474,7 @@ function raiseEvent(
     .map((card) => castTriggerWatcher(card, player.seat)));
   const watchers = [...allPermanents(state), ...extraWatchers, ...commandZoneWatchers];
   const queued: TriggerInstance[] = [];
+  const newOncePerTurnKeys: string[] = [];
   // Pontiff of Blight: "Other creatures you control have extort" (CR 702.39, 613).
   const extortGrantors = new Set(allPermanents(state)
     .filter((permanent) => cardProfile(permanent.card).grantsExtortToOthers)
@@ -2496,6 +2500,12 @@ function raiseEvent(
       if (definition.requiresEvoked && !watcher.evoked) continue;
       // "if you cast it from your hand" gate (Angel of the Dire Hour, CR 601.2a).
       if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
+      // "This ability triggers only once each turn" (CR 603.3): block a
+      // re-trigger for the rest of the turn once this exact source's exact
+      // trigger definition has already fired once.
+      const oncePerTurnKey = definition.condition?.kind === "once-per-turn" ? `${watcher.instance_id}:${index}` : null;
+      if (oncePerTurnKey && (state.triggeredOncePerTurnKeys.includes(oncePerTurnKey) || newOncePerTurnKeys.includes(oncePerTurnKey))) continue;
+      if (oncePerTurnKey) newOncePerTurnKeys.push(oncePerTurnKey);
       // A Class's higher-tier ability is inactive until its printed level is reached (CR 702.134d).
       if (definition.minClassLevel !== undefined && (watcher.classLevel ?? 1) < definition.minClassLevel) continue;
       // Undying / Persist only fire when the creature died without the relevant counter (CR 702.92c/702.93c).
@@ -2522,7 +2532,13 @@ function raiseEvent(
       }
     }
   }
-  return queued.length ? { ...state, triggerQueue: [...state.triggerQueue, ...queued] } : state;
+  return queued.length || newOncePerTurnKeys.length
+    ? {
+        ...state,
+        triggerQueue: [...state.triggerQueue, ...queued],
+        ...(newOncePerTurnKeys.length ? { triggeredOncePerTurnKeys: [...state.triggeredOncePerTurnKeys, ...newOncePerTurnKeys] } : {})
+      }
+    : state;
 }
 
 /** Counts permanents controlled by the watcher controller that double this trigger source. */
@@ -7005,7 +7021,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 
   switch (step) {
     case "untap": {
-      next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [] };
+      next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [], triggeredOncePerTurnKeys: [] };
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,

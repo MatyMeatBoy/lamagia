@@ -5885,3 +5885,29 @@ TAPPED, leaving the other four cards (two nonland, one differently
 named land, one artifact) to be bottomed. Validation: full **886**
 rules tests green (1 new), `npm run check` across all four workspaces,
 200/200 simulated games.
+
+Added a genuinely GENERIC primitive: "This ability triggers only once
+each turn" (CR 603.3), a trailing rider that appears on **139
+catalog cards** (Bident of Thassa was the specific target, found while
+investigating it). No existing mechanism modeled "has this exact
+trigger already fired this turn" — added `TriggerDefinition.condition`
+kind `"once-per-turn"`, a new `GameState.triggeredOncePerTurnKeys:
+readonly string[]` tracking `${sourcePermanentId}:${triggerIndex}`
+keys, checked and appended to inside `raiseEvent`'s own trigger-match
+loop (the ability is blocked from re-queueing, not merely
+re-resolving, matching CR 603.3's "triggers," not "resolves"), and
+reset to `[]` at the same per-turn cleanup site as
+`creaturesDiedThisTurn`. The trailing sentence is stripped from the
+trigger's own `effectText` the same way other trailing riders already
+are, via a small local shadow (`triggeredRaw`/`triggered`) rather than
+mutating the shared parser's return value. Verified only **+1** in the
+export count (10,878 → 10,879) THIS PASS — most of the 139 catalog
+cards sharing this phrase have OTHER unrecognized text besides this
+rider, so resolving it alone doesn't flip most of them to
+`fullyImplemented` yet, but the primitive is now available for any of
+them (or any future card) whose remaining text gets covered by a
+later pass. Set coverage holds at 33.0%. Scenario-tested: with two
+attacking creatures both dealing combat damage to a defending player
+in the same combat, Bident of Thassa draws exactly **one** card, not
+two. Validation: full **888** rules tests green (2 new), `npm run
+check` across all four workspaces, 200/200 simulated games.
