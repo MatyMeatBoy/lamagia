@@ -1567,6 +1567,17 @@ describe("mana payment", () => {
     expect(() => applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 2000, tapIds: [target.instance_id] })).toThrow();
   });
 
+  it("allows a summoning-sick creature to crew", () => {
+    const vehicle = make({ name: "Crew Vehicle", type_line: "Artifact — Vehicle", mana_cost: "{3}", cmc: 3, power: "3", toughness: "3", oracle_text: "Crew 1" });
+    const creature = make({ name: "New Crew", type_line: "Creature — Human", mana_cost: "{1}", cmc: 1, power: "1", toughness: "1" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [vehicle, creature]);
+    const source = game.players[0]!.battlefield[0]!;
+    const crew = game.players[0]!.battlefield[1]!;
+    expect(crew.summoningSick).toBe(true);
+    expect(legalActions(game, 0).some((entry) => entry.note === "Crew 1" && entry.action.type === "activate" && entry.action.tapIds?.[0] === crew.instance_id)).toBe(true);
+  });
+
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
     const profile = profileOf(PAIN_LAND());
     expect(profile.fullyImplemented).toBe(true);
