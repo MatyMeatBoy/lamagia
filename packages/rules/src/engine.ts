@@ -617,6 +617,14 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** "Look at the top N, then put them back in any order" (Ponder, Sensei's Divining Top): every card stays on top, only the sequence changes. */
+      readonly type: "reorder-top";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly cards: readonly GameCard[];
+    }
+  | {
       /**
        * "Look at target player's hand" (Gitaxian Probe, CR 701.20): a
        * private, self-closing reveal to the caster alone. `projectGame`
@@ -694,6 +702,7 @@ export type GameAction =
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
+  | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
@@ -4932,6 +4941,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }));
       }, state);
     }
+    case "look-top-reorder": {
+      const visible = playerAt(state, controller).library.slice(0, Math.max(0, effect.amount));
+      if (!visible.length) return state;
+      return {
+        ...state,
+        pendingChoice: { type: "reorder-top", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card, cards: visible }
+      };
+    }
+    case "draw-then-source-to-library-top": {
+      const sourceId = object.sourcePermanentId;
+      const permanent = sourceId ? findPermanent(state, sourceId) : undefined;
+      let next = drawCards(state, controller, 1);
+      if (!permanent) return next;
+      return withPlayer(next, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.filter((candidate) => candidate.instance_id !== sourceId),
+        library: [permanent.card, ...player.library]
+      }));
+    }
     case "untap-source": {
       const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -6472,6 +6500,14 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.sourceCard.name}: choose a color.`
         });
       }
+      return actions;
+    }
+    if (choice.type === "reorder-top") {
+      actions.push({
+        action: { type: "reorder-top", sourceId: choice.sourceId, order: choice.cards.map((card) => card.instance_id) },
+        label: "Keep the same order",
+        note: `${choice.sourceCard.name}: look at the top ${choice.cards.length} card(s) and keep them in the same order (any explicit order may be submitted directly).`
+      });
       return actions;
     }
     if (choice.type === "optional-trigger") {
@@ -8320,6 +8356,23 @@ function applyChooseBasicLandSearch(state: GameState, seat: SeatId, action: Extr
   };
 }
 
+function applyReorderTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "reorder-top" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "reorder-top" || choice.seat !== seat) throw new Error("No tienes una reordenación pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa reordenación ya no está pendiente.");
+  const ids = choice.cards.map((card) => card.instance_id);
+  const validPermutation = action.order.length === ids.length
+    && new Set(action.order).size === ids.length
+    && action.order.every((id) => ids.includes(id));
+  if (!validPermutation) throw new Error("Debes reordenar exactamente esas cartas, sin repetir ni omitir ninguna.");
+  const reordered = action.order.map((id) => choice.cards.find((card) => card.instance_id === id)!);
+  const next = withPlayer(state, seat, (player) => ({
+    ...player,
+    library: [...reordered, ...player.library.slice(reordered.length)]
+  }));
+  return logged({ ...next, pendingChoice: null }, seat, `${choice.sourceCard.name}: reordena las cartas de arriba de su biblioteca.`);
+}
+
 function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-color" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "choose-color" || choice.seat !== seat) throw new Error("You do not have a color choice pending.");
@@ -9335,6 +9388,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-basic-land-search": next = applyChooseBasicLandSearch(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
+    case "reorder-top": next = applyReorderTop(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;

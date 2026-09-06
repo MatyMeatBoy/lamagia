@@ -10231,6 +10231,78 @@ describe("Garruk Wildspeaker's '+1: Untap two target lands'", () => {
   });
 });
 
+describe("Sensei's Divining Top's reorder-top and draw-then-return abilities", () => {
+  const SENSEIS_TOP = () => make({
+    name: "Sensei's Divining Top", type_line: "Artifact", mana_cost: "{1}",
+    oracle_text: "{1}: Look at the top three cards of your library, then put them back in any order.\n{T}: Draw a card, then put this artifact on top of its owner's library."
+  });
+
+  it("recognizes both abilities", () => {
+    const profile = profileOf(SENSEIS_TOP());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({ effect: { kind: "look-top-reorder", amount: 3 } });
+    expect(profile.activatedAbilities[1]).toMatchObject({ effect: { kind: "draw-then-source-to-library-top" }, requiresTap: true });
+  });
+
+  it("opens a private reorder choice over the top three cards and applies a submitted order", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SENSEIS_TOP(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [BEAR(), SOL_RING(), ISLAND()], "top-reorder"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const top = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sensei's Divining Top")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: top.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "reorder-top" || state.stack.length === 0);
+
+    const choice = game.pendingChoice;
+    expect(choice?.type).toBe("reorder-top");
+    if (choice?.type !== "reorder-top") throw new Error("expected a pending reorder-top choice");
+    expect(choice.cards.map((card) => card.name)).toEqual(["Grizzly Bears", "Sol Ring", "Island"]);
+
+    const [bear, solRing, island] = choice.cards;
+    game = applyAction(game, 0, { type: "reorder-top", sourceId: choice.sourceId, order: [island!.instance_id, bear!.instance_id, solRing!.instance_id] });
+    expect(game.players[0]!.library.slice(0, 3).map((card) => card.name)).toEqual(["Island", "Grizzly Bears", "Sol Ring"]);
+  });
+
+  it("rejects a submitted order that omits or repeats a card", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SENSEIS_TOP(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [BEAR(), SOL_RING(), ISLAND()], "top-reorder-bad"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const top = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sensei's Divining Top")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: top.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "reorder-top" || state.stack.length === 0);
+    const choice = game.pendingChoice;
+    if (choice?.type !== "reorder-top") throw new Error("expected a pending reorder-top choice");
+    const ids = choice.cards.map((card) => card.instance_id);
+    expect(() => applyAction(game, 0, { type: "reorder-top", sourceId: choice.sourceId, order: [ids[0]!, ids[0]!] })).toThrow();
+  });
+
+  it("draws a card, then returns itself to the top of its owner's library", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SENSEIS_TOP()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [BEAR()], "top-return"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const top = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sensei's Divining Top")!;
+    const handSizeBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "activate", sourceId: top.instance_id, abilityIndex: 1 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(game.players[0]!.hand).toHaveLength(handSizeBefore + 1);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Sensei's Divining Top")).toBe(false);
+    expect(game.players[0]!.library[0]?.name).toBe("Sensei's Divining Top");
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

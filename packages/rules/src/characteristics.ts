@@ -418,6 +418,10 @@ export type SpellEffect =
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
+  /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
+  | { readonly kind: "look-top-reorder"; readonly amount: number }
+  /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
+  | { readonly kind: "draw-then-source-to-library-top" }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -3630,6 +3634,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
   if (/^Untap target land$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land" };
+  if ((match = /^Look at the top (\w+) cards? of your library, then put (?:it|them) back in any order$/i.exec(text))) {
+    const amount = toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "look-top-reorder", amount }, target: "none" };
+  }
+  if (/^Draw a card, then put ~ on top of its owner'?s library$/i.test(text)) {
+    return { effect: { kind: "draw-then-source-to-library-top" }, target: "none" };
+  }
   // Garruk Wildspeaker's "+1" (CR 601.2c: the same target can't be chosen
   // twice for one instance of "target", enforced at resolution alongside the
   // shared multi-slot targetKinds check).

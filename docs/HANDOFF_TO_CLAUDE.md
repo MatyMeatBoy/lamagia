@@ -4089,6 +4089,48 @@ check`, `npm run simulate:engine` 200/200, 10,087 global profiles.
 Prossh decklist status after this pass: **67 of 97 unique cards fully
 implemented (69.1%)**.
 
+Whole-mechanic gap closed: "Look at the top N cards of your library,
+then put them back in any order" (Ponder's first line, Sensei's Divining
+Top, Sage Owl, Halimar Depths, Mirri's Guile, 21 catalog cards total)
+had zero support — unlike Scry/Surveil, no card ever LEAVES the top
+group, only the sequence changes, so neither existing choice shape
+fit. Added a new `look-top-reorder` `SpellEffect`, a new `reorder-top`
+`PendingChoice` (the revealed cards, private to the choosing seat via a
+new `ReorderTopView` in `projection.ts`, mirroring `ScryView`), and a new
+`reorder-top` `GameAction` that submits a full permutation of the
+revealed cards' instance ids in one action (validated as a true
+permutation: same length, same set, no repeats) rather than the
+per-card sequential decisions Scry uses — reordering has no "send this
+one to the bottom" branch point to hang a step on. `legalActions` offers
+one representative action (keep the current order, itself a fully legal
+choice per the Oracle text) so bots always have something to take;
+human clients may submit any explicit order directly. Implemented as a
+single `case` in the SHARED `applyEffect` switch, which is what let it
+work identically whether reached through a spell, an activated ability,
+or (Sage Owl, Halimar Depths) a triggered ability, with no per-path
+special-casing. Sensei's Divining Top additionally needed its OWN
+second ability as a new `draw-then-source-to-library-top` effect kind
+("{T}: Draw a card, then put this artifact on top of its owner's
+library") — draws for the controller, then moves the activating
+permanent itself from the battlefield to the top of its owner's
+library, found via the `StackObject.sourcePermanentId` field activated
+abilities already carry. Verified **+13** in the export count (10,087 →
+10,100: Sensei's Divining Top plus every other catalog card sharing the
+reorder-top template) and set coverage holds at 30.6%. Ponder itself
+stays unimplemented — its trailing "You may shuffle" is a distinct,
+not-yet-parsed clause, noted as a deliberate follow-up rather than
+pulled into this pass's scope. Scenario-tested: activating the {1}
+ability opens a private reorder choice over exactly the top three cards
+in their current order; submitting an explicit permutation reorders the
+library to match; submitting a list that repeats or omits a card
+throws; activating the {T} ability draws the named card and leaves the
+Top itself as the new top-of-library card, removed from the
+battlefield. Validation: **747 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,100 global profiles.
+
+Prossh decklist status after this pass: **68 of 97 unique cards fully
+implemented (70.1%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:
