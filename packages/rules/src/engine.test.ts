@@ -8512,6 +8512,45 @@ describe("activated abilities", () => {
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Mountain"]);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Storm Crow")).toBe(true);
   });
+
+  describe("fetch land (subtype search from an activated ability)", () => {
+    const FLOODED_STRAND = () => make({
+      name: "Flooded Strand", type_line: "Land",
+      oracle_text: "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle."
+    });
+    const GODLESS_SHRINE = () => make({ name: "Godless Shrine", type_line: "Land — Plains Swamp", produced_mana: ["W", "B"] });
+
+    it("parses the crack into a Plains/Island battlefield search", () => {
+      expect(profileOf(FLOODED_STRAND()).activatedAbilities[0]).toMatchObject({
+        sacrificesSelf: true, lifeCost: 1, requiresTap: true,
+        effect: { kind: "search-library", types: [], subtypes: ["Plains", "Island"], destination: "battlefield" }
+      });
+    });
+
+    it("finds a nonbasic land with the Plains subtype and offers it as a choice", () => {
+      let game = readyOnBoard([FLOODED_STRAND()], { library: [GODLESS_SHRINE()], hold: true });
+      const source = permanentNamed(game, 0, "Flooded Strand")!;
+      game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+      game = applyAction(game, 0, { type: "pass" });
+      game = passUntil(game, (state) => state.stack.length === 0);
+      expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+      expect((game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>).optionIds).toHaveLength(1);
+    });
+
+    it("fails to find and shuffles when the library holds no legal target, with an unambiguous log", () => {
+      let game = readyOnBoard([FLOODED_STRAND()], { library: [SWAMP(), MOUNTAIN(), FOREST()], hold: true });
+      const source = permanentNamed(game, 0, "Flooded Strand")!;
+      game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+      game = applyAction(game, 0, { type: "pass" });
+      game = passUntil(game, (state) => state.stack.length === 0);
+      expect(game.pendingChoice).toBeNull();
+      expect(game.players[0]!.graveyard.some((card) => card.name === "Flooded Strand")).toBe(true);
+      const last = game.log.at(-1)!.text;
+      expect(last).toContain("Flooded Strand");
+      expect(last).toMatch(/no encuentra ninguna carta|baraja su biblioteca/);
+      expect(last).not.toContain("no hay una carta válida");
+    });
+  });
 });
 
 

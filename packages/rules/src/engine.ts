@@ -5663,7 +5663,7 @@ function resolveTop(state: GameState): GameState {
     if (!options.length) {
       next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library);
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
-      return logged(next, object.controller, `${object.card.name} se resuelve: no hay una carta válida en la biblioteca.`);
+      return logged(next, object.controller, `${object.card.name}: la búsqueda no encuentra ninguna carta que cumpla los criterios; ${playerAt(next, object.controller).name} baraja su biblioteca.`);
     }
     // "up to N": fetch deterministically and skip the interactive choice.
     if (search.count && search.count > 1 && search.destination === "battlefield") {
@@ -5707,7 +5707,7 @@ function resolveTop(state: GameState): GameState {
     if (!options.length) {
       next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library);
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
-      return logged(next, object.controller, `${object.card.name} se resuelve: no hay tierras básicas válidas en la biblioteca.`);
+      return logged(next, object.controller, `${object.card.name}: no hay tierras básicas que buscar; ${playerAt(next, object.controller).name} baraja su biblioteca.`);
     }
     return {
       ...next,

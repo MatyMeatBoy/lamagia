@@ -4,6 +4,25 @@
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
+### Gameplay/UI debugging pass — 2026-09-06 (in progress)
+
+Batch of player-reported gameplay/UX fixes. Landed so far:
+
+- **Fetch land "fail to find" wording.** An off-colour fetch (e.g. Flooded
+  Strand in a mono-black deck) correctly finds nothing and shuffles, but the
+  log read `… se resuelve: no hay una carta válida en la biblioteca.`, which
+  looked like an engine failure. Reworded in
+  `packages/rules/src/engine.ts` (`resolveTopOfStack`, the `search-library` and
+  `search-library-multi` empty-options branches) to
+  `… la búsqueda no encuentra ninguna carta … baraja su biblioteca.` The
+  activated-ability subtype search itself was verified correct: with a legal
+  Plains/Island card in the library the search choice opens normally.
+  `apps/client/src/main.ts` (`applyView`) now flashes that resolution as a
+  `ui.notice` so a no-op search is not silent. Regression tests:
+  `packages/rules/src/engine.test.ts` › "fetch land (subtype search from an
+  activated ability)" (4 cases). Validation: `npm run test --workspace=@prossh/rules`
+  → 785 passing; `npm run check --workspace=@prossh/client` clean.
+
 ### Gameplay hardening checkpoint — 2026-09-05
 
 The graphical stack projects each spell, activated ability, and trigger as an

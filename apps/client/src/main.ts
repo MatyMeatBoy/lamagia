@@ -408,11 +408,26 @@ async function setAutoPass(autoPass: boolean): Promise<void> {
   } catch (error) { ui.notice = error instanceof Error ? error.message : "No se pudo cambiar la preferencia."; render(); }
 }
 
+/** Resolutions that produce no visible effect and would otherwise read as a silent bug. */
+const QUIET_RESOLUTION = /no encuentra ninguna carta que cumpla|no hay tierras básicas que buscar/;
+
 function applyView(next: GameView): void {
   const sameDecision = view?.version === next.version
     && view?.prioritySeat === next.prioritySeat
     && view?.stack.map((object) => object.id).join(",") === next.stack.map((object) => object.id).join(",");
+  const previousLastLog = view?.log.at(-1)?.text;
   view = next;
+  // Flash "fizzle / fail to find" style resolutions so the player is not left
+  // wondering why an action seemed to do nothing (e.g. an off-colour fetch land).
+  let resumeFrom = 0;
+  if (previousLastLog) {
+    for (let index = next.log.length - 1; index >= 0; index -= 1) {
+      if (next.log[index]!.text === previousLastLog) { resumeFrom = index + 1; break; }
+    }
+  }
+  const quiet = next.log.slice(resumeFrom).find((entry) =>
+    entry.seat === next.viewerSeat && QUIET_RESOLUTION.test(entry.text));
+  if (quiet) ui.notice = quiet.text;
   if (!sameDecision) ui.pendingTarget = null;
   ui.selectedBlocker = null;
   ui.abilityMenu = null;
