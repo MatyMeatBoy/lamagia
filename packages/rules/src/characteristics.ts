@@ -335,6 +335,14 @@ export interface StaticManaAbilityGrant {
   readonly ability: Omit<ManaAbility, "index">;
 }
 
+/** Additional counters applied as a matching creature enters (CR 614.1c). */
+export interface StaticEntryCounterGrant {
+  readonly scope: "creatures-you-control";
+  readonly subtypes: readonly string[];
+  readonly counter: string;
+  readonly amount: number;
+}
+
 export interface StaticKeywordGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures" | "subtype-creatures-you-control";
   readonly keyword: EnforcedKeyword;
@@ -975,6 +983,7 @@ export interface CardProfile {
   readonly loyalty: number | null;
   readonly manaAbilities: readonly ManaAbility[];
   readonly staticManaAbilityGrants: readonly StaticManaAbilityGrant[];
+  readonly staticEntryCounterGrants: readonly StaticEntryCounterGrant[];
   /** Generic cycling from hand. */
   readonly cyclingCost: ManaCost | null;
   readonly cyclingSearches: readonly CyclingSearchAbility[];
@@ -1562,6 +1571,19 @@ function parseStaticManaAbilityGrants(text: string): StaticManaAbilityGrant[] {
       scope: "creatures-you-control",
       counter: match[1]!,
       ability: { produces: [...MANA_COLORS], amount: 1, requiresTap: true, lifeCost: 0, text: "{T}: Add one mana of any color." }
+    }];
+  });
+}
+
+function parseStaticEntryCounterGrants(text: string): StaticEntryCounterGrant[] {
+  return text.split("\n").flatMap((line): StaticEntryCounterGrant[] => {
+    const match = /^each creature you control that's a ([A-Za-z][A-Za-z'’-]*) or a ([A-Za-z][A-Za-z'’-]*) enters with an additional (\+\d+\/\+\d+|-\d+\/-\d+) counter on it\.?$/i.exec(line.trim());
+    if (!match) return [];
+    return [{
+      scope: "creatures-you-control",
+      subtypes: [match[1]!, match[2]!],
+      counter: match[3]!,
+      amount: 1
     }];
   });
 }
@@ -4268,6 +4290,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
     if (parseStaticManaAbilityGrants(line).length) continue;
+    if (parseStaticEntryCounterGrants(line).length) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
@@ -4822,6 +4845,7 @@ export function cardProfile(card: CardData): CardProfile {
   });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const staticManaAbilityGrants = isPermanent ? parseStaticManaAbilityGrants(text) : [];
+  const staticEntryCounterGrants = isPermanent ? parseStaticEntryCounterGrants(text) : [];
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
   const flashbackCost = parseFlashbackCost(text);
@@ -4999,6 +5023,7 @@ export function cardProfile(card: CardData): CardProfile {
     loyalty: numeric(face.loyalty),
     manaAbilities,
     staticManaAbilityGrants,
+    staticEntryCounterGrants,
     cyclingCost,
     cyclingSearches,
     echoCost: recognized.echoCost ?? null,

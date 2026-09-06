@@ -3867,3 +3867,9 @@ opponent, is checked when the trigger is created and again before resolution,
 and reuses the existing event-player damage primitive (CR 603.4, 603.6).
 Current validation: **718 rules tests**, `npm run check`, and `git diff --check`
 pass.
+
+Arlinn, Voice of the Pack is also covered: the shared tribal entry-counter
+replacement applies an additional +1/+1 counter to matching Wolf/Werewolf
+creatures as they enter, before the ETB event is raised (CR 614.1c, 122.1).
+Current validation: **719 rules tests**, `npm run check`, and `git diff --check`
+pass.

@@ -1827,13 +1827,27 @@ function entersTapped(state: GameState, seat: SeatId, profile: CardProfile): { t
   }
 }
 
+function staticEntryCountersFor(state: GameState, seat: SeatId, profile: CardProfile): readonly CounterCost[] {
+  if (!isCreature(profile)) return [];
+  return playerAt(state, seat).battlefield
+    .filter((source) => !permanentLosesAbilities(state, source))
+    .flatMap((source) => cardProfile(source.card).staticEntryCounterGrants)
+    .filter((grant) => grant.scope === "creatures-you-control"
+      && grant.subtypes.some((subtype) => hasSubtype(profile, subtype)))
+    .map((grant) => ({ kind: grant.counter, amount: grant.amount }));
+}
+
 function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = []): GameState {
   const enteringCard = uniqueTokenCard(state, card);
   const profile = cardProfile(enteringCard);
+  const entryAdditionalCounters = [...additionalCounters, ...staticEntryCountersFor(state, seat, profile)];
   const printed = entersTapped(state, seat, profile);
   // An effect that says "onto the battlefield tapped" overrides the card's own
   // printed entry rule; it never makes a tapped-by-default land enter untapped.
   const enters = forceTapped ? { tapped: true, lifeCost: 0 } : printed;
+  const counters: Record<string, number> = Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount]));
+  if (isCommander && commanderEntryCounters > 0) counters["+1/+1"] = commanderEntryCounters;
+  for (const counter of entryAdditionalCounters) counters[counter.kind] = (counters[counter.kind] ?? 0) + counter.amount;
   const permanent: Permanent = {
     instance_id: enteringCard.instance_id,
     card: enteringCard,
@@ -1849,9 +1863,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     ...(castSpentMana.length ? { castSpentMana } : {}),
     ...(profile.echoCost ? { echoDueTurn: state.turn + 1 } : {}),
     counters: {
-      ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
-      ...(isCommander && commanderEntryCounters > 0 ? { "+1/+1": commanderEntryCounters } : {}),
-      ...Object.fromEntries(additionalCounters.map((counter) => [counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount])),
+      ...counters,
       // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).
       ...(profile.types.includes("Planeswalker") && profile.loyalty !== null ? { loyalty: profile.loyalty } : {})
     },

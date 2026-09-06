@@ -146,6 +146,8 @@ const VRASKA_SWARMS_EMINENCE = () => make({ name: "Vraska, Swarm's Eminence", ty
 const AJANI_THE_GREATHEARTED = () => make({ name: "Ajani, the Greathearted", type_line: "Legendary Planeswalker — Ajani", mana_cost: "{2}{G}{W}", cmc: 4, loyalty: "5", oracle_text: "−2: Put a +1/+1 counter on each creature you control and a loyalty counter on each other planeswalker you control.", oracle_id: "f5d9be71-91d0-4166-ba58-cbbf5d490c40" });
 const JIANG_YANGGU_WILDCRAFTER = () => make({ name: "Jiang Yanggu, Wildcrafter", type_line: "Legendary Planeswalker — Yanggu", mana_cost: "{2}{G}", cmc: 3, loyalty: "4", oracle_text: "Each creature you control with a +1/+1 counter on it has \"{T}: Add one mana of any color.\"", oracle_id: "04f2c320-dfcc-440e-9e24-3c2083d74e7c" });
 const DAVRIEL_ROGUE_SHADOWMAGE = () => make({ name: "Davriel, Rogue Shadowmage", type_line: "Legendary Planeswalker — Davriel", mana_cost: "{2}{B}", cmc: 3, loyalty: "3", oracle_text: "At the beginning of each opponent's upkeep, if that player has one or fewer cards in hand, Davriel deals 2 damage to them.", oracle_id: "1bd5e51f-f9a5-4eb7-bda2-957310602c20" });
+const ARLINN_VOICE_OF_THE_PACK = () => make({ name: "Arlinn, Voice of the Pack", type_line: "Legendary Planeswalker — Arlinn", mana_cost: "{4}{G}{G}", cmc: 6, loyalty: "7", oracle_text: "Each creature you control that's a Wolf or a Werewolf enters with an additional +1/+1 counter on it.", oracle_id: "a15b83df-91b7-49f0-9bec-5776a3dac8bd" });
+const WOLF = () => make({ name: "Young Wolf", type_line: "Creature — Wolf", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
 const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
@@ -8182,6 +8184,20 @@ describe("activated abilities", () => {
     expect(game.stack[0]!.trigger?.eventController).toBe(1);
     game = passUntil(game, (state) => !state.stack.some((object) => object.trigger?.sourceCard.name === "Davriel, Rogue Shadowmage"));
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("adds tribal entry counters from a static subtype grant", () => {
+    const profile = profileOf(ARLINN_VOICE_OF_THE_PACK());
+    expect(profile.staticEntryCounterGrants).toEqual([{
+      scope: "creatures-you-control", subtypes: ["Wolf", "Werewolf"], counter: "+1/+1", amount: 1
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([ARLINN_VOICE_OF_THE_PACK(), FOREST(), FOREST(), FOREST()], { hold: true });
+    game = stage(game, 0, () => ({ hand: toHand(0, [WOLF()], "wolf") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "wolf-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(permanentNamed(game, 0, "Young Wolf")?.counters["+1/+1"]).toBe(1);
   });
 
   it("tracks a characteristic-defining power/toughness live off the controller's hand size", () => {
