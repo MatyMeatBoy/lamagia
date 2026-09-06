@@ -301,7 +301,8 @@ export function parseCombatRules(lines: readonly string[]): { rules: CombatRules
 }
 
 const PROTECTION_QUALITIES: Readonly<Record<string, string>> = {
-  white: "W", blue: "U", black: "B", red: "R", green: "G"
+  white: "W", blue: "U", black: "B", red: "R", green: "G",
+  artifact: "Artifact", artifacts: "Artifact"
 };
 
 /** Reads the common color-only protection line while preserving each quality. */

@@ -529,3 +529,4 @@ rules citations and the integrator review remain mandatory.
 | `global-destroy-permanent-controller-token` | Reusable destroy-any-permanent plus controller-token effect, including Beast Within (CR 701.7, 111.10) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `mh2-arcbound-modular` | Reusable Modular N entry counters and dies transfer to a target artifact creature for the Arcbound cluster (CR 702.43, 122.1) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `mh2-investigate-clue` | Reusable Investigate N primitive that creates Clue artifact tokens with their draw ability (CR 701.21, 111.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `mh2-protection-artifact` | Reusable Protection from artifacts parsing and targeting enforcement for MH2 artifact-protection cards (CR 702.16) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

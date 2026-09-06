@@ -139,6 +139,12 @@ const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: 
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
 const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
+const ANGELIC_CURATOR = () => make({
+  name: "Angelic Curator", type_line: "Creature — Angel Spirit", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "3",
+  keywords: ["Flying"], oracle_text: "Flying, protection from artifacts", oracle_id: "cca29a9b-794f-4712-8e6c-36ce3da9cb8b", scryfall_id: "332352c2-98f2-4eb8-b49a-026a39df227b"
+});
+const ARTIFACT_SOURCE = () => make({ name: "Artifact Ray", type_line: "Artifact", oracle_text: "" });
+const NONARTIFACT_SOURCE = () => make({ name: "Ray of Light", type_line: "Instant", oracle_text: "" });
 const GUARD_GOMAZOA = () => make({ name: "Guard Gomazoa", type_line: "Creature — Jellyfish", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "3", keywords: ["Defender", "Flying"], oracle_text: "Defender, flying\nPrevent all combat damage that would be dealt to this creature." });
 const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beast", mana_cost: "{3}{G}", cmc: 4, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample" });
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
@@ -8880,6 +8886,22 @@ describe("combat restrictions and landwalk", () => {
     });
     expect(profileOf(EXALTED()).fullyImplemented).toBe(true);
     expect(profileOf(CRAWLSPACE()).fullyImplemented).toBe(true);
+  });
+
+  it("reuses protection from artifacts for MH2 Angelic Curator", () => {
+    expect(profileOf(ANGELIC_CURATOR())).toMatchObject({
+      fullyImplemented: true,
+      keywords: ["flying"],
+      protectionFrom: ["Artifact"]
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ANGELIC_CURATOR()]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const curator = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Angelic Curator")!;
+    expect(legalTargets(game, 1, "creature", profileOf(ARTIFACT_SOURCE())))
+      .not.toContainEqual({ kind: "permanent", instanceId: curator.instance_id });
+    expect(legalTargets(game, 1, "creature", profileOf(NONARTIFACT_SOURCE())))
+      .toContainEqual({ kind: "permanent", instanceId: curator.instance_id });
   });
 
   it("allows a creature with additional blocker capacity to block two attackers", () => {

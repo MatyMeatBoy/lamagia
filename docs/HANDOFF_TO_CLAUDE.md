@@ -3981,3 +3981,15 @@ restricting it to creatures. The token is created for the permanent's live
 controller, including when that controller differs from its owner (CR 701.7,
 111.10). Current validation: **733 rules tests**, `npm run check`, and `git
 diff --check` pass.
+
+The next source rescan closed the MH2 protection quality gap: protection parsing
+now accepts both `protection from artifact` and the printed plural
+`protection from artifacts`, reusing the existing artifact-source targeting
+enforcement. Angelic Curator is scenario-covered against artifact and
+nonartifact sources (CR 702.16). The catalog rescan still reports **15,142
+near-complete cards**, **11,433 reusable** candidates, and a 5-worker plan of
+40 primitive clusters because this worktree has no local catalog database to
+regenerate `engine-card-profiles.json`; run `npm run rules:engine:export` in the
+integrator checkout before trusting refreshed counts. Current validation:
+**736 rules tests**, `npm run check`, near-complete unit tests, and
+`git diff --check` pass.
