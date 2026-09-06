@@ -107,6 +107,8 @@ export interface StackView {
   readonly text?: string;
   readonly image_normal?: string;
   readonly targets: readonly string[];
+  /** Public priority-pass state for this stack snapshot. */
+  readonly passedSeats?: readonly SeatId[];
   readonly countered: boolean;
 }
 
@@ -458,6 +460,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
         if (target.kind === "graveyard-card") return state.players[target.seat]?.graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? lastKnown ?? "carta del cementerio";
         return state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? lastKnown ?? "hechizo";
       }),
+      passedSeats: state.passedSeats,
       countered: object.countered
     })),
     librarySearch,

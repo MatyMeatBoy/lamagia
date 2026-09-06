@@ -1008,7 +1008,7 @@ function stackDetailHtml(): string {
       ${object.image_normal ? `<img src="${escapeHtml(object.image_normal)}" data-card-name="${escapeHtml(object.name)}" alt="${escapeHtml(object.name)}"/>` : ""}
       <div><b>${escapeHtml(object.label)}</b><p>${escapeHtml(object.text ?? "Sin texto adicional.")}</p>
         <small>${object.targets.length ? `Objetivos: ${escapeHtml(object.targets.join(", "))}` : "Sin objetivos"}${object.countered ? " · Contrarrestado" : ""}</small>
-        <small class="stack-detail-priority">${object.resolvesNext ? "Próximo en resolver" : `Posición ${object.position} desde abajo`} · ${view?.priorityOpen ? `Prioridad: ${escapeHtml(seatOf(view.prioritySeat)?.name ?? "")}` : "Prioridad cerrada"}</small>
+        <small class="stack-detail-priority">${object.resolvesNext ? "Próximo en resolver" : `Posición ${object.position} desde abajo`} · ${view?.priorityOpen ? `Prioridad: ${escapeHtml(seatOf(view.prioritySeat)?.name ?? "")}` : "Prioridad cerrada"}${object.passedSeats?.length ? ` · Pasaron: ${escapeHtml(object.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`).join(", "))}` : ""}</small>
         <span class="stack-detail-hint">Cierra este panel para responder; los objetivos resaltados siguen seleccionables.</span></div>
     </div>
   </section>`;
