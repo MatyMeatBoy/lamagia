@@ -4403,3 +4403,37 @@ end-to-end scenario (CR 122.1, 606.3). The generated global near-complete
 snapshot still reports Fae/Vraska and the same 15,142-card queue because this
 worktree has no `data/catalog/prossh.sqlite`; rerun `rules:engine:export` and
 `rules:near-complete` in the integrator checkout after restoring the catalog.
+
+## Regression fix: partially-illegal-targets over-reach (2026-09-05)
+
+Commit `25d298e` ("Resolve spells with partially illegal targets") added a
+blanket legality gate at the very top of `applyEffect` —
+`if (targetIndex >= 0 && object.targets.length && !targetIsLegal(target)) return state;`
+— intending to let a multi-target spell resolve its still-legal targets when
+another target becomes illegal (CR 608.2b). The gate was too broad: every
+recursive `applyEffect` call (including a `compound`'s children, which
+default to the SAME inherited `targetIndex` unless `targetOffsets` says
+otherwise) got checked against `object.targets[targetIndex]`, even for a
+sub-effect with no target concept at all. A spell shaped like "Destroy
+target creature. Draw a card." has a single target at index 0; once that
+target became illegal, the gate correctly skipped the destroy but ALSO
+skipped the untouched "draw a card" — which never referenced a target in
+the first place. This silently broke three pre-existing, unrelated
+regression tests (a nonblack-destroy-then-draw scenario, a C13 multi-target
+damage scenario, and a kicker "then draw a card" bonus). The commit's own
+new "resolves the legal half of a multi-target spell when another target
+leaves" test still passes without the gate, because the specific effect it
+covers (`damage-divided-targets`) already loops over `object.targets`
+internally and applies its own per-target handling — it never depended on
+the blanket check to begin with. Fixed by removing the three added lines at
+the top of `applyEffect`, keeping the OTHER half of the same commit (the
+`resolveTop`-level change from "any illegal target fizzles the whole spell"
+to "fizzle only when ALL targets are illegal, CR 608.2b") intact, since that
+half is self-contained, correctly scoped to the whole-object decision, and
+carries no equivalent flaw. Verified: all three previously-broken tests pass
+again, the new Fissure Vent test still passes, and the full **780**-test
+rules+match-server suite is green. If a future card genuinely needs a
+per-effect-kind "skip this specific target slot" behavior within a
+compound, that check belongs inside the specific `case` that owns a real
+target dependency (as `damage-divided-targets` already does), not as a
+blanket precondition on every `applyEffect` call.

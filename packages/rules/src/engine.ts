@@ -2602,17 +2602,6 @@ function modifyCreatures(
 function applyEffect(state: GameState, object: StackObject, effect: SpellEffect, targetIndex = 0): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
-  const target = object.targets[targetIndex];
-  const targetIsLegal = (candidate: Target | undefined): boolean => {
-    if (!candidate) return false;
-    if (candidate.kind === "permanent") return Boolean(findPermanent(state, candidate.instanceId));
-    if (candidate.kind === "graveyard-card") return playerAt(state, candidate.seat).graveyard.some((card) => card.instance_id === candidate.instanceId);
-    if (candidate.kind === "spell") return state.stack.some((entry) => entry.id === candidate.stackId);
-    return !playerAt(state, candidate.seat).lost;
-  };
-  // A compound effect may have independent target slots.  CR 608.2b says an
-  // illegal slot does nothing while other legal slots still resolve.
-  if (targetIndex >= 0 && object.targets.length && !targetIsLegal(target)) return state;
   switch (effect.kind) {
     case "compound": {
       let next = state;
