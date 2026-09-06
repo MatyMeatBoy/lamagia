@@ -5749,7 +5749,14 @@ function resolveTop(state: GameState): GameState {
           : search.maxManaValue === "lands-you-control"
             ? profile.manaValue <= playerAt(next, object.controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
             : search.maxManaValue === "sacrificed-creature-value"
-              ? profile.manaValue <= (search.manaValueOffset ?? 0) + (object.sacrificedManaValue ?? 0)
+              ? (() => {
+                  // An activated ability (Birthing Pod) has no dedicated
+                  // `sacrificedManaValue` field; it reuses the generic
+                  // `variableValue` channel other sacrifice-scaled activated
+                  // abilities already use (`sacrificedPower`, artifact mv, ...).
+                  const base = (search.manaValueOffset ?? 0) + (object.sacrificedManaValue ?? object.variableValue);
+                  return search.exactManaValue ? profile.manaValue === base : profile.manaValue <= base;
+                })()
               : true;
         return typeMatches && subtypeMatches && colorMatches && manaValueMatches;
       })
@@ -8409,11 +8416,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }
   let sacrificedPower = 0;
   let sacrificedToughness = 0;
+  let sacrificedManaValue = 0;
   for (const sacrifice of sacrifices) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === sacrifice!.instance_id);
     if (!paid) throw new Error("La criatura elegida para sacrificar ya no está en el campo.");
     sacrificedPower = Math.max(0, powerOf(paid, next));
     sacrificedToughness = Math.max(0, toughnessOf(paid, next));
+    sacrificedManaValue = cardProfile(paid.card).manaValue;
     next = movePermanentToZone(next, paid, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
@@ -8435,6 +8444,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
 
   const effectVariable = ability.manaCost?.hasVariable ? abilityX
     : ability.effect.kind === "gain-life-equal-sacrificed-toughness" ? sacrificedToughness
+    : ability.effect.kind === "search-library" && ability.effect.maxManaValue === "sacrificed-creature-value" ? sacrificedManaValue
     : sacrificedPower || sacrificedArtifactMv;
   const counterValue = ability.effect.kind === "destroy-n-creatures" && ability.effect.counter
     ? source.counters[ability.effect.counter] ?? 0

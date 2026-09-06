@@ -748,6 +748,8 @@ export type SpellEffect =
       readonly maxManaValue?: "X" | "lands-you-control" | "sacrificed-creature-value";
       /** Added to the computed cap when `maxManaValue` is "sacrificed-creature-value". */
       readonly manaValueOffset?: number;
+      /** "...mana value equal to..." (Birthing Pod): match exactly instead of "or less". */
+      readonly exactManaValue?: boolean;
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -2125,8 +2127,10 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // Mana abilities have their own immediate-resolution path (CR 605.1a).
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
+  const sorcerySpeedOnly = /\.\s*Activate only as a sorcery\.?$/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
+    .replace(/\.\s*Activate only as a sorcery\.?$/i, ".")
     // Oracle often uses “it” after naming the source in the cost/effect line.
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
@@ -2252,6 +2256,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
+    ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(energyCost ? { energyCost } : {}),
     ...(requiresUntap ? { requiresUntap: true } : {}),
@@ -2386,6 +2391,25 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       ...(criterion.colors.length ? { colors: criterion.colors } : {}),
       maxManaValue: "sacrificed-creature-value",
       manaValueOffset: Number(sacrificedManaValue[2]),
+      destination: "battlefield",
+      reveal: false
+    };
+  }
+  // "...card with mana value equal to N plus the sacrificed creature's mana
+  // value, put that card onto the battlefield, then shuffle" (Birthing Pod):
+  // unlike Eldritch Evolution above, this one keeps the destination clause in
+  // the same sentence, and the cap is an exact match rather than a ceiling.
+  const exactSacrificedManaValue = /^Search your library for (?:a |an )?(.+?) card with mana value equal to (\d+) plus the sacrificed creature['’]s mana value, put that card onto the battlefield, then shuffle\.?$/i.exec(text.trim());
+  if (exactSacrificedManaValue) {
+    const criterion = searchCriterion(exactSacrificedManaValue[1]!);
+    return {
+      kind: "search-library",
+      types: criterion.types,
+      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+      maxManaValue: "sacrificed-creature-value",
+      manaValueOffset: Number(exactSacrificedManaValue[2]),
+      exactManaValue: true,
       destination: "battlefield",
       reveal: false
     };

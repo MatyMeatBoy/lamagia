@@ -4742,3 +4742,59 @@ profiles, 200/200 simulated games.
 
 Prossh decklist status after this pass: **80 of 97 unique cards fully
 implemented (82.5%)**.
+
+Birthing Pod ("{1}{G/P}, {T}, Sacrifice a creature: Search your
+library for a creature card with mana value equal to 1 plus the
+sacrificed creature's mana value, put that card onto the battlefield,
+then shuffle. Activate only as a sorcery.") is the activated-ability
+sibling of the search machinery Eldritch Evolution and Food Chain built
+this session, with two new pieces. First, an EXACT match instead of a
+ceiling: added `search-library.exactManaValue?: boolean`, checked in
+`resolveTop`'s `manaValueMatches` alongside the existing
+`sacrificed-creature-value` branch (`profile.manaValue === base`
+instead of `<= base`). Second, and more interesting: `ActivatedAbility`
+already had a `sorcerySpeed?: boolean` field ("Level up is an activated
+ability with a sorcery-speed restriction," per its own doc comment)
+and `activatableAbility`'s legality gate already enforced it — so
+"Activate only as a sorcery." only needed a `parseActivatedAbility`
+rider strip (parallel to the existing "before attackers are declared"
+strip) setting that SAME pre-existing flag; no new engine.ts gate was
+needed at all. Threading the sacrificed creature's mana value into the
+activated ability's effect reuses the EXISTING `effectVariable`
+computation in `applyActivate` (already the generic channel other
+sacrifice-scaled activated abilities read their derived number from —
+`sacrificedPower`, `sacrificedArtifactMv`), rather than adding a new
+StackObject field: a new `sacrificedManaValue` local, computed
+alongside the existing `sacrificedPower`/`sacrificedToughness` in the
+same sacrifice loop, feeds `effectVariable` when the ability's effect
+is a `search-library` with the `sacrificed-creature-value` discriminant.
+`resolveTop`'s matching branch reads `object.sacrificedManaValue ??
+object.variableValue` so the ONE `manaValueMatches` branch serves both
+spells (Eldritch Evolution, which has the dedicated field) and
+activated abilities (Birthing Pod, which reuses the generic
+`variableValue` channel) without duplicating the comparison logic. The
+"Activate only as a sorcery." rider strip turned out to be far more
+consequential than this one card: since `sorcerySpeed` was already a
+correctly-enforced, pre-existing field with no prior text recognizer
+for this exact common phrase, stripping it retroactively unlocked
+**every other catalog card** blocked SOLELY by that one unrecognized
+trailing sentence — the export jumped by **+47** in one pass (10,218 →
+10,265) rather than the usual +1, and set coverage moved 31.3% → 31.4%.
+Verified via `npm run rules:engine:export`/`rules:set:coverage`, not
+hand-audited card-by-card, since the jump is a direct, mechanical
+consequence of a single well-scoped, pre-existing-field-reusing regex
+change rather than a new bespoke primitive. Scenario-tested: sacrificing
+a 2-mana-value Grizzly Bears to Birthing Pod requires a mana value of
+EXACTLY 3 to find a card — a 4-mana-value creature in the library
+throws, a 3-mana-value creature is legal and battlefields — and
+Birthing Pod itself (the ability's own permanent source, untouched by
+the sacrifice) remains on the battlefield afterward. Validation: **797
+rules tests** (2 new), `npm run check` across all four workspaces,
+`npx vitest run services/match-server/src` (one `tested-mode.test.ts`
+timeout confirmed as this session's usual machine-contention flake by
+an isolated re-run — 3/3 passed alone, unrelated to this change since
+it touches no `services/match-server` code), 10,265 global profiles,
+200/200 simulated games.
+
+Prossh decklist status after this pass: **81 of 97 unique cards fully
+implemented (83.5%)**.

@@ -11220,6 +11220,47 @@ describe("Eldritch Evolution's sacrifice-scaled creature tutor", () => {
   });
 });
 
+describe("Birthing Pod's sacrifice-scaled creature tutor", () => {
+  const BIRTHING_POD = () => make({
+    name: "Birthing Pod", type_line: "Artifact", mana_cost: "{3}{G/P}", cmc: 4,
+    oracle_text: "({G/P} can be paid with either {G} or 2 life.)\n{1}{G/P}, {T}, Sacrifice a creature: Search your library for a creature card with mana value equal to 1 plus the sacrificed creature's mana value, put that card onto the battlefield, then shuffle. Activate only as a sorcery."
+  });
+
+  it("recognizes the sacrifice-scaled activated ability with a sorcery-speed restriction", () => {
+    const profile = profileOf(BIRTHING_POD());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      requiresTap: true, sacrificesCreature: "any", sorcerySpeed: true,
+      effect: { kind: "search-library", types: ["Creature"], maxManaValue: "sacrificed-creature-value", manaValueOffset: 1, exactManaValue: true, destination: "battlefield" }
+    });
+  });
+
+  it("finds a creature with mana value exactly one more than the sacrificed creature and stays on the battlefield", () => {
+    const threeDrop = make({ name: "Test Three Drop", type_line: "Creature — Giant", mana_cost: "{3}", cmc: 3, power: "3", toughness: "3" });
+    const fourDrop = make({ name: "Test Four Drop", type_line: "Creature — Giant", mana_cost: "{4}", cmc: 4, power: "4", toughness: "4" });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BIRTHING_POD(), BEAR(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({
+      library: [...toHand(0, [fourDrop, threeDrop], "library"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const pod = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Birthing Pod")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === pod.instance_id && entry.action.sacrificeId === bear.instance_id)!;
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation.action);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+    expect(game.pendingChoice).toMatchObject({ type: "search-library" });
+    expect(() => applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Four Drop" })).toThrow();
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: game.pendingChoice!.sourceId, query: "Test Three Drop" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Three Drop")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Birthing Pod")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
