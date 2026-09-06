@@ -11000,6 +11000,45 @@ describe("Urborg, Tomb of Yawgmoth's every-land black-mana grant", () => {
   });
 });
 
+describe("board-scaled mana abilities (Priest of Titania, Cloudpost)", () => {
+  const PRIEST_OF_TITANIA = () => make({ name: "Priest of Titania", type_line: "Creature — Elf Druid", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", oracle_text: "{T}: Add {G} for each Elf on the battlefield." });
+  const CLOUDPOST = () => make({ name: "Cloudpost", type_line: "Land — Locus", oracle_text: "This land enters tapped.\n{T}: Add {C} for each Locus on the battlefield." });
+  const TEST_ELF_B = () => make({ name: "Test Elf B", type_line: "Creature — Elf", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1" });
+  const ELF_CHIEFTAIN_TEST = () => make({ name: "Elf Chieftain Test", type_line: "Creature — Elf", mana_cost: "{1}{G}", cmc: 2, power: "1", toughness: "1", oracle_text: "{T}: Add {G} for each Elf you control." });
+
+  it("recognizes both the 'on the battlefield' and 'you control' scaled shapes as a fully-implemented mana ability", () => {
+    const priestProfile = profileOf(PRIEST_OF_TITANIA());
+    expect(priestProfile.fullyImplemented).toBe(true);
+    expect(priestProfile.manaAbilities[0]).toMatchObject({ produces: ["G"], scalesWith: { kind: "subtype-anywhere", subtype: "Elf" } });
+
+    const cloudpostProfile = profileOf(CLOUDPOST());
+    expect(cloudpostProfile.fullyImplemented).toBe(true);
+    expect(cloudpostProfile.manaAbilities[0]).toMatchObject({ produces: ["C"], scalesWith: { kind: "subtype-anywhere", subtype: "Locus" } });
+  });
+
+  it("counts Elves on the WHOLE battlefield, including an opponent's, not just the controller's own", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [PRIEST_OF_TITANIA()]);
+    game = putOnBattlefield(game, 1, [TEST_ELF_B(), TEST_ELF_B()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const priest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Priest of Titania")!;
+    const source = manaSources(game.players[0]!, game).find((entry) => entry.permanentId === priest.instance_id)!;
+    expect(source.amount).toBe(3); // Priest of Titania itself plus the two opposing Elves.
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: priest.instance_id, abilityIndex: 0, mana: "G" });
+    expect(game.players[0]!.manaPool.G).toBe(3);
+  });
+
+  it("counts only the controller's own Elves for a sibling 'you control' scaled ability", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [ELF_CHIEFTAIN_TEST(), TEST_ELF_B()]);
+    game = putOnBattlefield(game, 1, [TEST_ELF_B()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const chieftain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Elf Chieftain Test")!;
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: chieftain.instance_id, abilityIndex: 0, mana: "G" });
+    expect(game.players[0]!.manaPool.G).toBe(2); // Chieftain and its own Test Elf B, NOT the opponent's.
+  });
+});
+
 describe("the stampede family (Craterhoof Behemoth, Pathbreaker Ibex)", () => {
   const CRATERHOOF = () => make({ name: "Craterhoof Behemoth", type_line: "Creature — Beast", mana_cost: "{5}{G}{G}{G}", cmc: 8, power: "5", toughness: "5", keywords: ["Haste"], oracle_text: "Haste\nWhen this creature enters, creatures you control gain trample and get +X/+X until end of turn, where X is the number of creatures you control." });
   const PATHBREAKER_IBEX = () => make({ name: "Pathbreaker Ibex", type_line: "Creature — Goat", mana_cost: "{4}{G}{G}", cmc: 6, power: "3", toughness: "3", oracle_text: "Whenever this creature attacks, creatures you control gain trample and get +X/+X until end of turn, where X is the greatest power among creatures you control." });

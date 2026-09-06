@@ -5553,3 +5553,48 @@ simulated games.
 
 Prossh decklist status after this pass: **90 of 97 unique cards fully
 implemented (92.8%)**.
+
+Pivoted to Modern Horizons 3 clusters (via `identify_near_complete_cards.py`
+cross-referenced against `set_code IN ('mh3','m3c')`, since `--set-code`
+needs a decks file this repo doesn't have for MH3), per the standing
+instruction to move there once genuinely stuck on the remaining Prossh
+cards (Chancellor of the Forge's pre-game reveal step, Eternal
+Scourge's generic "becomes the target" event, Melira's infect/poison
+from scratch, both Gods' devotion-based dynamic creature status,
+Yawgmoth's Will's 16-site graveyard-redirect, and Chord of Calling's
+Convoke all remain genuinely out of today's safe scope after a fresh
+re-examination of each).
+
+First MH3 find was a real, previously-latent BUG, not a missing
+primitive: Priest of Titania and Cloudpost ("{T}: Add {G}/{C} for
+each Elf/Locus on the battlefield") already had FULL parser support —
+`parseManaAbilities` already built a `ManaAbility.scalesWith: {kind:
+"subtype-anywhere"|"subtype-you-control", subtype}` field, correctly
+labeled `fullyImplemented` via a matching `scaledManaLine` gate — but
+`scalesWith` was never actually READ anywhere in `engine.ts`; the
+`amount` field stayed hardcoded at the parser's placeholder of 1
+regardless of board state, and there wasn't a single test exercising
+it. Added a `manaScaleAmount(scalesWith, player, state)` helper
+(counting matching-subtype permanents across `allPermanents(state)`
+for `"subtype-anywhere"`, or just `player.battlefield` for
+`"subtype-you-control"`) and wired it into BOTH real consumption sites
+`manaSources` (automatic payment planning/legality) and
+`applyActivateMana` (the authoritative activation). Also closed the
+actual coverage bug: the `manaLine` per-line loop in `recognizeText`
+had no `scaledManaLine` recognition case at all, so despite the
+mana ability parsing correctly, `fullyImplemented` was FALSE for every
+affected card — added `scaledManaLine` to the recognized-line
+allowlist. DELIBERATE OMISSION: Priest of Titania's own comment at the
+top of `CardProfile` already named this exact pattern as its target
+(dated from an earlier, apparently never-finished pass), meaning this
+sat half-built and untested until this fresh re-check surfaced it.
+Verified **+12** in the export count (10,818 → 10,830 — well beyond
+Priest of Titania/Cloudpost's own printings, since the underlying
+regex covers every catalog card matching this template); set coverage
+32.8% → 32.9%. Scenario-tested: with Priest of Titania alone on one
+side and two Elves on the OTHER player's side, tapping Priest counts
+all three Elves (`{G}{G}{G}`, not just the controller's own Priest);
+a sibling "you control"-scoped synthetic ability correctly counts only
+the controller's own Elves, excluding an opponent's. Validation: full
+**857** rules tests green (3 new), `npm run check` across all four
+workspaces, 200/200 simulated games.

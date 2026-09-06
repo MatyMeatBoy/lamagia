@@ -1247,6 +1247,13 @@ function manaAbilitiesFor(state: GameState | undefined, permanent: Permanent): r
   const granted = grantedManaAbilities(state, permanent);
   return granted.length ? [...profile.manaAbilities, ...granted] : profile.manaAbilities;
 }
+/** "Add {C} for each <Subtype> on the battlefield / you control" (Priest of Titania, Cloudpost): read live off the board rather than a fixed amount. */
+function manaScaleAmount(scalesWith: NonNullable<ManaAbility["scalesWith"]>, player: PlayerState, state?: GameState): number {
+  const subtype = scalesWith.subtype;
+  const pool = scalesWith.kind === "subtype-you-control" || !state ? player.battlefield : allPermanents(state);
+  return pool.filter((permanent) => hasSubtype(cardProfile(permanent.card), subtype)).length;
+}
+
 /** Which restricted-mana pools a spell of this profile may draw from (CR 106.7). */
 function allowedManaRestrictions(profile: CardProfile): ManaRestrictionKind[] {
   const restrictions: ManaRestrictionKind[] = [];
@@ -1281,12 +1288,13 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
         && (options as readonly string[]).includes(entry.mana));
       const bonusTypes = state && isLand(profile) ? auraLandManaBonusTypes(state, permanent) : [];
       const bonusOptions = doublesLandMana && isLand(profile) ? [...new Set(options)] : [];
+      const baseAmount = ability.scalesWith ? manaScaleAmount(ability.scalesWith, player, state) : ability.amount;
       sources.push({
         permanentId: permanent.instance_id,
         abilityIndex: ability.index,
         name: permanent.card.name,
         options,
-        amount: ability.amount + (bonus ? 1 : 0),
+        amount: baseAmount + (bonus ? 1 : 0),
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
         ...(bonusTypes.length ? { bonusTypes } : {}),
         ...(bonusOptions.length ? { bonusOptions } : {}),
@@ -8418,7 +8426,10 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     && cardProfile(candidate.card).doublesLandMana) ? options : [];
   const manaBonus = action.manaBonus ?? (manaBonusOptions[0]);
   if (manaBonus && !manaBonusOptions.includes(manaBonus)) throw new Error("Ese tipo de maná adicional no es válido.");
-  const amount = ability.amountFromSacrifice ? sacrificedCount : ability.amountFromExiledManaValuePlusOne ? 1 + exiledManaValue : ability.amount;
+  const amount = ability.amountFromSacrifice ? sacrificedCount
+    : ability.amountFromExiledManaValuePlusOne ? 1 + exiledManaValue
+    : ability.scalesWith ? manaScaleAmount(ability.scalesWith, currentPlayer, activationState)
+    : ability.amount;
   const lifeGain = ability.gainLifeFromAmount ? sacrificedCount : (ability.gainLife ?? 0);
   const auraBonusTypes = isLand(sourceProfile) ? auraLandManaBonusTypes(activationState, currentSource) : [];
   const outputTypes = ability.fixedProduces

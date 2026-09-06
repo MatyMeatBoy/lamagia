@@ -4905,7 +4905,11 @@ function recognizeText(text: string): RecognizedText {
       // activation time, so it never matches `parseAddClause`'s fixed shapes.
       const exiledManaValueLine = /^exile\s+a\s+creature\s+you\s+control$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+one\s+color,\s*where\s+X\s+is\s+1\s+plus\s+the\s+exiled\s+creature['’]s\s+mana\s+value\.?\s*Spend\s+this\s+mana\s+only\s+to\s+cast\s+creature\s+spells\.?$/i.test(manaLine[2]!.trim());
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine && !exiledManaValueLine) unimplementedText.push(line);
+      // "Add {C} for each <Subtype> on the battlefield / you control" (Priest
+      // of Titania, Cloudpost): the amount is read live off the board by
+      // `manaOptionsFor`'s `scalesWith` handling, not by `parseAddClause`.
+      const scaledManaLine = /^add\s+\{[WUBRGC]\}\s+for each\s+[A-Za-z][A-Za-z'’-]*\s+(?:on the battlefield|you control)\.?$/i.test(manaLine[2]!.trim());
+      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine && !exiledManaValueLine && !scaledManaLine) unimplementedText.push(line);
       continue;
     }
 
