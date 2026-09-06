@@ -7335,6 +7335,29 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.graveyard.some((card) => card.name === "Big Guy")).toBe(true);
   });
 
+  it("only pumps Ruby, Daring Tracker when attacking alongside a power-4+ creature", () => {
+    const ruby = make({ name: "Ruby, Daring Tracker", type_line: "Legendary Creature — Human Scout", mana_cost: "{R}{G}", cmc: 2, power: "1", toughness: "2", keywords: ["Haste"], oracle_text: "Haste\nWhenever Ruby attacks while you control a creature with power 4 or greater, Ruby gets +2/+2 until end of turn.\n{T}: Add {R} or {G}." });
+    const bigGuy = make({ name: "Big Guy", type_line: "Creature — Giant", mana_cost: "{5}", cmc: 5, power: "5", toughness: "5" });
+    const profile = profileOf(ruby);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "attacks", subject: "self", condition: { kind: "controlled-creature-power-at-least", amount: 4 },
+      effect: { kind: "modify-source-creature", power: 2, toughness: 2 }
+    });
+    let alone = twoSeatGame([], []);
+    alone = putOnBattlefield(alone, 0, [ruby]);
+    const rubyAlone = alone.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ruby, Daring Tracker")!;
+    alone = passUntil(alone, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    alone = applyAction(alone, 0, { type: "declare-attackers", attackers: [{ instanceId: rubyAlone.instance_id, defender: 1 }] });
+    expect(powerOf(alone.players[0]!.battlefield.find((permanent) => permanent.instance_id === rubyAlone.instance_id)!, alone)).toBe(1);
+
+    let withBigGuy = twoSeatGame([], []);
+    withBigGuy = putOnBattlefield(withBigGuy, 0, [ruby, bigGuy]);
+    const rubyWithBigGuy = withBigGuy.players[0]!.battlefield.find((permanent) => permanent.card.name === "Ruby, Daring Tracker")!;
+    withBigGuy = passUntil(withBigGuy, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    withBigGuy = applyAction(withBigGuy, 0, { type: "declare-attackers", attackers: [{ instanceId: rubyWithBigGuy.instance_id, defender: 1 }] });
+    expect(powerOf(withBigGuy.players[0]!.battlefield.find((permanent) => permanent.instance_id === rubyWithBigGuy.instance_id)!, withBigGuy)).toBe(3);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({

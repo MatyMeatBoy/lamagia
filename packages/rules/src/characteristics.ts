@@ -5427,6 +5427,20 @@ function recognizeText(text: string): RecognizedText {
       });
       continue;
     }
+    // Ruby, Daring Tracker: the power threshold gates the whole trigger
+    // itself (not the resolved effect), so it's modeled as a condition
+    // checked at trigger-fire time, reusing the existing
+    // controlled-creature-power-at-least condition kind.
+    const attacksWhilePowerPump = /^whenever\s+~\s+attacks\s+while\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*~\s+gets\s+([+-]\d+)\/([+-]\d+)\s+until\s+end\s+of\s+turn\.?$/i.exec(line);
+    if (attacksWhilePowerPump) {
+      triggers.push({
+        event: "attacks", subject: "self",
+        effect: { kind: "modify-source-creature", power: Number(attacksWhilePowerPump[2]), toughness: Number(attacksWhilePowerPump[3]) },
+        optional: false, targetKind: "none", sourceText: line,
+        condition: { kind: "controlled-creature-power-at-least", amount: Number(attacksWhilePowerPump[1]) }
+      });
+      continue;
+    }
     // Stalking Vengeance: "it" refers to the source permanent, not the
     // creature whose death caused the trigger (CR 109.5).
     if (/^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s+it\s+deals\s+damage\s+equal\s+to\s+its\s+power\s+to\s+target\s+player\s+or\s+planeswalker\.?$/i.test(line)) {

@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,248** · cobertura: **33.2%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,251** · cobertura: **33.2%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -446,7 +446,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 | 2019-07-18 | San Diego Comic-Con 2019 (`PS19`) | promos | comic-con-2019 | other | 5 | 0 | 5 | 0.0% |
 | 2019-08-01 | 2018 Heroes of the Realm (`PH18`) | funny-special | 2018-heroes-of-the-realm | other | 4 | 0 | 4 | 0.0% |
 | 2019-08-23 | Commander 2019 (`C19`) | commander | 2019 | commander | 292 | 113 | 179 | 38.7% |
-| 2019-10-01 | Planeswalker Championship Promos (`PWCS`) | promos | planeswalker-championship | other | 46 | 4 | 42 | 8.7% |
+| 2019-10-01 | Planeswalker Championship Promos (`PWCS`) | promos | planeswalker-championship | other | 46 | 5 | 41 | 10.9% |
 | 2019-10-04 | Throne of Eldraine (`ELD`) | expansion | eldraine | main | 286 | 88 | 198 | 30.8% |
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 10 | 58 | 14.7% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
@@ -584,7 +584,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 | 2023-09-01 | 30th Anniversary Celebration Tokyo (`P30T`) | promos | 30th-anniversary-celebration-tokyo | other | 2 | 2 | 0 | 100.0% |
 | 2023-09-08 | Magic × Duel Masters Promos (`PMDA`) | masters-remastered | magic-duel-masters | other | 4 | 3 | 1 | 75.0% |
 | 2023-09-08 | Time Spiral Remastered Promos (`PTSR`) | masters-remastered | time-spiral-remastered | other | 3 | 0 | 3 | 0.0% |
-| 2023-09-08 | Wilds of Eldraine (`WOE`) | expansion | eldraine | main | 281 | 56 | 225 | 19.9% |
+| 2023-09-08 | Wilds of Eldraine (`WOE`) | expansion | eldraine | main | 281 | 57 | 224 | 20.3% |
 | 2023-09-08 | Wilds of Eldraine Commander (`WOC`) | commander | 2023 | commander | 143 | 49 | 94 | 34.3% |
 | 2023-09-08 | Wilds of Eldraine Promos (`PWOE`) | promos | wilds-of-eldraine | other | 80 | 6 | 74 | 7.5% |
 | 2023-09-08 | Wilds of Eldraine: Enchanting Tales (`WOT`) | masterpieces | wilds-of-eldraine-enchanting-tales | other | 63 | 12 | 51 | 19.0% |
@@ -626,7 +626,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 | 2024-09-27 | Duskmourn: House of Horror Commander (`DSC`) | commander | 2024 | commander | 306 | 121 | 185 | 39.5% |
 | 2024-09-27 | Duskmourn: House of Horror Promos (`PDSK`) | promos | duskmourn-house-of-horror | other | 80 | 3 | 77 | 3.8% |
 | 2024-10-16 | Tales of Middle-earth Deluxe Commander Kit (`PLTC`) | promos | 2024 | other | 4 | 0 | 4 | 0.0% |
-| 2024-11-15 | Foundations (`FDN`) | core | 2020s | main | 517 | 215 | 302 | 41.6% |
+| 2024-11-15 | Foundations (`FDN`) | core | 2020s | main | 517 | 216 | 301 | 41.8% |
 | 2024-11-15 | Foundations Commander (`FDC`) | commander | 2024 | commander | 3 | 3 | 0 | 100.0% |
 | 2024-11-15 | Foundations Jumpstart (`J25`) | jumpstart | foundations-jumpstart | other | 768 | 300 | 468 | 39.1% |
 | 2024-11-15 | Foundations Promos (`PFDN`) | promos | foundations | other | 81 | 12 | 69 | 14.8% |
@@ -759,7 +759,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 | core | 1990s | 10 | 3267 | 1387 | 1880 | 42.5% |
 | core | 2000s | 4 | 1389 | 810 | 579 | 58.3% |
 | core | 2010s | 8 | 2011 | 1032 | 979 | 51.3% |
-| core | 2020s | 3 | 1132 | 470 | 662 | 41.5% |
+| core | 2020s | 3 | 1132 | 471 | 661 | 41.6% |
 | deck-products | coldsnap-theme-decks | 1 | 52 | 17 | 35 | 32.7% |
 | deck-products | magic-online-theme-decks | 1 | 174 | 103 | 71 | 59.2% |
 | deck-products | modern-event-deck-2014 | 1 | 26 | 11 | 15 | 42.3% |
@@ -801,7 +801,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 | expansion | bloomburrow | 1 | 280 | 49 | 231 | 17.5% |
 | expansion | capenna | 1 | 310 | 56 | 254 | 18.1% |
 | expansion | dominaria | 2 | 553 | 176 | 377 | 31.8% |
-| expansion | eldraine | 2 | 567 | 144 | 423 | 25.4% |
+| expansion | eldraine | 2 | 567 | 145 | 422 | 25.6% |
 | expansion | ice-age | 1 | 373 | 94 | 279 | 25.2% |
 | expansion | innistrad | 4 | 1103 | 289 | 814 | 26.2% |
 | expansion | invasion | 1 | 335 | 134 | 201 | 40.0% |
@@ -1111,7 +1111,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 | promos | phyrexia-all-will-be-one | 1 | 80 | 8 | 72 | 10.0% |
 | promos | planar-chaos | 1 | 2 | 0 | 2 | 0.0% |
 | promos | planeshift | 1 | 1 | 0 | 1 | 0.0% |
-| promos | planeswalker-championship | 1 | 46 | 4 | 42 | 8.7% |
+| promos | planeswalker-championship | 1 | 46 | 5 | 41 | 10.9% |
 | promos | player-rewards-2001 | 1 | 1 | 1 | 0 | 100.0% |
 | promos | player-rewards-2003 | 1 | 1 | 0 | 1 | 0.0% |
 | promos | player-rewards-2004 | 1 | 1 | 0 | 1 | 0.0% |
@@ -28898,7 +28898,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 - [ ] Nissa, Who Shakes the World — `5aa3abf1-d56b-4f42-8c84-7e5a2c15ee0f`
 - [ ] Pteramander — `00187de2-bc48-4137-97d8-a9a0fafc76c1`
 - [ ] Realm-Scorcher Hellkite — `50ace222-57f1-477f-9e06-155d7b403512`
-- [ ] Ruby, Daring Tracker — `5d1b0eee-3a7a-4f22-a40d-7658a368962a`
 - [ ] Saheeli, the Sun's Brilliance — `5aa76c5d-8046-42ce-b61d-cc9b4806c11a`
 - [ ] Saw It Coming — `90edaf33-d0ab-47e0-8f6a-6fba38286e6e`
 - [ ] Seasoned Hallowblade — `d03dbb60-e32b-4b74-ae8a-73d428d344cd`
@@ -48024,7 +48023,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 - [ ] Rowan, Scion of War — `333c15c6-c8fd-4cdd-89d2-06b921edeb8b`
 - [ ] Rowdy Research — `1a33a5c2-5aa1-48e5-95a8-d52cdce980de`
 - [ ] Royal Treatment — `fd0f8fdc-4065-41f4-b8fb-ecb8f185774d`
-- [ ] Ruby, Daring Tracker — `5d1b0eee-3a7a-4f22-a40d-7658a368962a`
 - [ ] Savior of the Sleeping — `412eb5ec-bf13-45fb-94b3-c41e62b19d1d`
 - [ ] Scalding Viper // Steam Clean — `12c71296-1243-49e6-a196-8b016a7b635c`
 - [ ] Scarecrow Guide — `cf7bb5d4-c33f-4879-a793-6d6f2a4d94be`
@@ -53166,7 +53164,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,24
 - [ ] Rise of the Dark Realms — `e5223a09-f732-4747-8914-e6546ab0ef4c`
 - [ ] River's Rebuke — `c52cfb41-18f3-4e73-b5e7-d75baf74e578`
 - [ ] Rogue's Passage — `f29dc596-2121-4421-8463-15f6c2e8b9b3`
-- [ ] Ruby, Daring Tracker — `5d1b0eee-3a7a-4f22-a40d-7658a368962a`
 - [ ] Run Away Together — `290faa28-450e-4797-9a8f-642d8af3f82a`
 - [ ] Sanguine Indulgence — `010ec11a-0484-486d-b7c0-de65593bf457`
 - [ ] Savage Ventmaw — `f743d85f-754e-4e70-9907-af54acb9e8d4`

@@ -5962,6 +5962,33 @@ choice, returning a staged Swamp while a mv-5 Big Guy stays put.
 Validation: full **902** rules tests green (1 new), `npm run check`
 across all four workspaces, 200/200 simulated games.
 
+## Ruby, Daring Tracker: a board-state gate on the trigger itself (2026-09-06)
+
+"Whenever ~ attacks WHILE you control a creature with power 4 or
+greater, ~ gets +2/+2 until end of turn" is a different shape from
+every existing "if [board state], EFFECT" rider this engine already
+parsed: those all gate the resolved EFFECT (checked when the trigger
+resolves), but here the power check gates whether the ability
+triggers AT ALL (CR 603.3d intervening-if clauses notwithstanding,
+Oracle phrases this one as part of the trigger condition itself, not
+the effect). The existing `controlled-creature-power-at-least`
+`TriggerDefinition.condition` kind (already built for a different
+card's "if you control a creature with power N or greater," EFFECT
+rider) checks exactly this board state already, so no engine changes
+were needed at all — only a new dedicated line-parsing branch
+(mirroring the existing `attacking-alone`/`defendingLandsPump`
+standalone blocks) recognizing "Whenever ~ attacks while you control
+a creature with power N or greater, ~ gets +P/+T until end of turn,"
+parameterized over both N and the pump amount, reusing
+`modify-source-creature` for the resolved effect. Verified **+1** in
+the export count (10,934 → 10,935) and set coverage holds at 33.2%.
+Scenario-tested: Ruby (power 1) attacking alone stays at power 1;
+attacking with a power-5 Big Guy also on the battlefield correctly
+pumps Ruby to power 3, confirming the condition legitimately gates
+the trigger rather than being ignored. Validation: full **903** rules
+tests green (1 new), `npm run check` across all four workspaces,
+200/200 simulated games.
+
 Eldrazi Displacer ("{2}{C}: Exile another target creature, then
 return it to the battlefield tapped under its owner's control.")
 reuses the existing `blink-target-creature` effect (Conjurer's
