@@ -605,6 +605,8 @@ export type SpellEffect =
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
+  /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
+  | { readonly kind: "add-counter-creatures-and-other-planeswalkers"; readonly counter: string; readonly amount: number; readonly planeswalkerAmount: number }
   | { readonly kind: "add-counter-all-creatures"; readonly counter: string; readonly amount: number | "X" }
   | { readonly kind: "remove-all-counters-target" }
   | { readonly kind: "remove-all-counters-all-and-exile-tokens" }
@@ -3466,6 +3468,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each creature you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-creatures-you-control", counter: match[2]!, amount }, target: "none" };
+  }
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each creature you control and (?:a|an|one|two|three|four|five|\d+) loyalty counter on each other planeswalker you control$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    const loyaltyAmount = toNumber(text.match(/and (a|an|one|two|three|four|five|\d+) loyalty counter/i)?.[1] ?? "") ?? 1;
+    if (amount !== null) {
+      return { effect: { kind: "add-counter-creatures-and-other-planeswalkers", counter: match[2]!, amount, planeswalkerAmount: loyaltyAmount }, target: "none" };
+    }
   }
   if ((match = /^Put (X|a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counters? on each creature$/i.exec(text))) {
     const amount = /^X$/i.test(match[1]!) ? "X" as const : toNumber(match[1]);

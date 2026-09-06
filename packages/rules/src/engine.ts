@@ -4913,6 +4913,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
     }
+    case "add-counter-creatures-and-other-planeswalkers": {
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => {
+          const profile = cardProfile(permanent.card);
+          const isOtherPlaneswalker = profile.types.includes("Planeswalker") && permanent.instance_id !== sourceId;
+          if (!isCreature(profile) && !isOtherPlaneswalker) return permanent;
+          const counters = { ...permanent.counters };
+          if (isCreature(profile)) counters[effect.counter] = (counters[effect.counter] ?? 0) + effect.amount;
+          if (isOtherPlaneswalker) counters.loyalty = (counters.loyalty ?? 0) + effect.planeswalkerAmount;
+          return { ...permanent, counters };
+        })
+      }));
+    }
     case "add-counter-all-creatures": {
       const amount = effect.amount === "X" ? object.variableValue : effect.amount;
       if (amount <= 0) return state;
