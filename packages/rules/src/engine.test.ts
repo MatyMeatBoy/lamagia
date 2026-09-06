@@ -10998,6 +10998,42 @@ describe("Survival of the Fittest's creature-only discard-tutor", () => {
   });
 });
 
+describe("Beseech the Queen's land-count-capped tutor", () => {
+  const BESEECH_THE_QUEEN = () => make({
+    name: "Beseech the Queen", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3,
+    oracle_text: "Search your library for a card with mana value less than or equal to the number of lands you control, reveal it, put it into your hand, then shuffle."
+  });
+
+  it("recognizes the land-count cap as a search-library restriction", () => {
+    const profile = profileOf(BESEECH_THE_QUEEN());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.effects[0]).toMatchObject({ kind: "search-library", types: [], maxManaValue: "lands-you-control", destination: "hand", reveal: true });
+  });
+
+  it("offers only cards at or under the controller's land count", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [BESEECH_THE_QUEEN()], "beseech-hand"),
+      library: [...toHand(0, [SOL_RING(), BEAR(), TRAMPLER()], "beseech-library"), ...player.library],
+      autoPass: false
+    }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    game = applyAction(game, 0, { type: "cast", cardId: "beseech-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library");
+
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "search-library" }>;
+    const legalNames = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    expect(legalNames).toContain("Grizzly Bears");
+    expect(legalNames).toContain("Sol Ring");
+    expect(legalNames).not.toContain("Big Stomper");
+
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Sol Ring" });
+    expect(game.players[0]!.hand.some((card) => card.name === "Sol Ring")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------

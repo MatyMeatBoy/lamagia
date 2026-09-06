@@ -4514,3 +4514,22 @@ tests**, `npm run check`, 10,213 global profiles.
 
 Prossh decklist status after this pass: **75 of 97 unique cards fully
 implemented (77.3%)**.
+
+Beseech the Queen ("Search your library for a card with mana value less
+than or equal to the number of lands you control...") widens the
+existing `search-library` `maxManaValue` field from a bare `"X"`
+discriminant (Green Sun's Zenith's paid `{X}`) to `"X" |
+"lands-you-control"` — a board-dependent cap read live at resolution
+rather than a value paid at cast time, computed the same way every
+other "number of lands you control" scaling already reads the board
+(`battlefield.filter(isLand).length`). Found via
+`tools/rules/identify_near_complete_cards.py`, which correctly flagged
+this as `priority: "reuse-existing"` against the `search-library`
+family rather than a new primitive. Verified **+1** in the export count
+(10,213 → 10,214) and set coverage holds at 31.2%. Scenario-tested:
+with three lands in play, a search offers a 2-mana-value creature and a
+1-mana-value artifact but excludes a 4-mana-value creature in the same
+library.
+
+Prossh decklist status after this pass: **76 of 97 unique cards fully
+implemented (78.4%)**.

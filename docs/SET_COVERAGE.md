@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,550** · cobertura: **31.2%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,555** · cobertura: **31.2%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -194,7 +194,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2008-02-01 | Morningtide (`MOR`) | expansion | 2000s | main | 150 | 30 | 120 | 20.0% |
 | 2008-04-01 | 15th Anniversary Cards (`P15A`) | promos | 15th-anniversary-cards | other | 2 | 2 | 0 | 100.0% |
 | 2008-04-19 | Shadowmoor Promos (`PSHM`) | promos | shadowmoor | other | 2 | 1 | 1 | 50.0% |
-| 2008-05-02 | Shadowmoor (`SHM`) | expansion | 2000s | main | 286 | 71 | 215 | 24.8% |
+| 2008-05-02 | Shadowmoor (`SHM`) | expansion | 2000s | main | 286 | 72 | 214 | 25.2% |
 | 2008-07-12 | Eventide Promos (`PEVE`) | promos | eventide | other | 2 | 0 | 2 | 0.0% |
 | 2008-07-25 | Eventide (`EVE`) | expansion | 2000s | main | 180 | 38 | 142 | 21.1% |
 | 2008-08-29 | From the Vault: Dragons (`DRB`) | from-the-vault | 2000s | other | 15 | 5 | 10 | 33.3% |
@@ -216,7 +216,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2009-07-16 | Magic 2010 Promos (`PM10`) | promos | magic-2010 | other | 3 | 1 | 2 | 33.3% |
 | 2009-07-17 | Magic 2010 (`M10`) | core | 2010s | main | 234 | 135 | 99 | 57.7% |
 | 2009-08-28 | From the Vault: Exiled (`V09`) | from-the-vault | 2000s | other | 15 | 6 | 9 | 40.0% |
-| 2009-09-04 | Planechase (`HOP`) | planechase | planechase | other | 146 | 74 | 72 | 50.7% |
+| 2009-09-04 | Planechase (`HOP`) | planechase | planechase | other | 146 | 75 | 71 | 51.4% |
 | 2009-09-07 | Masters Edition III (`ME3`) | masters-remastered | masters-edition-iii | other | 220 | 94 | 126 | 42.7% |
 | 2009-10-02 | Zendikar (`ZEN`) | expansion | zendikar | main | 234 | 94 | 140 | 40.2% |
 | 2009-10-02 | Zendikar Promos (`PZEN`) | promos | zendikar | other | 5 | 3 | 2 | 60.0% |
@@ -360,7 +360,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2016-06-10 | Eternal Masters (`EMA`) | masters-remastered | eternal-masters | other | 249 | 121 | 128 | 48.6% |
 | 2016-07-22 | Eldritch Moon (`EMN`) | expansion | 2010s | main | 208 | 42 | 166 | 20.2% |
 | 2016-07-22 | Eldritch Moon Promos (`PEMN`) | promos | eldritch-moon | other | 64 | 3 | 61 | 4.7% |
-| 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 0 | 15 | 0.0% |
+| 2016-08-19 | From the Vault: Lore (`V16`) | from-the-vault | 2010s | other | 15 | 1 | 14 | 6.7% |
 | 2016-08-26 | Conspiracy: Take the Crown (`CN2`) | conspiracy | conspiracy-take-the-crown | other | 221 | 67 | 154 | 30.3% |
 | 2016-09-02 | Duel Decks: Nissa vs. Ob Nixilis (`DDR`) | duel-decks | duel-decks-nissa-vs-ob-nixilis | other | 62 | 30 | 32 | 48.4% |
 | 2016-09-30 | Kaladesh (`KLD`) | expansion | kaladesh | main | 264 | 68 | 196 | 25.8% |
@@ -451,10 +451,10 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | 2019-10-04 | Throne of Eldraine Promos (`PELD`) | promos | throne-of-eldraine | other | 68 | 9 | 59 | 13.2% |
 | 2019-10-22 | Ponies: The Galloping (`PTG`) | funny-special | ponies-the-galloping | other | 3 | 0 | 3 | 0.0% |
 | 2019-11-07 | Mystery Booster Playtest Cards 2019 (`CMB1`) | funny-special | mystery-booster-playtest-cards-2019 | other | 120 | 12 | 108 | 10.0% |
-| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1609 | 3612 | 30.8% |
+| 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1610 | 3611 | 30.8% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 441 | 1255 | 26.0% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 442 | 1254 | 26.1% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 4 | 6 | 40.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 63 | 210 | 23.1% |
@@ -793,7 +793,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 147 | 390 | 27.4% |
 | expansion | 1990s | 11 | 1573 | 378 | 1195 | 24.0% |
-| expansion | 2000s | 19 | 3082 | 714 | 2368 | 23.2% |
+| expansion | 2000s | 19 | 3082 | 715 | 2367 | 23.2% |
 | expansion | 2010s | 14 | 2735 | 750 | 1985 | 27.4% |
 | expansion | 2020s | 17 | 3739 | 635 | 3104 | 17.0% |
 | expansion | alara | 2 | 379 | 155 | 224 | 40.9% |
@@ -826,7 +826,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | expansion | urza | 3 | 621 | 242 | 379 | 39.0% |
 | expansion | zendikar | 3 | 773 | 242 | 531 | 31.3% |
 | from-the-vault | 2000s | 2 | 30 | 11 | 19 | 36.7% |
-| from-the-vault | 2010s | 8 | 126 | 31 | 95 | 24.6% |
+| from-the-vault | 2010s | 8 | 126 | 32 | 94 | 25.4% |
 | funny-special | 2016-heroes-of-the-realm | 1 | 3 | 0 | 3 | 0.0% |
 | funny-special | 2017-heroes-of-the-realm | 1 | 3 | 1 | 2 | 33.3% |
 | funny-special | 2018-heroes-of-the-realm | 1 | 4 | 0 | 4 | 0.0% |
@@ -896,12 +896,12 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | masters-remastered | shadows-of-the-past | 1 | 76 | 29 | 47 | 38.2% |
 | masters-remastered | shadows-over-innistrad-remastered | 1 | 284 | 58 | 226 | 20.4% |
 | masters-remastered | tempest-remastered | 1 | 254 | 104 | 150 | 40.9% |
-| masters-remastered | the-list | 1 | 5221 | 1609 | 3612 | 30.8% |
+| masters-remastered | the-list | 1 | 5221 | 1610 | 3611 | 30.8% |
 | masters-remastered | time-spiral-remastered | 2 | 413 | 115 | 298 | 27.8% |
 | masters-remastered | ultimate-masters | 1 | 254 | 94 | 160 | 37.0% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
 | masters-remastered | vintage-masters | 1 | 325 | 142 | 183 | 43.7% |
-| planechase | planechase | 1 | 146 | 74 | 72 | 50.7% |
+| planechase | planechase | 1 | 146 | 75 | 71 | 51.4% |
 | planechase | planechase-2012 | 1 | 136 | 53 | 83 | 39.0% |
 | planechase | planechase-anthology | 1 | 136 | 53 | 83 | 39.0% |
 | premium-decks | 2000s | 1 | 41 | 11 | 30 | 26.8% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 11 | 73 | 13.1% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 14 | 44 | 24.1% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 441 | 1255 | 26.0% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 442 | 1254 | 26.1% |
 | secret-lair | secret-lair-promo | 1 | 52 | 18 | 34 | 34.6% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -14405,7 +14405,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Barkshell Blessing — `baf3d4d9-0590-4d94-8f4e-1e726194b920`
 - [ ] Barrenton Cragtreads — `969233f8-a644-4297-a2bf-b1ca7a58bb0b`
 - [ ] Barrenton Medic — `17661062-928c-4e33-a4f3-92ddc9d8c817`
-- [ ] Beseech the Queen — `cf94cafc-527e-4b27-8a28-7807435aaccf`
 - [ ] Biting Tether — `1ea20ecb-1919-4be7-b0bb-d79d2dec98fd`
 - [ ] Blazethorn Scarecrow — `5f7a4ffb-83f7-46e5-b0a7-c8b068af6969`
 - [ ] Bloodshed Fever — `3a018a54-6094-42bb-af6a-ef436c09f0b4`
@@ -15510,7 +15509,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Battlegate Mimic — `0af189d3-4de1-483e-aac4-dd5d51a57d9c`
 - [ ] Beacon of Unrest — `aef874fa-93c0-4f86-8b0d-dc24ec51467d`
 - [ ] Beast Hunt — `069c8fa1-fa04-4620-9356-a618158dad3e`
-- [ ] Beseech the Queen — `cf94cafc-527e-4b27-8a28-7807435aaccf`
 - [ ] Branching Bolt — `13f63b98-40b0-499b-bb5d-640b95a6ea1c`
 - [ ] Browbeat — `11cd0c42-4148-4d82-9172-b1a1967fe319`
 - [ ] Cabal Coffers — `7358e164-5704-4e78-9b21-6a9bf2a968ce`
@@ -23664,7 +23662,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 
 ### from-the-vault / 2010s · From the Vault: Lore (`V16`)
 
-- [ ] Beseech the Queen — `cf94cafc-527e-4b27-8a28-7807435aaccf`
 - [ ] Cabal Ritual — `5b5bf1fa-6502-4790-b66b-f0f8504ebc7c`
 - [ ] Conflux — `32ebb029-9f03-49c9-b9bb-cb1954e2a324`
 - [ ] Dark Depths — `c9b82110-7dfd-4617-9399-9510be449043`
@@ -30466,7 +30463,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Benevolent Bodyguard — `c8c38570-0b42-4bfc-896f-f57f9a11ba9d`
 - [ ] Benthic Infiltrator — `b2977807-5f46-424a-a6e9-14262f8a723a`
 - [ ] Berg Strider — `9bdd68e7-7787-4579-a128-09e78fdbf0e2`
-- [ ] Beseech the Queen — `cf94cafc-527e-4b27-8a28-7807435aaccf`
 - [ ] Besmirch — `fc80380c-7d75-4556-aaf2-bf7b2c757e75`
 - [ ] Betrayal of Flesh — `43cee9b6-9853-4337-869a-45540c9db10f`
 - [ ] Bhaal's Invoker — `92512acd-bf1e-4133-93cd-6c6af5affb95`
@@ -33924,7 +33920,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,55
 - [ ] Benevolent Hydra — `01dbf1bc-ca62-4fb6-959c-ef7c0dc03bb0`
 - [ ] Berserk — `8b67d192-9a05-4a47-82ae-5fc4b7834d88`
 - [ ] Beseech the Mirror — `cbbe535b-12d6-4e6c-8b26-9220f06a1604`
-- [ ] Beseech the Queen — `cf94cafc-527e-4b27-8a28-7807435aaccf`
 - [ ] Big Score — `a5cbd257-c836-493e-bb1a-76242619dea2`
 - [ ] Birthing Pod — `f8b9dd54-0837-47f4-ad14-7a0322d46d5f`
 - [ ] Bitterblossom — `fb868840-09fa-49b1-85cb-b08ad065e972`

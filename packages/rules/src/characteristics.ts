@@ -740,8 +740,8 @@ export type SpellEffect =
       readonly subtypes?: readonly string[];
       /** "a green creature card" (Natural Order): restricts by color, not just type/subtype. */
       readonly colors?: readonly string[];
-      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. */
-      readonly maxManaValue?: "X";
+      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. "lands-you-control" (Beseech the Queen): the cap is the searcher's own land count at resolution. */
+      readonly maxManaValue?: "X" | "lands-you-control";
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -2404,6 +2404,29 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       destination: "battlefield",
       reveal: false
     };
+  }
+  // "...card with mana value less than or equal to the number of lands you
+  // control..." (Beseech the Queen): the cap is a live board count, not a
+  // paid {X}, read at resolution the same way `landsYouControl` scaling
+  // already works for other board-dependent effects.
+  const manaValueLands = /^Search your library for (?:a |an )?(.+?) card with mana value less than or equal to the number of lands you control, (.+)$/i.exec(text);
+  if (manaValueLands) {
+    const criterion = searchCriterion(manaValueLands[1]!);
+    const instructions = manaValueLands[2]!;
+    const selected = "(?:(?:that|the) card|it)";
+    const destination = new RegExp(`put ${selected} into your hand`, "i").test(instructions) ? "hand"
+      : new RegExp(`put ${selected} onto the battlefield`, "i").test(instructions) ? "battlefield" : null;
+    if (destination) {
+      return {
+        kind: "search-library",
+        types: criterion.types,
+        ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
+        ...(criterion.colors.length ? { colors: criterion.colors } : {}),
+        maxManaValue: "lands-you-control",
+        destination,
+        reveal: /reveal/i.test(instructions)
+      };
+    }
   }
   if (!single) return null;
   const criterion = searchCriterion(single[1]!);
