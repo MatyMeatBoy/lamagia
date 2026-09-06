@@ -8705,6 +8705,10 @@ describe("combat restrictions and landwalk", () => {
     name: "Bog Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "2", toughness: "2",
     oracle_text: "Swampwalk"
   });
+  const TWO_HEADED_DRAGON = () => make({
+    name: "Two-Headed Dragon", type_line: "Creature — Dragon", mana_cost: "{3}{R}{R}", cmc: 5, power: "4", toughness: "4",
+    oracle_text: "Two-Headed Dragon can block an additional creature each combat.", oracle_id: "a4fa3052-d1ec-4442-a832-15ba36c500ee", scryfall_id: "a4fa3052-d1ec-4442-a832-15ba36c500ee"
+  });
   const ELVISH_CHAMPION = () => make({
     name: "Elvish Champion", type_line: "Creature — Elf", mana_cost: "{1}{G}{G}", cmc: 3, power: "2", toughness: "2",
     oracle_text: "Other Elf creatures you control get +1/+1 and have forestwalk.", oracle_id: "7e40f37c-9a0c-40e0-b195-7ea94b12f798", scryfall_id: "7e40f37c-9a0c-40e0-b195-7ea94b12f798"
@@ -8744,6 +8748,8 @@ describe("combat restrictions and landwalk", () => {
     // A recognised restriction is not left over as unimplemented text.
     expect(profileOf(NO_BLOCKER()).fullyImplemented).toBe(true);
     expect(profileOf(SWAMPWALKER()).fullyImplemented).toBe(true);
+    expect(profileOf(TWO_HEADED_DRAGON()).combatRules.maxBlockers).toBe(2);
+    expect(profileOf(TWO_HEADED_DRAGON()).fullyImplemented).toBe(true);
     expect(profileOf(HORSEMAN()).keywords).toContain("horsemanship");
     expect(profileOf(HORSEMAN()).fullyImplemented).toBe(true);
     expect(profileOf(SHADOWER()).keywords).toContain("shadow");
@@ -8754,6 +8760,39 @@ describe("combat restrictions and landwalk", () => {
     });
     expect(profileOf(EXALTED()).fullyImplemented).toBe(true);
     expect(profileOf(CRAWLSPACE()).fullyImplemented).toBe(true);
+  });
+
+  it("allows a creature with additional blocker capacity to block two attackers", () => {
+    let game = attackWith([BEAR(), BEAR()], [TWO_HEADED_DRAGON()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    const attackers = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    const blocker = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, {
+      type: "declare-attackers",
+      attackers: attackers.map((attacker) => ({ instanceId: attacker.instance_id, defender: 1 }))
+    });
+    game = passUntil(game, (state) => state.step === "declare-blockers");
+    game = applyAction(game, 1, {
+      type: "declare-blockers",
+      blockers: attackers.map((attacker) => ({ instanceId: blocker.instance_id, attackerId: attacker.instance_id }))
+    });
+    expect(game.combat.blockers).toHaveLength(2);
+
+    let ordinary = attackWith([BEAR(), BEAR()], [BEAR()]);
+    ordinary = stage(ordinary, 0, () => ({ autoPass: false }));
+    ordinary = stage(ordinary, 1, () => ({ autoPass: false }));
+    const ordinaryAttackers = ordinary.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears");
+    const ordinaryBlocker = ordinary.players[1]!.battlefield[0]!;
+    ordinary = applyAction(ordinary, 0, {
+      type: "declare-attackers",
+      attackers: ordinaryAttackers.map((attacker) => ({ instanceId: attacker.instance_id, defender: 1 }))
+    });
+    ordinary = passUntil(ordinary, (state) => state.step === "declare-blockers");
+    expect(() => applyAction(ordinary, 1, {
+      type: "declare-blockers",
+      blockers: ordinaryAttackers.map((attacker) => ({ instanceId: ordinaryBlocker.instance_id, attackerId: attacker.instance_id }))
+    })).toThrow(/no puede bloquear a más de 1/i);
   });
 
   it("applies tribal landwalk to matching other creatures", () => {

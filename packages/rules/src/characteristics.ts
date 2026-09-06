@@ -203,6 +203,8 @@ export interface CombatRules {
    * still a legal blocker, but only against an attacker that has the keyword.
    */
   readonly blocksOnlyWithKeyword: EnforcedKeyword | null;
+  /** Maximum number of creatures this creature can block each combat. */
+  readonly maxBlockers: number;
   /**
    * Landwalk (CR 702.14): unblockable while the defending player controls a land
    * with one of these subtypes. Stored as subtypes rather than as keywords
@@ -227,6 +229,7 @@ export const NO_COMBAT_RULES: CombatRules = {
   mustAttack: false,
   maxAttackers: null,
   blocksOnlyWithKeyword: null,
+  maxBlockers: 1,
   landwalk: [],
   preventsAllCombatDamage: false,
   preventsAllCombatDamageToSelf: false,
@@ -254,6 +257,8 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   }
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
+  const additionalBlocker = /^~ can block an additional creature each combat$/.test(text);
+  if (additionalBlocker) return { maxBlockers: 2 };
   if (/^prevent all combat damage that would be dealt to and dealt by ~$/i.test(text)) return { preventsAllCombatDamage: true };
   if (/^prevent all combat damage that would be dealt to ~$/i.test(text)) return { preventsAllCombatDamageToSelf: true };
   const controllerPrevention = /^as long as ~ is untapped, if a creature would deal combat damage to you, prevent (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) of that damage$/i.exec(text);

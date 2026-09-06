@@ -8871,8 +8871,14 @@ function applyDeclareBlockers(state: GameState, seat: SeatId, blockers: readonly
     if (!attacker || !blocker || !declaration || declaration.defender !== seat) throw new Error("Esa criatura no te está atacando.");
     if (!canBlock(state, attacker, blocker)) throw new Error(`${blocker.card.name} no puede bloquear a ${attacker.card.name}.`);
   }
-  const unique = new Set(blockers.map((entry) => entry.instanceId));
-  if (unique.size !== blockers.length) throw new Error("Una criatura solo puede bloquear a un atacante.");
+  const blockCounts = new Map<string, number>();
+  for (const entry of blockers) {
+    const count = (blockCounts.get(entry.instanceId) ?? 0) + 1;
+    blockCounts.set(entry.instanceId, count);
+    const blocker = findPermanent(state, entry.instanceId);
+    const capacity = blocker ? cardProfile(blocker.card).combatRules.maxBlockers : 1;
+    if (count > capacity) throw new Error(`${blocker?.card.name ?? "Esa criatura"} no puede bloquear a más de ${capacity} criaturas.`);
+  }
 
   // Menace needs at least two blockers, so a single-blocker assignment is illegal.
   for (const declaration of state.combat.attackers) {

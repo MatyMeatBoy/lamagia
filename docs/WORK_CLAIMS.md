@@ -523,3 +523,4 @@ rules citations and the integrator review remain mandatory.
 | `global-source-basic-land-subtype-threshold` | Reusable source P/T condition for controlling a basic land subtype, including Loam Lion (CR 604.1, 613.4) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `global-tribal-pump-keyword-grant` | Reusable combined tribal P/T and keyword grant for other matching creatures, including Goblin Chieftain (CR 611.3, 613.4) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
 | `global-tribal-landwalk-grant` | Reusable tribal landwalk grant carried by a static lord, including Elvish Champion (CR 611.3, 702.14) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |
+| `global-additional-blocker-capacity` | Reusable combat declaration capacity for creatures that can block an additional creature each combat, including Two-Headed Dragon (CR 509.1, 702.2) | `codex/c13-darksteel-mutation` | active | 2026-09-05 |

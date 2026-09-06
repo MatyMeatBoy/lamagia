@@ -3935,3 +3935,9 @@ landwalk now follows the same matching-subtype/source-exclusion model as its
 P/T and haste grants, while combat checks the defending player's land types
 at declaration time (CR 611.3, 702.14). Current validation: **729 rules
 tests**, `npm run check`, and `git diff --check` pass.
+
+The next one-line rescan item, Two-Headed Dragon, now uses a reusable
+`maxBlockers` combat capacity. Normal creatures remain limited to one blocker;
+the parsed additional-blocker clause permits two assignments and validates the
+limit authoritatively on the server (CR 509.1, 702.2). Current validation:
+**730 rules tests**, `npm run check`, and `git diff --check` pass.
