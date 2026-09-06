@@ -240,7 +240,11 @@ function manaReserveHtml(pool: Readonly<Record<string, number>>, restricted: rea
   return `${entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("")}${restrictedEntries.map(({ symbol, count }) => `<span class="mana-reserve-item restricted" title="Solo para hechizos legendarios">${manaSymbolHtml(symbol)}<b>${count}</b></span>`).join("")}`;
 }
 
-/** Replaces Oracle mana tokens while keeping the rules text and line breaks. */
+/**
+ * Renders `{W}{U}{B}…` mana tokens inside free text as coloured symbols and
+ * escapes everything else. Used for Oracle rules text and for engine-built
+ * action labels ("Girar Starting Town · agregar {C}").
+ */
 function oracleHtml(text: string): string {
   let html = "";
   let last = 0;
@@ -1094,7 +1098,7 @@ function stackStripHtml(): string {
     return `<button class="stack-chip${object.countered ? " countered" : ""}${isStackTargetable(object.id) ? " targetable" : ""}${object.resolvesNext ? " resolves-next" : ""}" type="button" data-stack-id="${escapeHtml(object.id)}" title="${escapeHtml(isStackTargetable(object.id) ? "Elegir este objeto como objetivo" : object.targets.length ? `Objetivo: ${object.targets.join(", ")}` : "Inspeccionar objeto de la pila")}" aria-current="${object.resolvesNext ? "step" : "false"}" aria-label="Pila ${stackPosition} desde abajo, ${escapeHtml(kind)} ${escapeHtml(object.name)}${object.resolvesNext ? ", próximo en resolver" : ""}">
       <strong class="stack-order" title="${object.resolvesNext ? "Próximo en resolver" : `Posición ${stackPosition} desde abajo`}">${object.resolvesNext ? "↑" : stackPosition}</strong>
       ${cardImageHtml(object.image_normal, object.name)}
-      <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${escapeHtml(object.label)}${object.text && object.text !== object.label ? ` · ${escapeHtml(object.text)}` : ""}</small></span>
+      <span><small class="stack-kind">${escapeHtml(kind)}${object.countered ? " · Contrarrestado" : ""}</small><b>${escapeHtml(object.name)}</b><i style="color: var(--seat-${object.controller})">${escapeHtml(seatOf(object.controller)?.name ?? "")}${object.targets.length ? ` → ${escapeHtml(object.targets.join(", "))}` : ""}</i><small class="stack-label">${oracleHtml(object.label)}${object.text && object.text !== object.label ? ` · ${oracleHtml(object.text)}` : ""}</small></span>
     </button>`;
   }).join("") : `<span class="stack-empty">Vacía · ${escapeHtml(status)}</span>`;
   return `<div class="stack-strip${view.stack.length ? "" : " empty"}" aria-label="Pila de hechizos y habilidades" title="${escapeHtml(statusDetail)}"><b>Pila</b><small class="stack-order-hint">Arriba resuelve primero · ${escapeHtml(status)}</small>${objects}</div>`;
@@ -1110,7 +1114,7 @@ function stackDetailHtml(): string {
       <button id="close-stack-detail" class="icon-button" type="button" aria-label="Cerrar detalle de la pila">×</button></header>
     <div class="stack-detail-body">
       ${cardImageHtml(object.image_normal, object.name)}
-      <div><b>${escapeHtml(object.label)}</b><p>${escapeHtml(object.text ?? "Sin texto adicional.")}</p>
+      <div><b>${oracleHtml(object.label)}</b><p>${oracleHtml(object.text ?? "Sin texto adicional.")}</p>
         <small>${object.targets.length ? `Objetivos: ${escapeHtml(object.targets.join(", "))}` : "Sin objetivos"}${object.countered ? " · Contrarrestado" : ""}</small>
         <small class="stack-detail-priority">${object.resolvesNext ? "Próximo en resolver" : `Posición ${object.position} desde abajo`} · ${view?.priorityOpen ? `Prioridad: ${escapeHtml(seatOf(view.prioritySeat)?.name ?? "")}` : "Prioridad cerrada"}${object.passedSeats?.length ? ` · Pasaron: ${escapeHtml(object.passedSeats.map((seat) => seatOf(seat)?.name ?? `Jugador ${seat + 1}`).join(", "))}` : ""}</small>
         <span class="stack-detail-hint">Cierra este panel para responder; los objetivos resaltados siguen seleccionables.</span></div>
@@ -1145,7 +1149,7 @@ function actionMenuHtml(): string {
     </form>` : ""}${rows.map((entry) => {
       const index = actions.indexOf(entry);
       return `<button class="action-row${entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger" ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
-      <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+      <span>${oracleHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}</div>
   </details>`;
 }
@@ -1175,7 +1179,7 @@ function cardActionMenuHtml(): string {
             : entry.note ?? entry.label;
       const choiceClass = entry.action.type === "toggle-trigger-yield" ? "choice-action trigger-yield-action" : "choice-action";
       return `<button class="action-row ${choiceClass}" type="button" data-action-index="${index}" title="${escapeHtml(description)}">
-        <span><b>${escapeHtml(entry.label)}</b><small>${escapeHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+        <span><b>${oracleHtml(entry.label)}</b><small>${oracleHtml(description)}</small></span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}<button id="card-action-info" class="action-row" type="button"><span><b>Ver información</b><small>Texto de reglas, tipo, coste y rulings.</small></span></button></div>
   </section>`;
 }
@@ -1222,7 +1226,7 @@ function decisionOverlayHtml(): string {
     <div class="decision-list">${choices.map((entry) => {
       const index = actions.indexOf(entry);
       return `<button class="action-row${entry.action.type.startsWith("choose-") ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
-        <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
+        <span>${oracleHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
     }).join("")}${ui.pendingTarget?.selectedTargets.length ? `<button id="undo-pending-target" class="action-row secondary-action" type="button"><span><b>Volver al objetivo anterior</b><small>Cambiar la última selección</small></span></button>` : ""}</div>
   </section>`;
 }
@@ -1257,7 +1261,7 @@ function scryHtml(): string {
     </article>`).join("")}</div>
     <div class="scry-actions">${actions.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
-      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">${escapeHtml(entry.label)}</button>`;
+      return `<button class="action-row choice-action" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">${oracleHtml(entry.label)}</button>`;
     }).join("")}</div>
   </section>`;
 }

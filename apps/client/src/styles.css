@@ -745,6 +745,11 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 }
 .pip.mana-asset { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: hidden; }
 .pip.mana-asset img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* Inline mana inside action labels and the stack strip rides with the text. */
+.action-row .pip, .decision-list .pip, .ability-row .pip, .stack-label .pip, .scry-actions .pip {
+  width: 14px; min-width: 14px; height: 14px; padding: 1px; font-size: .46rem;
+}
+.action-row .mana, .decision-list .mana, .ability-row .mana, .stack-label .mana, .scry-actions .mana { vertical-align: -2px; }
 .pip.p-w { background: #f8f4e3; color: #2b2415; }
 .pip.p-u { background: #a3cee6; color: #08222f; }
 .pip.p-b { background: #4b4249; color: #ece2f0; }
