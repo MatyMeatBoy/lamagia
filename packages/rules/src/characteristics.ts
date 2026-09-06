@@ -755,6 +755,7 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  | { readonly kind: "counter-target-object" }
   /** "Target spell can't be countered" (Vexing Shusher): tags the targeted stack object, mirroring the cast-time StackObject.cantBeCountered flag. */
   | { readonly kind: "make-target-spell-uncounterable" }
   /** Daze: the targeted spell's own controller decides whether to pay (CR 601.2b, 603.3, 118.9). */
@@ -1089,6 +1090,7 @@ export interface CardProfile {
   readonly cyclingSearches: readonly CyclingSearchAbility[];
   /** Echo cost paid at the controller's next upkeep (CR 702.30). */
   readonly echoCost: ManaCost | null;
+  readonly wardCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
   /** Additional life payment bundled into a Flashback cost (CR 118.8). */
@@ -5536,9 +5538,12 @@ export function cardProfile(card: CardData): CardProfile {
   const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
   const affinityMatch = /^Affinity for (.+)$/im.exec(text);
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
+  const wardMatch = /^Ward\s+((?:\{[^}]+\})+)\s*$/im.exec(text);
+  const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
-    .replace(/^Affinity for .+$/gim, ""));
+    .replace(/^Affinity for .+$/gim, "")
+    .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
   const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
@@ -5776,6 +5781,7 @@ export function cardProfile(card: CardData): CardProfile {
     cyclingCost,
     cyclingSearches,
     echoCost: recognized.echoCost ?? null,
+    wardCost,
     flashbackLifeCost,
     additionalLifeCost,
     additionalLifeCostVariable,
