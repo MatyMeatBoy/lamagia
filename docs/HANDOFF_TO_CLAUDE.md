@@ -6273,3 +6273,70 @@ also being a creature) — proving the subtype filter, not a card-type
 filter, is what's actually being checked; choosing the Elf puts it
 into hand. Validation: full **907** rules tests green (1 new), `npm
 run check` across all four workspaces, 200/200 simulated games.
+
+## Wild Pair: a non-self "cast from hand" condition, plus a real bug fix for Angel of the Dire Hour (2026-09-06)
+
+Wild Pair ("Whenever a creature enters, if you cast it from your
+hand, you may search your library for a creature card with the same
+total power and toughness, put it onto the battlefield, then
+shuffle.") needed three separate pieces. First, a new trigger subject
+`"any-creature"` for the `enters-battlefield` event — every existing
+template either watched the SOURCE's own entry (`"self"`) or excluded
+it (`"another-creature"`/`"another-creature-you-control"`); Wild
+Pair's "a creature enters" with no "another" qualifier watches every
+creature entering, including under an opponent's control, mirroring
+the sibling `"any-creature"` subject that already existed for `dies`
+and `deals-combat-damage-to-player`. Second, a new `search-library`
+field `exactTotalPowerToughness: "entering-creature"`, resolved by
+reading the triggering creature's LIVE power/toughness via
+`object.trigger?.eventPermanentId` (already populated generically for
+any event carrying a `permanentId`) and requiring an EXACT sum match
+against library candidates — wired into the `triggerSearch` filtering
+block (the trigger-side duplicate of `search-library`'s option
+computation, touched several times already this session).
+
+Third, and the more consequential find: implementing "if you cast it
+from your hand" for a NON-"self" subject exposed that the EXISTING
+`cast-from-hand` condition (built for Angel of the Dire Hour's
+self-referential "if you cast IT [itself] from your hand") checks
+`watcher.castFromHand` — correct only when the ability's source and
+the event's own permanent are the same object. For Wild Pair, "it"
+refers to the ENTERING creature (a different permanent than Wild Pair
+itself), so reusing the same condition would have checked whether
+WILD PAIR was cast from hand, not the entering creature. Added a
+sibling condition kind `event-permanent-cast-from-hand`, checked via
+`findPermanent(state, event.permanentId)` instead of `watcher`, and
+made the PARSER choose between the two kinds based on the trigger's
+own `subject` (`"self"` → `cast-from-hand`, anything else →
+`event-permanent-cast-from-hand`).
+
+Investigating this also surfaced a genuine, independent, and more
+serious latent bug: `castFromHandCondition`'s captured remainder text
+was computed but NEVER folded into the `effectText` selection
+ternary that strips other sibling riders (`power`/`subtype`/`revolt`/
+etc.) — meaning ANY card using "if you cast it from your hand," (not
+just Wild Pair) kept the literal rider prefix stuck to its effect
+text, which then failed to match any recognized effect template. A
+direct probe confirmed this: Angel of the Dire Hour ("if you cast it
+from your hand, exile all attacking creatures") came back with ZERO
+triggers and `fullyImplemented: false`, despite the `cast-from-hand`
+condition itself supposedly being "already built." Folded
+`castFromHandCondition` into the same ternary as its siblings,
+fixing this for every card using the rider, not just the two named
+here.
+
+Verified **+6** in the export count (10,999 → 11,005 — Wild Pair,
+Angel of the Dire Hour, and at least one more catalog card sharing
+this exact rider); `docs/SET_COVERAGE.md` stays at its already-stale
+33.2% (recorded) / 33.4% (true) split for the same oracle-id-cap
+reason as the three entries above. Scenario-tested: with Wild Pair on
+the battlefield and a Grizzly Bears (2/2, total 4) in hand, casting
+it opens Wild Pair's search directly (its own "you may" resolves
+through the search's own decline option, the same pattern already
+observed for Recruiter of the Guard, rather than a separate outer
+optional-trigger step) offering ONLY a staged Bear Twin (2/2, total
+4) and excluding a staged Big Guy (5/5, total 10) despite it also
+being a creature card — proving the exact-sum match, not a type-only
+filter, is what's actually checked. Validation: full **908** rules
+tests green (1 new), `npm run check` across all four workspaces,
+200/200 simulated games.

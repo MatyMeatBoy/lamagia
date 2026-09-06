@@ -2539,6 +2539,14 @@ function raiseEvent(
       if (definition.requiresEvoked && !watcher.evoked) continue;
       // "if you cast it from your hand" gate (Angel of the Dire Hour, CR 601.2a).
       if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
+      // Wild Pair: "it" refers to the ENTERING creature (the event's own
+      // permanent), not the ability's source watcher - unlike Angel of the
+      // Dire Hour's self-referential version above.
+      if (definition.condition?.kind === "event-permanent-cast-from-hand") {
+        const enteringId = "permanentId" in event ? event.permanentId : null;
+        const entering = enteringId ? findPermanent(state, enteringId) : null;
+        if (!entering?.castFromHand) continue;
+      }
       // "This ability triggers only once each turn" (CR 603.3): block a
       // re-trigger for the rest of the turn once this exact source's exact
       // trigger definition has already fired once.
@@ -6022,7 +6030,16 @@ function resolveTop(state: GameState): GameState {
                   : true;
           const toughnessMatches = triggerSearch.maxToughness === undefined
             || (Number.isFinite(Number(candidateProfile.toughness)) && Number(candidateProfile.toughness) <= triggerSearch.maxToughness);
-          return typeMatches && subtypeMatches && colorMatches && manaValueMatches && toughnessMatches;
+          const totalPTMatches = triggerSearch.exactTotalPowerToughness === undefined ? true : (() => {
+            const enteringId = object.trigger?.eventPermanentId;
+            const entering = enteringId ? findPermanent(next, enteringId) : null;
+            if (!entering) return false;
+            const targetSum = powerOf(entering, next) + toughnessOf(entering, next);
+            const candidatePower = Number(candidateProfile.power);
+            const candidateToughness = Number(candidateProfile.toughness);
+            return Number.isFinite(candidatePower) && Number.isFinite(candidateToughness) && candidatePower + candidateToughness === targetSum;
+          })();
+          return typeMatches && subtypeMatches && colorMatches && manaValueMatches && toughnessMatches && totalPTMatches;
         })
         .map((card) => card.instance_id);
       if (!searchOptions.length) {

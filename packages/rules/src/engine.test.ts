@@ -7432,6 +7432,32 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.exile.some((card) => card.name === "Tiny Viper")).toBe(true);
   });
 
+  it("only offers Wild Pair's total-power-and-toughness match for a creature cast from hand", () => {
+    const wildPair = make({ name: "Wild Pair", type_line: "Enchantment", mana_cost: "{3}{G}{G}", cmc: 5, oracle_text: "Whenever a creature enters, if you cast it from your hand, you may search your library for a creature card with the same total power and toughness, put it onto the battlefield, then shuffle." });
+    const bearTwin = make({ name: "Bear Twin", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
+    const bigGuy = make({ name: "Big Guy", type_line: "Creature — Giant", mana_cost: "{5}", cmc: 5, power: "5", toughness: "5" });
+    const profile = profileOf(wildPair);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "any-creature", optional: true,
+      condition: { kind: "event-permanent-cast-from-hand" },
+      effect: { kind: "search-library", types: ["Creature"], exactTotalPowerToughness: "entering-creature", destination: "battlefield" }
+    });
+    let game = readyToCast([BEAR()], [wildPair, FOREST(), FOREST()]);
+    game = stage(game, 0, () => ({ library: toHand(0, [bigGuy, bearTwin], "wild-pair-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    // Like Recruiter of the Guard's own optional ETB search, the "you may"
+    // is resolved through the search choice's own decline option rather
+    // than a separate outer optional-trigger accept/decline step.
+    expect(game.pendingChoice).toMatchObject({ type: "search-library" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    const offered = game.players[0]!.library.filter((card) => choice.optionIds.includes(card.instance_id)).map((card) => card.name);
+    // Bear Twin (2/2, total 4) matches Grizzly Bears' (2/2) total; Big Guy
+    // (5/5, total 10) doesn't, even though it's also a creature card.
+    expect(offered).toEqual(["Bear Twin"]);
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Bear Twin" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Bear Twin")).toBe(true);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({

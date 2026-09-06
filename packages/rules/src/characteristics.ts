@@ -838,6 +838,8 @@ export type SpellEffect =
       readonly exactManaValue?: boolean;
       /** "...creature card with toughness N or less" (Recruiter of the Guard): a printed-toughness cap, unrelated to mana value. */
       readonly maxToughness?: number;
+      /** "...creature card with the same total power and toughness" (Wild Pair): the sum must equal the entering creature's, read live at resolution via the trigger's own eventPermanentId. */
+      readonly exactTotalPowerToughness?: "entering-creature";
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -1006,6 +1008,8 @@ export interface TriggerDefinition {
     /** Revolt (CR 702.129a): a permanent the controller controlled left the battlefield this turn. */
     | { readonly kind: "revolt" }
     | { readonly kind: "cast-from-hand" }
+    /** Wild Pair: "it" refers to the entering creature (the event's own permanent), not the ability's source. */
+    | { readonly kind: "event-permanent-cast-from-hand" }
     | { readonly kind: "attacking-alone" }
     /** "draws their second card each turn" (Krang, Faerie Mastermind): gated on the per-turn draw count, not just any draw. */
     | { readonly kind: "second-draw-this-turn" }
@@ -2718,6 +2722,14 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       reveal: false
     };
   }
+  // "...creature card with the same total power and toughness, put it onto
+  // the battlefield, then shuffle" (Wild Pair): the target sum is read live
+  // from the entering creature at resolution (eventPermanentId), not from
+  // this spell's own casting.
+  const sameTotalPT = /^Search your library for a creature card with the same total power and toughness, put it onto the battlefield, then shuffle\.?$/i.exec(text);
+  if (sameTotalPT) {
+    return { kind: "search-library", types: ["Creature"], exactTotalPowerToughness: "entering-creature", destination: "battlefield", reveal: false };
+  }
   // "...card with mana value less than or equal to the number of lands you
   // control..." (Beseech the Queen): the cap is a live board count, not a
   // paid {X}, read at resolution the same way `landsYouControl` scaling
@@ -3072,6 +3084,11 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // not just the controller's own. Must stay after the "...under your
   // control" patterns above so those remain the first match when present.
   { event: "enters-battlefield", subject: "another-creature", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  // Wild Pair: "Whenever a creature enters," with no "another"/"you control"
+  // qualifier watches every creature entering, including under an
+  // opponent's control (CR 603.2). Must stay after the more specific
+  // patterns above so those remain the first match when present.
+  { event: "enters-battlefield", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
   { event: "dies", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+dies,?\s*(.+)$/i },
@@ -5546,7 +5563,7 @@ function recognizeText(text: string): RecognizedText {
       // since the resolved effect always acts on ITS controller regardless
       // of who is doing the choosing (Pattern of Rebirth).
       const eventControllerEffectText = eventControllerChoice?.[1]?.trim().replace(/\btheir\b/gi, "your");
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? revoltCondition?.[1]?.trim() ?? eventControllerEffectText ?? triggerEffectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? revoltCondition?.[1]?.trim() ?? castFromHandCondition?.[1]?.trim() ?? eventControllerEffectText ?? triggerEffectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
@@ -5609,7 +5626,13 @@ function recognizeText(text: string): RecognizedText {
           ...(countCondition && countConditionAmount !== null ? { condition: { kind: "controlled-subtype-at-least" as const, subtype: countCondition[2]!, amount: countConditionAmount } } : {}),
           ...(diedCondition ? { condition: { kind: "creature-died-this-turn" as const } } : {}),
           ...(revoltCondition ? { condition: { kind: "revolt" as const } } : {}),
-          ...(castFromHandCondition ? { condition: { kind: "cast-from-hand" as const } } : {}),
+          // "It" is self-referential only when the trigger's own subject is
+          // "self" (Angel of the Dire Hour); for any other subject (Wild
+          // Pair's "a creature enters, if you cast IT...") "it" refers to
+          // the event's own permanent, not the ability's source.
+          ...(castFromHandCondition
+            ? { condition: triggered.subject === "self" ? { kind: "cast-from-hand" as const } : { kind: "event-permanent-cast-from-hand" as const } }
+            : {}),
           ...(sourceUntappedCondition ? { condition: { kind: "source-untapped" as const } } : {}),
           ...(sourceTappedCondition ? { condition: { kind: "source-tapped" as const } } : {}),
           ...(commandZoneCondition ? { condition: { kind: "source-in-command-zone" as const } } : {}),
