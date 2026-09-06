@@ -5337,8 +5337,8 @@ function recognizeText(text: string): RecognizedText {
     // "Whenever a <Subtype> you control attacks, X" (Atarka, World Render): a
     // tribal filter on the attacking creature itself, distinct from a
     // board-count condition.
-  const subtypeAttacks = /^whenever\s+an?\s+([A-Za-z][A-Za-z'’-]*)\s+you\s+control\s+attacks,?\s*(.+)$/i.exec(line);
-  if (subtypeAttacks && !/^(?:creature|permanent|player)$/i.test(subtypeAttacks[1]!)) {
+    const subtypeAttacks = /^whenever\s+an?\s+([A-Za-z][A-Za-z'’-]*)\s+you\s+control\s+attacks,?\s*(.+)$/i.exec(line);
+    if (subtypeAttacks && !/^(?:creature|permanent|player)$/i.test(subtypeAttacks[1]!)) {
       const rec = recognizeSentence(subtypeAttacks[2]!);
       if (rec) {
         const effect = rec.effect.kind === "grant-target-creature-keyword"
@@ -5443,8 +5443,8 @@ function recognizeText(text: string): RecognizedText {
     // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
     const triggerLine = (leavesLine !== line ? leavesLine : line)
       .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
-      const triggeredRaw = matchTriggerLine(triggerLine);
-      if (triggeredRaw) {
+    const triggeredRaw = matchTriggerLine(triggerLine);
+    if (triggeredRaw) {
       // "This ability triggers only once each turn." (Bident of Thassa and
       // ~139 catalog cards): a trailing rider on the trigger's own effect
       // text, stripped the same way other trailing riders are extracted
