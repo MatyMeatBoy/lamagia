@@ -30,6 +30,11 @@ catalog. The exporter records per-definition image counts and missing sets so a
 future catalog refresh turns artwork gaps into explicit work items rather than
 silent broken frames.
 
+`rulesDataStatus` distinguishes tokens with explicit Oracle text from
+predefined/no-text tokens. The latter still require the engine's CR 111.10
+definition when their built-in abilities matter (for example Treasure, Food,
+Clue, and Blood); artwork completeness does not imply rules completeness.
+
 The rules engine carries the creating card's `set_code` through every generated
 token, including copy, amass, replacement, and targeted-player effects. The
 match server uses that value only for artwork selection; it never affects rules
