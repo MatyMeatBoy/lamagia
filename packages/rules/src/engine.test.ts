@@ -8572,6 +8572,19 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.life).toBe(37);
   });
 
+  it("restricts a 'target opponent loses life and you gain life' drain to opponents only", () => {
+    const drain = make({ name: "Test Drain", type_line: "Sorcery", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Target opponent loses 3 life and you gain 3 life." });
+    const profile = profileOf(drain);
+    expect(profile).toMatchObject({
+      targetKind: "opponent",
+      effects: [{ kind: "compound", effects: [{ kind: "lose-life-target-player", amount: 3 }, { kind: "gain-life", amount: 3 }] }]
+    });
+    let game = readyToCast([drain], [SWAMP(), SWAMP()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    expect(game.players[0]!.life).toBe(43);
+    expect(game.players[1]!.life).toBe(37);
+  });
+
   it("lets the target player both draw and pay the life for a Sign in Blood effect", () => {
     const profile = profileOf(SIGN_IN_BLOOD());
     expect(profile.effects[0]).toMatchObject({

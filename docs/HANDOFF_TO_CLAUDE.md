@@ -6478,3 +6478,39 @@ optional pay-{1} trigger; accepting it correctly moves the caster's
 life from 40 to 41 and the opponent's from 40 to 39 in the same
 resolution. Validation: full **912** rules tests green (1 new), `npm
 run check` across all four workspaces, 200/200 simulated games.
+
+## Zimone and Dina: "target opponent" sibling for an existing drain template (2026-09-06)
+
+Zimone and Dina's first line ("Whenever you draw your second card
+each turn, target opponent loses 2 life and you gain 2 life.") turned
+out to already have its TRIGGER half fully working —
+`second-draw-this-turn`'s "whenever you draw your second card each
+turn," template already existed and matched exactly — but its EFFECT
+half didn't: an existing template already handled "Target player
+loses N life and you gain N life" (a `compound` of
+`lose-life-target-player` + `gain-life`), but Zimone and Dina says
+"target OPPONENT," not "target player," and no sibling regex
+accepted that word. Widened the existing regex to accept
+`(player|opponent)` and route to `targetKind: "opponent"` versus
+`"player"` accordingly — the resolved effect itself needed no changes
+at all, since `lose-life-target-player` already just reads whichever
+player `Target` was chosen at declaration, regardless of which
+`TargetKind` restricted the CHOICE to get there. The card's SECOND
+ability ("{T}, Sacrifice another creature: Draw a card. You may put a
+land card from your hand onto the battlefield tapped. If you control
+eight or more lands, repeat this process once.") is a genuinely new,
+more involved mechanic (a conditionally-repeated multi-step process)
+and was left alone as clearly out of scope for this narrow fix — the
+card as a whole does not become `fullyImplemented`, but the widened
+template still counts every OTHER catalog card using the "target
+opponent" phrasing of this drain effect on its own. Verified **+14**
+in the export count (11,071 → 11,085); `docs/SET_COVERAGE.md` stays
+at its already-stale 33.2% (recorded) / 33.7% (true) split — holding
+at 33.7% specifically since this delta didn't cross another rounding
+boundary. Scenario-tested: a standalone "Target opponent loses 3 life
+and you gain 3 life" sorcery's `targetKind` is `"opponent"` (not the
+unrestricted `"player"` the sibling template would give), and casting
+it moves the caster from 40 to 43 life and the target from 40 to 37
+in the same resolution. Validation: full **913** rules tests green (1
+new), `npm run check` across all four workspaces, 200/200 simulated
+games.

@@ -3695,12 +3695,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // is always defined by a card-specific source (sacrificed creature's power,
   // Domain, etc.), not a spell's own {X} cost, so it is left pending instead
   // of silently resolving to zero.
-  if ((match = /^Target player loses (\w+) life and you gain (\w+) life$/i.exec(text))) {
-    const lifeLost = toNumber(match[1]);
-    const lifeGained = toNumber(match[2]);
+  if ((match = /^Target (player|opponent) loses (\w+) life and you gain (\w+) life$/i.exec(text))) {
+    const lifeLost = toNumber(match[2]);
+    const lifeGained = toNumber(match[3]);
     if (lifeLost !== null && lifeGained !== null) return {
       effect: { kind: "compound", effects: [{ kind: "lose-life-target-player", amount: lifeLost }, { kind: "gain-life", amount: lifeGained }] },
-      target: "player"
+      target: /^opponent$/i.test(match[1]!) ? "opponent" : "player"
     };
   }
   if ((match = /^Each player loses (\w+) life$/i.exec(text))) {
