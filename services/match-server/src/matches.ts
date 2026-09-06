@@ -193,7 +193,7 @@ export function setAutoPass(matchId: string, token: string | undefined, autoPass
   // this settle call, a new match stays visibly parked in upkeep until a click.
   match.state = settle(match.state);
   driveBots(match);
-  return { ...projectGame(match.state, seat), undoAvailable: false };
+  return enrichTokenArt({ ...projectGame(match.state, seat), undoAvailable: false });
 }
 
 /** Undo only the latest safe mana activation for the authenticated seat. */
@@ -206,7 +206,7 @@ export function undoInMatch(matchId: string, token: string | undefined, version:
   match.state = restored;
   match.undoHistory = match.undoHistory.slice(0, -1);
   match.lastActivityAt = Date.now();
-  return { ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) };
+  return enrichTokenArt({ ...projectGame(match.state, seat), undoAvailable: canUndo(match, seat) });
 }
 
 export function matchSummary(match: MatchRecord) {

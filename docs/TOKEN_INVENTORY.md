@@ -23,3 +23,8 @@ Do not count token printings as independent Oracle cards. Do preserve every
 printing and set relation. A token created by an edition-specific card should
 prefer that edition's matching token printing; otherwise use the newest regular
 paper token with the same normalized definition.
+
+The rules engine carries the creating card's `set_code` through every generated
+token, including copy, amass, replacement, and targeted-player effects. The
+match server uses that value only for artwork selection; it never affects rules
+identity or token behavior.

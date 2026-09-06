@@ -3351,7 +3351,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           scryfall_id: `copytoken:${object.id}:${index}`,
           instance_id: `copytoken:${object.id}:${index}`,
           owner: controller,
-          token: true
+          token: true,
+          token_source_set_code: original.card.set_code
         };
         next = putOntoBattlefield(next, controller, copy, false);
       }
@@ -3860,7 +3861,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         power: "0",
         toughness: "0",
         colors: ["B"],
-        keywords: []
+        keywords: [],
+        token_source_set_code: object.card.set_code
       };
       const next = putOntoBattlefield(state, controller, token, false, false, false, false, false, 0, [], [{ kind: "+1/+1", amount: effect.amount }]);
       return logged(next, controller, `${playerAt(next, controller).name} amasa ${effect.amount} (crea un token de Army).`);
@@ -4333,7 +4335,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         scryfall_id: `token:${object.id}:pongify`, instance_id: `token:${object.id}:pongify`, owner, token: true,
         name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
         power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
-        colors: spec.colors, keywords: spec.keywords
+        colors: spec.colors, keywords: spec.keywords,
+        token_source_set_code: object.card.set_code
       };
       next = putOntoBattlefield(next, owner, token, false, spec.tapped);
       return logged(next, controller, `${permanent.card.name} es destruida; su controlador crea ${spec.name}.`);
@@ -5100,7 +5103,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           scryfall_id: `token:${object.id}:offer:${index}`, instance_id: `token:${object.id}:offer:${index}`, owner, token: true,
           name: spec.name, type_line: spec.typeLine, mana_cost: "", cmc: 0, oracle_text: spec.keywords.join(", "),
           power: spec.power === null ? null : String(spec.power), toughness: spec.toughness === null ? null : String(spec.toughness),
-          colors: spec.colors, keywords: spec.keywords
+          colors: spec.colors, keywords: spec.keywords,
+          token_source_set_code: object.card.set_code
         };
         next = putOntoBattlefield(next, owner, token, false, spec.tapped);
       }
@@ -5504,8 +5508,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           power: stat !== null ? String(stat) : effect.token.power === null ? null : String(effect.token.power),
           toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,
-          keywords: effect.token.keywords
-          , token_source_set_code: object.card.set_code
+          keywords: effect.token.keywords,
+          token_source_set_code: object.card.set_code
         };
         next = putOntoBattlefield(next, controller, token, false, effect.token.tapped);
       }
@@ -5532,8 +5536,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           power: stat !== null ? String(stat) : effect.token.power === null ? null : String(effect.token.power),
           toughness: stat !== null ? String(stat) : effect.token.toughness === null ? null : String(effect.token.toughness),
           colors: effect.token.colors,
-          keywords: effect.token.keywords
-          , token_source_set_code: object.card.set_code
+          keywords: effect.token.keywords,
+          token_source_set_code: object.card.set_code
         };
         next = putOntoBattlefield(next, recipient, token, false, effect.token.tapped);
       }
