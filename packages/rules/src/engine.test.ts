@@ -230,6 +230,10 @@ describe("smart counter response and safe mana undo", () => {
     expect(hasRealChoice(spell(game, 0), 0)).toBe(false);
     expect(hasRealChoice(spell(game, 1), 0)).toBe(true);
   });
+  it("never auto-passes an explicit pending choice", () => {
+    const game = { ...board(), pendingChoice: { type: "choose-color" as const, seat: 0 as SeatId, sourceId: "color", sourceCard: { ...BOLT(), instance_id: "color-source", owner: 0 as SeatId }, effect: { kind: "add-mana-any-color" as const }, variableValue: 0, exileSourceAfterResolution: false, sendSourceToGraveyard: false } };
+    expect(hasRealChoice(game, 0)).toBe(true);
+  });
   it("keeps uncounterable targets legal in full control but skips counter-only responses", () => {
     const game = spell(board(), 1, "This spell can't be countered.");
     expect(hasRealChoice(game, 0)).toBe(false);

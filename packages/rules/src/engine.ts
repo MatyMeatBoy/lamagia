@@ -10798,6 +10798,9 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
  * 602.1), while mana is still produced by the payment solver when needed.
  */
 export function hasRealChoice(state: GameState, seat: SeatId): boolean {
+  // A pending choice is already a hard stop. Do not let auto-pass inspect the
+  // surrounding priority window and skip an explicit decision (CR 117.1b).
+  if (state.pendingChoice?.seat === seat) return true;
   return legalActions(state, seat).some((entry) => {
     if (entry.action.type === "pass" || entry.action.type === "concede") return false;
     if (entry.action.type === "activate-mana") return false;
