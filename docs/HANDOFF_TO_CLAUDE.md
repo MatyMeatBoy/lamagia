@@ -3900,3 +3900,9 @@ The next near-complete rescan closed Nicol Bolas's damage-victim hand clause:
 by the event, rather than the source controller, and reuses the existing hand
 discard executor (CR 603.3d, 701.8). Current validation: **723 rules tests**,
 `npm run check`, and `git diff --check` pass.
+
+The rescan also closed Essence Extraction by extending the shared compound
+damage-plus-life primitive to a creature-only target; the target restriction
+is preserved while the gain-life half resolves normally (CR 609.3, 118.3).
+Current validation: **724 rules tests**, `npm run check`, and `git diff --check`
+pass.

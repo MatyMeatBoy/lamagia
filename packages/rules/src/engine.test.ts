@@ -355,6 +355,7 @@ const FLING = () => make({ name: "Fling", type_line: "Instant", mana_cost: "{1}{
 const TREASURE_HUNT = () => make({ name: "Treasure Hunt", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Reveal cards from the top of your library until you reveal a nonland card, then put all cards revealed this way into your hand.", oracle_id: "05079479-86a6-4041-a395-83d325b6ddb7", scryfall_id: "53af54e3-412f-4bc4-8a3a-911eaa62be27" });
 const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Psionic Blast deals 4 damage to any target and 2 damage to you.", oracle_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad", scryfall_id: "7f221ad6-7ec4-483d-a6b5-1456c95c1cad" });
 const CHANDRAS_OUTRAGE = () => make({ name: "Chandra's Outrage", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "Chandra's Outrage deals 4 damage to target creature and 2 damage to that creature's controller.", oracle_id: "47437865-0032-4f47-b0ab-034cc841bb84", scryfall_id: "47437865-0032-4f47-b0ab-034cc841bb84" });
+const ESSENCE_EXTRACTION = () => make({ name: "Essence Extraction", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Essence Extraction deals 3 damage to target creature and you gain 3 life.", oracle_id: "14363df6-ac0f-476a-bbd8-ce351de0babf", scryfall_id: "14363df6-ac0f-476a-bbd8-ce351de0babf" });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Flying\nAs long as this card is in your graveyard and you control an Island, creatures you control have flying.", scryfall_id: "232284f7-c623-4895-9ab9-8b1a39926830" });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
@@ -4672,6 +4673,19 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("reuses compound damage and life gain for a creature-only target", () => {
+    expect(profileOf(ESSENCE_EXTRACTION())).toMatchObject({
+      targetKind: "creature",
+      effects: [{ kind: "compound", effects: [{ kind: "damage-any-target", amount: 3 }, { kind: "gain-life", amount: 3 }] }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([ESSENCE_EXTRACTION()], [SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    expect(game.players[0]!.life).toBe(43);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
   });
 
   it("filters power-threshold creature targets before resolution", () => {
