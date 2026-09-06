@@ -7276,7 +7276,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         const outputTypes = ability.fixedProduces ?? Array.from({ length: ability.amount }, () => mana);
         actions.push({
           action: { type: "activate-mana", sourceId: card.instance_id, abilityIndex: ability.index, mana },
-          label: `${card.name}: Add ${outputTypes.map((type) => `{${type}}`).join("")}`,
+          label: `${card.name}: Activate mana — Add ${outputTypes.map((type) => `{${type}}`).join("")}`,
           cardId: card.instance_id,
           note: "Exile esta carta de tu mano como coste."
         });
@@ -8429,7 +8429,7 @@ function applyToggleTriggerYield(state: GameState, seat: SeatId, action: Extract
     if (action.enabled) current.add(action.sourceId); else current.delete(action.sourceId);
     return { ...player, yieldedTriggerSources: [...current] };
   }), seat, action.enabled
-    ? `${source.card.name}: se ignoran sus triggers opcionales.`
+    ? `${source.card.name}: se omiten sus triggers opcionales; los obligatorios y los del oponente siguen activos.`
     : `${source.card.name}: vuelven a mostrarse sus triggers opcionales.`);
 }
 
