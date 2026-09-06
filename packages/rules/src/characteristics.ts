@@ -3214,6 +3214,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       target: "none"
     };
   }
+  // "Draw two cards, then proliferate." (Tezzeret's Gambit): a plain
+  // sequence of two already-independent effects, not a new mechanic.
+  if ((match = /^Draw (\w+) cards?,\s*then proliferate$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return {
+      effect: { kind: "compound", effects: [{ kind: "draw", amount }, { kind: "proliferate" }] },
+      target: "none"
+    };
+  }
   if ((match = /^Draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
