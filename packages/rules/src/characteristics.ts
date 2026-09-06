@@ -312,6 +312,8 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Multiplier for a dynamic Aura bonus. */
+  readonly scaling?: "other-enchantments-on-battlefield";
   /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
   readonly characteristicSetting?: {
     readonly basePower: number;
@@ -1721,6 +1723,11 @@ function parseAuraModification(text: string): EquipmentModification | null {
       };
     }
     let match = /^enchanted creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
+    const counted = /^enchanted creature gets \+(\d+)\/\+(\d+) for each other enchantment on the battlefield$/i.exec(clean);
+    if (counted) return {
+      power: Number(counted[1]), toughness: Number(counted[2]), keywords: [],
+      scaling: "other-enchantments-on-battlefield", text: line.trim()
+    };
     if (match) {
       const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
@@ -4252,6 +4259,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever enchanted land is tapped for mana, its controller adds an additional \{[WUBRGC]\}\.?$/i.test(line)) continue;
+    if (/^Enchanted creature gets \+\d+\/\+\d+ for each other enchantment on the battlefield\.?$/i.test(line)) continue;
     if (/^~ doesn[’']t untap during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
