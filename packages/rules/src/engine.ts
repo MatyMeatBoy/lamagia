@@ -8211,13 +8211,14 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         ? state.players.flatMap((candidate) => combinations(candidate.graveyard.filter((card) => isCreature(cardProfile(card))), ability.exilesGraveyardCards!.amount))
         : ability.exilesGraveyardCard ? player.graveyard.map((card) => [card]) : [[]];
       const tapCreatures = ability.tapsCreature ? tapCostCandidates(state, seat, permanent, ability) : [undefined];
-      for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const discard of discards) for (const exileSet of exileSets) actions.push({
+      const crewSets = ability.tapCost ? combinations(crewCostCandidates(state, seat, permanent, ability.tapCost.amount), ability.tapCost.amount) : [[]];
+      for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const crewSet of crewSets) for (const discard of discards) for (const exileSet of exileSets) actions.push({
         action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index,
           ...(ability.manaCost?.hasVariable ? { variableValue } : {}),
           ...(sacrificeSet.length === 1 ? { sacrificeId: sacrificeSet[0]!.instance_id } : {}),
           ...(sacrificeSet.length > 1 ? { sacrificeIds: sacrificeSet.map((candidate) => candidate.instance_id) } : {}),
           ...(tapCreature ? { tapId: tapCreature.instance_id } : {}),
-          ...(ability.tapCost ? { tapIds: crewCostCandidates(state, seat, permanent, ability.tapCost.amount).slice(0, ability.tapCost.amount).map((candidate) => candidate.instance_id) } : {}),
+          ...(ability.tapCost ? { tapIds: crewSet.map((candidate) => candidate.instance_id) } : {}),
           ...(discard ? { discardCardId: discard.instance_id } : {}),
           ...(exileSet.length === 1 ? { exileCardId: exileSet[0]!.instance_id } : {}),
           ...(exileSet.length > 1 ? { exileCardIds: exileSet.map((card) => card.instance_id) } : {}) },
