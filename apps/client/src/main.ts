@@ -1061,8 +1061,9 @@ function cardActionMenuHtml(): string {
   const hasCast = entries.some((entry) => entry.action.type === "cast");
   const unavailableCast = !hasCast && entries.some((entry) => entry.action.type === "cycle")
     ? `<button class="action-row action-disabled" type="button" disabled><span><b>Lanzar ${escapeHtml(card.name)}</b><small>No disponible ahora; puedes ciclarla.</small></span></button>` : "";
+  const context = entries.length ? "Elige una acción o consulta la información de la carta." : "No hay acciones legales ahora; puedes consultar la información.";
   return `<section class="decision-overlay card-action-overlay" role="dialog" aria-modal="false" aria-label="Acciones de ${escapeHtml(card.name)}">
-    <header class="decision-head"><div><b>${escapeHtml(card.name)}</b><span>Elige una acción</span></div>
+    <header class="decision-head"><div><b>${escapeHtml(card.name)}</b><span>${context}</span></div>
       <button id="close-card-action-menu" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
     <div class="decision-list">${unavailableCast}${entries.map((entry) => {
       const index = view!.legalActions.indexOf(entry);
@@ -1557,7 +1558,7 @@ function showZone(seat: number, zone: "library" | "hand" | "graveyard" | "exile"
       ? `<div class="zone-cards">${cards.map((card) => `<button class="zone-card" type="button" data-zone-card="${escapeHtml(card.instance_id)}" title="Ver detalles de ${escapeHtml(card.name)}">${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}"/>` : ""}<b>${escapeHtml(card.name)}</b></button>`).join("")}</div>`
       : `<p class="zone-private">No hay cartas en esta zona.</p>`));
   document.querySelectorAll<HTMLButtonElement>("[data-zone-card]").forEach((button) => {
-    button.addEventListener("click", () => showCardDetail(button.dataset.zoneCard!));
+    button.addEventListener("click", () => openCardActionMenu(button.dataset.zoneCard!));
     button.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       openCardActionMenu(button.dataset.zoneCard!);
