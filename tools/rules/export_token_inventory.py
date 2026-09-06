@@ -87,6 +87,10 @@ def build(catalog: Path) -> dict[str, Any]:
         group["imageCount"] = len(usable_images)
         group["missingImageSets"] = sorted({str(printing.get("setCode") or "").lower() for printing in printings if not printing.get("imageNormal")})
         group["hasArtwork"] = bool(usable_images)
+        # A token's printed text is not automatically executable. Keep this
+        # signal separate from artwork so workers can prioritize rule-bearing
+        # tokens without redoing frame-only assignments.
+        group["rulesDataStatus"] = "rules-text-present" if text else "predefined-or-no-text"
         needs_work = bool(text and NON_TRIVIAL.search(text))
         group["needsRulesWork"] = needs_work
         group["cluster"] = cluster_for(text) if needs_work else "token-frame-only"
