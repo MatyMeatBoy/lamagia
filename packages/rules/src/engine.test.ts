@@ -411,6 +411,7 @@ const GLOBAL_INDESTRUCTIBLE = () => make({
 const HASTE_LORD = () => make({ name: "Haste Memory", type_line: "Creature — Goblin", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Creatures you control have haste." });
 const MAELSTROM_WANDERER = () => make({ name: "Maelstrom Wanderer", type_line: "Legendary Creature — Elemental", mana_cost: "{5}{G}{U}{R}", cmc: 8, power: "7", toughness: "5", oracle_text: "Creatures you control have haste.\nCascade\nCascade" });
 const VELA = () => make({ name: "Vela the Night-Clad", type_line: "Legendary Creature — Vampire", mana_cost: "{3}{U}{B}", cmc: 5, power: "4", toughness: "4", colors: ["U", "B"], keywords: ["Intimidate"], oracle_text: "Intimidate\nOther creatures you control have intimidate.\nWhenever Vela the Night-Clad or another creature you control leaves the battlefield, each opponent loses 1 life." });
+const LAQUATUS_CHAMPION = () => make({ name: "Laquatus's Champion", type_line: "Creature — Nightmare", mana_cost: "{4}{B}{B}", cmc: 6, power: "6", toughness: "3", oracle_text: "When Laquatus's Champion leaves the battlefield, that player gains 6 life." });
 const GAHIJI = () => make({ name: "Gahiji, Honored One", type_line: "Legendary Creature — Beast", mana_cost: "{3}{R}{G}{W}", cmc: 6, power: "4", toughness: "4", oracle_text: "Whenever a creature attacks one of your opponents or a planeswalker an opponent controls, that creature gets +2/+0 until end of turn." });
 const TERRA_RAVAGER = () => make({ name: "Terra Ravager", type_line: "Creature — Elemental", mana_cost: "{3}{R}", cmc: 4, power: "0", toughness: "4", oracle_text: "Whenever Terra Ravager attacks, it gets +X/+0 until end of turn, where X is the number of lands defending player controls.", oracle_id: "c7686204-0433-48cf-bbfb-5d32b6a25cc3" });
 const INFERNO_TITAN = () => make({ name: "Inferno Titan", type_line: "Creature — Giant", mana_cost: "{4}{R}{R}", cmc: 6, power: "6", toughness: "6", oracle_text: "Whenever Inferno Titan enters the battlefield or attacks, it deals 3 damage divided as you choose among one, two, or three targets.", oracle_id: "0ce47c8b-1e1f-463f-94f0-35ca00be89e6" });
@@ -3509,6 +3510,17 @@ describe("casting", () => {
     const target = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
     expect(game.players[1]!.life).toBe(39);
+  });
+  it("resolves a leaves-the-battlefield life gain for the event controller", () => {
+    const profile = profileOf(LAQUATUS_CHAMPION());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ event: "leaves-battlefield", subject: "self", effect: { kind: "gain-life-event-controller", amount: 6 } }]
+    });
+    let game = readyToCast([DESTROY_TARGET_CREATURE()], [SWAMP(), SWAMP(), LAQUATUS_CHAMPION()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: game.players[0]!.battlefield.find((permanent) => permanent.card.name === LAQUATUS_CHAMPION().name)!.instance_id }] });
+    expect(game.players[0]!.life).toBe(46);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === LAQUATUS_CHAMPION().name)).toBe(false);
   });
   it("supports static grants that exclude their source", () => {
     expect(profileOf(OTHER_FLYING_LORD()).staticKeywordGrants).toEqual([{ scope: "other-creatures-you-control", keyword: "flying" }]);

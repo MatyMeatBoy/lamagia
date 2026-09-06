@@ -2823,8 +2823,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^put a \+1\/\+1 counter on it\.?$/i.test(text)) {
     return { effect: { kind: "add-counter-triggered-creature", counter: "+1/+1", amount: 1 }, target: "none" };
   }
-  if (/^its controller gains (\w+) life\.?$/i.test(text)) {
-    const amount = toNumber(/^its controller gains (\w+) life\.?$/i.exec(text)![1]!);
+  const eventControllerLifeGain = /^(?:its controller|that player) gains (\w+) life\.?$/i.exec(text);
+  if (eventControllerLifeGain) {
+    const amount = toNumber(eventControllerLifeGain[1]!);
     if (amount !== null) return { effect: { kind: "gain-life-event-controller", amount }, target: "none" };
   }
   if ((match = /^(?:~|This spell) deals damage equal to the number of (creatures|artifacts|enchantments|lands) you control to any target$/i.exec(text))) {
@@ -4275,8 +4276,8 @@ function recognizeText(text: string): RecognizedText {
     // it goes on the stack (CR 603.3d), so it never leaks into the card-level
     // `targetKind` a spell uses when it is cast.
     // "When ~ enters or is put into a graveyard from the battlefield, X" is two
-    // triggers on one line (Ichor Wellspring). "leaves the battlefield" is
-    // approximated as the dies event.
+    // triggers on one line (Ichor Wellspring). "leaves the battlefield" is a
+    // distinct zone-change event (CR 603.6c-d), not the dies event (CR 700.4).
     const entersOrDies = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i.exec(line);
     if (entersOrDies) {
       const rec = recognizeSentence(entersOrDies[1]!.replace(/^you\s+may\s+/i, "").replace(/^it\s+(deals|gets|gains)/i, "~ $1"));
@@ -4489,8 +4490,6 @@ function recognizeText(text: string): RecognizedText {
       });
       continue;
     }
-    const linkedLeavesReturn = /~\s+leaves\s+the\s+battlefield,?\s+return\s+the\s+exiled\s+card\s+to\s+the\s+battlefield\s+under\s+its\s+owner[\x27\u2019]?s\s+control/i.test(line);
-    const leavesLine = linkedLeavesReturn ? line : line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
     // Modern Oracle splits Bane of Progress's dependent instruction into a
     // second sentence. Keep it attached to the ETB trigger so the existing
     // counted sweep primitive remains reusable across printings (CR 603.2,
@@ -4519,7 +4518,7 @@ function recognizeText(text: string): RecognizedText {
     // Ability words are presentation labels, not part of the trigger grammar.
     // Normalize both current and legacy-import separators here as a second
     // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
-    const triggerLine = (leavesLine !== line ? leavesLine : line)
+    const triggerLine = line
       .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
     const triggered = matchTriggerLine(triggerLine);
     if (triggered) {
