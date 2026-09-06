@@ -1,5 +1,11 @@
 # Worker commit audit
 
+Current intake gate: `audit_worker_commit.py` rejects more than 600 total
+deletions or 300 deletions under `packages/rules`. This protects the published
+gameplay tree from stale worker rebases; a passing rules scenario alone does
+not authorize a broad rewrite. Resubmit focused source/test hunks from the
+current integration SHA.
+
 Run the read-only gate before integrating any external worker commit:
 
 ```powershell
