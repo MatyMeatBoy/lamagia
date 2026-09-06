@@ -6180,6 +6180,17 @@ function resolveTop(state: GameState): GameState {
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
       return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en su mano.`);
     }
+    // Same deterministic policy for "up to N ... cards, put them into your
+    // graveyard, then shuffle" (Buried Alive).
+    if (search.count && search.count > 1 && search.destination === "graveyard") {
+      const picked = options.slice(0, search.count);
+      const pickedSet = new Set(picked);
+      const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
+      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
+      next = withPlayer(next, object.controller, (player) => ({ ...player, graveyard: [...player.graveyard, ...fetched] }));
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
+      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en su cementerio.`);
+    }
     return {
       ...next,
       pendingChoice: {
