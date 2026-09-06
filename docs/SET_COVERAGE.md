@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,114** · cobertura: **30.7%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,120** · cobertura: **30.7%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -102,8 +102,8 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | 2002-01-01 | Arena League 2002 (`PAL02`) | promos | arena-2002 | other | 5 | 4 | 1 | 80.0% |
 | 2002-01-01 | Friday Night Magic 2002 (`F02`) | promos | fnm-2002 | other | 12 | 8 | 4 | 66.7% |
 | 2002-01-01 | Judge Gift Cards 2002 (`G02`) | promos | judge-2002 | other | 2 | 1 | 1 | 50.0% |
-| 2002-01-26 | Torment Promos (`PTOR`) | promos | torment | other | 1 | 0 | 1 | 0.0% |
-| 2002-02-04 | Torment (`TOR`) | expansion | 2000s | main | 143 | 20 | 123 | 14.0% |
+| 2002-01-26 | Torment Promos (`PTOR`) | promos | torment | other | 1 | 1 | 0 | 100.0% |
+| 2002-02-04 | Torment (`TOR`) | expansion | 2000s | main | 143 | 22 | 121 | 15.4% |
 | 2002-05-18 | Judgment Promos (`PJUD`) | promos | judgment | other | 1 | 0 | 1 | 0.0% |
 | 2002-05-27 | Judgment (`JUD`) | expansion | 2000s | main | 143 | 28 | 115 | 19.6% |
 | 2002-07-01 | Hobby Japan Promos (`JP1`) | promos | hobby-japan | other | 5 | 1 | 4 | 20.0% |
@@ -122,7 +122,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 194 | 148 | 56.7% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
 | 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 123 | 168 | 42.3% |
-| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 599 | 2090 | 22.3% |
+| 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 600 | 2089 | 22.3% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
 | 2004-01-01 | Judge Gift Cards 2004 (`G04`) | promos | judge-2004 | other | 6 | 0 | 6 | 0.0% |
@@ -310,7 +310,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | 2014-05-30 | Modern Event Deck 2014 (`MD1`) | deck-products | modern-event-deck-2014 | other | 26 | 11 | 15 | 42.3% |
 | 2014-06-06 | Conspiracy (`CNS`) | conspiracy | conspiracy | other | 210 | 53 | 157 | 25.2% |
 | 2014-06-06 | Conspiracy Promos (`PCNS`) | conspiracy | conspiracy | other | 1 | 0 | 1 | 0.0% |
-| 2014-06-16 | Vintage Masters (`VMA`) | masters-remastered | vintage-masters | other | 325 | 139 | 186 | 42.8% |
+| 2014-06-16 | Vintage Masters (`VMA`) | masters-remastered | vintage-masters | other | 325 | 140 | 185 | 43.1% |
 | 2014-07-08 | San Diego Comic-Con 2014 (`PS14`) | promos | comic-con-2014 | other | 6 | 0 | 6 | 0.0% |
 | 2014-07-09 | Duels of the Planeswalkers 2015 Promos (`PDP15`) | promos | duels-of-the-planeswalkers-2015 | other | 2 | 0 | 2 | 0.0% |
 | 2014-07-17 | Magic 2015 Promos (`PM15`) | promos | magic-2015 | other | 13 | 2 | 11 | 15.4% |
@@ -402,7 +402,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | 2018-01-19 | Rivals of Ixalan (`RIX`) | expansion | ixalan | main | 205 | 66 | 139 | 32.2% |
 | 2018-01-19 | Rivals of Ixalan Promos (`PRIX`) | promos | rivals-of-ixalan | other | 63 | 4 | 59 | 6.3% |
 | 2018-01-25 | Nationals Promos (`PNAT`) | promos | nationals | other | 1 | 1 | 0 | 100.0% |
-| 2018-03-16 | Masters 25 (`A25`) | masters-remastered | masters-25 | other | 249 | 105 | 144 | 42.2% |
+| 2018-03-16 | Masters 25 (`A25`) | masters-remastered | masters-25 | other | 249 | 106 | 143 | 42.6% |
 | 2018-04-06 | Duel Decks: Elves vs. Inventors (`DDU`) | duel-decks | duel-decks-elves-vs-inventors | other | 71 | 36 | 35 | 50.7% |
 | 2018-04-27 | Dominaria (`DOM`) | expansion | dominaria | main | 265 | 84 | 181 | 31.7% |
 | 2018-04-27 | Dominaria Promos (`PDOM`) | promos | dominaria | other | 93 | 19 | 74 | 20.4% |
@@ -793,7 +793,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | duel-decks | duel-decks-zendikar-vs-eldrazi | 1 | 67 | 35 | 32 | 52.2% |
 | eternal | 2020s | 6 | 537 | 143 | 394 | 26.6% |
 | expansion | 1990s | 11 | 1573 | 373 | 1200 | 23.7% |
-| expansion | 2000s | 19 | 3082 | 698 | 2384 | 22.6% |
+| expansion | 2000s | 19 | 3082 | 700 | 2382 | 22.7% |
 | expansion | 2010s | 14 | 2735 | 734 | 2001 | 26.8% |
 | expansion | 2020s | 17 | 3738 | 641 | 3097 | 17.1% |
 | expansion | alara | 2 | 379 | 154 | 225 | 40.6% |
@@ -880,7 +880,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | masters-remastered | innistrad-remastered | 1 | 300 | 68 | 232 | 22.7% |
 | masters-remastered | kaladesh-remastered | 1 | 292 | 60 | 232 | 20.5% |
 | masters-remastered | magic-duel-masters | 1 | 4 | 3 | 1 | 75.0% |
-| masters-remastered | masters-25 | 1 | 249 | 105 | 144 | 42.2% |
+| masters-remastered | masters-25 | 1 | 249 | 106 | 143 | 42.6% |
 | masters-remastered | masters-edition | 1 | 185 | 52 | 133 | 28.1% |
 | masters-remastered | masters-edition-ii | 1 | 245 | 70 | 175 | 28.6% |
 | masters-remastered | masters-edition-iii | 1 | 220 | 94 | 126 | 42.7% |
@@ -900,7 +900,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | masters-remastered | time-spiral-remastered | 2 | 413 | 111 | 302 | 26.9% |
 | masters-remastered | ultimate-masters | 1 | 254 | 87 | 167 | 34.3% |
 | masters-remastered | universes-within | 1 | 30 | 0 | 30 | 0.0% |
-| masters-remastered | vintage-masters | 1 | 325 | 139 | 186 | 42.8% |
+| masters-remastered | vintage-masters | 1 | 325 | 140 | 185 | 43.1% |
 | planechase | planechase | 1 | 146 | 74 | 72 | 50.7% |
 | planechase | planechase-2012 | 1 | 136 | 52 | 84 | 38.2% |
 | planechase | planechase-anthology | 1 | 136 | 52 | 84 | 38.2% |
@@ -1072,7 +1072,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | promos | magic-2013 | 1 | 6 | 3 | 3 | 50.0% |
 | promos | magic-2014 | 1 | 6 | 1 | 5 | 16.7% |
 | promos | magic-2015 | 1 | 13 | 2 | 11 | 15.4% |
-| promos | magic-online | 1 | 2689 | 599 | 2090 | 22.3% |
+| promos | magic-online | 1 | 2689 | 600 | 2089 | 22.3% |
 | promos | magic-origins | 1 | 43 | 7 | 36 | 16.3% |
 | promos | magic-premiere-shop-2005 | 1 | 5 | 5 | 0 | 100.0% |
 | promos | magic-premiere-shop-2006 | 1 | 5 | 5 | 0 | 100.0% |
@@ -1163,7 +1163,7 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 | promos | theros-beyond-death | 1 | 68 | 8 | 60 | 11.8% |
 | promos | throne-of-eldraine | 1 | 68 | 9 | 59 | 13.2% |
 | promos | time-spiral | 1 | 3 | 1 | 2 | 33.3% |
-| promos | torment | 1 | 1 | 0 | 1 | 0.0% |
+| promos | torment | 1 | 1 | 1 | 0 | 100.0% |
 | promos | two-headed-giant-tournament | 1 | 1 | 1 | 0 | 100.0% |
 | promos | ugin-s-fate | 1 | 26 | 1 | 25 | 3.8% |
 | promos | unhinged | 1 | 1 | 0 | 1 | 0.0% |
@@ -7900,10 +7900,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 
 - [ ] Tradewind Rider — `d0314da0-da24-4f6e-b1f6-0d50617bcaaa`
 
-### promos / torment · Torment Promos (`PTOR`)
-
-- [ ] Laquatus's Champion — `693ddb18-00d2-4784-90a0-701a64195034`
-
 ### expansion / 2000s · Torment (`TOR`)
 
 - [ ] Alter Reality — `054c00b4-c940-455a-ad88-b8aa35931ecf`
@@ -7963,7 +7959,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 - [ ] Kamahl's Sledge — `defa9b92-4b54-4b00-852e-6c5ec4015643`
 - [ ] Krosan Constrictor — `c9747b5d-0f6d-4a9a-8921-1d5c0be3bd60`
 - [ ] Krosan Restorer — `ea845951-0158-4646-acd9-3b0b28da40b1`
-- [ ] Laquatus's Champion — `693ddb18-00d2-4784-90a0-701a64195034`
 - [ ] Last Laugh — `5facb256-b993-43f8-b971-b3a59a7434bf`
 - [ ] Liquify — `dc9ae094-139f-4f28-9d4e-4d6def765744`
 - [ ] Llawan, Cephalid Empress — `55f9a9a2-2842-4555-8b54-03aebc8d6fb8`
@@ -8011,7 +8006,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 - [ ] Skullscorch — `b52788ff-9956-400a-bf26-17e58f673af0`
 - [ ] Slithery Stalker — `0c31edd0-a471-4994-8209-b0a7370fc27b`
 - [ ] Sonic Seizure — `f43c68f1-97ac-47a4-82d3-a41277259388`
-- [ ] Soul Scourge — `d66e89a3-d582-4867-899c-f560b8a5b973`
 - [ ] Spirit Flare — `d19a2c28-8d09-40bf-aeb1-e699672b009f`
 - [ ] Stern Judge — `b4fbf91c-8eed-49d5-91fa-9ae1c03966b7`
 - [ ] Strength of Isolation — `87aad9fb-e234-4171-a4ae-c686f613d37e`
@@ -10050,7 +10044,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 - [ ] Lake of the Dead — `bdf476e5-1d57-4b17-b45b-d52fd75aadeb`
 - [ ] Land Tax — `d2d9ecea-7925-420e-98b9-2f87f41f387c`
 - [ ] Lantern Flare — `06a1c404-d76f-4206-8740-7ad7488fac33`
-- [ ] Laquatus's Champion — `693ddb18-00d2-4784-90a0-701a64195034`
 - [ ] Lathiel, the Bounteous Dawn — `d3c56fc4-3611-41b1-952e-4c5311b1510b`
 - [ ] Laurine, the Diversion — `f2f8847d-17a8-4c26-8a7a-1bb6c02f2b39`
 - [ ] Lavabelly Sliver — `334f673e-7cfa-432c-93aa-41adfbb99113`
@@ -20471,7 +20464,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 - [ ] Krosan Vorine — `ddb95c3a-b383-4987-ba24-72e95f8e33bf`
 - [ ] Krovikan Sorcerer — `00e6808c-1f9e-4b6a-807c-83f433b81a41`
 - [ ] Lake of the Dead — `bdf476e5-1d57-4b17-b45b-d52fd75aadeb`
-- [ ] Laquatus's Champion — `693ddb18-00d2-4784-90a0-701a64195034`
 - [ ] Library of Alexandria — `2111588d-9af5-4a33-989e-b074d83f0463`
 - [ ] Lightning Rift — `ac3fb7ef-709c-40be-a75b-1b438708388d`
 - [ ] Lion's Eye Diamond — `ee6099b0-fb1f-42f1-b862-7708c6e36d05`
@@ -26954,7 +26946,6 @@ Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **26,11
 - [ ] Knight of the Skyward Eye — `633e91ea-84d4-42ca-a8eb-603db340ebe7`
 - [ ] Kor Firewalker — `fb37ff1c-7461-4a16-b27f-6eef0db937fe`
 - [ ] Krosan Colossus — `703ab192-7e0a-4f02-8381-568ad2d999ca`
-- [ ] Laquatus's Champion — `693ddb18-00d2-4784-90a0-701a64195034`
 - [ ] Living Death — `9e6a3df4-67a3-452e-a6ef-f04dbadb21ef`
 - [ ] Living Wish — `b9d186f5-1c92-4539-a5b5-e7fbd4b726fe`
 - [ ] Loyal Sentry — `54b1a496-1f8e-4581-8260-bad57b25c6e3`
