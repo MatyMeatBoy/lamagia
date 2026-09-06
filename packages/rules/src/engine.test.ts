@@ -100,6 +100,21 @@ describe("smart counter response and safe mana undo", () => {
     game = applyAction(game, 0, { type: "pass" });
     expect(game.stack.at(-1)?.countered).toBe(true);
   });
+  it("requires a full multiplayer pass cycle before resolving the top stack object", () => {
+    let game = threeSeatGame();
+    const spellCard = toHand(0, [BOLT()], "priority-bolt")[0]!;
+    const spell = { id: "priority-bolt", controller: 0 as SeatId, card: spellCard, label: spellCard.name,
+      targets: [{ kind: "player", seat: 1 } as const], fromCommandZone: false, variableValue: 0, countered: false };
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], stack: [spell],
+      players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.stack).toHaveLength(1);
+    expect(game.prioritySeat).toBe(2);
+    expect(game.passedSeats).toEqual([0, 1]);
+    game = applyAction(game, 2, { type: "pass" });
+    expect(game.stack).toHaveLength(0);
+  });
   it("projects every target kind for a multi-target modal action", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ kind: "human", autoPass: false, hand: toHand(0, [FISSURE_VENT()], "multi-target") }));
