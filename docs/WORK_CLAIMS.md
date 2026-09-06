@@ -541,3 +541,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-counter-static-spell-4` | Reusable replacement that doubles +1/+1 counters placed on creatures when Primal Vigor applies (CR 614.1, 121.6) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-other-static-spell-4` | Reusable replacement that doubles token creation when Primal Vigor applies (CR 614.1, 111.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-static-spell-6` | Reusable entry replacement that gives a creature +1/+1 counters equal to mana spent to cast it, including Marath (CR 614.1c, 121.1) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-return-activated-target` | Reusable land-return activation cost for Uyo's target-spell copy ability (CR 602.2b, 707.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

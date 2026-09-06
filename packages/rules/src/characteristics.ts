@@ -129,6 +129,8 @@ export interface ActivatedAbility {
   readonly exilesGraveyardCards?: { readonly amount: number; readonly scope: "single-graveyard" };
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
+  /** Lands returned to their owners' hands as an activation cost (Uyo, CR 602.2b). */
+  readonly returnLands?: number;
   readonly lifeCost: number;
   /** Mana part of the activation cost, or null when the ability needs none. */
   readonly manaCost: ManaCost | null;
@@ -2143,6 +2145,16 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .trim();
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
   const toggleSourceCounter = /^Put a plague counter on ~ or remove a plague counter from it\.?$/i.test(parsedEffectText);
+  const returnLandsCopy = /^((?:\{[^}]+\})+),\s*Return (two|three|four|five|\d+) lands you control to their owner'?s hand:\s*(.+)$/i.exec(line.trim());
+  if (returnLandsCopy) {
+    const manaCost = parseManaCost(returnLandsCopy[1]!);
+    const count = toNumber(returnLandsCopy[2]!);
+    const copied = recognizeSentence(returnLandsCopy[3]!.trim());
+    if (manaCost && count !== null && copied) return {
+      index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost,
+      returnLands: count, effect: copied.effect, targetKind: copied.target, text: line.trim()
+    };
+  }
   // Planeswalker loyalty abilities (CR 606): the cost is a signed loyalty change.
   const loyalty = /^\s*([+\u2212\u2013-])?\s*(\d+)\s*$/.exec(costText);
   if (loyalty) {

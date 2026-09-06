@@ -275,6 +275,7 @@ const C13_SUN_DROPLET = () => make({ name: "Sun Droplet", type_line: "Artifact",
 const C13_PLAGUE_BOILER = () => make({ name: "Plague Boiler", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "At the beginning of your upkeep, put a plague counter on this artifact.\n{1}{B}{G}: Put a plague counter on this artifact or remove a plague counter from it.\nWhen this artifact has three or more plague counters on it, sacrifice it. If you do, destroy all nonland permanents.", oracle_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a", scryfall_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a" });
 const C13_PRIMAL_VIGOR = () => make({ name: "Primal Vigor", type_line: "Enchantment", mana_cost: "{4}{G}", cmc: 5, oracle_text: "If one or more +1/+1 counters would be put on a creature, twice that many +1/+1 counters are put on that creature instead.\nIf one or more tokens would be created, twice that many of those tokens are created instead.", oracle_id: "c665544f-557b-4631-a1dc-39571470ca2e", scryfall_id: "c665544f-557b-4631-a1dc-39571470ca2e" });
 const C13_MARATH = () => make({ name: "Marath, Will of the Wild", type_line: "Legendary Creature — Elemental Beast", mana_cost: "{X}{R}{G}{W}", cmc: 3, power: "0", toughness: "0", oracle_text: "Marath enters with a number of +1/+1 counters on it equal to the amount of mana spent to cast it.\n{X}, Remove X +1/+1 counters from Marath: Choose one —\n• Put X +1/+1 counters on target creature. X can't be 0.\n• Marath deals X damage to any target. X can't be 0.\n• Create an X/X green Elemental creature token. X can't be 0.", oracle_id: "fae87115-8749-4d25-a594-7139dd01a034", scryfall_id: "fae87115-8749-4d25-a594-7139dd01a034" });
+const C13_UYO = () => make({ name: "Uyo, Silent Prophet", type_line: "Legendary Creature — Moonfolk Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "4", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\n{2}{U}{U}, Return two lands you control to their owner's hand: Copy target instant or sorcery spell. You may choose new targets for the copy.", oracle_id: "93da1e63-54d6-4b05-af91-f13e7e111176", scryfall_id: "93da1e63-54d6-4b05-af91-f13e7e111176" });
 const C13_NIVIX_GUILDMAGE = () => make({ name: "Nivix Guildmage", type_line: "Creature — Human Wizard", mana_cost: "{U}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{1}{U}{R}: Draw a card, then discard a card.\n{2}{U}{R}: Copy target instant or sorcery spell you control. You may choose new targets for the copy.", oracle_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936", scryfall_id: "603e7dd3-c361-4e66-9df5-4b24f40734e8" });
 const C13_WILD_RICOCHET = () => make({ name: "Wild Ricochet", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "You may choose new targets for target instant or sorcery spell. Then copy that spell. You may choose new targets for the copy.", oracle_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9", scryfall_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
@@ -3153,6 +3154,19 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
     const marath = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Marath, Will of the Wild")!;
     expect(marath.counters["+1/+1"]).toBe(5);
+  });
+
+  it("pays Uyo's two-land return cost before copying a spell", () => {
+    const profile = profileOf(C13_UYO());
+    expect(profile).toMatchObject({ fullyImplemented: true, activatedAbilities: [expect.objectContaining({ returnLands: 2, targetKind: "instant-or-sorcery-spell" })] });
+    let game = readyToCast([AZORIUS_SPELL()], [C13_UYO(), PLAINS(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    const original = game.stack.at(-1)!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Uyo, Silent Prophet")!.instance_id)!;
+    if (activation.action.type !== "activate") throw new Error("Uyo activation was not offered.");
+    game = applyAction(game, 0, { ...activation.action, targets: [{ kind: "spell", stackId: original.id }] });
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Island")).toHaveLength(5);
   });
 
   it("resolves Oloro's optional life-gain draw and opponent life loss", () => {

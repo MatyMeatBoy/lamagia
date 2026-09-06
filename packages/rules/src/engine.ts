@@ -689,7 +689,7 @@ export type GameAction =
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
-  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly discardCardIds?: readonly string[]; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly variableValue?: number }
+  | { readonly type: "activate"; readonly sourceId: string; readonly abilityIndex: number; readonly targets?: readonly Target[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[]; readonly tapId?: string; readonly discardCardId?: string; readonly discardCardIds?: readonly string[]; readonly exileCardId?: string; readonly exileCardIds?: readonly string[]; readonly returnPermanentIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-reveal"; readonly sourceId: string; readonly reveal: boolean; readonly cardId?: string }
   | { readonly type: "choose-countered-spell-library"; readonly sourceId: string; readonly destination: "top" | "bottom" }
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
@@ -7425,6 +7425,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const sacrificeSets: readonly (readonly Permanent[])[] = ability.sacrificesCreatures
         ? combinations(sacrificeCandidates, ability.sacrificesCreatures!.amount)
         : hasSacrificeCost ? sacrificeCandidates.map((candidate) => [candidate]) : [[]];
+      const returnLandSets: readonly (readonly Permanent[])[] = ability.returnLands
+        ? combinations(player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))), ability.returnLands)
+        : [[]];
       const discardSets: readonly (readonly GameCard[])[] = ability.discardsCards
         ? combinations(player.hand, ability.discardsCards.amount)
         : ability.discardsCard ? player.hand.map((card) => [card]) : [[]];
@@ -7432,7 +7435,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         ? state.players.flatMap((candidate) => combinations(candidate.graveyard.filter((card) => isCreature(cardProfile(card))), ability.exilesGraveyardCards!.amount))
         : ability.exilesGraveyardCard ? player.graveyard.map((card) => [card]) : [[]];
       const tapCreatures = ability.tapsCreature ? tapCostCandidates(state, seat, permanent, ability) : [undefined];
-      for (const sacrificeSet of sacrificeSets) for (const tapCreature of tapCreatures) for (const discardSet of discardSets) for (const exileSet of exileSets) actions.push({
+      for (const sacrificeSet of sacrificeSets) for (const returnLandSet of returnLandSets) for (const tapCreature of tapCreatures) for (const discardSet of discardSets) for (const exileSet of exileSets) actions.push({
         action: { type: "activate", sourceId: permanent.instance_id, abilityIndex: ability.index,
           ...(ability.manaCost?.hasVariable ? { variableValue } : {}),
           ...(sacrificeSet.length === 1 ? { sacrificeId: sacrificeSet[0]!.instance_id } : {}),
@@ -7441,8 +7444,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           ...(discardSet.length === 1 ? { discardCardId: discardSet[0]!.instance_id } : {}),
           ...(discardSet.length > 1 ? { discardCardIds: discardSet.map((card) => card.instance_id) } : {}),
           ...(exileSet.length === 1 ? { exileCardId: exileSet[0]!.instance_id } : {}),
-          ...(exileSet.length > 1 ? { exileCardIds: exileSet.map((card) => card.instance_id) } : {}) },
-        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discardSet.length ? ` — Discard ${discardSet.map((card) => card.name).join(", ")}` : ""}${exileSet.length ? ` — Exile ${exileSet.map((card) => card.name).join(", ")}` : ""}`,
+          ...(exileSet.length > 1 ? { exileCardIds: exileSet.map((card) => card.instance_id) } : {}),
+          ...(returnLandSet.length ? { returnPermanentIds: returnLandSet.map((land) => land.instance_id) } : {}) },
+        label: `${permanent.card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}${sacrificeSet.length ? ` — Sacrifice ${sacrificeSet.map((candidate) => candidate.card.name).join(", ")}` : ""}${returnLandSet.length ? ` — Return ${returnLandSet.map((land) => land.card.name).join(", ")}` : ""}${tapCreature ? ` — Tap ${tapCreature.card.name}` : ""}${discardSet.length ? ` — Discard ${discardSet.map((card) => card.name).join(", ")}` : ""}${exileSet.length ? ` — Exile ${exileSet.map((card) => card.name).join(", ")}` : ""}`,
         cardId: permanent.instance_id,
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
@@ -8027,6 +8031,8 @@ function activatableAbility(
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
     return { legal: false };
   }
+  if (ability.returnLands !== undefined
+    && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.returnLands) return { legal: false };
   if (ability.manaCost && ability.manaCost.symbols.length) {
     // The cost is paid as one lump, so the check has to look at the board the
     // payment will actually see: life already spent on the ability, and the
@@ -8185,6 +8191,17 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     exiles = [exile];
   }
 
+  let returnedLands: Permanent[] = [];
+  if (ability.returnLands !== undefined) {
+    const selectedIds = action.returnPermanentIds ?? [];
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => isLand(cardProfile(candidate.card)));
+    const selected = selectedIds.map((id) => candidates.find((candidate) => candidate.instance_id === id));
+    if (selectedIds.length !== ability.returnLands || new Set(selectedIds).size !== selectedIds.length || selected.some((candidate) => !candidate)) {
+      throw new Error(`Debes devolver ${ability.returnLands} tierras a sus propietarios.`);
+    }
+    returnedLands = selected as Permanent[];
+  }
+
   if (ability.targetKinds?.length) {
     const allowedBySlot = ability.targetKinds.map((kind) => legalTargets(state, seat, kind, cardProfile(source.card)));
     const chosen = targets.length ? targets : allowedBySlot.map((allowed) => allowed[0]).filter((target): target is Target => Boolean(target));
@@ -8227,6 +8244,11 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   }));
   if (ability.requiresTap) next = raiseTapEvents(next, state, [source.instance_id]);
   if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);
+
+  for (const land of returnedLands) {
+    const current = findPermanent(next, land.instance_id);
+    if (current) next = returnPermanentToOwnersHand(next, current);
+  }
 
   const abilityX = ability.manaCost?.hasVariable ? Math.max(0, action.variableValue ?? 0) : 0;
   if (ability.manaCost && ability.manaCost.symbols.length) {
