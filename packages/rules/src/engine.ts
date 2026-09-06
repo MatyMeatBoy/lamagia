@@ -3084,6 +3084,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "mill": {
       return millCards(state, controller, effectAmount(effect.amount, object));
     }
+    case "discard-then-draw": {
+      const amount = Math.min(effect.amount, playerAt(state, controller).hand.length);
+      if (amount <= 0) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "discard-cards",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card,
+          amount,
+          remaining: amount,
+          thenDrawSame: true
+        }
+      };
+    }
     case "each-opponent-discards": {
       const amount = effectAmount(effect.amount, object);
       if (amount <= 0) return state;

@@ -451,6 +451,8 @@ export type SpellEffect =
   /** Curse of Chaos: the attacking player may discard one, then draws one. */
   | { readonly kind: "discard-event-controller-then-draw"; readonly amount: number }
   | { readonly kind: "draw-then-discard"; readonly draw: number; readonly discard: number }
+  /** "Discard a card. If you do, draw a card" — a rummage; the controller chooses what to pitch. */
+  | { readonly kind: "discard-then-draw"; readonly amount: number }
   | { readonly kind: "draw-then-put-back-on-top"; readonly draw: number; readonly putBack: number }
   | { readonly kind: "exile-self" }
   | { readonly kind: "shuffle-self-into-library" }
@@ -3240,6 +3242,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const draw = toNumber(match[1]);
     const discard = toNumber(match[2]);
     if (draw !== null && draw > 0 && discard !== null && discard > 0) return { effect: { kind: "draw-then-discard", draw, discard }, target: "none" };
+  }
+  // Rummage: "discard a card. If you do, draw a card" (also "discard N cards, then draw N cards").
+  // The optional "you may" is stripped by the trigger parser before this point.
+  if ((match = /^(?:You )?discard (a|an|one|two|three|\d+) cards?(?:\.\s*If you do,|,\s*then) draw (a|an|one|two|three|\d+) cards?$/i.exec(text))) {
+    const discard = /^(a|an|one)$/i.test(match[1]!) ? 1 : toNumber(match[1]);
+    const draw = /^(a|an|one)$/i.test(match[2]!) ? 1 : toNumber(match[2]);
+    if (discard !== null && draw !== null && discard > 0 && discard === draw) {
+      return { effect: { kind: "discard-then-draw", amount: discard }, target: "none" };
+    }
   }
   if ((match = /^Draw (\w+) cards?\.\s*If you do, discard (\w+) cards?$/i.exec(text))) {
     const draw = toNumber(match[1]);

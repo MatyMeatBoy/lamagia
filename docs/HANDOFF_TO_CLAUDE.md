@@ -6,6 +6,13 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **`discard-then-draw` (rummage)** — "discard a card. If you do, draw a card"
+  (Reckless Racer, Hazoret's Monument, Spider-Gwen, …). Parsed in
+  `recognizeSentence` (the trigger parser already strips the optional
+  "you may" and flags the trigger `optional`), executed by opening a
+  `discard-cards` choice with `thenDrawSame`. Export **10,379 → 10,398**
+  (+19). Test: `engine.test.ts` › "rummages (discard then draw)…".
+
 - **Unrestricted graveyard recursion** — `{cost}: Return ~ from your graveyard
   to your hand` without the Eternal Dragon upkeep restriction (Sanitarium
   Skeleton, Firewing Phoenix, Clay Revenant, Jungle Creeper, …). The parser at

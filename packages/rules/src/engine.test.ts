@@ -7240,6 +7240,31 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("rummages (discard then draw) from an optional trigger", () => {
+    const racer = make({
+      name: "Test Racer", type_line: "Creature — Human", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "Whenever this creature becomes tapped, you may discard a card. If you do, draw a card."
+    });
+    expect(profileOf(racer).triggers[0]).toMatchObject({ event: "becomes-tapped", optional: true, effect: { kind: "discard-then-draw", amount: 1 } });
+    let game = readyToCast([], [racer, make({ name: "Tap Engine", type_line: "Artifact", oracle_text: "{T}: Add {C}." })]);
+    game = stage(game, 0, (player) => ({ autoPass: false, hand: toHand(0, [BEAR(), BOLT(), SOL_RING()], "h"), library: toHand(0, [FLIER(), FOREST()], "lib") }));
+    // Tap the creature for mana... it has no mana ability; instead attack to tap it.
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0 && !state.combat.attackersDeclared);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Racer")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: source.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger" || state.pendingChoice?.type === "discard-cards");
+    if (game.pendingChoice?.type === "optional-trigger") {
+      game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice.sourceId, accept: true });
+    }
+    expect(game.pendingChoice).toMatchObject({ type: "discard-cards", seat: 0, remaining: 1, thenDrawSame: true });
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "choose-discard", sourceId: game.pendingChoice!.sourceId, cardId: "h-0" });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    // Net card count unchanged (pitched one, drew one); Grizzly Bears in graveyard.
+    expect(game.players[0]!.hand).toHaveLength(handBefore);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
   it("recurs a creature from the graveyard with an unrestricted '{cost}: Return this card' ability", () => {
     const skeleton = make({
       name: "Test Skeleton", type_line: "Creature — Skeleton", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",

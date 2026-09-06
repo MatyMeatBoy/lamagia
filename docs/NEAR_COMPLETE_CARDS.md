@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,062**
-- Cards with a reusable existing primitive hint: **11,337**
-- Cards needing new primitive review: **3,725**
-- Templates: **11,983**
+- One-line cards: **15,053**
+- Cards with a reusable existing primitive hint: **11,321**
+- Cards needing new primitive review: **3,732**
+- Templates: **11,982**
 
 ## Worker rule
 
@@ -519,4 +519,4 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
 
-The JSON contains the remaining 14,562 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,553 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
