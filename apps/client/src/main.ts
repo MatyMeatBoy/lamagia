@@ -633,8 +633,8 @@ function chooseTarget(target: Target): void {
   }
   const action = pending.action.action;
   if (action.type !== "cast" && action.type !== "activate" && action.type !== "equip") return;
-  ui.pendingTarget = null;
   if (action.type === "equip") {
+    ui.pendingTarget = null;
     if (target.kind !== "permanent") return;
     void submit({ ...action, targetId: target.instanceId });
     return;
@@ -646,6 +646,7 @@ function chooseTarget(target: Target): void {
     const selected = new Set(selectedTargets.map((candidate) => JSON.stringify(candidate)));
     const options = (view?.targetOptions[nextKind] ?? []).filter((candidate) => !selected.has(JSON.stringify(candidate)));
     if (!options.length) {
+      ui.pendingTarget = { ...pending, options: pending.options, selectedTargets, targetIndex: nextIndex };
       ui.notice = "Ya no hay objetivos legales para completar esta elección.";
       render();
       return;
@@ -655,6 +656,7 @@ function chooseTarget(target: Target): void {
     render();
     return;
   }
+  ui.pendingTarget = null;
   void submit({ ...action, targets: selectedTargets });
 }
 
