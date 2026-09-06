@@ -708,6 +708,8 @@ export type SpellEffect =
   | { readonly kind: "counter-target-spell-to-battlefield" }
   /** Counter a spell and schedule the Arcane Denial-style upkeep draws (CR 603.7). */
   | { readonly kind: "counter-target-spell-with-delayed-draw"; readonly targetAmount: number; readonly casterAmount: number }
+  /** "Draw a card at the beginning of the next turn's upkeep" — a cantrip rider (Barbed Sextant, Lightning Blow). CR 603.7. */
+  | { readonly kind: "delayed-draw"; readonly amount: number }
   /** Mana Drain: paired with the separate "Counter target spell" sentence, reads the same shared target at resolution (CR 603.7, 605.3a). */
   | { readonly kind: "delayed-mana-equal-to-target-spell-mana-value"; readonly manaType: ManaType }
   /** Resolves a level-up activation by adding one level counter (CR 702.87). */
@@ -2927,6 +2929,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount) return { effect: { kind: "draw", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "draw", amount: "X" }, target: "none" };
+  }
+  if ((match = /^(?:You )?[Dd]raw (\w+) cards? at the beginning of the next turn'?s upkeep$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null && amount > 0) return { effect: { kind: "delayed-draw", amount }, target: "none" };
   }
   if ((match = /^Then if you have more life than an opponent, draw (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);

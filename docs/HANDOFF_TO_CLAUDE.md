@@ -6,6 +6,13 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **`delayed-draw`** — "Draw a card at the beginning of the next turn's upkeep"
+  as a spell rider (Lightning Blow, Fevered Strength, …). Parsed in
+  `recognizeSentence`, scheduled via the existing `state.delayedDraws` /
+  `queueDelayedDraws` machinery. Export **10,482 → 10,500**. Test:
+  `engine.test.ts` › "schedules a cantrip's 'draw at the next turn's upkeep'
+  rider".
+
 - **Pacifism-style Aura combat lock** — `EquipmentModification` gains
   `cannotAttack` / `cannotBlock`; `parseAuraModification` matches "Enchanted
   creature can't attack or block" (also "can't attack" / "can't block" alone),
@@ -14,8 +21,8 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
   10,482** (Pacifism, Bound in Silence, Chains of Faith, …). Test:
   `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
 
-Session net: engine export **10,197 → 10,482** fully-implemented profiles
-(+285) across the eight primitives below, each with a scenario test; rules
+Session net: engine export **10,197 → 10,500** fully-implemented profiles
+(+303) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 

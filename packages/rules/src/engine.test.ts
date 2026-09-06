@@ -7240,6 +7240,32 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("schedules a cantrip's 'draw at the next turn's upkeep' rider", () => {
+    const blow = make({
+      name: "Test Cantrip", type_line: "Instant", mana_cost: "{W}", cmc: 1,
+      oracle_text: "Target creature gains first strike until end of turn.\nDraw a card at the beginning of the next turn's upkeep."
+    });
+    expect(profileOf(blow).fullyImplemented).toBe(true);
+    let game = readyToCast([blow], [PLAINS()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, library: toHand(0, [BEAR(), BOLT()], "lib") }));
+    game = putOnBattlefield(game, 0, [BEAR()]);
+    const own = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears" && !permanent.summoningSick)
+      ?? game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const handBefore = game.players[0]!.hand.length;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Test Cantrip")!.instance_id, targets: [{ kind: "permanent", instanceId: own.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    // No immediate draw; the delayed draw is queued.
+    expect(game.players[0]!.hand.length).toBe(handBefore - 1);
+    expect(game.delayedDraws.some((delayed) => delayed.seat === 0 && delayed.amount === 1)).toBe(true);
+
+    // It fires at the very next upkeep.
+    const castTurn = game.turn;
+    const graveBefore = game.players[0]!.graveyard.length;
+    game = passUntil(game, (state) => state.turn === castTurn + 1 && state.step === "precombat-main");
+    expect(game.delayedDraws.length).toBe(0);
+    expect(game.players[0]!.graveyard.length).toBeGreaterThanOrEqual(graveBefore);
+  });
+
   it("stops an enchanted creature from attacking or blocking (Pacifism)", () => {
     const pacifism = make({
       name: "Test Pacifism", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2,

@@ -3084,6 +3084,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "mill": {
       return millCards(state, controller, effectAmount(effect.amount, object));
     }
+    case "delayed-draw": {
+      return {
+        ...state,
+        delayedDraws: [...state.delayedDraws, {
+          id: `${object.id}:delayed-draw:${state.version}`,
+          triggerAtTurn: state.turn + 1,
+          seat: controller,
+          sourceCard: object.card,
+          amount: effect.amount,
+          optional: false,
+          sourceText: `Draw ${effect.amount} card${effect.amount === 1 ? "" : "s"} at the beginning of the next turn's upkeep.`
+        }]
+      };
+    }
     case "discard-then-draw": {
       const amount = Math.min(effect.amount, playerAt(state, controller).hand.length);
       if (amount <= 0) return state;
