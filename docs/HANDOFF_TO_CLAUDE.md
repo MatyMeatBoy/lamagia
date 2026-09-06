@@ -8,6 +8,21 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 Batch of player-reported gameplay/UX fixes. Landed so far:
 
+- **Mana-payment "Cancelar" left the cast stuck.** The engine already returns a
+  clean, recastable state on `cancel-mana-payment` (spell stays in hand, no
+  sources tapped, no floating mana, priority retained) — covered by a new
+  `engine.test.ts` case. The bug was client-only: the decision overlay's `×`
+  button (`#close-decision-overlay`) just removed the DOM node without telling
+  the server, so a player who closed the "Elegir fuentes de maná" panel with
+  `×` instead of the "Cancelar pago" row left the server holding a pending
+  `mana-payment` choice. `apps/client/src/main.ts` `decisionOverlayHtml` now:
+  routes `×` to submit `cancel-mana-payment` when a payment is pending; hides
+  `×` for truly mandatory choices (trigger targets, modal choices); and for a
+  "you may respond" prompt, `×` hides it only until the game state next changes
+  (`ui.dismissedDecisionVersion`). Validation: `npm run check --workspace=@prossh/client`
+  clean; `npm run test --workspace=@prossh/rules` → 786 passing.
+
+
 - **Fetch land "fail to find" wording.** An off-colour fetch (e.g. Flooded
   Strand in a mono-black deck) correctly finds nothing and shuffles, but the
   log read `… se resuelve: no hay una carta válida en la biblioteca.`, which

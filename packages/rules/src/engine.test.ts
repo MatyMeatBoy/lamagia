@@ -1355,6 +1355,44 @@ describe("mana payment", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Red Test Spell")).toBe(true);
   });
 
+  it("returns to a clean, recastable state when the mana payment is cancelled", () => {
+    const spell = make({ name: "Red Test Spell", type_line: "Creature — Goblin", mana_cost: "{1}{R}", power: "2", toughness: "2" });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ kind: "human" }));
+    game = stage(game, 0, () => ({ hand: toHand(0, [spell], "manual-cast") }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "manual-cast-0")!;
+    game = applyAction(game, 0, cast.action);
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+
+    // Select one source, then bail out of the whole payment.
+    const mountain = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mountain")!;
+    const red = legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === mountain.instance_id && entry.action.mana === "R")!;
+    game = applyAction(game, 0, red.action);
+    game = applyAction(game, 0, { type: "cancel-mana-payment", sourceId: game.pendingChoice!.sourceId });
+
+    // Clean state: no pending choice, spell still in hand, nothing tapped, no
+    // floating mana, priority still with the caster, and the cast is offered again.
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack).toHaveLength(0);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === "manual-cast-0")).toBe(true);
+    expect(game.players[0]!.battlefield.every((permanent) => !permanent.tapped)).toBe(true);
+    expect(game.players[0]!.manaPool).toMatchObject({ W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 });
+    expect(game.priorityOpen).toBe(true);
+    expect(game.prioritySeat).toBe(0);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "manual-cast-0")).toBe(true);
+
+    // And it can actually be recast to completion.
+    game = applyAction(game, 0, cast.action);
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    game = applyAction(game, 0, legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === mountain.instance_id && entry.action.mana === "R")!.action);
+    game = applyAction(game, 0, legalActions(game, 0).find((entry) => entry.action.type === "choose-mana-source" && entry.action.manaSourceId === forest.instance_id)!.action);
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack.some((object) => object.card.name === "Red Test Spell") || game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Red Test Spell")).toBe(true);
+  });
+
   it("keeps five independent primitives executable in the same card batch", () => {
     expect(profileOf(PRISTINE_TALISMAN()).fullyImplemented).toBe(true);
     expect(profileOf(PRISTINE_TALISMAN()).manaAbilities[0]).toMatchObject({ gainLife: 1 });

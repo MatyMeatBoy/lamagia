@@ -90,6 +90,8 @@ interface UiState {
   /** MTGO-style phase stops for the local seat. */
   stops: Set<TurnStep>;
   stopMenu: { x: number; y: number; step: TurnStep } | null;
+  /** Version at which the player dismissed the non-mandatory decision overlay. */
+  dismissedDecisionVersion: number | null;
 }
 
 let session: MatchSession | null = null;
@@ -108,7 +110,8 @@ const ui: UiState = {
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
   ,stops: new Set<TurnStep>(JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") ?? ["upkeep", "draw", "precombat-main", "declare-attackers", "declare-blockers", "combat-damage", "end", "cleanup"]),
-  stopMenu: null
+  stopMenu: null,
+  dismissedDecisionVersion: null
 };
 
 function persistStops(): void {
@@ -429,6 +432,7 @@ function applyView(next: GameView): void {
     entry.seat === next.viewerSeat && QUIET_RESOLUTION.test(entry.text));
   if (quiet) ui.notice = quiet.text;
   if (!sameDecision) ui.pendingTarget = null;
+  ui.dismissedDecisionVersion = null;
   ui.selectedBlocker = null;
   ui.abilityMenu = null;
   ui.cardActionMenu = null;
@@ -1187,8 +1191,13 @@ function decisionOverlayHtml(): string {
       && (respondingToStack || !["cast", "activate", "equip"].includes(entry.action.type)));
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
+  const cancelEntry = actions.find((entry) => entry.action.type === "cancel-mana-payment");
   const manaPayment = choices.some((entry) => entry.action.type === "choose-mana-source" || entry.action.type === "cancel-mana-payment");
   const triggerTargetChoice = choices.some((entry) => entry.action.type === "choose-trigger-target");
+  // A required choice with no cancel path cannot be skipped; a "you may respond"
+  // prompt can be dismissed until the game state next changes.
+  const mandatory = triggerTargetChoice || (hasPendingChoice && !cancelEntry);
+  if (!mandatory && ui.dismissedDecisionVersion === view?.version) return "";
   const title = manaPayment ? "Elegir fuentes de maná" : triggerTargetChoice ? "Elegir objetivo" : hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
   const subtitle = triggerTargetChoice
     ? "Selecciona el permanente, jugador o hechizo marcado en la mesa."
@@ -1197,9 +1206,14 @@ function decisionOverlayHtml(): string {
     : view?.stack.length
       ? "Puedes responder ahora o pasar prioridad."
       : "Estas son las acciones disponibles en este momento.";
+  const closeButton = cancelEntry
+    ? `<button id="cancel-decision-overlay" data-action-index="${actions.indexOf(cancelEntry)}" class="icon-button" type="button" aria-label="Cancelar el pago y volver">×</button>`
+    : mandatory
+      ? ""
+      : `<button id="close-decision-overlay" class="icon-button" type="button" aria-label="Ocultar acciones">×</button>`;
   return `<section class="decision-overlay" role="dialog" aria-modal="false" aria-label="${escapeHtml(title)}">
     <header class="decision-head"><div><b>${escapeHtml(title)}</b><span>${escapeHtml(subtitle)}</span></div>
-      <button id="close-decision-overlay" class="icon-button" type="button" aria-label="Cerrar acciones">×</button></header>
+      ${closeButton}</header>
     <div class="decision-list">${choices.map((entry) => {
       const index = actions.indexOf(entry);
       return `<button class="action-row${entry.action.type.startsWith("choose-") ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
@@ -1417,7 +1431,7 @@ function wireBoard(): void {
   on("#coverage", () => openCoverage());
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
-  on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
+  on("#close-decision-overlay", () => { ui.dismissedDecisionVersion = view?.version ?? null; render(); });
   on("#undo-pending-target", undoPendingTarget);
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
   on("#close-stack-detail", () => { ui.stackDetail = null; render(); });
