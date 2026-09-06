@@ -238,6 +238,7 @@ const OPPONENT_LIFE_LOCK = () => make({ name: "Opponent Life Lock", type_line: "
 const NO_MAX_HAND = () => make({ name: "No Hand Limit", type_line: "Enchantment", mana_cost: "{3}", cmc: 3, oracle_text: "You have no maximum hand size." });
 const PUMP_LORD = () => make({ name: "Pump Lord", type_line: "Creature — Elf", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2", oracle_text: "Other creatures you control get +1/+1." });
 const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line: "Creature — Spirit Avatar", mana_cost: "{3}{W}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature gets +4/+4 as long as you have 25 or more life.", scryfall_id: "2c91c236-34d7-4454-a55a-784db7f68bde" });
+const RUTHLESS_CULLBLADE = () => make({ name: "Ruthless Cullblade", type_line: "Creature — Vampire Warrior", mana_cost: "{1}{B}", cmc: 2, power: "2", toughness: "1", oracle_text: "Ruthless Cullblade gets +2/+1 as long as an opponent has 10 or less life.", oracle_id: "b7748ad6-a8cd-45e7-a4d6-4ee747722657", scryfall_id: "b7748ad6-a8cd-45e7-a4d6-4ee747722657" });
 const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
@@ -3607,6 +3608,20 @@ describe("casting", () => {
     expect([powerOf(wight, game), toughnessOf(wight, game)]).toEqual([3, 3]);
     game = stage(game, 0, () => ({ life: 24 }));
     expect([powerOf(divinity, game), toughnessOf(divinity, game)]).toEqual([4, 4]);
+  });
+
+  it("applies a source pump while an opponent is at or below its life threshold", () => {
+    expect(profileOf(RUTHLESS_CULLBLADE()).staticPowerToughnessGrants).toEqual([
+      { scope: "source-opponent-life-threshold", power: 2, toughness: 1, threshold: 10 }
+    ]);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [RUTHLESS_CULLBLADE()]);
+    const cullblade = game.players[0]!.battlefield[0]!;
+    expect([powerOf(cullblade, game), toughnessOf(cullblade, game)]).toEqual([2, 1]);
+    game = stage(game, 1, () => ({ life: 10 }));
+    expect([powerOf(cullblade, game), toughnessOf(cullblade, game)]).toEqual([4, 2]);
+    game = stage(game, 1, () => ({ life: 11 }));
+    expect([powerOf(cullblade, game), toughnessOf(cullblade, game)]).toEqual([2, 1]);
   });
 
   it("applies Hooded Horror's defending-player creature-count evasion", () => {

@@ -903,6 +903,10 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
         && playerAt(state, source.controller).life >= (grant.threshold ?? Number.POSITIVE_INFINITY)) {
         power += grant.power;
         toughness += grant.toughness;
+      } else if (grant.scope === "source-opponent-life-threshold"
+        && opponentsOf(state, source.controller).some((seat) => playerAt(state, seat).life <= (grant.threshold ?? Number.NEGATIVE_INFINITY))) {
+        power += grant.power;
+        toughness += grant.toughness;
       }
     }
   }

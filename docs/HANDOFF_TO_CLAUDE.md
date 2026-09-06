@@ -3881,3 +3881,9 @@ lethal, then applies the second damage to that player (CR 608.2b, 609.3).
 The scenario verifies both the creature leaving the battlefield and the
 controller losing 2 life. Current validation: **720 rules tests**, `npm run
 check`, and `git diff --check` pass.
+
+The same rescan then closed Ruthless Cullblade with a reusable
+`source-opponent-life-threshold` static P/T grant: the source gets +2/+1 while
+any opponent has 10 or less life, recalculated from live state (CR 604.1,
+613.4). Current validation: **721 rules tests**, `npm run check`, and `git
+diff --check` pass.
