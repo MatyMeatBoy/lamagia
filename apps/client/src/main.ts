@@ -1060,9 +1060,11 @@ function cardActionMenuHtml(): string {
  */
 function decisionOverlayHtml(): string {
   const actions = view?.legalActions ?? [];
+  const respondingToStack = Boolean(view?.stack.length);
   const choices = actions.filter((entry) =>
     entry.action.type !== "pass" && entry.action.type !== "concede" && entry.action.type !== "choose-library-card"
-      && !["cast", "cycle", "play-land", "activate", "activate-mana", "equip", "toggle-trigger-yield", "declare-attackers", "declare-blockers"].includes(entry.action.type));
+      && !["cycle", "play-land", "activate-mana", "toggle-trigger-yield", "declare-attackers", "declare-blockers"].includes(entry.action.type)
+      && (respondingToStack || !["cast", "activate", "equip"].includes(entry.action.type)));
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
   const manaPayment = choices.some((entry) => entry.action.type === "choose-mana-source" || entry.action.type === "cancel-mana-payment");
