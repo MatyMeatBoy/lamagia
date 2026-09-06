@@ -116,7 +116,17 @@ function persistStops(): void {
 }
 
 function autoPassForPhase(): boolean {
-  return ui.autoPass && !ui.stops.has(view?.step ?? "cleanup");
+  if (!ui.autoPass || ui.stops.has(view?.step ?? "cleanup") || !view) return false;
+  // Smart pass is only a priority convenience. Any player-owned decision,
+  // target selection, combat declaration, or legal response must keep the
+  // decision surface under human control (MTGO-style yield semantics).
+  const playerDecision = Boolean(
+    view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand
+      || view.combat.awaitingAttackers || view.combat.awaitingBlockersFrom.includes(view.viewerSeat)
+      || view.legalActions.some((entry) => entry.requiresTarget || entry.requiresTargets?.length
+        || entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger-target")
+  );
+  return !playerDecision;
 }
 
 function phaseRailHtml(): string {
