@@ -5956,7 +5956,9 @@ function resolveTop(state: GameState): GameState {
           const subtypeMatches = triggerSearchMulti.subtypes?.every((subtype) => subtype.toLowerCase() === "basic"
             ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
             : candidateProfile.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase())) ?? true;
-          return typeMatches && subtypeMatches;
+          const budgetMatches = triggerSearchMulti.maxTotalManaValue === undefined
+            || candidateProfile.manaValue <= triggerSearchMulti.maxTotalManaValue;
+          return typeMatches && subtypeMatches && budgetMatches;
         })
         .map((card) => card.instance_id);
       if (!multiOptions.length) {
