@@ -7088,6 +7088,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (freeCast && !controlsCommander(state, seat)) return { legal: false };
   // Commander alternative costs apply only while casting from hand. Do not let
   // a forged action bypass flashback or commander-zone costs.
+  if (freeCast && (fromCommandZone || flashback)) return { legal: false };
+  // Commander alternative costs apply only while casting from hand. Do not let
+  // a forged action bypass flashback or commander-zone costs.
   if ((freeCast || payLifeCost) && (fromCommandZone || flashback)) return { legal: false };
   if (payLifeCost && !profile.payLifeInsteadOfManaCost) return { legal: false };
   if (payLifeCost && profile.payLifeInsteadOfManaCost
