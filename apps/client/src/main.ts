@@ -456,6 +456,11 @@ function chooseTarget(target: Target): void {
 
   const pending = ui.pendingTarget;
   if (!pending) return;
+  if (pending.selectedTargets.some((selected) => JSON.stringify(selected) === JSON.stringify(target))) {
+    ui.notice = "Ese objetivo ya fue elegido; selecciona otro.";
+    render();
+    return;
+  }
   const action = pending.action.action;
   if (action.type !== "cast" && action.type !== "activate" && action.type !== "equip") return;
   ui.pendingTarget = null;
@@ -468,7 +473,8 @@ function chooseTarget(target: Target): void {
   const nextIndex = pending.targetIndex + 1;
   if (nextIndex < pending.targetKinds.length) {
     const nextKind = pending.targetKinds[nextIndex]!;
-    const options = view?.targetOptions[nextKind] ?? [];
+    const selected = new Set(selectedTargets.map((candidate) => JSON.stringify(candidate)));
+    const options = (view?.targetOptions[nextKind] ?? []).filter((candidate) => !selected.has(JSON.stringify(candidate)));
     if (!options.length) {
       ui.notice = "Ya no hay objetivos legales para completar esta elección.";
       render();
@@ -535,6 +541,23 @@ function onCardClick(cardId: string, forcedAction?: LegalAction): void {
   }
   if (action.action.type === "choose-reveal") { void submit(action.action); return; }
   runAction(action, action.label.replace(/^Lanzar /, ""));
+}
+
+function undoPendingTarget(): void {
+  const pending = ui.pendingTarget;
+  if (!pending || !pending.selectedTargets.length) return;
+  const selectedTargets = pending.selectedTargets.slice(0, -1);
+  const targetIndex = selectedTargets.length;
+  const targetKind = pending.targetKinds[targetIndex];
+  const selected = new Set(selectedTargets.map((candidate) => JSON.stringify(candidate)));
+  ui.pendingTarget = {
+    ...pending,
+    selectedTargets,
+    targetIndex,
+    options: (view?.targetOptions[targetKind!] ?? []).filter((candidate) => !selected.has(JSON.stringify(candidate)))
+  };
+  ui.notice = `Elige el objetivo ${targetIndex + 1} de ${pending.targetKinds.length}.`;
+  render();
 }
 function triggerYieldActionsFor(instanceId: string): LegalAction[] {
   return (view?.legalActions ?? []).filter((entry) =>
@@ -1059,7 +1082,7 @@ function decisionOverlayHtml(): string {
       const index = actions.indexOf(entry);
       return `<button class="action-row${entry.action.type.startsWith("choose-") ? " choice-action" : ""}" type="button" data-action-index="${index}" title="${escapeHtml(entry.note ?? "")}">
         <span>${escapeHtml(entry.label)}</span>${entry.manaValue ? `<i>${entry.manaValue}</i>` : ""}</button>`;
-    }).join("")}</div>
+    }).join("")}${ui.pendingTarget?.selectedTargets.length ? `<button id="undo-pending-target" class="action-row secondary-action" type="button"><span><b>Volver al objetivo anterior</b><small>Cambiar la última selección</small></span></button>` : ""}</div>
   </section>`;
 }
 
@@ -1276,6 +1299,7 @@ function wireBoard(): void {
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
   on("#close-decision-overlay", () => document.querySelector(".decision-overlay")?.remove());
+  on("#undo-pending-target", undoPendingTarget);
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
   on("#close-stack-detail", () => { ui.stackDetail = null; render(); });
   on("#card-action-info", () => {
