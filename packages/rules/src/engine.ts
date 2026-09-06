@@ -222,6 +222,8 @@ export interface StackObject {
   readonly card: GameCard;
   readonly label: string;
   readonly targets: readonly Target[];
+  /** Public last-known labels retained for stack UI/logs after zone changes. */
+  readonly targetLabels?: readonly string[];
   readonly fromCommandZone: boolean;
   /** The spell was cast from a graveyard using Flashback (CR 702.34). */
   readonly flashback?: boolean;
@@ -7586,6 +7588,7 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     card,
     label: fromCopy ? `${card.name} (copia)` : card.name,
     targets,
+    targetLabels: targets.map((target) => targetLabel(state, target)),
     fromCommandZone,
     flashback,
     variableValue,
@@ -7612,6 +7615,7 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     card: source.card,
     label: `${source.card.name} · habilidad activada`,
     targets,
+    targetLabels: targets.map((target) => targetLabel(state, target)),
     fromCommandZone: false,
     flashback: false,
     variableValue,
@@ -9274,6 +9278,12 @@ function triggerStackObject(trigger: TriggerInstance, targets: readonly Target[]
     card: trigger.sourceCard,
     label: `${trigger.sourceCard.name} · ${TRIGGER_EVENT_LABELS[trigger.definition.event]}`,
     targets,
+    targetLabels: targets.map((target) => {
+      if (target.kind === "player") return `Jugador ${target.seat + 1}`;
+      if (target.kind === "permanent") return "Permanente";
+      if (target.kind === "graveyard-card") return "Carta del cementerio";
+      return "Hechizo o habilidad";
+    }),
     fromCommandZone: false,
     flashback: false,
     variableValue: 0,

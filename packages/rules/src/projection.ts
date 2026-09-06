@@ -443,11 +443,11 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
         ? { text: object.trigger?.definition.sourceText ?? object.activated?.text ?? object.card.oracle_text ?? undefined }
         : {}),
       ...(object.card.image_normal ? { image_normal: object.card.image_normal } : {}),
-      targets: object.targets.map((target) =>
+      targets: object.targets.map((target, index) =>
         target.kind === "player" ? state.players[target.seat]!.name
           : target.kind === "permanent" ? nameOf(state, target.instanceId)
             : target.kind === "graveyard-card" ? state.players[target.seat]!.graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? "carta del cementerio"
-            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo"),
+            : state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? object.targetLabels?.[index] ?? "hechizo"),
       countered: object.countered
     })),
     librarySearch,
