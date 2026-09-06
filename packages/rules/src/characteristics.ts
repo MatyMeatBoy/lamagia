@@ -2006,6 +2006,10 @@ const MANA_GRANT_TYPE_WORDS: Readonly<Record<string, CardType | undefined>> = {
   creatures: "Creature", lands: "Land", artifacts: "Artifact", enchantments: "Enchantment", permanents: undefined
 };
 
+const BASIC_LAND_TYPE_COLOR: Readonly<Record<string, MagicColor>> = {
+  plains: "W", island: "U", swamp: "B", mountain: "R", forest: "G"
+};
+
 /** "X [you control] have '{T}: Add ...'" (Chromatic Lantern, Joraga Treespeaker, Cryptolith Rite, CR 113.6). */
 function parseManaAbilityGrant(line: string): StaticManaAbilityGrant | null {
   const clean = line.trim().replace(/\.$/, "");
@@ -2035,16 +2039,19 @@ function parseManaAbilityGrant(line: string): StaticManaAbilityGrant | null {
   if (bareSubtypeMatch && !MANA_GRANT_TYPE_WORDS[bareSubtypeMatch[1]!.toLowerCase()] && bareSubtypeMatch[1]!.toLowerCase() !== "permanents") {
     return buildSubtype(bareSubtypeMatch[1]!, "you-control", false, bareSubtypeMatch[2]!);
   }
-  // "Each land is a Swamp in addition to its other land types" (Urborg, Tomb
-  // of Yawgmoth): modeled as every land gaining Swamp's intrinsic mana
-  // ability (CR 305.6) rather than literally granting the "Swamp" subtype,
-  // which would need `hasSubtype`/`isLand` to become board-state-aware
-  // everywhere they're checked (fetch lands searching for "Swamp", "sacrifice
-  // a Swamp" costs, Blood Moon-style type overwrites). DOCUMENTED TRADE-OFF:
-  // covers this card's actual EDH purpose (every land can tap for {B}) but
-  // not those secondary subtype-matching interactions.
-  if (/^Each land is a Swamp in addition to its other (?:land )?types$/i.test(clean)) {
-    return finish({ scope: "all", excludesSelf: false, type: "Land" }, "{T}: Add {B}");
+  // "Each land is a Swamp/Forest/... in addition to its other land types"
+  // (Urborg, Tomb of Yawgmoth; Yavimaya, Cradle of Growth): modeled as every
+  // land gaining that basic type's intrinsic mana ability (CR 305.6) rather
+  // than literally granting the basic land subtype, which would need
+  // `hasSubtype`/`isLand` to become board-state-aware everywhere they're
+  // checked (fetch lands searching for that basic type, "sacrifice a Swamp"
+  // costs, Blood Moon-style type overwrites). DOCUMENTED TRADE-OFF: covers
+  // this card's actual EDH purpose (every land can tap for that basic type's
+  // color) but not those secondary subtype-matching interactions.
+  const basicLandGrantMatch = /^Each land is an? (Plains|Island|Swamp|Mountain|Forest) in addition to its other (?:land )?types$/i.exec(clean);
+  if (basicLandGrantMatch) {
+    const color = BASIC_LAND_TYPE_COLOR[basicLandGrantMatch[1]!.toLowerCase()]!;
+    return finish({ scope: "all", excludesSelf: false, type: "Land" }, `{T}: Add {${color}}`);
   }
   return null;
 }

@@ -5598,3 +5598,17 @@ a sibling "you control"-scoped synthetic ability correctly counts only
 the controller's own Elves, excluding an opponent's. Validation: full
 **857** rules tests green (3 new), `npm run check` across all four
 workspaces, 200/200 simulated games.
+
+Generalized Urborg's every-land mana grant to Yavimaya, Cradle of
+Growth ("Each land is a Forest in addition to its other land types"),
+the exact same template with a different basic land type. Widened the
+single regex from a Swamp-only literal to `(Plains|Island|Swamp|
+Mountain|Forest)` plus a new `BASIC_LAND_TYPE_COLOR` lookup, so both
+cards now share one code path. Verified **+1** in the export count
+(10,830 → 10,831, Yavimaya's single printing); set coverage holds at
+32.9%. Scenario-tested via profile shape only (the runtime mechanism
+is already scenario-tested end-to-end by Urborg's own test, sharing
+the identical `grantedManaAbilities` code path — a second full
+scenario run would only re-exercise, not add, coverage). Validation:
+full **858** rules tests green (1 new), `npm run check` across all
+four workspaces, 200/200 simulated games.

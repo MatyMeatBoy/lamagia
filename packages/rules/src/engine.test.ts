@@ -10975,11 +10975,20 @@ describe("static mana-ability grants (Chromatic Lantern, Joraga Treespeaker)", (
 
 describe("Urborg, Tomb of Yawgmoth's every-land black-mana grant", () => {
   const URBORG = () => make({ name: "Urborg, Tomb of Yawgmoth", type_line: "Legendary Land", oracle_text: "Each land is a Swamp in addition to its other land types." });
+  const YAVIMAYA = () => make({ name: "Yavimaya, Cradle of Growth", type_line: "Legendary Land", oracle_text: "Each land is a Forest in addition to its other land types." });
 
   it("recognizes an all-scope, land-typed mana ability grant", () => {
     const profile = profileOf(URBORG());
     expect(profile.staticManaAbilityGrants).toEqual([
       { scope: "all", excludesSelf: false, type: "Land", ability: expect.objectContaining({ produces: ["B"], amount: 1 }) }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognizes the same grant for Yavimaya's Forest-typed sibling", () => {
+    const profile = profileOf(YAVIMAYA());
+    expect(profile.staticManaAbilityGrants).toEqual([
+      { scope: "all", excludesSelf: false, type: "Land", ability: expect.objectContaining({ produces: ["G"], amount: 1 }) }
     ]);
     expect(profile.fullyImplemented).toBe(true);
   });
