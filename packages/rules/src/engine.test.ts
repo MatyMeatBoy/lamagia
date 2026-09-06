@@ -7240,6 +7240,19 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("adds energy counters from an ETB 'you get {E}' trigger (reminder text stripped)", () => {
+    const leopard = make({
+      name: "Test Leopard", type_line: "Creature — Cat", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2",
+      oracle_text: "Trample\nWhen this creature enters, you get {E}{E} (two energy counters)."
+    });
+    expect(profileOf(leopard).triggers[0]).toMatchObject({ event: "enters-battlefield", effect: { kind: "add-player-counter", counter: "energy", amount: 2 } });
+    let game = readyToCast([leopard], [FOREST(), FOREST()]);
+    expect(game.players[0]!.counters.energy ?? 0).toBe(0);
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.counters.energy).toBe(2);
+  });
+
   it("rummages (discard then draw) from an optional trigger", () => {
     const racer = make({
       name: "Test Racer", type_line: "Creature — Human", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2",

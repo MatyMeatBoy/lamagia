@@ -2764,7 +2764,9 @@ function singularSubtype(word: string): string {
 
 /** Matches one sentence against the closed effect templates. */
 function recognizeSentence(sentence: string): { effect: SpellEffect; target: TargetKind; targetKinds?: readonly Exclude<TargetKind, "none">[] } | null {
-  const text = sentence.trim().replace(/\s+/g, " ").replace(/\.$/, "");
+  // Trailing whitespace before the full stop appears when reminder text such as
+  // "(an energy counter)" is stripped mid-sentence; drop it with the period.
+  const text = sentence.trim().replace(/\s+/g, " ").replace(/\s*\.\s*$/, "").trim();
   let match: RegExpExecArray | null;
 
   const simple = simpleEffectIR(text);

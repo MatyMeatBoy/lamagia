@@ -6,6 +6,14 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **Stripped-reminder trailing whitespace** — `recognizeSentence` normalised a
+  sentence with `.replace(/\.$/, "")`, which left `"you get {E} "` (trailing
+  space) after reminder text like `"(an energy counter)"` was blanked mid-
+  sentence, so `^You get ({E})+$` never matched. Now `\s*\.\s*$` + `trim()`.
+  Export **10,398 → 10,437** (+39: energy ETB/activated cards — Aether Hub,
+  Aetherstream Leopard, Thriving Turtle, Consulate Turret, …). Test:
+  `engine.test.ts` › "adds energy counters from an ETB 'you get {E}' trigger…".
+
 - **`discard-then-draw` (rummage)** — "discard a card. If you do, draw a card"
   (Reckless Racer, Hazoret's Monument, Spider-Gwen, …). Parsed in
   `recognizeSentence` (the trigger parser already strips the optional

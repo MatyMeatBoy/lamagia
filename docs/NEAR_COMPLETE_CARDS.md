@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,053**
-- Cards with a reusable existing primitive hint: **11,321**
-- Cards needing new primitive review: **3,732**
-- Templates: **11,982**
+- One-line cards: **15,035**
+- Cards with a reusable existing primitive hint: **11,301**
+- Cards needing new primitive review: **3,734**
+- Templates: **11,993**
 
 ## Worker rule
 
@@ -107,7 +107,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Reverse Engineer | `f56596be-e12f-4ab6-af61-3ef8dc87134c` | activated | new primitive review | Improvise |
 | needs-new-primitive | Capture of Jingzhou | `89aa65d9-2502-40b0-90b6-b25a8e9f6155` | activated | new primitive review | Take an extra turn after this one. |
 | reuse-existing | Archfiend of Ifnir | `535e2af0-7b08-4026-b1bf-87626407dd42` | counters | trigger / ETB | Whenever you cycle or discard another card, put a -1/-1 counter on each creature your opponents control. |
-| reuse-existing | Aether Hub | `61c89b11-65c9-4fda-bbcd-d84de25df801` | activated | trigger / ETB | When ~ enters, you get {E} . |
 | reuse-existing | Unlicensed Disintegration | `eaa2ff39-c3cf-428b-a2f1-a6a99a2c806b` | damage | damage / life | If you control an artifact, ~ deals 3 damage to that creature's controller. |
 | needs-new-primitive | Avacyn, Angel of Hope | `216cb26e-8da9-478b-bfbc-8030f7adee72` | static-continuous | new primitive review | Other permanents you control have indestructible. |
 | reuse-existing | Gaea's Cradle | `7c427c3d-ecd8-45ef-bebd-8f10f4a311db` | activated | activated ability / mana | {T}: Add {G} for each creature you control. |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Unnatural Growth | `7324abaa-48da-439d-9339-b0ea5eea612e` | activated | trigger / ETB | At the beginning of each combat, double the power and toughness of each creature you control until end of turn. |
 | reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
+| reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
 
-The JSON contains the remaining 14,553 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,535 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
