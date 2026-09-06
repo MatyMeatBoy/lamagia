@@ -1,5 +1,5 @@
-import { cardProfile } from "./characteristics.js";
 import type { GameAction, GameState, SeatId } from "./engine.js";
+import { manaAbilitiesFor } from "./engine.js";
 
 /** Fail closed: only a manual mana activation whose reversible delta is limited
  * to the activating player's mana/life and the source's tapped state.
@@ -12,7 +12,7 @@ export function isSafeManaUndo(before: GameState, after: GameState, seat: SeatId
     || !before.priorityOpen || after.version !== before.version + 1) return false;
   const player = before.players.find(p => p.seat === seat);
   const source = player?.battlefield.find(p => p.instance_id === action.sourceId);
-  const ability = source && cardProfile(source.card).manaAbilities[action.abilityIndex];
+  const ability = source && manaAbilitiesFor(before, source).find((candidate) => candidate.index === action.abilityIndex);
   if (!player || !source || !ability || ability.removeCounters?.length
     || ability.variableAmountCounter || ability.manaCost?.symbols.length) return false;
   // Extra log entries reveal intervening work even if its board delta cancels.

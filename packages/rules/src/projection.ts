@@ -8,7 +8,7 @@
 
 import { cardProfile, type TriggerEvent } from "./characteristics.js";
 import {
-  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaSourcePotential, powerOf, toughnessOf,
+  STEP_LABELS, defendersAwaitingBlocks, legalActions, legalAttackers, legalBlockers, legalTargets, manaAbilitiesFor, manaSourcePotential, powerOf, toughnessOf,
   type GameCard, type GameState, type LegalAction, type LogEntry, type Permanent, type SeatId, type Target, type TurnStep
 } from "./engine.js";
 import { emptyPool, type ManaPool, type ManaType } from "./mana.js";
@@ -209,12 +209,12 @@ function cardView(card: GameCard): CardView {
  * Availability is read from `legalActions` rather than recomputed, so an icon
  * is never lit for something the authoritative path would refuse.
  */
-function abilitiesOf(permanent: Permanent, available: readonly LegalAction[]): AbilityView[] {
+function abilitiesOf(state: GameState, permanent: Permanent, available: readonly LegalAction[]): AbilityView[] {
   const profile = cardProfile(permanent.card);
   const canActivate = (kind: "activate" | "activate-mana", index: number) => available.some((entry) =>
     entry.action.type === kind && entry.action.sourceId === permanent.instance_id && entry.action.abilityIndex === index);
   return [
-    ...profile.manaAbilities.map((ability): AbilityView => ({
+    ...manaAbilitiesFor(state, permanent).map((ability): AbilityView => ({
       index: ability.index, kind: "mana", text: ability.text, available: canActivate("activate-mana", ability.index)
     })),
     ...profile.activatedAbilities.map((ability): AbilityView => ({
@@ -255,7 +255,7 @@ function permanentView(state: GameState, permanent: Permanent, available: readon
     power: isCreature ? powerOf(permanent, state) : null,
     toughness: isCreature ? toughnessOf(permanent, state) : null,
     keywords: effectiveKeywords(state, permanent),
-    abilities: abilitiesOf(permanent, available),
+    abilities: abilitiesOf(state, permanent, available),
     controller: permanent.controller,
     tapped: permanent.tapped,
     summoningSick: permanent.summoningSick,
@@ -265,7 +265,7 @@ function permanentView(state: GameState, permanent: Permanent, available: readon
     attacking: attacking ? attacking.defender : null,
     blocking: blocking ? blocking.attackerId : null,
     blockedBy,
-    producesMana: cardProfile(permanent.card).manaAbilities.length > 0,
+    producesMana: manaAbilitiesFor(state, permanent).length > 0,
     ...(permanent.attachedTo ? { attachedTo: permanent.attachedTo } : {}),
     ...(permanent.attachedToPlayer !== undefined ? { attachedToPlayer: permanent.attachedToPlayer } : {})
   };
@@ -306,7 +306,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     landsPlayedThisTurn: player.landsPlayedThisTurn,
     manaPool: player.seat === viewerSeat ? player.manaPool : emptyPool(),
     restrictedMana: player.seat === viewerSeat ? (player.restrictedMana ?? []).map((mana) => mana.type) : [],
-    availableMana: player.seat === viewerSeat ? manaSourcePotential(player) : 0
+    availableMana: player.seat === viewerSeat ? manaSourcePotential(player, state) : 0
   }));
 
   const mustDeclareAttackers = state.step === "declare-attackers" && !state.combat.attackersDeclared;

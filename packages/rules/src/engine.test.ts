@@ -144,6 +144,7 @@ const TRAMPLER = () => make({ name: "Big Stomper", type_line: "Creature — Beas
 const DEATHTOUCHER = () => make({ name: "Tiny Viper", type_line: "Creature — Snake", mana_cost: "{B}", cmc: 1, power: "1", toughness: "1", keywords: ["Deathtouch"], oracle_text: "Deathtouch" });
 const VRASKA_SWARMS_EMINENCE = () => make({ name: "Vraska, Swarm's Eminence", type_line: "Legendary Planeswalker — Vraska", mana_cost: "{2}{B}{G}", cmc: 4, loyalty: "4", oracle_text: "Whenever a creature you control with deathtouch deals damage to a player or planeswalker, put a +1/+1 counter on that creature.", oracle_id: "cff8b4e9-c60c-42c1-ad2e-74ae9d7f3afb" });
 const AJANI_THE_GREATHEARTED = () => make({ name: "Ajani, the Greathearted", type_line: "Legendary Planeswalker — Ajani", mana_cost: "{2}{G}{W}", cmc: 4, loyalty: "5", oracle_text: "−2: Put a +1/+1 counter on each creature you control and a loyalty counter on each other planeswalker you control.", oracle_id: "f5d9be71-91d0-4166-ba58-cbbf5d490c40" });
+const JIANG_YANGGU_WILDCRAFTER = () => make({ name: "Jiang Yanggu, Wildcrafter", type_line: "Legendary Planeswalker — Yanggu", mana_cost: "{2}{G}", cmc: 3, loyalty: "4", oracle_text: "Each creature you control with a +1/+1 counter on it has \"{T}: Add one mana of any color.\"", oracle_id: "04f2c320-dfcc-440e-9e24-3c2083d74e7c" });
 const FEARER = () => make({ name: "Fear Stalker", type_line: "Creature — Horror", mana_cost: "{2}{B}", cmc: 3, power: "3", toughness: "2", keywords: ["Fear"], oracle_text: "Fear" });
 const BLACK_BLOCKER = () => make({ name: "Dusk Bat", type_line: "Creature — Bat", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1", colors: ["B"] });
 const ARTIFACT_BLOCKER = () => make({ name: "Iron Construct", type_line: "Artifact Creature — Construct", mana_cost: "{2}", cmc: 2, power: "2", toughness: "2" });
@@ -8142,6 +8143,28 @@ describe("activated abilities", () => {
     expect(permanentNamed(game, 0, "Grizzly Bears")?.counters["+1/+1"]).toBe(1);
     expect(permanentNamed(game, 0, "Vraska, Swarm's Eminence")?.counters.loyalty).toBe(6);
     expect(permanentNamed(game, 0, "Ajani, the Greathearted")?.counters.loyalty).toBe(3);
+  });
+
+  it("grants conditional any-color mana to creatures with the required counter", () => {
+    const profile = profileOf(JIANG_YANGGU_WILDCRAFTER());
+    expect(profile.staticManaAbilityGrants).toMatchObject([{
+      scope: "creatures-you-control", counter: "+1/+1", ability: { produces: ["W", "U", "B", "R", "G"], amount: 1, requiresTap: true }
+    }]);
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyOnBoard([JIANG_YANGGU_WILDCRAFTER(), BEAR()], { hold: true });
+    const bear = permanentNamed(game, 0, "Grizzly Bears")!;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === bear.instance_id
+        ? { ...permanent, counters: { ...permanent.counters, "+1/+1": 1 } }
+        : permanent)
+    }));
+    const source = manaSources(game.players[0]!, game).find((entry) => entry.permanentId === bear.instance_id);
+    expect(source).toMatchObject({ options: ["W", "U", "B", "R", "G"], amount: 1, requiresTap: true });
+
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: bear.instance_id, abilityIndex: source!.abilityIndex, mana: "G" });
+    expect(game.players[0]!.manaPool.G).toBe(1);
+    expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(true);
   });
 
   it("tracks a characteristic-defining power/toughness live off the controller's hand size", () => {

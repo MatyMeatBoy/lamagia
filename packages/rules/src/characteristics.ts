@@ -328,6 +328,13 @@ export interface EquipmentModification {
   readonly text: string;
 }
 
+/** A mana ability granted by another permanent's static condition (CR 604.1). */
+export interface StaticManaAbilityGrant {
+  readonly scope: "creatures-you-control";
+  readonly counter: string;
+  readonly ability: Omit<ManaAbility, "index">;
+}
+
 export interface StaticKeywordGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures" | "subtype-creatures-you-control";
   readonly keyword: EnforcedKeyword;
@@ -965,6 +972,7 @@ export interface CardProfile {
   readonly toughness: number | null;
   readonly loyalty: number | null;
   readonly manaAbilities: readonly ManaAbility[];
+  readonly staticManaAbilityGrants: readonly StaticManaAbilityGrant[];
   /** Generic cycling from hand. */
   readonly cyclingCost: ManaCost | null;
   readonly cyclingSearches: readonly CyclingSearchAbility[];
@@ -1542,6 +1550,18 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
   const produced = (card.produced_mana ?? []).filter((symbol) => MANA_LETTERS.has(symbol)) as ManaType[];
   if (!produced.length) return [];
   return [{ index: 0, produces: produced, amount: 1, requiresTap: true, lifeCost: 0, text: `{T}: Add one mana (${produced.join("/")}).` }];
+}
+
+function parseStaticManaAbilityGrants(text: string): StaticManaAbilityGrant[] {
+  return text.split("\n").flatMap((line): StaticManaAbilityGrant[] => {
+    const match = /^each creature you control with a ([+\-]\d+\/[+\-]\d+) counter on it has "\{T\}: add one mana of any color\.?"\.?$/i.exec(line.trim());
+    if (!match) return [];
+    return [{
+      scope: "creatures-you-control",
+      counter: match[1]!,
+      ability: { produces: [...MANA_COLORS], amount: 1, requiresTap: true, lifeCost: 0, text: "{T}: Add one mana of any color." }
+    }];
+  });
 }
 
 function parseCyclingCost(text: string): ManaCost | null {
@@ -4245,6 +4265,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
     if (parseDamageAmplify(line)) continue;
+    if (parseStaticManaAbilityGrants(line).length) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
@@ -4795,6 +4816,7 @@ export function cardProfile(card: CardData): CardProfile {
     optional: true, targetKind: "none", sourceText: `Graft ${graftAmount}`
   });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
+  const staticManaAbilityGrants = isPermanent ? parseStaticManaAbilityGrants(text) : [];
   const cyclingCost = parseCyclingCost(text);
   const cyclingSearches = parseCyclingSearches(text);
   const flashbackCost = parseFlashbackCost(text);
@@ -4971,6 +4993,7 @@ export function cardProfile(card: CardData): CardProfile {
     toughness: numeric(face.toughness),
     loyalty: numeric(face.loyalty),
     manaAbilities,
+    staticManaAbilityGrants,
     cyclingCost,
     cyclingSearches,
     echoCost: recognized.echoCost ?? null,

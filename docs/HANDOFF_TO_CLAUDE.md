@@ -3852,3 +3852,11 @@ end-to-end scenario (CR 122.1, 606.3). The generated global near-complete
 snapshot still reports Fae/Vraska and the same 15,142-card queue because this
 worktree has no `data/catalog/prossh.sqlite`; rerun `rules:engine:export` and
 `rules:near-complete` in the integrator checkout after restoring the catalog.
+
+Jiang Yanggu, Wildcrafter is now covered by the same rescan pass: its static
+grant parses the counter condition once and exposes a real any-color mana
+ability on each qualifying creature. `manaAbilitiesFor` is shared by legal
+actions, payment planning, activation validation, undo checks, and projection;
+the per-state grant cache avoids rescanning the entire battlefield for every
+mana source. Validation after this addition: **717 rules tests**, `npm run
+check` and `git diff --check` pass.

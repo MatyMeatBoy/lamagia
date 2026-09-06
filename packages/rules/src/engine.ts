@@ -13,7 +13,7 @@
  */
 
 import {
-  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type StaticManaAbilityGrant, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaType, type RestrictedMana
@@ -1045,6 +1045,37 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   return true;
 }
 
+/** Printed mana abilities plus static abilities granted by permanents on this battlefield. */
+const staticManaGrantCache = new WeakMap<GameState, Map<SeatId, readonly StaticManaAbilityGrant[]>>();
+
+function staticManaGrantsFor(state: GameState, seat: SeatId): readonly StaticManaAbilityGrant[] {
+  let bySeat = staticManaGrantCache.get(state);
+  if (!bySeat) {
+    bySeat = new Map();
+    staticManaGrantCache.set(state, bySeat);
+  }
+  const cached = bySeat.get(seat);
+  if (cached) return cached;
+  const player = state.players.find((candidate) => candidate.seat === seat);
+  const grants = player?.battlefield
+    .filter((source) => !permanentLosesAbilities(state, source))
+    .flatMap((source) => cardProfile(source.card).staticManaAbilityGrants) ?? [];
+  bySeat.set(seat, grants);
+  return grants;
+}
+
+export function manaAbilitiesFor(state: GameState, permanent: Permanent): readonly ManaAbility[] {
+  const profile = cardProfile(permanent.card);
+  const printed = profile.manaAbilities;
+  if (!isCreature(profile)) return printed;
+  if (!permanentLosesAbilities(state, permanent)) {
+    const grants = staticManaGrantsFor(state, permanent.controller)
+      .filter((grant) => grant.scope === "creatures-you-control" && (permanent.counters[grant.counter] ?? 0) > 0);
+    return [...printed, ...grants.map((grant, offset) => ({ ...grant.ability, index: printed.length + offset }))];
+  }
+  return printed;
+}
+
 /** Every color a land the given seats control could produce (CR "could produce" is characteristic-based, not activation-gated). */
 function colorsFromLandsControlledBy(state: GameState, seats: readonly SeatId[]): ManaType[] {
   const colors = new Set<ManaType>();
@@ -1099,12 +1130,13 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
     && cardProfile(permanent.card).doublesLandMana) : false;
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
-    for (const ability of profile.manaAbilities) {
+    const manaAbilities = state ? manaAbilitiesFor(state, permanent) : profile.manaAbilities;
+    for (const ability of manaAbilities) {
       if (ability.manaRestriction && !sourceOptions.allowLegendaryMana) continue;
       // Variable storage output is chosen as a single activation and cannot
       // be used as an automatic source while paying another cost.
       if (ability.variableAmountCounter || ability.manaCost || ability.sacrificesCreatures) continue;
-      if (!canUseManaAbility(player, permanent, ability)) continue;
+      if (!canUseManaAbility(player, permanent, ability, state)) continue;
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
       // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
@@ -1145,8 +1177,8 @@ function manaSourceCapacity(sources: readonly ManaSource[]): number {
 }
 
 /** Maximum mana currently available from untapped sources, excluding the pool. */
-export function manaSourcePotential(player: PlayerState): number {
-  return manaSourceCapacity(manaSources(player));
+export function manaSourcePotential(player: PlayerState, state?: GameState): number {
+  return manaSourceCapacity(manaSources(player, state));
 }
 
 export interface ManaPlan {
@@ -1170,8 +1202,8 @@ export interface ManaPlan {
 }
 
 /** Upper bound on mana available, used for quick "can I afford anything?" filtering. */
-export function potentialMana(player: PlayerState): number {
-  return manaSourcePotential(player) + poolTotal(player.manaPool);
+export function potentialMana(player: PlayerState, state?: GameState): number {
+  return manaSourcePotential(player, state) + poolTotal(player.manaPool);
 }
 
 type Tap = ManaPlan["taps"][number];
@@ -6796,7 +6828,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const sacrificeOptions = profile.additionalCostSacrificeCreature
       ? player.battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)))
       : [undefined];
-    const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
+    const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player, state) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
     const variants: { kicked: boolean; evoked: boolean; entwined: boolean }[] = [{ kicked: false, evoked: false, entwined: false }];
     if (profile.kickerCost) variants.push({ kicked: true, evoked: false, entwined: false });
@@ -6908,7 +6940,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const profile = cardProfile(card);
     const cost = profile.flashbackCost;
     if (!cost || profile.isPermanent) continue;
-    const values = cost.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
+    const values = cost.hasVariable ? [...Array(Math.max(1, potentialMana(player, state) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
     const entwinedOptions = profile.entwineCost && profile.modalChoices.length ? [false, true] : [false];
     for (const variableValue of values) for (const mode of modes) for (const entwined of entwinedOptions) {
@@ -6933,7 +6965,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (opponentsLocked) break;
     const tax = commanderTax(player, card.instance_id);
     const profile = cardProfile(card);
-    const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()] : [0];
+    const values = profile.cost?.hasVariable ? [...Array(Math.max(1, potentialMana(player, state) + 1)).keys()] : [0];
     const modes: (number | undefined)[] = profile.modalChoices.length ? profile.modalChoices.map((_, index) => index) : [undefined];
     const kickers = profile.kickerCost ? [false, true] : [false];
     const entwinedOptions = profile.entwineCost && profile.modalChoices.length ? [false, true] : [false];
@@ -6979,7 +7011,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const source = handActivationSource(card, seat);
     for (const ability of cardProfile(card).activatedAbilities.filter((candidate) => candidate.sourceZone === "hand")) {
       const variableValues = ability.manaCost?.hasVariable
-        ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
+        ? [...Array(Math.max(1, potentialMana(player, state) + 1)).keys()]
         : [0];
       for (const variableValue of variableValues) {
         const check = activatableAbility(state, seat, source, ability, variableValue);
@@ -7018,7 +7050,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   // announced like a spell and waits for priority to pass.
   for (const permanent of player.battlefield) {
     const profile = cardProfile(permanent.card);
-    for (const ability of profile.manaAbilities) {
+    for (const ability of manaAbilitiesFor(state, permanent)) {
       if (!canUseManaAbility(player, permanent, ability, state)) continue;
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
@@ -7070,7 +7102,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     for (const ability of activatedAbilitiesFor(state, permanent)) {
       if (opponentsLocked && ["Artifact", "Creature", "Enchantment"].some((type) => profile.types.includes(type as CardType))) continue;
       const variableValues = ability.manaCost?.hasVariable
-        ? [...Array(Math.max(1, potentialMana(player) + 1)).keys()]
+        ? [...Array(Math.max(1, potentialMana(player, state) + 1)).keys()]
         : [0];
       for (const variableValue of variableValues) {
         const check = activatableAbility(state, seat, permanent, ability, variableValue);
@@ -7339,7 +7371,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const player = playerAt(state, seat);
   const source = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   if (!source) throw new Error("Ese permanente ya no está bajo tu control.");
-  const ability = cardProfile(source.card).manaAbilities.find((candidate) => candidate.index === action.abilityIndex);
+  const ability = manaAbilitiesFor(state, source).find((candidate) => candidate.index === action.abilityIndex);
   const options = ability ? manaOptionsFor(player, ability, state) : [];
   if (!ability || !options.includes(action.mana)) throw new Error("Esa habilidad de maná no existe.");
   if (ability.variableAmountCounter) {
