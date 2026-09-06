@@ -9365,12 +9365,19 @@ function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAc
     : ["W", "U", "B", "R", "G"];
   if (!colors.includes(action.color)) throw new Error("Choose one of Magic's five colors.");
   if (choice.effect.kind === "add-mana-any-color" && choice.effect.splitAmount) {
-    const amount = choice.variableValue ?? 0;
-    const next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
-      ...player,
-      manaPool: addMana(player.manaPool, action.color, action.amount ?? amount)
-    }));
-    return logged(next, seat, `${playerAt(next, seat).name} agrega ${action.amount ?? amount} maná ${action.color}.`);
+    const total = choice.variableValue ?? 0;
+    const chosenAmount = Math.min(action.amount ?? total, total);
+    const remainderColor = colors.find((color) => color !== action.color);
+    const remainderAmount = total - chosenAmount;
+    const next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => {
+      let manaPool = addMana(player.manaPool, action.color, chosenAmount);
+      if (remainderAmount > 0 && remainderColor) manaPool = addMana(manaPool, remainderColor, remainderAmount);
+      return { ...player, manaPool };
+    });
+    const description = remainderAmount > 0 && remainderColor
+      ? `${chosenAmount} maná ${action.color} y ${remainderAmount} maná ${remainderColor}`
+      : `${chosenAmount} maná ${action.color}`;
+    return logged(next, seat, `${playerAt(next, seat).name} agrega ${description}.`);
   }
   const source: StackObject = {
     id: choice.sourceId,

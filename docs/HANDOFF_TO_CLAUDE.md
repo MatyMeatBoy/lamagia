@@ -5496,3 +5496,29 @@ profiles, 200/200 simulated games.
 
 Prossh decklist status after this pass: **89 of 97 unique cards fully
 implemented (91.8%)**.
+
+Merging the shared branch afterward brought in another worker's fix
+for the SAME Xenagos, the Reveler mana ability this session had
+already implemented as "choose one color for all X mana" — their
+change added a `splitAmount` flag plus a test expecting a true split
+across both offered colors. `characteristics.ts` auto-merged the two
+edits into one effect literal carrying both the old `amount` field and
+the new `splitAmount` field with no conflict, but `applyChooseColor`'s
+new split branch only ever added the CHOSEN color's amount and never
+computed the remainder for the other one, so the merged-in test failed
+(`{R:1, G:1}` expected, `{R:1, G:0}` produced) — not a regression in
+prior work, an incomplete branch that arrived via the merge itself.
+Completed it: with exactly two offered colors, the remainder (total
+minus the chosen amount) is now added to whichever color wasn't
+picked, matching Xenagos's real "any combination of {R} and/or {G}"
+wording with a single interactive choice rather than a second prompt,
+since two colors make the split fully determined once the first
+amount is set. Also fixed a stale comment left over from the merge
+that still described the old single-color simplification. Verified
+**+1** in the export count (10,815 → 10,816); set coverage holds at
+32.8%. Added one more scenario test (three creatures, choosing G with
+amount 2, expecting `{G:2, R:1}`) confirming the remainder logic
+generalizes past the merged-in test's 1/1 case. Validation: full
+**852** rules tests green (1 new), `npm run check` across all four
+workspaces, `npx vitest run services/match-server/src` (6 passed),
+200/200 simulated games.

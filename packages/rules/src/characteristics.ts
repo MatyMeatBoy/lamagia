@@ -3053,9 +3053,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // choose-color infrastructure for spell effects.
   if (/^Add one mana of any color$/i.test(text)) return { effect: { kind: "add-mana-any-color" }, target: "none" };
   // "Add X mana in any combination of {R} and/or {G}, where X is the number
-  // of creatures you control" (Xenagos, the Reveler): modeled as choosing ONE
-  // of the two colors for all X mana rather than a true free split, the same
-  // simplification `add-mana-any-color` already makes for a single mana.
+  // of creatures you control" (Xenagos, the Reveler): the controller picks an
+  // amount of one offered color and the remainder is added in the other.
   if ((match = /^Add X mana in any combination of (\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?, where X is the number of creatures you control$/i.exec(text))) {
     const colors = [match[1], match[2]].filter((symbol): symbol is string => Boolean(symbol)).map((symbol) => symbol.slice(1, -1).toUpperCase() as MagicColor);
     if (colors.length) return { effect: { kind: "add-mana-any-color", colors, amount: "creatures-you-control", splitAmount: "creatures-you-control" }, target: "none" };
