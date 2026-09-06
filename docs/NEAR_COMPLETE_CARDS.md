@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,006**
-- Cards with a reusable existing primitive hint: **11,235**
-- Cards needing new primitive review: **3,771**
-- Templates: **12,053**
+- One-line cards: **14,988**
+- Cards with a reusable existing primitive hint: **11,212**
+- Cards needing new primitive review: **3,776**
+- Templates: **12,049**
 
 ## Worker rule
 
@@ -150,7 +150,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Quicksmith Rebel | `d69594fc-9250-41e7-a170-d4705615312c` | damage | activated ability / mana | When ~ enters, target artifact you control gains "{T}: ~ deals 2 damage to any target" for as long as you control ~. |
 | reuse-existing | Kothophed, Soul Hoarder | `85e1791f-f9a0-4e82-baf6-33cff2dcf60b` | draw | damage / life | Whenever a permanent owned by another player is put into a graveyard from the battlefield, you draw a card and you lose 1 life. |
 | needs-new-primitive | Shardless Agent | `2afbaa9a-c171-4a8b-90f3-5250d8498356` | activated | new primitive review | Cascade |
-| reuse-existing | Essence Extraction | `14363df6-ac0f-476a-bbd8-ce351de0babf` | damage | damage / life | ~ deals 3 damage to target creature and you gain 3 life. |
 | reuse-existing | Soul of Theros | `d820b920-191c-43e3-ba6a-4cdceab1c06d` | pump | damage / life | {4}{W}{W}, Exile ~ from your graveyard: Creatures you control get +2/+2 and gain first strike and lifelink until end of turn. |
 | reuse-existing | Ulvenwald Observer | `dff3cfff-69f9-4afd-af28-b75504d30ffa` | draw | trigger / ETB | Whenever a creature you control with toughness 4 or greater dies, draw a card. |
 | reuse-existing | Soul Swallower | `6cc99047-91dc-4ef2-99f3-65932b82ca31` | counters | trigger / ETB | Delirium — At the beginning of your upkeep, if there are four or more card types among cards in your graveyard, put three +1/+1 counters on ~. |
@@ -291,7 +290,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Living Death | `9e6a3df4-67a3-452e-a6ef-f04dbadb21ef` | exile | sacrifice | Each player exiles all creature cards from their graveyard, then sacrifices all creatures they control, then puts all cards they exiled this way onto the battlefield. |
 | needs-new-primitive | Burning Wish | `13a884b5-8970-4d71-9082-a8b6c8db9a01` | activated | new primitive review | You may reveal a sorcery card you own from outside the game and put it into your hand. |
 | needs-new-primitive | Wren's Run Vanquisher | `fe9cdd15-a390-4a1e-bae9-474ce8d355b8` | activated | new primitive review | As an additional cost to cast ~, reveal an Elf card from your hand or pay {3}. |
-| reuse-existing | Thran Quarry | `57b4da3f-361a-4cbe-b77f-190ec33eefd8` | sacrifice | sacrifice | At the beginning of the end step, if you control no creatures, sacrifice ~. |
 | reuse-existing | Karametra's Acolyte | `e8cf80a1-6908-4adb-88e7-2015672d4905` | activated | activated ability / mana | {T}: Add an amount of {G} equal to your devotion to green. |
 | needs-new-primitive | Hand of Justice | `af8eb20a-dfa2-49a4-892b-26d7e276fcd2` | destroy | new primitive review | {T}, Tap three untapped white creatures you control: Destroy target creature. |
 | reuse-existing | Curse of the Bloody Tome | `5480f855-80b7-45c7-94a9-071c7b5d5ccf` | mill | trigger / ETB | At the beginning of enchanted player's upkeep, that player mills two cards. |
@@ -301,6 +299,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Carnophage | `9ac77cfd-7d78-4c8a-bffc-17649a852114` | activated | damage / life | At the beginning of your upkeep, tap ~ unless you pay 1 life. |
 | reuse-existing | Overbeing of Myth | `5391f601-b778-413f-a31f-9f8b23b40f5c` | draw | trigger / ETB | At the beginning of your draw step, draw an additional card. |
 | needs-new-primitive | Reckless Wurm | `c9159396-81d3-4f81-88b4-dda163ff4b74` | activated | new primitive review | Madness {2}{R} |
+| needs-new-primitive | Hellspark Elemental | `a7ba88c6-81e7-4ab7-9c9b-308831e56833` | activated | new primitive review | Unearth {1}{R} |
 | needs-new-primitive | Okina Nightwatch | `d1c222fe-0ca7-415b-a28a-3b704df53d66` | pump | new primitive review | As long as you have more cards in hand than each opponent, ~ gets +3/+3. |
 | reuse-existing | Force of Nature | `e3c4c27d-f263-4c69-a4fe-2928136ff68b` | damage | damage / life | At the beginning of your upkeep, ~ deals 8 damage to you unless you pay {G}{G}{G}{G}. |
 | reuse-existing | Treva, the Renewer | `72524f3c-674b-4ebf-9526-18737b354010` | damage | damage / life | Whenever ~ deals combat damage to a player, you may pay {2}{W}. If you do, choose a color, then you gain 1 life for each permanent of that color. |
@@ -346,7 +345,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Juggernaut | `4ac9116f-36bc-4d71-b696-d6ee064e1d58` | activated | new primitive review | ~ can't be blocked by Walls. |
 | reuse-existing | Retaliator Griffin | `dd4b9e5a-b3ab-4b70-b200-228c8add9f52` | damage | damage / life | Whenever a source an opponent controls deals damage to you, you may put that many +1/+1 counters on ~. |
 | needs-new-primitive | Render Silent | `3966bd03-a98e-43b6-a0c0-10d4d81c173c` | activated | new primitive review | Its controller can't cast spells this turn. |
-| reuse-existing | Ball Lightning | `7485cf25-eb41-4397-be13-7f0b8c10c70a` | sacrifice | sacrifice | At the beginning of the end step, sacrifice ~. |
 | reuse-existing | Sparksmith | `b27bc09a-ebea-498c-87f2-753852569a73` | damage | activated ability / mana | {T}: ~ deals X damage to target creature and X damage to you, where X is the number of Goblins on the battlefield. |
 | reuse-existing | Killing Wave | `69d6b906-5461-4eba-8667-dbb8c0ce3fcb` | sacrifice | sacrifice | For each creature, its controller sacrifices it unless they pay X life. |
 | needs-new-primitive | Arrogant Wurm | `dc7f0c33-80ea-453e-a237-473f077f038e` | activated | new primitive review | Madness {2}{G} |
@@ -457,7 +455,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Chandra's Phoenix | `65ddd04c-7207-4f6c-ae1b-c5e02a520a51` | damage | damage / life | Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red planeswalker you control, return ~ from your graveyard to your hand. |
 | reuse-existing | Myr Superion | `43dac6fa-4cdf-49ec-9e11-2e5e8f9f928b` | activated | activated ability / mana | Spend only mana produced by creatures to cast ~. |
 | needs-new-primitive | Dungrove Elder | `32083c9f-04c6-4b6f-9e24-cc8f3cae3e3e` | activated | new primitive review | ~'s power and toughness are each equal to the number of Forests you control. |
-| reuse-existing | Groundbreaker | `a14dc46f-b790-458e-8821-0c5646188680` | sacrifice | sacrifice | At the beginning of the end step, sacrifice ~. |
 | reuse-existing | Mayor of Avabruck // Howlpack Alpha | `6e638587-30b3-4c4b-b463-fb415ea048f7` | transform | trigger / ETB | At the beginning of each upkeep, if no spells were cast last turn, transform ~. |
 | needs-new-primitive | Tempered Steel | `e220138c-5fc6-487d-9fa9-f21b2fb1f12c` | pump | new primitive review | Artifact creatures you control get +2/+2. |
 | reuse-existing | Garruk's Horde | `b9da511e-a57f-43c2-aa97-902f3b4c55fb` | activated | search / library | You may cast creature spells from the top of your library. |
@@ -518,5 +515,8 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
 | reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
 | reuse-existing | Briarbridge Tracker | `8fe6e954-f19b-4d11-83d3-74c634d51bad` | pump | create / token | As long as you control a token, ~ gets +2/+0. |
+| reuse-existing | Somberwald Beastmaster | `df35bf19-4cbf-4624-925d-ceca6bff596e` | activated | create / token | Creature tokens you control have deathtouch. |
+| reuse-existing | Quirion Beastcaller | `d777e428-cc50-40b1-a241-41576d2575d1` | counters | counter | When ~ dies, distribute X +1/+1 counters among any number of target creatures you control, where X is the number of +1/+1 counters on ~. |
+| reuse-existing | Extravagant Replication | `3a646245-b8b7-4f91-a312-d5eea9a9e49a` | token | trigger / ETB | At the beginning of your upkeep, create a token that's a copy of another target nonland permanent you control. |
 
-The JSON contains the remaining 14,506 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,488 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

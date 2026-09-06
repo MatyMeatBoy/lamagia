@@ -2807,7 +2807,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "draw-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+draw\s+step,?\s*(.+)$/i },
   { event: "draw-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+draw\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "you", pattern: /^at\s+the\s+beginning\s+of\s+your\s+end\s+step,?\s*(.+)$/i },
-  { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+end\s+step,?\s*(.+)$/i },
+  { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+(?:each|the)\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "each-player", pattern: /^at\s+the\s+beginning\s+of\s+each\s+player[’']s\s+end\s+step,?\s*(.+)$/i },
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i },
 
@@ -3058,14 +3058,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "lose-life-event-player", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-event-player", amount: "X" }, target: "none" };
   }
-  const damageAndLife = /^~ deals (\w+) damage to any target and you gain (\w+) life$/i.exec(text);
+  const damageAndLife = /^~ deals (\w+) damage to (any target|target creature|target creature or planeswalker) and you gain (\w+) life$/i.exec(text);
   if (damageAndLife) {
     const damage = damageAndLife[1]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[1]!);
-    const life = damageAndLife[2]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[2]!);
+    const life = damageAndLife[3]!.toUpperCase() === "X" ? "X" as const : toNumber(damageAndLife[3]!);
+    const scope = damageAndLife[2]!.toLowerCase();
     if (damage !== null && life !== null) {
       return {
         effect: { kind: "compound", effects: [{ kind: "damage-any-target", amount: damage }, { kind: "gain-life", amount: life }] },
-        target: "any"
+        target: scope === "any target" ? "any" : scope === "target creature or planeswalker" ? "creature-or-planeswalker" : "creature"
       };
     }
   }

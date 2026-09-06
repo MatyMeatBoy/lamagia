@@ -6,6 +6,13 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **"At the beginning of the end step, sacrifice ~"** — the `end-step` trigger
+  table gained an `each|the` alternation (Ball Lightning, Spark Elemental,
+  Hunted-token cycle). **"~ deals N damage to target creature and you gain N
+  life"** — the `damageAndLife` regex now also matches `target creature` /
+  `target creature or planeswalker` (Firebolt, Barbed Lightning). **Threshold
+  static P/T** — new `source-controller-graveyard-threshold` scope. Combined
+  export **10,664 → 10,703** (+39).
 - **"Whenever you cast a noncreature spell" / "you draw your second card each
   turn" triggers** — added the `subject: "you"` (and matching `opponent`)
   trigger patterns; the `spellType: "noncreature"` filter and
@@ -61,7 +68,7 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
   `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
 
 Session net: engine export **10,197 → 10,500** fully-implemented profiles
-(+478) across the eight primitives below, each with a scenario test; rules
+(+506) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 

@@ -7240,6 +7240,36 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("sacrifices a Ball Lightning-style creature at the end step", () => {
+    const ballLightning = make({
+      name: "Test Ball Lightning", type_line: "Creature — Elemental", mana_cost: "{R}{R}{R}", cmc: 3, power: "6", toughness: "1",
+      oracle_text: "Trample, haste\nAt the beginning of the end step, sacrifice this creature."
+    });
+    expect(profileOf(ballLightning).triggers[0]).toMatchObject({ event: "end-step", effect: { kind: "sacrifice-source" } });
+    let game = readyToCast([], [ballLightning]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Ball Lightning")).toBe(true);
+    game = passUntil(game, (state) => state.turn === 2 && state.step === "precombat-main");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Test Ball Lightning")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Test Ball Lightning")).toBe(true);
+  });
+
+  it("deals damage to a creature and gains life on the same spell (Firebolt-style)", () => {
+    const firebolt = make({
+      name: "Test Firebolt", type_line: "Instant", mana_cost: "{R}", cmc: 1,
+      oracle_text: "This spell deals 3 damage to target creature and you gain 3 life."
+    });
+    expect(profileOf(firebolt)).toMatchObject({ fullyImplemented: true, targetKind: "creature" });
+    let game = readyToCast([firebolt], [MOUNTAIN()], [make({ name: "Chump", type_line: "Creature — Goblin", mana_cost: "{R}", power: "2", toughness: "3" })]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const foe = game.players[1]!.battlefield[0]!;
+    const lifeBefore = game.players[0]!.life;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: foe.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.life).toBe(lifeBefore + 3);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === foe.instance_id)).toBe(false);
+  });
+
   it("applies a Threshold static +X/+Y once seven cards are in the graveyard", () => {
     const mongoose = make({
       name: "Test Mongoose", type_line: "Creature — Mongoose", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1",
