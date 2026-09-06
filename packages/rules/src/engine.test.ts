@@ -560,6 +560,7 @@ const C13_MAGUS_OF_THE_ARENA = () => make({ name: "Magus of the Arena", type_lin
 const C13_SHATTERGANG_BROTHERS = () => make({ name: "Shattergang Brothers", type_line: "Legendary Creature — Goblin", mana_cost: "{1}{B}{R}{G}", cmc: 4, power: "3", toughness: "3", oracle_text: "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.", oracle_id: "7fb63d9a-8d90-4b43-8390-924de2d7e32c" });
 const C13_SYDRI = () => make({ name: "Sydri, Galvanic Genius", type_line: "Legendary Creature — Human Wizard", mana_cost: "{W}{U}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "{U}: Target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value until end of turn.\n{W}{B}: Target artifact creature gains deathtouch and lifelink until end of turn.", oracle_id: "4e92d36b-1a35-4fa9-87ea-10eace5a3cc7" });
 const C13_DEADWOOD_TREEFOLK = () => make({ name: "Deadwood Treefolk", type_line: "Creature — Treefolk", mana_cost: "{4}{G}", cmc: 5, power: "3", toughness: "6", oracle_text: "Vanishing 3 (This creature enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this creature enters or leaves the battlefield, return another target creature card from your graveyard to your hand.", oracle_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd" });
+const C13_INCENDIARY_COMMAND = () => make({ name: "Incendiary Command", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "Choose two —\n• Incendiary Command deals 4 damage to target player or planeswalker.\n• Incendiary Command deals 2 damage to each creature.\n• Destroy target nonbasic land.\n• Each player discards all the cards in their hand, then draws that many cards.", oracle_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870" });
 const TEST_BEAST = () => make({ name: "Test Beast", type_line: "Creature — Beast", mana_cost: "{2}{G}", cmc: 3, power: "4", toughness: "4" });
 const C13_WITCH_HUNT = () => make({ name: "Witch Hunt", type_line: "Enchantment", oracle_text: "Players can't gain life.\nAt the beginning of your upkeep, this enchantment deals 4 damage to you.\nAt the beginning of your end step, target opponent chosen at random gains control of this enchantment.", oracle_id: "e86bd38f-7804-449d-af29-21e96a56ab30" });
 const C13_NAYA_SOULBEAST = () => make({ name: "Naya Soulbeast", type_line: "Creature — Beast", mana_cost: "{6}{G}{G}", cmc: 8, power: "0", toughness: "0", oracle_text: "When you cast this spell, each player reveals the top card of their library. This creature enters with X +1/+1 counters on it, where X is the total mana value of all cards revealed this way.\nTrample", oracle_id: "5ea0c608-2c56-4889-a5d3-d435df515950" });
@@ -8450,6 +8451,22 @@ describe("activated abilities", () => {
     let game = twoSeatGame([], []);
     game = putOnBattlefield(game, 0, [C13_DEADWOOD_TREEFOLK()], { sick: false });
     expect(permanentNamed(game, 0, "Deadwood Treefolk")!.counters.time).toBe(3);
+  });
+
+  it("generates exact two-mode Incendiary Command choices", () => {
+    const profile = profileOf(C13_INCENDIARY_COMMAND());
+    expect(profile).toMatchObject({ fullyImplemented: true, modalChoices: expect.any(Array) });
+    expect(profile.modalChoices).toHaveLength(6);
+    expect(profile.modalChoices.some((choice) => choice.effect.kind === "compound"
+      && choice.effect.effects.some((effect) => effect.kind === "each-player-discard-and-draw-own"))).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [C13_INCENDIARY_COMMAND()]), autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", mode: 4 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Incendiary Command")).toBe(true);
   });
 
   it("resolves Leonin Bladetrap against only attacking nonfliers", () => {

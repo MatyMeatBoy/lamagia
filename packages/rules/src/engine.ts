@@ -5077,6 +5077,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "each-player-discard-and-draw-own": {
+      let next = state;
+      for (const player of state.players) {
+        const hand = playerAt(next, player.seat).hand;
+        next = discardCards(next, player.seat, hand);
+        next = drawCards(next, player.seat, hand.length);
+      }
+      return next;
+    }
     case "grant-source-cannot-be-blocked-except-keyword": {
       const sourceId = object.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;

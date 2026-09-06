@@ -553,3 +553,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-each-other-player-sacrifice-shattergang` | Reusable sacrifice-cost plus each-other-player permanent sacrifice primitive for Shattergang Brothers (CR 602.2b, 701.17) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-artifact-animation-sydri` | Reusable mana-value artifact animation and multi-keyword grant for Sydri, Galvanic Genius (CR 613.6, 702.2, 702.15) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-vanishing-leaves-deadwood` | Reusable Vanishing time-counter upkeep and enters/leaves graveyard-return trigger for Deadwood Treefolk (CR 702.63, 603.6) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-exact-modal-wheel-command` | Reusable exact-N modal choice generation and each-player hand wheel for Incendiary Command (CR 700.2, 701.8) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

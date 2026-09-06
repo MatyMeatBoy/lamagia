@@ -464,6 +464,8 @@ export type SpellEffect =
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
+  /** Each player discards their hand, then draws that player's discarded count. */
+  | { readonly kind: "each-player-discard-and-draw-own" }
   /** Each player discards their hand, then all draw the greatest discarded hand size. */
   | { readonly kind: "each-player-discard-and-draw-greatest" }
   /** Geier Reach Sanitarium: draw happens for everyone at once; the discard is each player's own choice, queued one seat at a time (CR 701.8a, APNAP order). */
@@ -3224,6 +3226,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
     return { effect: { kind: "copy-triggered-spell" }, target: "none" };
   }
+  if ((match = /^~ deals (\w+) damage to each creature$/i.exec(text))) {
+    const amount = match[1]!.toUpperCase() === "X" ? "X" as const : toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "damage-all-creatures", amount, excludeSource: false }, target: "none" };
+  }
   if (/^Copy target instant or sorcery spell(?: you control)?(?: twice)?\.?\s*(?:You may choose new targets for the cop(?:y|ies))?$/i.test(text)) {
     return { effect: { kind: "copy-target-spell", copies: /twice/i.test(text) ? 2 : 1 }, target: "instant-or-sorcery-spell" };
   }
@@ -3715,6 +3721,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Each player discards their hand, then draws (\w+) cards?$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
+  }
+  if (/^Each player discards (?:all the cards in their hand|their hand), then draws that many cards$/i.test(text)) {
+    return { effect: { kind: "each-player-discard-and-draw-own" }, target: "none" };
   }
   if (/^Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way$/i.test(text)) {
     return { effect: { kind: "each-player-discard-and-draw-greatest" }, target: "none" };
@@ -4473,7 +4482,8 @@ function recognizeText(text: string): RecognizedText {
     }
     const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
     const chooseMoreMatch = /^Choose (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more(?:\s+[—–-�])?\s*$/i.exec(line);
-    if (chooseOneOrBoth || chooseMoreMatch || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
+    const chooseExactMatch = /^Choose (two|three|four|five|six|seven|eight|nine|ten|\d+)(?:\s+[—–-�])?\s*$/i.exec(line);
+    if (chooseOneOrBoth || chooseMoreMatch || chooseExactMatch || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
       const minimumChoices = chooseMoreMatch ? (toNumber(chooseMoreMatch[1]!) ?? Number(chooseMoreMatch[1])) : 1;
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
@@ -4493,7 +4503,7 @@ function recognizeText(text: string): RecognizedText {
         cursor += 1;
       }
       if (!invalid && choices.length > 0 && choices.length === cursor - start) {
-        if (!chooseMoreMatch) modalChoices.push(...choices);
+        if (!chooseMoreMatch && !chooseExactMatch) modalChoices.push(...choices);
         if (chooseOneOrBoth) {
           const targetKinds = choices.map((choice) => choice.targetKind)
             .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
@@ -4509,6 +4519,29 @@ function recognizeText(text: string): RecognizedText {
             targetKind: targetKinds[0] ?? "none",
             ...(targetKinds.length ? { targetKinds } : {})
           });
+        } else if (chooseExactMatch) {
+          const exactChoices = toNumber(chooseExactMatch[1]!) ?? Number(chooseExactMatch[1]);
+          const visit = (from: number, selected: ModalChoice[]): void => {
+            if (selected.length === exactChoices) {
+              const targetKinds = selected.map((choice) => choice.targetKind)
+                .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
+              let targetOffset = 0;
+              modalChoices.push({
+                index: modalChoices.length,
+                text: `Choose ${selected.map((choice) => choice.text.replace(/[.;]$/, "")).join("; ")}`,
+                effect: {
+                  kind: "compound",
+                  effects: selected.map((choice) => choice.effect),
+                  targetOffsets: selected.map((choice) => choice.targetKind === "none" ? null : targetOffset++)
+                },
+                targetKind: targetKinds[0] ?? "none",
+                ...(targetKinds.length ? { targetKinds } : {})
+              });
+              return;
+            }
+            for (let index = from; index < choices.length; index += 1) visit(index + 1, [...selected, choices[index]!]);
+          };
+          if (exactChoices > 0 && exactChoices <= choices.length) visit(0, []);
         } else if (chooseMoreMatch) {
           // "Choose N or more" is a single modal choice whose legal modes are
           // all non-empty subsets meeting the printed minimum. Generate those
