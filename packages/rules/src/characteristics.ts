@@ -824,6 +824,7 @@ export type TriggerEvent =
   /** Modeled as precombat main beginning (CR 505.1a); this project has no "additional main phase" effects, so the two coincide for every card in scope. */
   | "first-main-phase"
   | "leaves-battlefield"
+  | "permanent-sacrificed"
   | "life-gained"
   | "life-lost"
   | "class-level-up"
@@ -880,6 +881,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "draw-step": "habilidad del paso de robo",
   "end-step": "habilidad del paso final",
   "leaves-battlefield": "habilidad de salida del campo de batalla",
+  "permanent-sacrificed": "sacrifice trigger",
   "life-gained": "life-gain trigger",
   "life-lost": "life-loss trigger",
   "class-level-up": "habilidad de nivel de Clase",
@@ -2699,6 +2701,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(that\s+creature[’']s\s+controller\s+may\s+.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "permanent-sacrificed", subject: "another-permanent-you-control", pattern: /^whenever\s+you\s+sacrifice\s+another\s+permanent,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-attacks-opponent", pattern: /^whenever\s+a\s+creature\s+attacks\s+one\s+of\s+your\s+opponents(?:\s+or\s+a\s+planeswalker\s+an\s+opponent\s+controls)?,?\s*(.+)$/i },

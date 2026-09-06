@@ -544,3 +544,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-return-activated-target` | Reusable land-return activation cost for Uyo's target-spell copy ability (CR 602.2b, 707.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-activated-cost-marath` | Reusable variable-X counter cost and three-mode activation primitives for Marath (CR 602.2b, 107.3, 700.2) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-activated-source-phantom` | Reusable tapped self-counter activation for Phantom Nantuko and equivalent creatures (CR 602.2, 121.1) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-sacrifice-trigger-furnace` | Reusable permanent-sacrificed event and optional mana trigger for Furnace Celebration (CR 603.2, 601.2) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
