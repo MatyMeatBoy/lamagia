@@ -505,10 +505,11 @@ function onCardClick(cardId: string, forcedAction?: LegalAction): void {
   const choices = cardActionsForCard(cardId);
   const card = seatOf(view?.viewerSeat ?? -1)?.hand?.find((candidate) => candidate.instance_id === cardId);
   const hasCycleOnly = choices.some((entry) => entry.action.type === "cycle") && !choices.some((entry) => entry.action.type === "cast");
+  const hasManaAbility = choices.some((entry) => entry.action.type === "activate-mana");
   // Never guess between printed modes. This is especially important for
   // hand-based mana abilities (e.g. Simian Spirit Guide): a normal click must
   // open the general menu, where casting and exiling for mana are separate.
-  if (!forcedAction && (choices.length > 1 || (hasCycleOnly && Boolean(card)))) {
+  if (!forcedAction && (choices.length > 1 || hasManaAbility || (hasCycleOnly && Boolean(card)))) {
     ui.cardActionMenu = ui.cardActionMenu === cardId ? null : cardId;
     ui.notice = "Elige qué hacer con esta carta.";
     render();
