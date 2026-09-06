@@ -1978,6 +1978,7 @@ function triggerMatches(
     const source = findPermanent(state, watcher.instanceId);
     if (!source || !source.tapped) return false;
   }
+  if (condition?.kind === "noncombat-damage" && event.kind !== "deals-damage-to-player") return false;
   if (condition?.kind === "source-in-command-zone"
     && !playerAt(state, watcher.controller).commandZone.some((card) => card.instance_id === watcher.instanceId)) return false;
   if (condition?.kind === "class-level-reached" && (event.kind !== "class-level-up" || event.level !== condition.level)) return false;
@@ -2101,6 +2102,8 @@ function triggerMatches(
     // The watcher is the Equipment; the event object must be the creature it is
     // attached to (Skullclamp, Argentum Armor).
     case "equipped-creature": return findPermanent(state, watcher.instanceId)?.attachedTo === object.permanentId;
+    case "opponent": return (event.kind === "deals-damage-to-player" || event.kind === "deals-combat-damage-to-player")
+      && event.victim !== watcher.controller;
     default: return false;
   }
 }

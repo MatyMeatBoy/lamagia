@@ -3887,3 +3887,10 @@ The same rescan then closed Ruthless Cullblade with a reusable
 any opponent has 10 or less life, recalculated from live state (CR 604.1,
 613.4). Current validation: **721 rules tests**, `npm run check`, and `git
 diff --check` pass.
+
+The rescan also closed Chandra's Spitfire with a shared `noncombat-damage`
+trigger condition. It listens only to the noncombat damage event (so combat
+damage does not qualify) and reuses the existing temporary source P/T pump;
+the scenario activates a permanent damage source and verifies +3/+0 (CR
+603.2, 120.2a). Current validation: **722 rules tests**, `npm run check`, and
+`git diff --check` pass.

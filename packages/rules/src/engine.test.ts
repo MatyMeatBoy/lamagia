@@ -216,6 +216,7 @@ const ARCHAEOMANCER = () => make({ name: "Archaeomancer", type_line: "Creature �
 const IZZET_CHRONARCH = () => make({ name: "Izzet Chronarch", type_line: "Creature — Human Wizard", mana_cost: "{3}{U}{R}", cmc: 5, power: "2", toughness: "2", oracle_text: "When Izzet Chronarch enters the battlefield, return target instant or sorcery card from your graveyard to your hand.", oracle_id: "1da438f3-db1c-4713-a60c-e078f31d809c", scryfall_id: "d2f8fe93-8d20-41d4-8205-597a9c9b8bbe" });
 const CHARNELHOARD_WURM = () => make({ name: "Charnelhoard Wurm", type_line: "Creature — Wurm", mana_cost: "{4}{B}{R}{G}", cmc: 7, power: "6", toughness: "6", keywords: ["Trample"], oracle_text: "Trample\nWhenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.", scryfall_id: "4a430fa3-e693-424b-9981-d7d8193445e3" });
 const DAMAGE_TRIGGERER = () => make({ name: "Damage Triggerer", type_line: "Creature — Wurm", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3", oracle_text: "Whenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.\n{T}: ~ deals 1 damage to any target." });
+const CHANDRAS_SPITFIRE = () => make({ name: "Chandra's Spitfire", type_line: "Creature — Elemental", mana_cost: "{2}{R}", cmc: 3, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhenever an opponent is dealt noncombat damage, Chandra's Spitfire gets +3/+0 until end of turn.", oracle_id: "5a0eb270-b142-45da-87a2-2f1c4e25db17", scryfall_id: "5a0eb270-b142-45da-87a2-2f1c4e25db17" });
 const CONJURERS_CLOSET = () => make({ name: "Conjurer's Closet", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", scryfall_id: "cd1eda60-53e4-44d0-9b2c-7a57395e291f" });
 const TIDAL_FORCE = () => make({ name: "Tidal Force", type_line: "Creature — Elemental", mana_cost: "{5}{U}{U}", cmc: 7, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you may tap or untap target permanent.", scryfall_id: "1b25e262-e2df-4768-b55e-1b7b8d3ee993" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
@@ -7904,6 +7905,22 @@ describe("activated abilities", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
     game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
     expect(game.players[0]!.hand.some((card) => card.instance_id === returned.instance_id)).toBe(true);
+  });
+
+  it("fires noncombat damage triggers", () => {
+    expect(profileOf(CHANDRAS_SPITFIRE()).triggers[0]).toMatchObject({
+      event: "deals-damage-to-player", subject: "opponent", optional: false,
+      condition: { kind: "noncombat-damage" }, effect: { kind: "modify-source-creature", power: 3, toughness: 0 }
+    });
+    expect(profileOf(CHANDRAS_SPITFIRE()).fullyImplemented).toBe(true);
+    let game = readyOnBoard([DAMAGE_TRIGGERER(), CHANDRAS_SPITFIRE()], { hold: true });
+    const source = permanentNamed(game, 0, "Damage Triggerer")!;
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "player", seat: 1 }]
+    });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(powerOf(permanentNamed(game, 0, "Chandra's Spitfire")!, game)).toBe(4);
   });
 
   it("refuses Llanowar Elves the turn it arrives and adds {G} once it can tap", () => {

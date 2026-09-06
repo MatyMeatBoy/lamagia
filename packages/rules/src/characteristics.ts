@@ -892,6 +892,8 @@ export interface TriggerDefinition {
     | { readonly kind: "source-untapped" }
     /** "if ~ is tapped" (Mana Vault): the inverse check on the source permanent's own tapped state. */
     | { readonly kind: "source-tapped" }
+    /** "Whenever an opponent is dealt noncombat damage" (CR 120.2a). */
+    | { readonly kind: "noncombat-damage" }
     /** "except the first [card] they draw in each of their draw steps" (Orcish Bowmasters): suppressed only for the player's first draw during an actual draw step; any draw outside a draw step always counts. */
     | { readonly kind: "not-first-draw-step-draw" }
     /** "When this Class becomes level N" (CR 702.134): fires only for the transition that reaches exactly this level. */
@@ -2597,6 +2599,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // permanent, unlike the combat-only templates above (CR 603.2).
   { event: "deals-damage-to-player", subject: "creature-with-deathtouch-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+with\s+deathtouch\s+deals\s+damage\s+to\s+a\s+player(?:\s+or\s+(?:a\s+)?planeswalker)?,?\s*(.+)$/i },
   { event: "deals-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+damage\s+to\s+an?\s+opponent,?\s*(.+)$/i },
+  { event: "deals-damage-to-player", subject: "opponent", condition: { kind: "noncombat-damage" }, pattern: /^whenever\s+an\s+opponent\s+is\s+dealt\s+noncombat\s+damage,?\s*(.+)$/i },
 
   // A player is the subject.
   { event: "spell-cast", subject: "you", pattern: /^when\s+you\s+cast\s+~,?\s*(.+)$/i },
