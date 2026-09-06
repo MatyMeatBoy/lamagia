@@ -4138,18 +4138,21 @@ function recognizeText(text: string): RecognizedText {
     // applies this as a characteristic of the controller's battlefield, not
     // as a triggered or activated ability of the artifact.
     if (/^You may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line)) continue;
-    // Eternal Dragon-style graveyard activation (CR 602.1, 602.5).
+    // Graveyard recursion: "{cost}: Return ~ from your graveyard to your hand"
+    // (Sanitarium Skeleton, Firewing Phoenix; Eternal Dragon adds an upkeep-only
+    // restriction). CR 602.1, 602.5.
     const graveyardReturn = /^((?:\{[^}]+\})+):\s*Return (?:~|this card) from your graveyard to your hand\.?/i.exec(line);
     const upkeepRestrictionOnNextLine = /^Activate only during your upkeep\.?$/i.test(body[lineIndex + 1]?.text ?? "");
     const upkeepRestrictionInline = /Activate only during your upkeep\.?$/i.test(line);
-    if (graveyardReturn && (upkeepRestrictionInline || upkeepRestrictionOnNextLine)) {
+    if (graveyardReturn) {
       const manaCost = parseManaCost(graveyardReturn[1]!);
+      const upkeepOnly = upkeepRestrictionInline || upkeepRestrictionOnNextLine;
       if (manaCost) {
         activatedAbilities.push({
           index: activatedAbilities.length, requiresTap: false, sacrificesSelf: false, lifeCost: 0,
-          manaCost, sourceZone: "graveyard", upkeepOnly: true,
+          manaCost, sourceZone: "graveyard", ...(upkeepOnly ? { upkeepOnly: true } : {}),
           effect: { kind: "return-source-to-hand" }, targetKind: "none",
-          text: upkeepRestrictionInline ? line : `${line} ${body[lineIndex + 1]!.text}`
+          text: upkeepRestrictionOnNextLine ? `${line} ${body[lineIndex + 1]!.text}` : line
         });
         if (upkeepRestrictionOnNextLine) lineIndex += 1;
         continue;

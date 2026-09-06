@@ -6,6 +6,15 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
 ### Card-engine primitives — 2026-09-06
 
+- **Unrestricted graveyard recursion** — `{cost}: Return ~ from your graveyard
+  to your hand` without the Eternal Dragon upkeep restriction (Sanitarium
+  Skeleton, Firewing Phoenix, Clay Revenant, Jungle Creeper, …). The parser at
+  `characteristics.ts` ~L4142 only built the `sourceZone: "graveyard"`
+  activated ability when an "Activate only during your upkeep" line followed;
+  it now builds it either way, keeping `upkeepOnly` only when present. Export
+  **10,362 → 10,379** (+17). Test: `engine.test.ts` › "recurs a creature from
+  the graveyard…".
+
 - **`grant-source-keyword`** — `{cost}: ~ gains KEYWORD until end of turn`, a
   self-targeting keyword pump. Parsed in `recognizeSentence`
   (`characteristics.ts`), executed in `engine.ts` by adding the keyword to the

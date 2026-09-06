@@ -7240,6 +7240,23 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("recurs a creature from the graveyard with an unrestricted '{cost}: Return this card' ability", () => {
+    const skeleton = make({
+      name: "Test Skeleton", type_line: "Creature — Skeleton", mana_cost: "{1}{B}", cmc: 2, power: "1", toughness: "1",
+      oracle_text: "{2}{B}: Return this card from your graveyard to your hand."
+    });
+    expect(profileOf(skeleton).activatedAbilities[0]).toMatchObject({ sourceZone: "graveyard", effect: { kind: "return-source-to-hand" } });
+    let game = readyToCast([], [SWAMP(), SWAMP(), SWAMP()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, graveyard: [{ ...skeleton, instance_id: "gy-skel", owner: 0 } as GameCard] }));
+
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === "gy-skel");
+    expect(activate).toBeDefined();
+    game = applyAction(game, 0, activate!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.hand.some((card) => card.instance_id === "gy-skel")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.instance_id === "gy-skel")).toBe(false);
+  });
+
   it("grants the source a keyword until end of turn from its own activated ability", () => {
     const kestrel = make({
       name: "Test Kestrel", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2",
