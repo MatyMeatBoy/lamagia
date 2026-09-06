@@ -990,6 +990,7 @@ function activatedAbilitiesFor(state: GameState, permanent: Permanent): Activate
     return [{ ...ability, index: 1000 + auraIndex }];
   });
   const crew = cardProfile(permanent.card).crewAmount;
+  if (permanent.temporaryAnimation) return [...printed, ...granted];
   if (crew === null || !cardProfile(permanent.card).types.includes("Artifact") || !cardProfile(permanent.card).subtypes.some((s) => s.toLowerCase() === "vehicle")) return [...printed, ...granted];
   return [...printed, ...granted, {
     index: 2000,

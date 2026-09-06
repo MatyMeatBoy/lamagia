@@ -1553,6 +1553,7 @@ describe("mana payment", () => {
     const action = actions.find((entry) => entry.note === "Crew 2")!.action;
     game = applyAction(game, 0, action);
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(2);
+    expect(legalActions(game, 0).some((entry) => entry.note === "Crew 2")).toBe(false);
   });
 
   it("pays 1 life when a pain land is tapped for colored mana, but not for colorless", () => {
