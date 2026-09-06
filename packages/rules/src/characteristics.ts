@@ -3687,6 +3687,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
   }
+  if (/^that attacking player may tap or untap target permanent of their choice$/i.test(text)) {
+    return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
+  }
   if (/^Create a token that's a copy of target creature you control$/i.test(text)) {
     return { effect: { kind: "create-copy-token", amount: 1 }, target: "creature-you-control" };
   }
@@ -4908,6 +4911,17 @@ function recognizeText(text: string): RecognizedText {
         for (const event of ["enters-battlefield", "attacks"] as const) {
           triggers.push({ event, subject: "self", effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
         }
+        continue;
+      }
+    }
+    const playerAttacksEnchanted = /^whenever\s+a\s+player\s+attacks\s+enchanted\s+player\s+with\s+one\s+or\s+more\s+creatures,?\s*(.+)$/i.exec(line);
+    if (playerAttacksEnchanted) {
+      const rec = recognizeSentence(playerAttacksEnchanted[1]!);
+      if (rec) {
+        triggers.push({
+          event: "attacks", subject: "player-attacks-enchanted-player", effect: rec.effect,
+          optional: true, choiceBy: "event-controller", targetKind: rec.target, sourceText: line
+        });
         continue;
       }
     }

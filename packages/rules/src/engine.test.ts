@@ -388,6 +388,7 @@ const CHARNELHOARD_WURM = () => make({ name: "Charnelhoard Wurm", type_line: "Cr
 const DAMAGE_TRIGGERER = () => make({ name: "Damage Triggerer", type_line: "Creature — Wurm", mana_cost: "{3}{R}", cmc: 4, power: "3", toughness: "3", oracle_text: "Whenever this creature deals damage to an opponent, you may return target card from your graveyard to your hand.\n{T}: ~ deals 1 damage to any target." });
 const CONJURERS_CLOSET = () => make({ name: "Conjurer's Closet", type_line: "Artifact", mana_cost: "{5}", cmc: 5, oracle_text: "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", scryfall_id: "cd1eda60-53e4-44d0-9b2c-7a57395e291f" });
 const TIDAL_FORCE = () => make({ name: "Tidal Force", type_line: "Creature — Elemental", mana_cost: "{5}{U}{U}", cmc: 7, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you may tap or untap target permanent.", scryfall_id: "1b25e262-e2df-4768-b55e-1b7b8d3ee993" });
+const CURSE_OF_INERTIA = () => make({ name: "Curse of Inertia", type_line: "Enchantment — Aura Curse", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Enchant player\nWhenever a player attacks enchanted player with one or more creatures, that attacking player may tap or untap target permanent of their choice.", oracle_id: "0bbeb0ee-647b-43d3-91b3-6869d5ccb8b8", scryfall_id: "32d0c2a7-4277-43eb-bb09-5ca0c27edee4" });
 const DRAW_AND_LOSE = () => make({ name: "Dark Exchange", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Draw a card and lose 1 life." });
 const HAND_DAMAGE = () => make({ name: "Viseling Memory", type_line: "Instant", mana_cost: "{2}{B}", cmc: 3, oracle_text: "This spell deals damage to you equal to the number of cards in your hand." });
 const DRAW_MINE = () => make({ name: "Draw Mine", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "At the beginning of each player's draw step, that player draws an additional card." });
@@ -5864,6 +5865,12 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.tapped)).toBe(false);
     game = applyAction(game, 0, { type: "pass" });
     expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("recognizes Curse of Inertia and offers its attacker the tap choice", () => {
+    const profile = profileOf(CURSE_OF_INERTIA());
+    expect(profile).toMatchObject({ fullyImplemented: true, targetKind: "player" });
+    expect(profile.triggers[0]).toMatchObject({ event: "attacks", subject: "player-attacks-enchanted-player", optional: true, choiceBy: "event-controller", effect: { kind: "tap-or-untap-target-permanent" }, targetKind: "permanent" });
   });
 
   it("does not expose a commander free-cast alternative from the graveyard", () => {
