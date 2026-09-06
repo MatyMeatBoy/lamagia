@@ -206,10 +206,17 @@ export function gameplayDebugSnapshot(match: MatchRecord) {
     prioritySeat: state.prioritySeat,
     priorityOpen: state.priorityOpen,
     pendingChoice: state.pendingChoice?.type ?? null,
+    pendingSource: state.pendingChoice && "sourceCard" in state.pendingChoice
+      ? state.pendingChoice.sourceCard.name
+      : null,
+    passedSeats: state.passedSeats,
     stack: state.stack.map((object) => ({
       id: object.id,
       name: object.card.name,
+      kind: object.trigger ? "trigger" : object.activated ? "activated" : "spell",
       controller: object.controller,
+      label: object.label,
+      countered: object.countered,
       targets: object.targets.map((target) => target.kind === "player"
         ? state.players[target.seat]?.name ?? `seat-${target.seat}`
         : target.kind === "permanent"
