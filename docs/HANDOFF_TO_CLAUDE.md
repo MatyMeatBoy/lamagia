@@ -5830,3 +5830,36 @@ mana value N or less" card next should add it there too. Verified
 Stomper (toughness 6) in the library, the search offers only the Bear.
 Validation: full **879** rules tests green (2 new), `npm run check`
 across all four workspaces, 200/200 simulated games.
+
+Grapple with the Past ("Mill three cards, then you may return a
+creature or land card from your graveyard to your hand.") needed a
+genuinely NEW primitive: every existing "return ... card from your
+graveyard to your hand" template uses the normal TARGET system
+(`targetKind: "creature-card-in-your-graveyard"` etc.), but this
+card's Oracle text carries no "target" at all — it's a non-targeted,
+type-filtered CHOICE, the same category as a library search but
+sourced from the graveyard instead. Added a new `SpellEffect` kind
+(`return-graveyard-card-choice`, with a `types` filter), a new
+`PendingChoice` type (`graveyard-card-choice`, carrying `optionIds`
+from the controller's own graveyard — no privacy/projection concerns
+since a graveyard is always public information, CR 400.2, so no
+`projection.ts` change was needed unlike library-sourced choices), a
+new `choose-graveyard-card` `GameAction` (`accept`/optional `cardId`,
+mirroring `choose-trigger`'s accept/decline shape), its `legalActions`
+enumeration (one action per matching graveyard card plus a decline),
+and — per this session's established rule for any genuinely new
+`PendingChoice` — a proactive `bot.ts` handler (unlike Exploit/Devour's
+conservative always-decline default, this one takes the first offered
+card, since returning a card to hand is a pure upside with no cost).
+Verified **+5** in the export count (10,872 → 10,877 — a catalog
+search for this exact "mill N, then you may return a [type] card from
+your graveyard to your hand" template found 12 total matching cards;
+this pass's regex covers a meaningful subset of them by construction,
+sharing this new primitive for free). Set coverage holds at 33.0%.
+Scenario-tested: milling a Grizzly Bears, a Forest, and a Lightning
+Bolt offers only the Bear and the Forest for return (not the Bolt);
+choosing the Bear moves it to hand and out of the graveyard; declining
+leaves the graveyard and hand untouched with the choice cleanly
+closed. Validation: full **884** rules tests green (3 new), `npm run
+check` across all four workspaces, `npx vitest run
+services/match-server/src` (6 passed), 200/200 simulated games.
