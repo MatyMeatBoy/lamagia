@@ -124,7 +124,10 @@ function autoPassForPhase(): boolean {
     view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand
       || view.combat.awaitingAttackers || view.combat.awaitingBlockersFrom.includes(view.viewerSeat)
       || view.legalActions.some((entry) => entry.requiresTarget || entry.requiresTargets?.length
-        || entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger-target")
+        || entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger-target"
+        || (entry.action.type !== "pass" && entry.action.type !== "concede"
+          && entry.action.type !== "activate-mana" && entry.action.type !== "toggle-trigger-yield"
+          && entry.action.type !== "cast" && entry.action.type !== "activate"))
   );
   return !playerDecision;
 }
