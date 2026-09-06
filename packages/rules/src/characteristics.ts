@@ -2035,6 +2035,17 @@ function parseManaAbilityGrant(line: string): StaticManaAbilityGrant | null {
   if (bareSubtypeMatch && !MANA_GRANT_TYPE_WORDS[bareSubtypeMatch[1]!.toLowerCase()] && bareSubtypeMatch[1]!.toLowerCase() !== "permanents") {
     return buildSubtype(bareSubtypeMatch[1]!, "you-control", false, bareSubtypeMatch[2]!);
   }
+  // "Each land is a Swamp in addition to its other land types" (Urborg, Tomb
+  // of Yawgmoth): modeled as every land gaining Swamp's intrinsic mana
+  // ability (CR 305.6) rather than literally granting the "Swamp" subtype,
+  // which would need `hasSubtype`/`isLand` to become board-state-aware
+  // everywhere they're checked (fetch lands searching for "Swamp", "sacrifice
+  // a Swamp" costs, Blood Moon-style type overwrites). DOCUMENTED TRADE-OFF:
+  // covers this card's actual EDH purpose (every land can tap for {B}) but
+  // not those secondary subtype-matching interactions.
+  if (/^Each land is a Swamp in addition to its other (?:land )?types$/i.test(clean)) {
+    return finish({ scope: "all", excludesSelf: false, type: "Land" }, "{T}: Add {B}");
+  }
   return null;
 }
 

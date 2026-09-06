@@ -5522,3 +5522,34 @@ generalizes past the merged-in test's 1/1 case. Validation: full
 **852** rules tests green (1 new), `npm run check` across all four
 workspaces, `npx vitest run services/match-server/src` (6 passed),
 200/200 simulated games.
+
+Re-examined Urborg, Tomb of Yawgmoth ("Each land is a Swamp in
+addition to its other land types.") with fresh eyes, having previously
+deferred it as needing dynamic land-type-granting that would make
+`hasSubtype`/`isLand` board-state-aware everywhere they're checked
+(fetch lands searching for "Swamp", "sacrifice a Swamp" costs,
+Blood-Moon-style type overwrites). Found a much narrower path: the
+existing `staticManaAbilityGrants` infrastructure (built for Chromatic
+Lantern/Joraga Treespeaker this session) already supports a `scope:
+"all"` grant restricted by `type: "Land"` — Urborg's practical EDH
+effect (every land, either player's, can tap for {B}) is exactly a
+grant of Swamp's own intrinsic mana ability (CR 305.6), so it needed
+only one new regex branch in `parseManaAbilityGrant` synthesizing that
+grant directly, rather than a quoted-ability match like the existing
+branches. DOCUMENTED TRADE-OFF: covers the mana-fixing use every EDH
+pilot actually wants from this card, but NOT the secondary
+subtype-matching interactions a literal "gains the Swamp type" would
+carry (a Swamp-fetching land search still only finds real Swamps; a
+"sacrifice a Swamp" cost still only accepts real Swamps). Verified
+**+2** in the export count (10,816 → 10,818, Urborg's two printings);
+set coverage holds at 32.8%. Scenario-tested: with Urborg in play, a
+Forest gains a second, granted "{T}: Add {B}" ability alongside its
+own printed one, confirmed for BOTH the controller's own land and an
+*opponent's* Mountain — proving the `"all"` scope (not `"you-control"`)
+reaches every land regardless of controller, matching "each land"
+rather than "lands you control." Validation: full **854** rules tests
+green (2 new), `npm run check` across all four workspaces, 200/200
+simulated games.
+
+Prossh decklist status after this pass: **90 of 97 unique cards fully
+implemented (92.8%)**.

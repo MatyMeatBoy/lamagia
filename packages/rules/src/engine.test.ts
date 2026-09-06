@@ -10973,6 +10973,33 @@ describe("static mana-ability grants (Chromatic Lantern, Joraga Treespeaker)", (
   });
 });
 
+describe("Urborg, Tomb of Yawgmoth's every-land black-mana grant", () => {
+  const URBORG = () => make({ name: "Urborg, Tomb of Yawgmoth", type_line: "Legendary Land", oracle_text: "Each land is a Swamp in addition to its other land types." });
+
+  it("recognizes an all-scope, land-typed mana ability grant", () => {
+    const profile = profileOf(URBORG());
+    expect(profile.staticManaAbilityGrants).toEqual([
+      { scope: "all", excludesSelf: false, type: "Land", ability: expect.objectContaining({ produces: ["B"], amount: 1 }) }
+    ]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("lets a Forest tap for black mana, for either player, not just Urborg's controller", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [URBORG(), FOREST()]);
+    game = putOnBattlefield(game, 1, [MOUNTAIN()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const forest = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    const mountain = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Mountain")!;
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate-mana" && entry.action.sourceId === forest.instance_id && entry.action.mana === "B")).toBe(true);
+    game = applyAction(game, 0, { type: "activate-mana", sourceId: forest.instance_id, abilityIndex: 1, mana: "B" });
+    expect(game.players[0]!.manaPool.B).toBe(1);
+
+    expect(manaSources(game.players[1]!, game).some((source) =>
+      source.permanentId === mountain.instance_id && source.options.includes("B"))).toBe(true);
+  });
+});
+
 describe("the stampede family (Craterhoof Behemoth, Pathbreaker Ibex)", () => {
   const CRATERHOOF = () => make({ name: "Craterhoof Behemoth", type_line: "Creature — Beast", mana_cost: "{5}{G}{G}{G}", cmc: 8, power: "5", toughness: "5", keywords: ["Haste"], oracle_text: "Haste\nWhen this creature enters, creatures you control gain trample and get +X/+X until end of turn, where X is the number of creatures you control." });
   const PATHBREAKER_IBEX = () => make({ name: "Pathbreaker Ibex", type_line: "Creature — Goat", mana_cost: "{4}{G}{G}", cmc: 6, power: "3", toughness: "3", oracle_text: "Whenever this creature attacks, creatures you control gain trample and get +X/+X until end of turn, where X is the greatest power among creatures you control." });
