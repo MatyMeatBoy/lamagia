@@ -1885,7 +1885,7 @@ function tokenAmount(state: GameState, amount: number): number {
   return doubled ? amount * 2 : amount;
 }
 
-function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = []): GameState {
+function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = [], castVariableValue = 0): GameState {
   const enteringCard = uniqueTokenCard(state, card);
   const profile = cardProfile(enteringCard);
   const entryAdditionalCounters = [...additionalCounters, ...staticEntryCountersFor(state, seat, profile)];
@@ -1897,6 +1897,10 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
   if (isCommander && commanderEntryCounters > 0) counters["+1/+1"] = commanderEntryCounters;
   const doublesEntryCounters = isCreature(profile) && allPermanents(state).some((source) => !permanentLosesAbilities(state, source)
     && cardProfile(source.card).doublesCreatureCounters);
+  if (profile.entersWithSpentManaCounters) {
+    const manaSpent = (profile.cost?.manaValue ?? castSpentMana.length) + castVariableValue;
+    counters["+1/+1"] = (counters["+1/+1"] ?? 0) + (doublesEntryCounters ? manaSpent * 2 : manaSpent);
+  }
   for (const counter of entryAdditionalCounters) {
     const amount = doublesEntryCounters && counter.kind === "+1/+1" ? counter.amount * 2 : counter.amount;
     counters[counter.kind] = (counters[counter.kind] ?? 0) + amount;
@@ -5818,7 +5822,7 @@ function resolveTop(state: GameState): GameState {
       ? [{ kind: profile.entersWithVariableCounters.kind, amount: object.variableValue }] : [];
     next = putOntoBattlefield(next, object.controller, object.card, isCommander, false, Boolean(object.kicked), Boolean(object.evoked), castFromHand,
       isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0,
-      object.spentMana ?? [], [...(object.additionalCounters ?? []), ...variableEntryCounters]);
+      object.spentMana ?? [], [...(object.additionalCounters ?? []), ...variableEntryCounters], object.variableValue);
     // CR 303.4h: an Aura enters the battlefield attached to the permanent it targeted.
     const enchantTarget = hasSubtype(profile, "Aura")
       ? object.targets.find((target) => target.kind === "permanent" || target.kind === "player")

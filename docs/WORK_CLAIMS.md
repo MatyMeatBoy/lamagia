@@ -540,3 +540,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-other-static-spell-2` | Reusable copy-target-instant-or-sorcery primitive for C13 copy cards, preserving the original spell's targets when no retarget choice is made (CR 707.10, 707.12) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-counter-static-spell-4` | Reusable replacement that doubles +1/+1 counters placed on creatures when Primal Vigor applies (CR 614.1, 121.6) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-other-static-spell-4` | Reusable replacement that doubles token creation when Primal Vigor applies (CR 614.1, 111.10) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-counter-static-spell-6` | Reusable entry replacement that gives a creature +1/+1 counters equal to mana spent to cast it, including Marath (CR 614.1c, 121.1) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

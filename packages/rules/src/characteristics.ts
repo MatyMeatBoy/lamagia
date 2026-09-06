@@ -1189,6 +1189,8 @@ export interface CardProfile {
   readonly entersWithCounters: readonly CounterCost[];
   /** "~ enters with X <kind> counters on it" (Walking Ballista, Hangarback Walker): X is the value paid for the spell's own {X} in its cost. */
   readonly entersWithVariableCounters: { readonly kind: string } | null;
+  /** "~ enters with ... counters ... equal to the amount of mana spent to cast it" (CR 614.1c). */
+  readonly entersWithSpentManaCounters: boolean;
   /** Graft number, when this permanent has the Graft keyword. */
   readonly graftAmount: number | null;
   readonly isPermanent: boolean;
@@ -4439,6 +4441,7 @@ function recognizeText(text: string): RecognizedText {
     // unconsumed and still reported as unimplemented.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
+    if (/^~\s+enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/i.test(line)) continue;
     // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
     // tapped.") and reveal lands ("...you may reveal a <type> card from your
     // hand. If you don't, ~ enters tapped.") print the same replacement as
@@ -5375,6 +5378,7 @@ export function cardProfile(card: CardData): CardProfile {
         })()
       : [],
     entersWithVariableCounters: isPermanent ? parseEntersWithVariableCounters(text) : null,
+    entersWithSpentManaCounters: isPermanent && /^~ enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/im.test(text),
     isPermanent,
     // Lands are played, not cast; everything else needs a payable printed cost.
     castableFromHand: !types.includes("Land") && cost !== null && cost.symbols.length > 0,
