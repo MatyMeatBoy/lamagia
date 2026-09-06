@@ -3080,7 +3080,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   // self-inclusive subject (Ogre Battledriver, Cathars' Crusade).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+a?\s*creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
-  { event: "enters-battlefield", subject: "another-permanent-you-control", pattern: /^whenever\s+another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "another-permanent-you-control", pattern: /^whenever\s+another\s+permanent(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "permanent-you-control", pattern: /^whenever\s+a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "land-you-control", pattern: /^whenever\s+a\s+land(?:\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control|\s+you\s+control\s+enters(?:\s+the\s+battlefield)?),?\s*(.+)$/i },

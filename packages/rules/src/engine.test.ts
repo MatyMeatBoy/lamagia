@@ -8599,6 +8599,19 @@ describe("triggered abilities", () => {
     expect(powerOf(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === songshaperInPlay.instance_id)!, game)).toBe(3);
   });
 
+  it("mills an opponent when another permanent you control enters via Altar of the Brood", () => {
+    const altar = make({ name: "Altar of the Brood", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Whenever another permanent you control enters, each opponent mills a card." });
+    const profile = profileOf(altar);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "enters-battlefield", subject: "another-permanent-you-control",
+      effect: { kind: "mill-each-opponent", amount: 1 }
+    });
+    let game = readyToCast([FOREST()], [altar]);
+    const beforeLibrary = game.players[1]!.library.length;
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-0" });
+    expect(game.players[1]!.library.length).toBe(beforeLibrary - 1);
+  });
+
   it("lets the target player both draw and pay the life for a Sign in Blood effect", () => {
     const profile = profileOf(SIGN_IN_BLOOD());
     expect(profile.effects[0]).toMatchObject({

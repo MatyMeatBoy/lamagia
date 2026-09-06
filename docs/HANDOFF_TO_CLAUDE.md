@@ -6543,3 +6543,22 @@ Scenario-tested: Towashi Songshaper (power 2) correctly reaches power
 3 the instant a second artifact it controls resolves onto the
 battlefield. Validation: full **914** rules tests green (1 new), `npm
 run check` across all four workspaces, 200/200 simulated games.
+
+## Altar of the Brood: closing the last phrasing-duality gap in this family (2026-09-06)
+
+Completing the sweep started by the artifact/enchantment fixes above:
+`another-permanent-you-control` had the SAME single-phrasing gap
+("enters under your control" only, missing "you control enters").
+Only one catalog card uses it (Altar of the Brood, "Whenever another
+permanent you control enters, each opponent mills a card."), but the
+fix is the same one-line alternation already applied three times this
+session, so it was worth finishing the set. Checked `another-land-
+you-control` and `another-enchantment-you-control` too before adding
+anything speculative — zero catalog cards use either phrasing, so no
+new subjects were added for those (would be untested, unused code).
+Verified **+1** in the export count (11,091 → 11,092); `docs/
+SET_COVERAGE.md` holds at its stale 33.2%/true-33.7% split. Scenario-
+tested: playing a land while Altar of the Brood is in play mills
+exactly one card from the opponent's library. Validation: full
+**915** rules tests green (1 new), `npm run check` across all four
+workspaces, 200/200 simulated games.
