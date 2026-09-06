@@ -5563,7 +5563,7 @@ function recognizeText(text: string): RecognizedText {
       // since the resolved effect always acts on ITS controller regardless
       // of who is doing the choosing (Pattern of Rebirth).
       const eventControllerEffectText = eventControllerChoice?.[1]?.trim().replace(/\btheir\b/gi, "your");
-      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? revoltCondition?.[1]?.trim() ?? castFromHandCondition?.[1]?.trim() ?? eventControllerEffectText ?? triggerEffectText)
+      let effectText = (powerCondition?.[2]?.trim() ?? subtypeCondition?.[2]?.trim() ?? countCondition?.[3]?.trim() ?? diedCondition?.[1]?.trim() ?? commandZoneCondition?.[1]?.trim() ?? sourceUntappedCondition?.[1]?.trim() ?? sourceTappedCondition?.[1]?.trim() ?? unlessPayment?.[1]?.trim() ?? revoltCondition?.[1]?.trim() ?? castFromHandCondition?.[1]?.trim() ?? eventControllerEffectText ?? triggerEffectText)
         .replace(/^you\s+may\s+have\s+it\s+deal\b/i, "~ deals")
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");

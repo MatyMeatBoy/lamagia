@@ -2274,8 +2274,14 @@ function triggerMatches(
   }
   if (condition?.kind === "controlled-subtype-at-least") {
     const subtype = condition.subtype.toLowerCase();
-    const count = playerAt(state, watcher.controller).battlefield.filter((permanent) =>
-      cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype)).length;
+    // "if you control N or more lands/creatures/artifacts" names a CARD
+    // TYPE, not a printed subtype (no real card has a subtype literally
+    // named "Land") - check both so the type-word phrasing works too.
+    const count = playerAt(state, watcher.controller).battlefield.filter((permanent) => {
+      const profile = cardProfile(permanent.card);
+      return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype)
+        || profile.types.some((type) => type.toLowerCase() === subtype);
+    }).length;
     if (count < condition.amount) return false;
   }
   if (condition?.kind === "creature-died-this-turn" && state.creaturesDiedThisTurn < 1) return false;
@@ -2438,8 +2444,11 @@ function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boo
         isCreature(cardProfile(permanent.card)) && powerOf(permanent, state) >= condition.amount);
     case "controlled-subtype-at-least": {
       const subtype = condition.subtype.toLowerCase();
-      return playerAt(state, trigger.controller).battlefield.filter((permanent) =>
-        cardProfile(permanent.card).subtypes.some((candidate) => candidate.toLowerCase() === subtype)).length >= condition.amount;
+      return playerAt(state, trigger.controller).battlefield.filter((permanent) => {
+        const profile = cardProfile(permanent.card);
+        return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype)
+          || profile.types.some((type) => type.toLowerCase() === subtype);
+      }).length >= condition.amount;
     }
     case "creature-died-this-turn":
       return state.creaturesDiedThisTurn > 0;

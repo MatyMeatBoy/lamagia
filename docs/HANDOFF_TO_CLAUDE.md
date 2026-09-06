@@ -6340,3 +6340,52 @@ being a creature card — proving the exact-sum match, not a type-only
 filter, is what's actually checked. Validation: full **908** rules
 tests green (1 new), `npm run check` across all four workspaces,
 200/200 simulated games.
+
+## Two more dormant condition bugs, found by finishing the pattern from Wild Pair's fix (2026-09-06)
+
+Wild Pair's fix folded `castFromHandCondition` into the `effectText`
+selection ternary that strips sibling riders. The same review noted
+(but hadn't yet fixed) two SIBLING captures with the exact same gap:
+`diedCondition` ("if a creature died this turn,") and `countCondition`
+("if you control N or more [word],"), both computed but never folded
+into that ternary either. Direct probes confirmed both were
+genuinely broken, not hypothetically: **Osai Vultures** ("At the
+beginning of each end step, if a creature died this turn, put a
+carrion counter on ~.") came back with zero triggers, and **Kyoshi
+Warrior Exemplars** ("Whenever ~ attacks, if you control eight or
+more lands, creatures you control get +2/+2 until end of turn.")
+came back with zero triggers, both for exactly the reason predicted.
+Folded both into the same ternary as `castFromHandCondition`,
+`revoltCondition`, etc.
+
+Fixing Kyoshi Warrior Exemplars surfaced a THIRD, independent, more
+consequential bug: `countCondition`'s regex captures a bare word
+("lands", "creatures", "artifacts") and the parser unconditionally
+stores it as a `subtype` — but "land"/"creature"/"artifact" are CARD
+TYPES, not printed subtypes, and no real card's subtypes array ever
+contains the literal word "Land". The `controlled-subtype-at-least`
+condition's RUNTIME check (duplicated at two independent sites in
+`engine.ts`, the same two-site-drift pattern already seen for
+`search-library`) only ever tested `profile.subtypes`, so ANY card
+using "if you control N or more lands/creatures/artifacts," — the
+type-word phrasing, not a subtype phrasing like "Elves" — would
+silently and permanently fail its condition check at runtime even
+after correctly PARSING. Widened both sites to also check
+`profile.types`, so the type-word phrasing now works without needing
+a new condition kind (no real subtype ever collides with a
+capitalized type name, so this is a safe, unconditional widening).
+
+Verified **+29** in the export count (11,005 → 11,034 — the type-vs-
+subtype widening alone likely reaches well beyond the two named cards,
+since "if you control N or more lands/creatures/artifacts" is a
+common Magic template); `docs/SET_COVERAGE.md` stays at its
+already-stale 33.2% (recorded) / 33.5% (true) split for the same
+oracle-id-cap reason as prior entries. Scenario-tested: Osai Vultures
+gains no counter at its own end step when nothing died that turn, but
+gains exactly one when a death is recorded before that same end step;
+Kyoshi Warrior Exemplars attacking with only 7 lands leaves its own
+power unbuffed (3), while attacking with 8 lands correctly pumps BOTH
+itself (5) and another controlled creature (Grizzly Bears, 2→4),
+proving the fixed condition check is what gates the whole-team pump.
+Validation: full **910** rules tests green (2 new), `npm run check`
+across all four workspaces, 200/200 simulated games.

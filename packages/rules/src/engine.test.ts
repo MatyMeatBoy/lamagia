@@ -7458,6 +7458,54 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Bear Twin")).toBe(true);
   });
 
+  it("only puts a carrion counter on Osai Vultures after a creature died this turn", () => {
+    const vultures = make({ name: "Osai Vultures", type_line: "Creature — Bird", mana_cost: "{3}{B}", cmc: 4, power: "3", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nAt the beginning of each end step, if a creature died this turn, put a carrion counter on this creature.\nRemove two carrion counters from this creature: This creature gets +1/+1 until end of turn." });
+    const profile = profileOf(vultures);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "end-step", subject: "each-player", condition: { kind: "creature-died-this-turn" },
+      effect: { kind: "add-counter-source", counter: "carrion", amount: 1 }
+    });
+    let quiet = twoSeatGame([], []);
+    quiet = putOnBattlefield(quiet, 0, [vultures]);
+    const vulturesQuiet = quiet.players[0]!.battlefield.find((permanent) => permanent.card.name === "Osai Vultures")!;
+    quiet = passUntil(quiet, (state) => state.step === "end" && state.activeSeat === 0 && state.prioritySeat === 0);
+    // Nothing died this turn, so no counter yet.
+    expect(quiet.players[0]!.battlefield.find((permanent) => permanent.instance_id === vulturesQuiet.instance_id)!.counters["carrion"] ?? 0).toBe(0);
+
+    // Mark a death BEFORE this turn's own end step is reached, so the
+    // trigger's condition check actually sees it when that step begins.
+    let deadly = twoSeatGame([], []);
+    deadly = putOnBattlefield(deadly, 0, [vultures]);
+    const vulturesDeadly = deadly.players[0]!.battlefield.find((permanent) => permanent.card.name === "Osai Vultures")!;
+    deadly = { ...deadly, creaturesDiedThisTurn: 1 };
+    deadly = passUntil(deadly, (state) => state.step === "end" && state.activeSeat === 0 && state.prioritySeat === 0);
+    expect(deadly.players[0]!.battlefield.find((permanent) => permanent.instance_id === vulturesDeadly.instance_id)!.counters["carrion"]).toBe(1);
+  });
+
+  it("only pumps creatures for Kyoshi Warrior Exemplars while controlling eight or more lands", () => {
+    const kyoshi = make({ name: "Kyoshi Warrior Exemplars", type_line: "Creature — Human Warrior", mana_cost: "{3}{G}", cmc: 4, power: "3", toughness: "4", oracle_text: "Whenever this creature attacks, if you control eight or more lands, creatures you control get +2/+2 until end of turn." });
+    const profile = profileOf(kyoshi);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "attacks", subject: "self", condition: { kind: "controlled-subtype-at-least", subtype: "land", amount: 8 },
+      effect: { kind: "modify-creatures-you-control", power: 2, toughness: 2 }
+    });
+    let underLands = twoSeatGame([], []);
+    underLands = putOnBattlefield(underLands, 0, [kyoshi, BEAR(), ...Array.from({ length: 7 }, () => FOREST())]);
+    const kyoshiUnder = underLands.players[0]!.battlefield.find((permanent) => permanent.card.name === "Kyoshi Warrior Exemplars")!;
+    underLands = passUntil(underLands, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    underLands = applyAction(underLands, 0, { type: "declare-attackers", attackers: [{ instanceId: kyoshiUnder.instance_id, defender: 1 }] });
+    expect(powerOf(underLands.players[0]!.battlefield.find((permanent) => permanent.instance_id === kyoshiUnder.instance_id)!, underLands)).toBe(3);
+
+    let atLands = twoSeatGame([], []);
+    atLands = putOnBattlefield(atLands, 0, [kyoshi, BEAR(), ...Array.from({ length: 8 }, () => FOREST())]);
+    const kyoshiAt = atLands.players[0]!.battlefield.find((permanent) => permanent.card.name === "Kyoshi Warrior Exemplars")!;
+    const bearAt = atLands.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    atLands = passUntil(atLands, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    atLands = applyAction(atLands, 0, { type: "declare-attackers", attackers: [{ instanceId: kyoshiAt.instance_id, defender: 1 }] });
+    expect(powerOf(atLands.players[0]!.battlefield.find((permanent) => permanent.instance_id === kyoshiAt.instance_id)!, atLands)).toBe(5);
+    expect(powerOf(atLands.players[0]!.battlefield.find((permanent) => permanent.instance_id === bearAt.instance_id)!, atLands)).toBe(4);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({
