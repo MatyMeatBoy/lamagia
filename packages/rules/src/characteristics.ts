@@ -961,7 +961,7 @@ export type TargetKind =
   | "creature-with-hexproof"
   | "creature-with-shroud"
   | "creature-with-reach"
-  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | "instant-or-sorcery-card-in-your-graveyard" | "permanent-card-in-your-graveyard-mv-3-or-less" | `subtype:${string}` | "none" | "nontoken-creature"
+  | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | "instant-or-sorcery-card-in-your-graveyard" | "permanent-card-in-your-graveyard-mv-3-or-less" | `creature-card-in-your-graveyard-mv-${number}-or-less` | `subtype:${string}` | "none" | "nontoken-creature"
   | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
   
 
@@ -3631,6 +3631,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // chooses this target as it is put on the stack (CR 603.3d).
   if (/^Return target instant or sorcery card from your graveyard to your hand$/i.test(text)) return { effect: { kind: "return-target-card-from-graveyard" }, target: "instant-or-sorcery-card-in-your-graveyard" };
   if (/^Return (?:another )?target creature card from your graveyard to the battlefield$/i.test(text)) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: "creature-card-in-your-graveyard" };
+  const creatureGraveyardManaValue = /^Return target creature card with mana value (\d+) or less from your graveyard to the battlefield$/i.exec(text);
+  if (creatureGraveyardManaValue) return { effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" }, target: `creature-card-in-your-graveyard-mv-${Number(creatureGraveyardManaValue[1])}-or-less` };
   if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {
     return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-your-graveyard" };
   }

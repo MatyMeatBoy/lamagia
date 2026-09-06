@@ -7222,7 +7222,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<TargetKind, "none">, sourceProfile?: CardProfile): Target[] {
   if (kind === "player") return state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
   if (kind === "opponent") return state.players.filter((player) => player.seat !== seat && !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target);
-  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard" || kind === "instant-or-sorcery-card-in-your-graveyard") {
+  const creatureGraveyardManaValue = /^creature-card-in-your-graveyard-mv-(\d+)-or-less$/.exec(kind);
+  if (kind === "card-in-your-graveyard" || kind === "card-in-a-graveyard" || kind === "creature-card-in-your-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-your-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-your-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-your-graveyard" || kind === "permanent-card-in-a-graveyard" || kind === "legendary-creature-card-in-your-graveyard" || kind === "instant-or-sorcery-card-in-your-graveyard" || creatureGraveyardManaValue) {
     const sources = kind === "card-in-a-graveyard" || kind === "creature-card-in-a-graveyard" || kind === "artifact-card-in-a-graveyard" || kind === "enchantment-card-in-a-graveyard" || kind === "permanent-card-in-a-graveyard" ? state.players : [playerAt(state, seat)];
     return sources.flatMap((player) => player.graveyard
       .filter((card) => kind === "card-in-your-graveyard"
@@ -7236,6 +7237,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         || (kind === "permanent-card-in-your-graveyard" && cardProfile(card).isPermanent)
         || (kind === "permanent-card-in-a-graveyard" && cardProfile(card).isPermanent)
         || (kind === "legendary-creature-card-in-your-graveyard" && isCreature(cardProfile(card)) && cardProfile(card).supertypes.some((value) => value.toLowerCase() === "legendary"))
+        || (creatureGraveyardManaValue && isCreature(cardProfile(card)) && cardProfile(card).manaValue <= Number(creatureGraveyardManaValue[1]))
         // CR 109.2a: a card type plus a named zone describes matching cards in that zone.
         || (kind === "instant-or-sorcery-card-in-your-graveyard" && cardProfile(card).types.some((type) => type === "Instant" || type === "Sorcery"))
       )

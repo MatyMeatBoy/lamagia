@@ -357,6 +357,7 @@ const PSIONIC_BLAST = () => make({ name: "Psionic Blast", type_line: "Instant", 
 const CHANDRAS_OUTRAGE = () => make({ name: "Chandra's Outrage", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "Chandra's Outrage deals 4 damage to target creature and 2 damage to that creature's controller.", oracle_id: "47437865-0032-4f47-b0ab-034cc841bb84", scryfall_id: "47437865-0032-4f47-b0ab-034cc841bb84" });
 const ESSENCE_EXTRACTION = () => make({ name: "Essence Extraction", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, oracle_text: "Essence Extraction deals 3 damage to target creature and you gain 3 life.", oracle_id: "14363df6-ac0f-476a-bbd8-ce351de0babf", scryfall_id: "14363df6-ac0f-476a-bbd8-ce351de0babf" });
 const RED_DRAGON = () => make({ name: "Red Dragon", type_line: "Creature — Dragon", mana_cost: "{5}{R}", cmc: 6, power: "4", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\nFire Breath — When ~ enters, it deals 4 damage to each opponent.", oracle_id: "ff6e4346-463c-445d-8f72-11cb35dd99ee", scryfall_id: "ff6e4346-463c-445d-8f72-11cb35dd99ee" });
+const BISHOP_OF_REBIRTH = () => make({ name: "Bishop of Rebirth", type_line: "Creature — Vampire Cleric", mana_cost: "{3}{W}", cmc: 4, power: "3", toughness: "2", keywords: ["Lifelink"], oracle_text: "Lifelink\nWhenever ~ attacks, you may return target creature card with mana value 3 or less from your graveyard to the battlefield.", oracle_id: "05058594-608f-4046-bf44-b736a7072f0a", scryfall_id: "05058594-608f-4046-bf44-b736a7072f0a" });
 const FLYING_REMOVAL = () => make({ name: "Sky Hunter's Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with flying." });
 const WONDER = () => make({ name: "Wonder", type_line: "Creature — Incarnation", mana_cost: "{3}{U}", cmc: 4, power: "2", toughness: "2", oracle_text: "Flying\nAs long as this card is in your graveyard and you control an Island, creatures you control have flying.", scryfall_id: "232284f7-c623-4895-9ab9-8b1a39926830" });
 const BIG_CREATURE_REMOVAL = () => make({ name: "Big Game Bane", type_line: "Instant", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Destroy target creature with power 5 or greater." });
@@ -4697,6 +4698,27 @@ describe("casting", () => {
     let game = readyToCast([RED_DRAGON()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     expect(game.players[1]!.life).toBe(36);
+  });
+
+  it("filters attack-triggered graveyard reanimation by mana value", () => {
+    expect(profileOf(BISHOP_OF_REBIRTH())).toMatchObject({
+      triggers: [{ event: "attacks", subject: "self", optional: true, targetKind: "creature-card-in-your-graveyard-mv-3-or-less", effect: { kind: "return-target-creature-card-from-graveyard-to-battlefield" } }],
+      fullyImplemented: true
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BISHOP_OF_REBIRTH()]);
+    game = stage(game, 0, () => ({ graveyard: toHand(0, [BEAR(), C13_PROSSH()], "bishop-yard") }));
+    const bishop = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Bishop of Rebirth")!;
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })), step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], combat: { ...game.combat, attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false } };
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bishop.instance_id, defender: 1 }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice?.type).toBe("optional-trigger");
+    const bear = game.players[0]!.graveyard.find((card) => card.name === "Grizzly Bears")!;
+    expect(legalTargets(game, 0, "creature-card-in-your-graveyard-mv-3-or-less")).toEqual([{ kind: "graveyard-card", seat: 0, instanceId: bear.instance_id }]);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("filters power-threshold creature targets before resolution", () => {

@@ -3912,3 +3912,9 @@ now stripped before the shared trigger grammar, so `Fire Breath — When ~
 enters` reuses the normal ETB damage-to-each-opponent primitive (CR 603.1,
 603.2). Current validation: **725 rules tests**, `npm run check`, and `git
 diff --check` pass.
+
+The next one-line rescan item, Bishop of Rebirth, now reuses the graveyard
+target filter `creature-card-in-your-graveyard-mv-N-or-less`. It preserves the
+printed mana-value bound while using the existing creature-card reanimation
+effect (CR 109.4, 603.3d, 601.2c). Current validation: **726 rules tests**,
+`npm run check`, and `git diff --check` pass.
