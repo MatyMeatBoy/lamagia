@@ -361,7 +361,7 @@ export interface TriggerDoubler {
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
     | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "other-subtype-creatures-you-control"
-    | "other-all-creatures" | "creatures-you-control-source-counter-threshold";
+    | "other-all-creatures" | "creatures-you-control-source-counter-threshold" | "source-controller-graveyard-threshold";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -2032,6 +2032,12 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
   const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
   if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
+  // Threshold (CR 702.19): "~ gets +X/+Y as long as there are seven or more cards in your graveyard".
+  const graveyardThreshold = /^(?:Threshold\s*[—–-]\s*)?~ gets ([+-]\d+)\/([+-]\d+) as long as (?:there are (\w+) or more cards? in your graveyard|(\w+) or more cards? are in your graveyard|you have (\w+) or more cards? in your graveyard)$/i.exec(clean);
+  if (graveyardThreshold) {
+    const threshold = toNumber(graveyardThreshold[3] ?? graveyardThreshold[4] ?? graveyardThreshold[5]);
+    if (threshold !== null) return { scope: "source-controller-graveyard-threshold", power: Number(graveyardThreshold[1]), toughness: Number(graveyardThreshold[2]), threshold };
+  }
   // "As long as ~ has N or more <name> counters on it, creatures you control get +X/+Y" (Beastmaster Ascension).
   const counterThreshold = /^as long as ~ has (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more ([a-z][a-z\s-]*?) counters? on it,\s*creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (counterThreshold) {

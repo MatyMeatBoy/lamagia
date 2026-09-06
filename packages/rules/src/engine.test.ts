@@ -7240,6 +7240,24 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("applies a Threshold static +X/+Y once seven cards are in the graveyard", () => {
+    const mongoose = make({
+      name: "Test Mongoose", type_line: "Creature — Mongoose", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1",
+      oracle_text: "Threshold — This creature gets +2/+2 as long as there are seven or more cards in your graveyard."
+    });
+    expect(profileOf(mongoose).staticPowerToughnessGrants[0]).toMatchObject({ scope: "source-controller-graveyard-threshold", power: 2, toughness: 2, threshold: 7 });
+    let game = readyToCast([], [FOREST()]);
+    game = putOnBattlefield(game, 0, [mongoose]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Mongoose")!;
+    expect(powerOf(source, game)).toBe(1);
+
+    game = stage(game, 0, (player) => ({ graveyard: [...Array(6)].map((_, i) => ({ ...BOLT(), instance_id: `gy-${i}`, owner: 0 } as GameCard)) }));
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)!, game)).toBe(1);
+    game = stage(game, 0, (player) => ({ graveyard: [...player.graveyard, { ...BOLT(), instance_id: "gy-6", owner: 0 } as GameCard] }));
+    expect(powerOf(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)!, game)).toBe(3);
+    expect(toughnessOf(game.players[0]!.battlefield.find((p) => p.instance_id === source.instance_id)!, game)).toBe(3);
+  });
+
   it("triggers 'whenever you cast a noncreature spell' on the source", () => {
     const docent = make({
       name: "Test Spellweaver", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2",

@@ -953,6 +953,10 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
         && playerAt(state, source.controller).life >= (grant.threshold ?? Number.POSITIVE_INFINITY)) {
         power += grant.power;
         toughness += grant.toughness;
+      } else if (grant.scope === "source-controller-graveyard-threshold"
+        && playerAt(state, source.controller).graveyard.length >= (grant.threshold ?? Number.POSITIVE_INFINITY)) {
+        power += grant.power;
+        toughness += grant.toughness;
       }
     }
   }

@@ -61,7 +61,7 @@ Repository: <https://github.com/MatyMeatBoy/lamagia>.
   `engine.test.ts` › "stops an enchanted creature from attacking or blocking".
 
 Session net: engine export **10,197 → 10,500** fully-implemented profiles
-(+467) across the eight primitives below, each with a scenario test; rules
+(+478) across the eight primitives below, each with a scenario test; rules
 suite **796 passing**, `npm run check` clean, `npm run rules:test:oracle` OK,
 200-game engine matrix **200/200** (unchanged from baseline).
 

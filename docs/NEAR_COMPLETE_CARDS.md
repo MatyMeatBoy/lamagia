@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,017**
-- Cards with a reusable existing primitive hint: **11,246**
+- One-line cards: **15,006**
+- Cards with a reusable existing primitive hint: **11,235**
 - Cards needing new primitive review: **3,771**
-- Templates: **12,054**
+- Templates: **12,053**
 
 ## Worker rule
 
@@ -519,4 +519,4 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
 | reuse-existing | Briarbridge Tracker | `8fe6e954-f19b-4d11-83d3-74c634d51bad` | pump | create / token | As long as you control a token, ~ gets +2/+0. |
 
-The JSON contains the remaining 14,517 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,506 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
