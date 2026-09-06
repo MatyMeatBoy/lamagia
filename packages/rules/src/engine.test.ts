@@ -9694,6 +9694,8 @@ describe("Aura targeting, attachment, and static bonuses", () => {
   const DEBILITATING_INJURY = () => make({ name: "Debilitating Injury", type_line: "Enchantment — Aura", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature gets -2/-2.", oracle_id: "52eab77d-9a07-4e14-8872-72681d3b3d0e", scryfall_id: "cf2d01e2-9f9f-4674-b8ab-b783d3faef03" });
   const DARKSTEEL_MUTATION = () => make({ name: "Darksteel Mutation", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature\nEnchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.", oracle_id: "05a4f8ff-49da-42af-add5-6248c4b0644b", scryfall_id: "05a4f8ff-49da-42af-add5-6248c4b0644b" });
   const WILD_GROWTH = () => make({ name: "Wild Growth", type_line: "Enchantment — Aura", mana_cost: "{G}", cmc: 1, oracle_text: "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", oracle_id: "706ae742-1807-44b7-a4fa-f2e26f61519a", scryfall_id: "b87f2d2c-d6ad-4639-b8c3-e75569c5373f" });
+  const ANCESTRAL_MASK = () => make({ name: "Ancestral Mask", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature gets +2/+2 for each other enchantment on the battlefield.", oracle_id: "db5380ed-ba28-4ea2-abc3-4998e2022903", scryfall_id: "4d5cc8f6-4b2c-4f32-bc32-2d4c1e4f848a" });
+  const TEST_ENCHANTMENT = () => make({ name: "Test Enchantment", type_line: "Enchantment", mana_cost: "{1}{G}", cmc: 2 });
   const LEAFDRAKE_ROOST = () => make({ name: "Leafdrake Roost", type_line: "Enchantment — Aura", mana_cost: "{3}{G}{U}", cmc: 5, oracle_text: "Enchant land\nEnchanted land has \"{G}{U}, {T}: Create a 2/2 green and blue Drake creature token with flying.\"", oracle_id: "b5ff42a1-1ac4-472b-8479-5e3749845305" });
   const PRESENCE_OF_GOND = () => make({ name: "Presence of Gond", type_line: "Enchantment — Aura", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Enchant creature\nEnchanted creature has \"{T}: Create a 1/1 green Elf Warrior creature token.\"", oracle_id: "ab42398c-f0a1-4b94-ac5f-b8768e1b4e05" });
   const SPAWNING_GROUNDS = () => make({ name: "Spawning Grounds", type_line: "Enchantment — Aura", mana_cost: "{6}{G}", cmc: 7, oracle_text: "Enchant land\nEnchanted land has \"{T}: Create a 5/5 green Beast creature token with trample.\"", oracle_id: "1961dd92-db0b-4f02-b9c8-08f760f4051b" });
@@ -9776,6 +9778,20 @@ describe("Aura targeting, attachment, and static bonuses", () => {
     const enchantedBear = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
     expect(powerOf(enchantedBear, game)).toBe(5);
     expect(toughnessOf(enchantedBear, game)).toBe(5);
+  });
+
+  it("scales Ancestral Mask by other enchantments on the battlefield", () => {
+    const profile = profileOf(ANCESTRAL_MASK());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      auraModification: { power: 2, toughness: 2, scaling: "other-enchantments-on-battlefield" }
+    });
+    let game = readyToCast([ANCESTRAL_MASK()], [BEAR(), FOREST(), FOREST(), FOREST(), TEST_ENCHANTMENT(), TEST_ENCHANTMENT()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    const enchanted = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(powerOf(enchanted, game)).toBe(6);
+    expect(toughnessOf(enchanted, game)).toBe(6);
   });
 
   it("falls to the graveyard (rule 704.5n) when its enchanted creature dies from the Aura's own -2/-2", () => {

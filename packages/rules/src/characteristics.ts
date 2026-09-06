@@ -47,10 +47,6 @@ export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
 export interface ManaAbility {
   readonly index: number;
-  /** Zone from which this mana ability can be activated (battlefield by default). */
-  readonly sourceZone?: "battlefield" | "hand";
-  /** Exile the source card as part of a hand-based mana cost (e.g. Simian Spirit Guide). */
-  readonly exilesSelf?: boolean;
   /** The mana types the controller may choose between for each mana produced. */
   readonly produces: readonly ManaType[];
   readonly amount: number;
@@ -84,6 +80,8 @@ export interface ManaAbility {
   readonly gainLifeFromAmount?: boolean;
   /** Some mana abilities have a small immediate side effect (CR 605). */
   readonly gainLife?: number;
+  /** A source-counter rider resolved atomically with the mana ability (CR 605.3b). */
+  readonly addCounterOnSource?: CounterCost;
   /** Static activation restriction such as Temple of the False God. */
   readonly requiresLands?: number;
   readonly text: string;
@@ -131,6 +129,8 @@ export interface ActivatedAbility {
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** Printed "another target" restriction; the source itself is not legal. */
+  readonly excludesSourceFromTargets?: boolean;
   /** Level up is an activated ability with a sorcery-speed restriction. */
   readonly sorcerySpeed?: boolean;
   /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
@@ -312,6 +312,8 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Multiplier for a dynamic Aura bonus. */
+  readonly scaling?: "other-enchantments-on-battlefield";
   /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
   readonly characteristicSetting?: {
     readonly basePower: number;
@@ -334,27 +336,16 @@ export interface StaticKeywordGrant {
   readonly requiresControlledLandSubtype?: string;
 }
 
-/** "X [you control] have '{T}: Add ...'" (Chromatic Lantern, Joraga Treespeaker, Cryptolith Rite, CR 113.6). */
-export interface StaticManaAbilityGrant {
-  readonly scope: "you-control" | "all";
-  readonly excludesSelf: boolean;
-  readonly type?: CardType;
-  readonly subtype?: string;
-  readonly ability: ManaAbility;
-  /** Only active once the granting permanent (a Class or Level Up card) has reached this level (CR 702.134, 710.3). */
-  readonly minLevel?: number;
-}
-
 /** "If a triggered ability of X triggers, that ability triggers an additional time" (CR 603.3f). */
 export interface TriggerDoubler {
-  readonly scope: "subtype-you-control" | "equipped-creature" | "draw-caused-triggers";
+  readonly scope: "subtype-you-control" | "equipped-creature" | "equipped-self-and-attached-equipment" | "draw-caused-triggers";
   readonly subtypes?: readonly string[];
 }
 
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
     | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "other-subtype-creatures-you-control"
-    | "other-all-creatures" | "creatures-you-control-source-counter-threshold";
+    | "other-all-creatures";
   readonly power: number;
   readonly toughness: number;
   readonly color?: string;
@@ -427,10 +418,6 @@ export type SpellEffect =
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean }
-  /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
-  | { readonly kind: "look-top-reorder"; readonly amount: number }
-  /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
-  | { readonly kind: "draw-then-source-to-library-top" }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -574,7 +561,7 @@ export type SpellEffect =
   | { readonly kind: "modify-all-creatures-per-land"; readonly power: number; readonly toughness: number; readonly subtype: string }
   | { readonly kind: "modify-target-creature-morbid"; readonly power: number; readonly toughness: number; readonly morbidPower: number; readonly morbidToughness: number }
   | { readonly kind: "modify-creatures-you-control"; readonly power: number; readonly toughness: number }
-  | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number }
+  | { readonly kind: "modify-target-creature"; readonly power: number; readonly toughness: number; readonly losesAllCreatureTypes?: boolean }
   | { readonly kind: "modify-source-creature"; readonly power: number; readonly toughness: number }
   /** Mirror Entity: set base P/T and grant every creature type until cleanup. */
   | { readonly kind: "set-creatures-you-control-base-pt-all-types"; readonly power: number | "X"; readonly toughness: number | "X" }
@@ -586,8 +573,6 @@ export type SpellEffect =
   /** Temporary pump based on the defending player in the triggering attack. */
   | { readonly kind: "modify-triggered-creature-by-defending-lands" }
   | { readonly kind: "modify-triggered-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
-  /** "That creature gets +X/+Y and gains KEYWORD until end of turn" (Ogre Battledriver): targets the OTHER creature named by the triggering event, not the source. */
-  | { readonly kind: "modify-event-creature-and-grant-keyword"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   /** Graft counter transfer to the creature that caused the trigger (CR 702.58). */
   | { readonly kind: "move-counter-from-source-to-triggered-creature"; readonly counter: string }
   | { readonly kind: "grant-target-creature-keyword"; readonly keyword: EnforcedKeyword }
@@ -595,8 +580,6 @@ export type SpellEffect =
   /** Temporary keyword grant limited to creatures controlled by the effect's controller. */
   | { readonly kind: "grant-creatures-you-control-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "overwhelming-stampede" }
-  /** Craterhoof Behemoth: same trample/+X/+X grant as Overwhelming Stampede, but X is the creature count, not the greatest power. */
-  | { readonly kind: "creature-count-stampede" }
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
   | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
@@ -605,8 +588,6 @@ export type SpellEffect =
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
-  /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
-  | { readonly kind: "add-counter-creatures-and-other-planeswalkers"; readonly counter: string; readonly amount: number; readonly planeswalkerAmount: number }
   | { readonly kind: "add-counter-all-creatures"; readonly counter: string; readonly amount: number | "X" }
   | { readonly kind: "remove-all-counters-target" }
   | { readonly kind: "remove-all-counters-all-and-exile-tokens" }
@@ -616,8 +597,6 @@ export type SpellEffect =
   /** Counter target spell, then its (former) controller creates N tokens (An Offer You Can't Refuse). */
   | { readonly kind: "counter-target-spell-then-controller-token"; readonly amount: number; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent" }
-  /** Ghost Quarter: destroy a land, then its controller may search for a basic land. */
-  | { readonly kind: "destroy-target-land-search-basic" }
   /** Destroy a target artifact or creature whose mana value equals X. */
   | { readonly kind: "destroy-target-artifact-or-creature-mana-value" }
   /** Return each non-token permanent to its owner's control without changing zones. */
@@ -688,8 +667,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
-  /** "Target spell can't be countered" (Vexing Shusher): tags the targeted stack object, mirroring the cast-time StackObject.cantBeCountered flag. */
-  | { readonly kind: "make-target-spell-uncounterable" }
+  /** Hinder: the countered spell's owner chooses a library destination replacement (CR 701.18, 608.2b). */
+  | { readonly kind: "counter-target-spell-to-library" }
   /** Daze: the targeted spell's own controller decides whether to pay (CR 601.2b, 603.3, 118.9). */
   | { readonly kind: "counter-target-spell-unless-pay"; readonly cost: ManaCost }
   | { readonly kind: "counter-target-spell-to-battlefield" }
@@ -712,8 +691,6 @@ export type SpellEffect =
   /** "Your opponents can't cast spells this turn." (Silence, CR 116.3). */
   | { readonly kind: "opponents-cant-cast-spells-this-turn" }
   | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
-  /** "Add one mana of any color" as a one-shot resolution, not a mana ability (Lotus Cobra's Landfall): the color is chosen when the effect resolves. */
-  | { readonly kind: "add-mana-any-color" }
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
@@ -732,10 +709,6 @@ export type SpellEffect =
       readonly kind: "search-library";
       readonly types: readonly CardType[];
       readonly subtypes?: readonly string[];
-      /** "a green creature card" (Natural Order): restricts by color, not just type/subtype. */
-      readonly colors?: readonly string[];
-      /** "...card with mana value X or less" (Green Sun's Zenith): X is the spell's own paid {X}. */
-      readonly maxManaValue?: "X";
       readonly destination: "top" | "hand" | "graveyard" | "battlefield";
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
@@ -784,9 +757,7 @@ export type TriggerEvent =
   | "life-lost"
   | "class-level-up"
   /** The action of playing a land (CR 305.1), distinct from that land's own "enters the battlefield" event (City of Traitors). */
-  | "play-land"
-  /** Specifically a mana ability's activation (Forbidden Orchard), narrower than the general "becomes-tapped" (a non-mana tap effect must not trigger this). */
-  | "taps-for-mana";
+  | "play-land";
 
 /**
  * Which object or player the event has to involve for the ability to trigger.
@@ -799,7 +770,6 @@ export type TriggerSubject =
   | "another-creature-you-control"
   | "creature-you-control"
   | "artifact-creature-you-control"
-  | "creature-with-deathtouch-you-control"
   | "another-permanent-you-control"
   | "permanent-you-control"
   | "land-you-control"
@@ -839,8 +809,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "life-lost": "life-loss trigger",
   "class-level-up": "habilidad de nivel de Clase",
   "first-main-phase": "habilidad de la primera fase principal",
-  "play-land": "habilidad de jugar una tierra",
-  "taps-for-mana": "habilidad de girar por maná"
+  "play-land": "habilidad de jugar una tierra"
 };
 
 /** A triggered ability whose source is already on the battlefield. */
@@ -917,8 +886,6 @@ export interface TriggerDefinition {
   readonly spellSubtype?: string;
   readonly nontoken?: boolean;
   readonly excludeSubtype?: string;
-  /** Tribal filter on the event object itself (Atarka, World Render's "a Dragon you control attacks"), distinct from a board-count condition. */
-  readonly requireSubtype?: string;
   /** Filters a card-discarded event by the discarded card's own type (Waste Not). */
   readonly discardedCardType?: "creature" | "land" | "noncreature-nonland";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
@@ -942,6 +909,7 @@ export type MagicColor = "W" | "U" | "B" | "R" | "G";
 export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
+  | "creature-mana-value-up-to-plains"
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
   | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
@@ -950,6 +918,7 @@ export type TargetKind =
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
+  | "creature-power-toughness-total-at-most-5"
   | "creature-toughness-at-most-4"
   | "creature-with-defender"
   | "creature-with-deathtouch"
@@ -1013,18 +982,21 @@ export interface CardProfile {
   readonly equipmentModification: EquipmentModification | null;
   /** Static bonuses an Aura grants the permanent it's attached to (CR 303.4.5), e.g. "Enchanted creature gets +2/+2." */
   readonly auraModification: EquipmentModification | null;
+  /** Fixed mana added when the enchanted land is tapped for mana (CR 303.4, 605.1a). */
+  readonly auraLandManaBonus: { readonly mana: ManaType; readonly amount: number } | null;
   /** Permanent type continuously controlled by an Aura, e.g. "You control enchanted creature." (CR 611.3, 613.7). */
   readonly auraControlTarget: "creature" | "land" | "permanent" | null;
   /** Activated ability granted by an attached Aura (CR 303.4, 605.1a). */
   readonly auraActivatedAbility: ActivatedAbility | null;
   readonly staticKeywordGrants: readonly StaticKeywordGrant[];
-  readonly staticManaAbilityGrants: readonly StaticManaAbilityGrant[];
   /** "~ has flying during your turn" (Razorkin Needlehead): self-only, active-player-gated. */
   readonly keywordsDuringYourTurn: readonly EnforcedKeyword[];
   /** Colors of creatures this permanent untaps during each other player's untap step (CR 502.2). */
   readonly untapColorsDuringOtherPlayersUntap: readonly string[];
   readonly triggerDoublers: readonly TriggerDoubler[];
   readonly preventsLifeGain: boolean;
+  /** Static prevention of life gain by this permanent's opponents (CR 614.12). */
+  readonly preventsOpponentLifeGain: boolean;
   readonly noMaximumHandSize: boolean;
   readonly noMaximumHandSizeForAllPlayers: boolean;
   readonly locksOpponentsOnYourTurn: boolean;
@@ -1069,10 +1041,6 @@ export interface CardProfile {
   readonly entersPrepared: boolean;
   /** "You may play N additional land(s) on each of your turns" (Exploration, Azusa, CR 305.2). */
   readonly extraLandDropsPerTurn: number;
-  /** "You may play lands from the top of your library" (Oracle of Mul Daya, CR 305.1). */
-  readonly playLandsFromTopOfLibrary: boolean;
-  /** "Play with the top card of your library revealed" (Oracle of Mul Daya): public information, not merely visible to its controller. */
-  readonly revealsTopOfLibrary: boolean;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
   readonly additionalCostExileGraveyardX: boolean;
   /** Rebound (CR 702.88): if cast from hand, exile on resolution and offer a free recast next upkeep. */
@@ -1081,14 +1049,12 @@ export interface CardProfile {
   readonly additionalCostSacrificeLand: boolean;
   /** "As an additional cost to cast ~, sacrifice a creature" (Diabolic Intent, CR 601.2b). */
   readonly additionalCostSacrificeCreature: boolean;
-  /** "As an additional cost to cast ~, sacrifice a green creature" (Natural Order, CR 601.2b): the color-restricted sibling. */
-  readonly additionalCostSacrificeCreatureColor: string | null;
   /** "If you control a commander, you may cast ~ without paying its mana cost" (Deadly Rollick, CR 601.2b, 118.9). */
   readonly freeCastIfCommander: boolean;
   /** "If you control a [land type], you may pay N life rather than pay ~'s mana cost" (Snuff Out, CR 601.2b, 118.9). */
   readonly payLifeInsteadOfManaCost: { readonly life: number; readonly controlLandType: string } | null;
-  /** "You may return a [land type] you control to its owner's hand rather than pay ~'s mana cost" (Daze, CR 601.2b, 118.9). */
-  readonly returnLandInsteadOfManaCost: { readonly subtype: string } | null;
+  /** "You may return N [land type]s you control to their owner's hand rather than pay ~'s mana cost" (Daze/Gush, CR 601.2b, 118.9). */
+  readonly returnLandInsteadOfManaCost: { readonly subtype: string; readonly amount: number } | null;
   /** "You may pay {cost} rather than pay ~'s mana cost" (Baleful Mastery, CR 601.2b, 118.9). */
   readonly payReducedCostInstead: ManaCost | null;
   /** "Gift a card" (CR 702.166): promising the gift while casting draws an opponent a card before other effects. */
@@ -1153,14 +1119,13 @@ export type EntersTappedRule =
   | { readonly kind: "tapped" }
   | { readonly kind: "unless-few-lands"; readonly max: number }
   | { readonly kind: "unless-many-lands"; readonly min: number }
-  | { readonly kind: "unless-first-turns"; readonly maxTurn: number }
   | { readonly kind: "unless-pay-life"; readonly life: number }
   /** The controller may reveal a card with one of these subtypes to avoid entering tapped. */
   | { readonly kind: "unless-reveal-card"; readonly subtypes: readonly string[] };
 
 const WORD_NUMBERS: Record<string, number> = {
-  a: 1, an: 1, one: 1, first: 1, two: 2, second: 2, three: 3, third: 3, four: 4, fourth: 4, five: 5, fifth: 5, six: 6, sixth: 6, seven: 7, seventh: 7,
-  eight: 8, eighth: 8, nine: 9, ninth: 9, ten: 10, tenth: 10, eleven: 11, twelve: 12, thirteen: 13, twenty: 20
+  a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, twenty: 20
 };
 
 function toNumber(token: string | undefined): number | null {
@@ -1380,6 +1345,14 @@ function parseAddClause(effect: string): { produces: ManaType[]; amount: number;
   return { produces: distinct, amount: symbols.length };
 }
 
+function parseManaSourceCounterRider(effect: string): { production: string; counter: CounterCost } | null {
+  const match = /^(.+?)\.\s*Put (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) ([+\-\w/ ]+?) counter(?:s)? on (?:~|this (?:artifact|creature|enchantment|land|permanent))\.?$/i.exec(effect.trim());
+  if (!match) return null;
+  const amount = toNumber(match[2]!);
+  if (amount === null) return null;
+  return { production: match[1]!.trim(), counter: { kind: match[3]!.trim().replace(/\s+/g, " ").toLowerCase(), amount } };
+}
+
 function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean }; commanderEntryCounters?: boolean } | null {
   let remainder = effect.trim().replace(/\.$/, "");
   let gainLife: number | undefined;
@@ -1446,17 +1419,9 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     if (!activated) continue;
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
+    const sourceCounterRider = parseManaSourceCounterRider(effectText);
+    const productionText = sourceCounterRider?.production ?? effectText;
     const requiresTap = /\{T\}/.test(costText);
-    // Modern Oracle uses either the printed name, `~`, or `this card` here.
-    // All three mean the same hand-based mana ability (CR 605.1a); do not let
-    // a wording variant make a fast-mana card look like a normal cast only.
-    const escapedSelfNames = [card.name, card.name.split(",")[0] ?? ""]
-      .filter(Boolean)
-      .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    const exilesSelfFromHand = new RegExp(
-      `^exile\\s+(?:~|this\\s+card|${escapedSelfNames.join("|")})\\s+from\\s+your\\s+hand$`,
-      "i"
-    ).test(costText.trim());
     const variableSacrifice = /^(?:\{T\},\s*)?sacrifice\s+X\s+([A-Za-z][A-Za-z'’-]*)s?$/i.exec(costText.trim().replace(/,\s*$/, ""));
     if (variableSacrifice && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(effectText.trim())) {
       abilities.push({
@@ -1493,8 +1458,6 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
     if (manaSymbols.length && !manaCost) continue;
     const leftovers = costText
-      .replace(/exile\s+(?:~|this\s+card)\s+from\s+your\s+hand/gi, "")
-      .replace(new RegExp(`exile\\s+(?:${escapedSelfNames.join("|")})\\s+from\\s+your\\s+hand`, "gi"), "")
       .replace(/\{T\}/g, "")
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
@@ -1508,8 +1471,8 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     // `manaAbilities` may still expose a production choice whose restriction
     // is not executable yet; `recognizeText` below remains strict so coverage
     // does not claim that trailing restriction is enforced.
-    const instruction = parseManaInstruction(effectText) ?? (() => {
-      const produced = parseAddClause(effectText.split(/[.!?]/, 1)[0] ?? effectText);
+    const instruction = parseManaInstruction(productionText) ?? (() => {
+      const produced = parseAddClause(productionText.split(/[.!?]/, 1)[0] ?? productionText);
       return produced ? {
         produced,
         gainLife: undefined,
@@ -1520,24 +1483,26 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       } : null;
     })();
     // "Add {C} for each <Subtype> on the battlefield / you control".
-    const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(effectText.trim().replace(/\.$/, ""));
+    const scaled = /^add\s+\{([WUBRGC])\}\s+for each\s+([A-Za-z][A-Za-z'’-]*)\s+(on the battlefield|you control)$/i.exec(productionText.trim().replace(/\.$/, ""));
     if (scaled && (!instruction?.produced)) {
       abilities.push({
         index: abilities.length, produces: [scaled[1]!.toUpperCase() as ManaType], amount: 1,
         scalesWith: { kind: /you control/i.test(scaled[3]!) ? "subtype-you-control" : "subtype-anywhere", subtype: scaled[2]! },
         ...(removeCounters.length ? { removeCounters } : {}),
+        ...(sourceCounterRider ? { addCounterOnSource: sourceCounterRider.counter } : {}),
         requiresTap, lifeCost, text: line.trim()
       });
       continue;
     }
     // Board-dependent color (Fellwar Stone, Harvester Druid): resolved from
     // the battlefield at activation time, not a fixed color set on the card.
-    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(effectText.trim().replace(/\.$/, ""));
+    const anyColorFromLands = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(an\s+opponent\s+controls|you\s+control)\s+could\s+produce$/i.exec(productionText.trim().replace(/\.$/, ""));
     if (anyColorFromLands && !instruction?.produced) {
       abilities.push({
         index: abilities.length, produces: [], amount: 1,
         anyColorFromLandsControlledBy: /opponent/i.test(anyColorFromLands[1]!) ? "opponent" : "you",
         ...(removeCounters.length ? { removeCounters } : {}),
+        ...(sourceCounterRider ? { addCounterOnSource: sourceCounterRider.counter } : {}),
         requiresTap, lifeCost, text: line.trim()
       });
       continue;
@@ -1552,12 +1517,12 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       : undefined;
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
-      ...(exilesSelfFromHand ? { sourceZone: "hand" as const, exilesSelf: true } : {}),
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
       ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
       ...(manaRestriction ? { manaRestriction } : {}),
       ...(removeCounters.length ? { removeCounters } : {}),
+      ...(sourceCounterRider ? { addCounterOnSource: sourceCounterRider.counter } : {}),
       ...(instruction.gainLife === undefined ? {} : { gainLife: instruction.gainLife }),
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
       ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
@@ -1758,6 +1723,11 @@ function parseAuraModification(text: string): EquipmentModification | null {
       };
     }
     let match = /^enchanted creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
+    const counted = /^enchanted creature gets \+(\d+)\/\+(\d+) for each other enchantment on the battlefield$/i.exec(clean);
+    if (counted) return {
+      power: Number(counted[1]), toughness: Number(counted[2]), keywords: [],
+      scaling: "other-enchantments-on-battlefield", text: line.trim()
+    };
     if (match) {
       const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
@@ -1789,6 +1759,15 @@ function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null
     if (!match) continue;
     const ability = parseActivatedAbility(match[1]!, 0);
     if (ability) return ability;
+  }
+  return null;
+}
+
+/** Parses Wild Growth-style mana granted to an enchanted land (CR 605.1a). */
+function parseAuraLandManaBonus(text: string): { readonly mana: ManaType; readonly amount: number } | null {
+  for (const line of text.split("\n")) {
+    const match = /^whenever enchanted land is tapped for mana, its controller adds an additional \{([WUBRGC])\}\.?$/i.exec(line.trim());
+    if (match) return { mana: match[1]!.toUpperCase() as ManaType, amount: 1 };
   }
   return null;
 }
@@ -1842,61 +1821,6 @@ function parseStaticKeywordGrants(text: string): StaticKeywordGrant[] {
   return text.split("\n").flatMap(parseStaticKeywordGrant);
 }
 
-const MANA_GRANT_TYPE_WORDS: Readonly<Record<string, CardType | undefined>> = {
-  creatures: "Creature", lands: "Land", artifacts: "Artifact", enchantments: "Enchantment", permanents: undefined
-};
-
-/** "X [you control] have '{T}: Add ...'" (Chromatic Lantern, Joraga Treespeaker, Cryptolith Rite, CR 113.6). */
-function parseManaAbilityGrant(line: string): StaticManaAbilityGrant | null {
-  const clean = line.trim().replace(/\.$/, "");
-  const build = (typeWord: string, scope: "you-control" | "all", excludesSelf: boolean, abilityText: string): StaticManaAbilityGrant | null => {
-    const type = MANA_GRANT_TYPE_WORDS[typeWord.toLowerCase()];
-    return finish({ scope, excludesSelf, ...(type ? { type } : {}) }, abilityText);
-  };
-  const buildSubtype = (subtypeWord: string, scope: "you-control" | "all", excludesSelf: boolean, abilityText: string): StaticManaAbilityGrant | null =>
-    finish({ scope, excludesSelf, type: "Creature", subtype: singularSubtype(subtypeWord) }, abilityText);
-  const finish = (base: { scope: "you-control" | "all"; excludesSelf: boolean; type?: CardType; subtype?: string }, abilityText: string): StaticManaAbilityGrant | null => {
-    const fakeCard: CardData = { scryfall_id: "mana-grant", name: "~", type_line: "", mana_cost: "", cmc: 0 };
-    const abilities = parseManaAbilities(fakeCard, abilityText.trim());
-    return abilities.length === 1 ? { ...base, ability: abilities[0]! } : null;
-  };
-
-  const typeWordAlt = "creatures|lands|artifacts|enchantments|permanents";
-  const allMatch = new RegExp(`^all (${typeWordAlt}) have "([^"]+)"$`, "i").exec(clean);
-  if (allMatch) return build(allMatch[1]!, "all", false, allMatch[2]!);
-  const otherMatch = new RegExp(`^other (${typeWordAlt}) you control have "([^"]+)"$`, "i").exec(clean);
-  if (otherMatch) return build(otherMatch[1]!, "you-control", true, otherMatch[2]!);
-  const typeMatch = new RegExp(`^(${typeWordAlt}) you control have "([^"]+)"$`, "i").exec(clean);
-  if (typeMatch) return build(typeMatch[1]!, "you-control", false, typeMatch[2]!);
-  const subtypeMatch = /^([A-Za-z][A-Za-z'’-]*) creatures you control have "([^"]+)"$/i.exec(clean);
-  if (subtypeMatch && !/^creatures?$/i.test(subtypeMatch[1]!)) return buildSubtype(subtypeMatch[1]!, "you-control", false, subtypeMatch[2]!);
-  // Bare subtype, no "creatures" noun (Joraga Treespeaker: "Elves you control have ...").
-  const bareSubtypeMatch = /^([A-Za-z][A-Za-z'’-]*) you control have "([^"]+)"$/i.exec(clean);
-  if (bareSubtypeMatch && !MANA_GRANT_TYPE_WORDS[bareSubtypeMatch[1]!.toLowerCase()] && bareSubtypeMatch[1]!.toLowerCase() !== "permanents") {
-    return buildSubtype(bareSubtypeMatch[1]!, "you-control", false, bareSubtypeMatch[2]!);
-  }
-  return null;
-}
-
-/**
- * Scans every line for a mana-ability grant, gating each one on the nearest
- * preceding "LEVEL N[+/-M]" marker (Joraga Treespeaker's grant only applies
- * at LEVEL 5+, not from level 0) the same way `parseLevelDefinitions` tracks
- * level blocks for power/toughness/keywords.
- */
-function parseManaAbilityGrants(text: string): StaticManaAbilityGrant[] {
-  const grants: StaticManaAbilityGrant[] = [];
-  let currentMinLevel: number | undefined;
-  for (const rawLine of text.split("\n")) {
-    const line = rawLine.trim();
-    const marker = /^level\s+(\d+)(?:-\d+|\+)?$/i.exec(line);
-    if (marker) { currentMinLevel = Number(marker[1]); continue; }
-    const grant = parseManaAbilityGrant(line);
-    if (grant) grants.push(currentMinLevel !== undefined ? { ...grant, minLevel: currentMinLevel } : grant);
-  }
-  return grants;
-}
-
 /** "~ has flying during your turn" (Razorkin Needlehead) — self-only, gated on whose turn it is. */
 function parseKeywordDuringYourTurn(line: string): EnforcedKeyword[] {
   const clean = line.trim().replace(/\.$/, "");
@@ -1911,6 +1835,9 @@ function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
 /** Harmonic Prodigy / Wizard's Staff style trigger-doubling clauses. */
 function parseTriggerDoubler(line: string): TriggerDoubler | null {
   const clean = line.trim().replace(/\.$/, "");
+  if (/^(?:As long as ~ is equipped,\s*)?If a triggered ability of ~ or an Equipment attached to it triggers,\s*that ability triggers an additional time$/i.test(clean)) {
+    return { scope: "equipped-self-and-attached-equipment" };
+  }
   if (/^If a triggered ability of equipped creature triggers,\s*that ability triggers an additional time$/i.test(clean)) {
     return { scope: "equipped-creature" };
   }
@@ -1943,16 +1870,6 @@ function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant
   if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
   const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
   if (life) return { scope: "source-controller-life-threshold", power: Number(life[1]), toughness: Number(life[2]), threshold: Number(life[3]) };
-  // "As long as ~ has N or more <name> counters on it, creatures you control get +X/+Y" (Beastmaster Ascension).
-  const counterThreshold = /^as long as ~ has (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more ([a-z][a-z\s-]*?) counters? on it,\s*creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
-  if (counterThreshold) {
-    const threshold = toNumber(counterThreshold[1]!);
-    if (threshold !== null) return {
-      scope: "creatures-you-control-source-counter-threshold",
-      power: Number(counterThreshold[3]), toughness: Number(counterThreshold[4]),
-      threshold, counterName: counterThreshold[2]!.trim().toLowerCase()
-    };
-  }
   const match = /^(?:(other\s+(?:(white|blue|black|red|green)\s+)?creatures\s+you\s+control)|(creatures\s+you\s+control)|(all creatures))\s+get\s+([+-]\d+)\/([+-]\d+)$/i.exec(clean);
   if (match) {
     return {
@@ -2096,9 +2013,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     return {
       index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost: null,
       loyaltyCost: magnitude === 0 ? 0 : sign * magnitude, sorcerySpeed: true,
-      effect: recognized.effect, targetKind: recognized.target,
-      ...(recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
-      text: line.trim()
+      effect: recognized.effect, targetKind: recognized.target, text: line.trim()
     };
   }
   // "Activate only if an opponent controls N or more lands" (Tectonic Edge, CR 602.5).
@@ -2212,6 +2127,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     effect: recognized.effect,
     targetKind: recognized.target,
     ...("targetKinds" in recognized && recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
+    ...( /\banother\s+target\b/i.test(parsedEffectText) ? { excludesSourceFromTargets: true } : {}),
     text: line.trim()
   };
 }
@@ -2238,16 +2154,6 @@ function parseEntersTapped(text: string, typeLine: string): EntersTappedRule {
   if (manyLands) {
     const min = toNumber(manyLands[1]);
     if (min !== null) return { kind: "unless-many-lands", min };
-  }
-  // Starting Town and similar designs use the game turn rather than a
-  // battlefield count: it enters untapped during the first N turns, then
-  // enters tapped. Keep this replacement effect explicit so it cannot fall
-  // through to the generic always-tapped case.
-  const firstTurns = /unless[^.\n]*your[^.\n]*turn\s+of\s+the\s+game/i.exec(text);
-  if (firstTurns) {
-    const ordinals = firstTurns[0]!.match(/first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+/gi) ?? [];
-    const maxTurn = Math.max(...ordinals.map((ordinal) => toNumber(ordinal) ?? 0));
-    if (maxTurn > 0) return { kind: "unless-first-turns", maxTurn };
   }
   const payLife = /(?:unless\s+you\s+pay|you\s+may\s+pay)\s+(\d+)\s+life/i.exec(text);
   if (payLife) return { kind: "unless-pay-life", life: Number(payLife[1]) };
@@ -2295,19 +2201,14 @@ function parseEntersWithVariableCounters(text: string): { kind: string } | null 
 
 const SENTENCE_SPLIT = /(?<=\.)\s+(?=[A-Z~])/;
 
-function searchCriterion(text: string): { types: CardType[]; subtypes: string[]; colors: string[] } {
-  // "a green creature card" (Natural Order): a leading color adjective
-  // restricts by color, not a creature subtype, so pull it out first.
-  const colorMatch = /\b(white|blue|black|red|green)\b/i.exec(text);
-  const colors = colorMatch ? [DAMAGE_AMPLIFY_COLOR_LETTER[colorMatch[1]!.toLowerCase()]!] : [];
-  const withoutColor = colorMatch ? text.replace(colorMatch[0], " ").replace(/\s+/g, " ").trim() : text;
-  const types = CARD_TYPES.filter((type) => new RegExp(`\\b${type}\\b`, "i").test(withoutColor));
-  const subtypes: string[] = /\bbasic\b/i.test(withoutColor) ? ["Basic"] : [];
+function searchCriterion(text: string): { types: CardType[]; subtypes: string[] } {
+  const types = CARD_TYPES.filter((type) => new RegExp(`\\b${type}\\b`, "i").test(text));
+  const subtypes: string[] = /\bbasic\b/i.test(text) ? ["Basic"] : [];
   // Search criteria are open-ended in Oracle: Equipment, Aura, Goblin and
   // future creature/artefact subtypes must not be reduced to “all cards”.
   // Only collect a single lexical criterion after removing card-type words;
   // compound descriptions ("land with ...", "card with ...") stay pending.
-  const criterion = withoutColor.replace(/\b(?:a|an|up to (?:one|two|three|five))\b/gi, "")
+  const criterion = text.replace(/\b(?:a|an|up to (?:one|two|three|five))\b/gi, "")
     .replace(/\bcard\b/gi, "").replace(/\s+/g, " ").trim();
   for (const part of criterion.split(/\s+(?:or|and)\s+/i)) {
     const candidate = part.trim();
@@ -2317,7 +2218,7 @@ function searchCriterion(text: string): { types: CardType[]; subtypes: string[];
       subtypes.push(candidate);
     }
   }
-  return { types, subtypes, colors };
+  return { types, subtypes };
 }
 
 function parseLibrarySearch(text: string): SpellEffect | null {
@@ -2341,7 +2242,6 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       kind: "search-library",
       types: criterion.types,
       ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
-      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
       destination: "hand",
       reveal: true,
       count
@@ -2356,27 +2256,10 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       kind: "search-library",
       types: criterion.types,
       ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
-      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
       destination: "battlefield",
       ...(multi[3] ? { tapped: true } : {}),
       reveal: false,
       count
-    };
-  }
-  // "...card with mana value X or less, put it onto the battlefield, then
-  // shuffle" (Green Sun's Zenith, Chord of Calling): X is the spell's own
-  // paid {X}, read from the stack object at resolution.
-  const manaValueX = /^Search your library for (?:a |an )?(.+?) card with mana value X or less, put it onto the battlefield, then shuffle\.?$/i.exec(text);
-  if (manaValueX) {
-    const criterion = searchCriterion(manaValueX[1]!);
-    return {
-      kind: "search-library",
-      types: criterion.types,
-      ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
-      ...(criterion.colors.length ? { colors: criterion.colors } : {}),
-      maxManaValue: "X",
-      destination: "battlefield",
-      reveal: false
     };
   }
   if (!single) return null;
@@ -2392,7 +2275,6 @@ function parseLibrarySearch(text: string): SpellEffect | null {
     kind: "search-library",
     types: criterion.types,
     ...(criterion.subtypes.length ? { subtypes: criterion.subtypes } : {}),
-    ...(criterion.colors.length ? { colors: criterion.colors } : {}),
     destination,
     ...(destination === "battlefield" && /onto the battlefield tapped/i.test(instructions) ? { tapped: true } : {}),
     reveal: /reveal/i.test(instructions)
@@ -2421,10 +2303,8 @@ function parseCreateToken(text: string): SpellEffect | null {
   const artifact = /\bartifact\b/i.test(descriptor);
   const creature = /\bcreature\b/i.test(descriptor);
   // Oracle token descriptors commonly join multiple colors with "and";
-  // conjunctions are grammar, not part of the token's subtype/name. "Colorless"
-  // is a real descriptor too (an absent color, not a subtype word) — the
-  // token's empty `colors` array already expresses it correctly.
-  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and|colorless)$/i.test(word)).join(" ");
+  // conjunctions are grammar, not part of the token's subtype/name.
+  const subtype = words.filter((word) => !colorWords[word.toLowerCase()] && !/^(artifact|creature|and)$/i.test(word)).join(" ");
   const name = (match[5]?.trim() || (subtype || (artifact ? "Treasure" : "Token"))).replace(/\s+token$/i, "");
   const keywords = (match[6]?.match(/flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate/gi) ?? [])
     .map((keyword) => keyword.toLowerCase() as EnforcedKeyword);
@@ -2623,20 +2503,10 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "blocks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+blocks(?:\s+a\s+creature)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "becomes-tapped", subject: "self", pattern: /^(?:when|whenever)\s+~\s+becomes\s+tapped,?\s*(.+)$/i },
-  // Equipment triggers about the creature it's attached to (Skullclamp,
-  // Argentum Armor); the "equipped-creature" subject already exists for the
-  // static P/T-doubler grant, wired here for the first time as a real event.
-  { event: "dies", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+dies,?\s*(.+)$/i },
-  { event: "attacks", subject: "equipped-creature", pattern: /^whenever\s+equipped\s+creature\s+attacks,?\s*(.+)$/i },
 
   // Another object triggers it. `another` excludes the source itself (CR 109.5).
   { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
-  // "another" must exclude the source itself (CR 109.5); kept as its own
-  // template ahead of the bare "a creature you control enters" one below so a
-  // real "another" in the Oracle text is never collapsed into the
-  // self-inclusive subject (Ogre Battledriver, Cathars' Crusade).
-  { event: "enters-battlefield", subject: "another-creature-you-control", pattern: /^whenever\s+another\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
-  { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+a?\s*creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "another-permanent-you-control", pattern: /^whenever\s+another\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "permanent-you-control", pattern: /^whenever\s+a\s+permanent\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "creature-you-control", pattern: /^whenever\s+(?:a|another)?\s*creature\s+enters(?:\s+the\s+battlefield)?\s+under\s+your\s+control,?\s*(.+)$/i },
@@ -2663,13 +2533,11 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "attacks", subject: "creature-attacks-enchanted-player", pattern: /^whenever\s+a\s+creature\s+attacks\s+enchanted\s+player,?\s*(.+)$/i },
   { event: "attacks", subject: "player-attacks-enchanted-player", pattern: /^whenever\s+a\s+player\s+attacks\s+enchanted\s+player\s+with\s+one\s+or\s+more\s+creatures,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "artifact-creature-you-control", pattern: /^whenever\s+an\s+artifact\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
-  { event: "deals-combat-damage-to-player", subject: "creature-with-deathtouch-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+with\s+deathtouch\s+deals\s+combat\s+damage\s+to\s+a\s+player(?:\s+or\s+(?:a\s+)?planeswalker)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+deals\s+combat\s+damage\s+to\s+one\s+of\s+your\s+opponents,?\s*(.+)$/i },
   // This event is raised for both combat and noncombat damage from a
   // permanent, unlike the combat-only templates above (CR 603.2).
-  { event: "deals-damage-to-player", subject: "creature-with-deathtouch-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+with\s+deathtouch\s+deals\s+damage\s+to\s+a\s+player(?:\s+or\s+(?:a\s+)?planeswalker)?,?\s*(.+)$/i },
   { event: "deals-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+damage\s+to\s+an?\s+opponent,?\s*(.+)$/i },
 
   // A player is the subject.
@@ -2677,6 +2545,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "spell-cast", subject: "you", spellSubtype: "elf", pattern: /^whenever\s+you\s+cast\s+an\s+elf\s+spell,?\s*(.+)$/i },
   { event: "enters-battlefield", subject: "another-creature-you-control", nontoken: true, pattern: /^whenever\s+another\s+nontoken\s+creature\s+you\s+control\s+enters(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "creature", pattern: /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*(.+)$/i },
+  { event: "spell-cast", subject: "you", spellType: "noncreature", pattern: /^whenever\s+you\s+cast\s+a\s+noncreature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "opponent", spellType: "creature", pattern: /^whenever\s+an\s+opponent\s+casts\s+a\s+creature\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "you", spellType: "instant-or-sorcery", pattern: /^whenever\s+you\s+cast\s+an?\s+instant\s+or\s+sorcery\s+spell,?\s*(.+)$/i },
   { event: "spell-cast", subject: "each-player", pattern: /^(?:when|whenever)\s+a\s+player\s+casts\s+a\s+spell,?\s*(.+)$/i },
@@ -2709,10 +2578,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "end-step", subject: "opponent", pattern: /^at\s+the\s+beginning\s+of\s+each\s+opponent[’']s\s+end\s+step,?\s*(.+)$/i },
 
   // The action of playing a land (CR 305.1), not that land's own ETB (City of Traitors).
-  { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i },
-  // Specifically a mana ability's activation (Forbidden Orchard), narrower than
-  // the general "becomes-tapped" — a non-mana tap effect must not trigger this.
-  { event: "taps-for-mana", subject: "self", pattern: /^whenever\s+you\s+tap\s+~\s+for\s+mana,?\s*(.+)$/i }
+  { event: "play-land", subject: "you", pattern: /^when\s+you\s+play\s+(?:a|another)\s+land,?\s*(.+)$/i }
 ];
 
 function matchTriggerLine(line: string): (Omit<TriggerTemplate, "pattern"> & { effectText: string }) | null {
@@ -2741,8 +2607,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const simple = simpleEffectIR(text);
   const simpleResult = simple ? simpleEffectFromIR(simple) : null;
   if (simpleResult) return simpleResult;
-  if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
-    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
+  const delayedReturn = /^Exile (?:another )?target (permanent|creature)\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.exec(text);
+  if (delayedReturn) {
+    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: delayedReturn[1]!.toLowerCase() === "creature" ? "creature" : "permanent" };
   }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
@@ -2776,11 +2643,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
           : null;
     if (pool) return { effect: { kind: "add-mana", pool }, target: "none" };
   }
-  // "Add one mana of any color" as a triggered/activated ability's own
-  // resolution (Lotus Cobra's Landfall), not a mana ability: the caster picks
-  // the color as part of resolving the effect, mirroring the existing
-  // choose-color infrastructure for spell effects.
-  if (/^Add one mana of any color$/i.test(text)) return { effect: { kind: "add-mana-any-color" }, target: "none" };
   const targetOpponentToken = /^Target opponent creates (.+)$/i.exec(text)
     ?? /^Create (.+) under target opponent'?s control$/i.exec(text);
   if (targetOpponentToken) {
@@ -2922,15 +2784,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "each-opponent-loses-life", amount }, target: "none" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "each-opponent-loses-life", amount: "X" }, target: "none" };
   }
-  // Zulaport Cutthroat template (CR 119.3): a drain that hits every opponent
-  // at once, unlike Blood Artist's single "target player" variant above.
-  if ((match = /^Each opponent loses (\w+) life and you gain \1 life$/i.exec(text))) {
-    const amount = toNumber(match[1]);
-    if (amount) return {
-      effect: { kind: "compound", effects: [{ kind: "each-opponent-loses-life", amount }, { kind: "gain-life", amount }] },
-      target: "none"
-    };
-  }
   // "that player" in these two refers back to the event's own player (e.g.
   // the opponent who drew the card that triggered this), not a chosen
   // target — CR 603.3d. Resolved from `object.trigger?.eventController`.
@@ -2985,11 +2838,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^~ deals damage equal to its power to target player or planeswalker$/i.test(text)) {
     return { effect: { kind: "damage-triggered-creature-power" }, target: "player-or-planeswalker" };
   }
-  if (/^put a \+1\/\+1 counter on (?:it|that creature)\.?$/i.test(text)) {
+  if (/^put a \+1\/\+1 counter on it\.?$/i.test(text)) {
     return { effect: { kind: "add-counter-triggered-creature", counter: "+1/+1", amount: 1 }, target: "none" };
   }
-  if (/^its controller gains (\w+) life\.?$/i.test(text)) {
-    const amount = toNumber(/^its controller gains (\w+) life\.?$/i.exec(text)![1]!);
+  const eventControllerLifeGain = /^(?:its controller|that player) gains (\w+) life\.?$/i.exec(text);
+  if (eventControllerLifeGain) {
+    const amount = toNumber(eventControllerLifeGain[1]!);
     if (amount !== null) return { effect: { kind: "gain-life-event-controller", amount }, target: "none" };
   }
   if ((match = /^(?:~|This spell) deals damage equal to the number of (creatures|artifacts|enchantments|lands) you control to any target$/i.exec(text))) {
@@ -3282,14 +3136,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Until end of turn, creatures you control gain trample and get \+X\/\+X, where X is the greatest power among creatures you control$/i.test(text)) {
     return { effect: { kind: "overwhelming-stampede" }, target: "none" };
   }
-  // Same effect, "until end of turn" trailing instead of leading (Pathbreaker Ibex's attack trigger).
-  if (/^creatures you control gain trample and get \+X\/\+X until end of turn, where X is the greatest power among creatures you control$/i.test(text)) {
-    return { effect: { kind: "overwhelming-stampede" }, target: "none" };
-  }
-  // Craterhoof Behemoth: same shape, X is the creature COUNT instead of the greatest power.
-  if (/^creatures you control gain trample and get \+X\/\+X until end of turn, where X is the number of creatures you control$/i.test(text)) {
-    return { effect: { kind: "creature-count-stampede" }, target: "none" };
-  }
   if ((match = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     // Firebreathing-style self pumps: the source is the only affected creature
     // and the modifier expires during cleanup (CR 613.4c, 514.2).
@@ -3347,6 +3193,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
+  if ((match = /^Target creature gets ([+-]\d+)\/([+-]\d+) and loses all creature types until end of turn$/i.exec(text))) {
+    return { effect: { kind: "modify-target-creature", power: Number(match[1]), toughness: Number(match[2]), losesAllCreatureTypes: true }, target: "creature" };
   }
   if (/^Target player sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-creature" }, target: "player" };
@@ -3446,11 +3295,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Proliferate\.?$/i.test(text)) return { effect: { kind: "proliferate" }, target: "none" };
 
-  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature$/i.exec(text))) {
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter(?:s)? on target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature" };
   }
-  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on target creature you control$/i.exec(text))) {
+  if ((match = /^Put (a|an|one|two|three|four|five|\d+) ([+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter(?:s)? on target creature you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-target-creature", counter: match[2]!, amount }, target: "creature-you-control" };
   }
@@ -3471,13 +3320,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each creature you control$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-creatures-you-control", counter: match[2]!, amount }, target: "none" };
-  }
-  if ((match = /^Put (a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counter(?:s)? on each creature you control and (?:a|an|one|two|three|four|five|\d+) loyalty counter on each other planeswalker you control$/i.exec(text))) {
-    const amount = toNumber(match[1]);
-    const loyaltyAmount = toNumber(text.match(/and (a|an|one|two|three|four|five|\d+) loyalty counter/i)?.[1] ?? "") ?? 1;
-    if (amount !== null) {
-      return { effect: { kind: "add-counter-creatures-and-other-planeswalkers", counter: match[2]!, amount, planeswalkerAmount: loyaltyAmount }, target: "none" };
-    }
   }
   if ((match = /^Put (X|a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counters? on each creature$/i.exec(text))) {
     const amount = /^X$/i.test(match[1]!) ? "X" as const : toNumber(match[1]);
@@ -3550,20 +3392,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-triggered-creature", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
   }
-  if ((match = /^That creature gets ([+-]\d+)\/([+-]\d+) and gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text))) {
-    return {
-      effect: { kind: "modify-event-creature-and-grant-keyword", power: Number(match[1]), toughness: Number(match[2]), keyword: match[3]!.toLowerCase() as EnforcedKeyword },
-      target: "none"
-    };
-  }
-  // "it gains KEYWORD until end of turn" (Atarka, World Render): the event
-  // object (the attacking creature), not the ability's own source.
-  if ((match = /^it gains (flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn$/i.exec(text))) {
-    return {
-      effect: { kind: "modify-event-creature-and-grant-keyword", power: 0, toughness: 0, keyword: match[1]!.toLowerCase() as EnforcedKeyword },
-      target: "none"
-    };
-  }
   if (/^~ gets \+X\/\+0 until end of turn, where X is the number of lands defending player controls$/i.test(text)) {
     return { effect: { kind: "modify-triggered-creature-by-defending-lands" }, target: "none" };
   }
@@ -3621,10 +3449,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       targetKinds: ["artifact", "enchantment"]
     };
   }
-  if (/^Destroy target land\.\s*Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle$/i.test(text)) {
-    return { effect: { kind: "destroy-target-land-search-basic" }, target: "land" };
-  }
   if (/^Destroy target land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "land" };
+  if (/^Destroy target land\.\s*Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle$/i.test(text)) {
+    return { effect: { kind: "destroy-target-permanent" }, target: "land" };
+  }
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
   if (/^Exile target creature or planeswalker$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-or-planeswalker" };
@@ -3657,7 +3485,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with reach$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-reach" };
   if (/^Destroy target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-least-5" };
   if (/^Exile target creature with power 5 or greater$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-power-at-least-5" };
+  if (/^Exile target creature with mana value less than or equal to the number of Plains you control\.?$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-mana-value-up-to-plains" };
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
+  if (/^Destroy target creature with total power and toughness 5 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-toughness-total-at-most-5" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };
   if (/^Destroy target creature with toughness 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-most-4" };
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
@@ -3765,18 +3595,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Untap target artifact$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "artifact" };
   if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };
   if (/^Untap target permanent you control$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent-you-control" };
-  if (/^Untap target land$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land" };
-  if ((match = /^Look at the top (\w+) cards? of your library, then put (?:it|them) back in any order$/i.exec(text))) {
-    const amount = toNumber(match[1]!);
-    if (amount !== null) return { effect: { kind: "look-top-reorder", amount }, target: "none" };
-  }
-  if (/^Draw a card, then put ~ on top of its owner'?s library$/i.test(text)) {
-    return { effect: { kind: "draw-then-source-to-library-top" }, target: "none" };
-  }
-  // Garruk Wildspeaker's "+1" (CR 601.2c: the same target can't be chosen
-  // twice for one instance of "target", enforced at resolution alongside the
-  // shared multi-slot targetKinds check).
-  if (/^Untap two target lands$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "land", targetKinds: ["land", "land"] };
   if (/^Tap target creature an opponent controls\. That creature doesn't untap during its controller's untap step for as long as you control ~$/i.test(text)) {
     return { effect: { kind: "tap-target-creature-and-lock" }, target: "creature-opponent" };
   }
@@ -3803,7 +3621,6 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^At the beginning of your next main phase, add an amount of \{([WUBRGC])\} equal to that spell's mana value$/i.exec(text))) {
     return { effect: { kind: "delayed-mana-equal-to-target-spell-mana-value", manaType: match[1]!.toUpperCase() as ManaType }, target: "spell" };
   }
-  if (/^Target spell can'?t be countered$/i.test(text)) return { effect: { kind: "make-target-spell-uncounterable" }, target: "spell" };
   const multiBasicSearch = parseMultiBasicSearch(text);
   if (multiBasicSearch) return { effect: multiBasicSearch, target: "none" };
   const token = parseManaSpentToken(text) ?? parseLandScaledToken(text) ?? parseCreatureScaledToken(text) ?? parseCreateToken(text);
@@ -3922,6 +3739,12 @@ function recognizeText(text: string): RecognizedText {
   if (/^Counter target spell\. If that spell is an artifact or creature spell, put it onto the battlefield under your control instead of into its owner's graveyard\.?$/i.test(joined)) {
     return {
       effects: [{ kind: "counter-target-spell-to-battlefield" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Counter target spell\. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "counter-target-spell-to-library" }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell", unimplementedText: [], covered: true
     };
   }
@@ -4045,19 +3868,6 @@ function recognizeText(text: string): RecognizedText {
       return {
         effects: [{ kind: "destroy-target-creature-then-controller-token", token: token.token }],
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature", unimplementedText: [], covered: true
-      };
-    }
-  }
-  // Beast Within / Generous Gift: the same shape, but any permanent (the
-  // engine's handler for the effect kind above is target-agnostic — it just
-  // destroys whatever was targeted and hands its controller the token).
-  const destroyPermanentThenToken = /^Destroy target permanent\.\s+Its controller creates (.+?)\.?$/i.exec(joined);
-  if (destroyPermanentThenToken) {
-    const token = parseCreateToken(`Create ${destroyPermanentThenToken[1]!}`);
-    if (token?.kind === "create-token") {
-      return {
-        effects: [{ kind: "destroy-target-creature-then-controller-token", token: token.token }],
-        triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "permanent", unimplementedText: [], covered: true
       };
     }
   }
@@ -4390,11 +4200,11 @@ function recognizeText(text: string): RecognizedText {
     // blocking and damage prevention, not stack resolution (CR 702.16).
     if (parseProtectionFromLine(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
-    if (parseManaAbilityGrant(line)) continue;
     if (parseKeywordDuringYourTurn(line).length) continue;
     if (parseTriggerDoubler(line)) continue;
     if (parseStaticPowerToughnessGrant(line)) continue;
     if (/^players can't gain life\.?$/i.test(line)) continue;
+    if (/^your opponents can't gain life\.?$/i.test(line)) continue;
     if (/^creature spells you control with power \d+ or greater can't be countered\.?$/i.test(line)) continue;
     if (/^you have no maximum hand size\.?$/i.test(line)) continue;
     if (/^players have no maximum hand size\.?$/i.test(line)) continue;
@@ -4405,21 +4215,15 @@ function recognizeText(text: string): RecognizedText {
     if (/^as an additional cost to cast ~, exile x cards from your graveyard\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a land\.?$/i.test(line)) continue;
     if (/^as an additional cost to cast ~, sacrifice a creature\.?$/i.test(line)) continue;
-    if (/^as an additional cost to cast ~, sacrifice an? (?:white|blue|black|red|green) creature\.?$/i.test(line)) continue;
     if (/^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line)) continue;
     if (/^if you control an? [A-Za-z][A-Za-z'’-]*, you may pay \d+ life rather than pay ~'s mana cost\.?$/i.test(line)) continue;
-    if (/^you may return an? [A-Za-z][A-Za-z'’-]* you control to its owner's hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
+    if (/^you may return (?:a|an|one|two|three|four|five|\d+) [A-Za-z][A-Za-z'’-]*s? you control to (?:its|their) owner'?s hand rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^you may pay (?:\{[^}]+\})+ rather than pay ~'s mana cost\.?$/i.test(line)) continue;
     if (/^gift a card\.?$/i.test(line)) continue;
     if (/^creatures can'?t attack you unless their controller pays \{(\d+)\} for each creature they control that'?s attacking you\.?$/i.test(line)) continue;
     if (/^double all damage equipped creature would deal\.?$/i.test(line)) continue;
     if (/^~ enters prepared\.?$/i.test(line)) continue;
     if (/^you\s+may\s+play\s+(?:a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns\.?$/i.test(line)) continue;
-    // Oracle of Mul Daya (CR 305.1): consumed into CardProfile.playLandsFromTopOfLibrary.
-    if (/^you\s+may\s+play\s+lands\s+from\s+the\s+top\s+of\s+your\s+library\.?$/i.test(line)) continue;
-    // Consumed into CardProfile.revealsTopOfLibrary; the engine exposes the top
-    // card as public information in the projection rather than a one-shot effect.
-    if (/^play\s+with\s+the\s+top\s+card\s+of\s+your\s+library\s+revealed\.?$/i.test(line)) continue;
     if (/^if an opponent would draw a card except the first one they draw in each of their draw steps, instead that player skips that draw and you draw a card\.?$/i.test(line)) continue;
     if (/^you can't win the game and your opponents can't lose the game\.?$/i.test(line)) continue;
     if (/^all creatures attack each combat if able\.?$/i.test(line)) continue;
@@ -4428,9 +4232,6 @@ function recognizeText(text: string): RecognizedText {
     if (/^rebound$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
-    // Undying / Persist (CR 702.93/702.92) are synthesised from the keyword below.
-    if (/^undying\.?$/i.test(line)) continue;
-    if (/^persist\.?$/i.test(line)) continue;
     // Changeling is represented by `profile.changeling` and enforced by
     // `hasSubtype` in every zone (CR 702.73a); consume the keyword line only
     // after that semantic representation has been built.
@@ -4457,6 +4258,8 @@ function recognizeText(text: string): RecognizedText {
     // Static land mana bonus is consumed by cardProfile / manaSources.
     if (/^(?:Plains|Islands|Swamps|Mountains|Forests) you control produce an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever you tap a (?:Plains|Island|Swamp|Mountain|Forest) for mana, add an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
+    if (/^Whenever enchanted land is tapped for mana, its controller adds an additional \{[WUBRGC]\}\.?$/i.test(line)) continue;
+    if (/^Enchanted creature gets \+\d+\/\+\d+ for each other enchantment on the battlefield\.?$/i.test(line)) continue;
     if (/^~ doesn[’']t untap during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
@@ -4471,12 +4274,13 @@ function recognizeText(text: string): RecognizedText {
         && /remove\s+X\s+storage\s+counters\s+from\s+(?:~|this\s+(?:land|permanent))/i.test(manaLine[1]!);
       // Board-dependent color (Fellwar Stone, Harvester Druid): resolved at
       // activation time by `manaOptionsFor`, not by `parseAddClause`.
-      const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+(?:color|type)\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
+      const anyColorFromLandsLine = /^add\s+one\s+mana\s+of\s+any\s+color\s+that\s+a\s+land\s+(?:an\s+opponent\s+controls|you\s+control)\s+could\s+produce\.?$/i.test(manaLine[2]!.trim());
       const variableSacrificeMana = /(?:\{T\},\s*)?sacrifice\s+X\s+[A-Za-z][A-Za-z'’-]*s?\s*$/i.test(manaLine[1]!.trim())
         && /^add\s+X\s+mana\s+of\s+any\s+(?:one\s+)?color\.?\s*You gain X life\.?$/i.test(manaLine[2]!.trim());
       const restrictedManaLine = /spend\s+this\s+mana\s+only\s+to\s+cast\s+a\s+legendary\s+spell/i.test(manaLine[2]!)
         && Boolean(parseAddClause(manaLine[2]!.split(/[.!?]/, 1)[0] ?? ""));
-      if (!parseManaInstruction(manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
+      const sourceCounterRider = parseManaSourceCounterRider(manaLine[2]!);
+      if (!parseManaInstruction(sourceCounterRider?.production ?? manaLine[2]!) && !variableStorageMana && !anyColorFromLandsLine && !variableSacrificeMana && !restrictedManaLine) unimplementedText.push(line);
       continue;
     }
 
@@ -4492,8 +4296,8 @@ function recognizeText(text: string): RecognizedText {
     // it goes on the stack (CR 603.3d), so it never leaks into the card-level
     // `targetKind` a spell uses when it is cast.
     // "When ~ enters or is put into a graveyard from the battlefield, X" is two
-    // triggers on one line (Ichor Wellspring). "leaves the battlefield" is
-    // approximated as the dies event.
+    // triggers on one line (Ichor Wellspring). "leaves the battlefield" is a
+    // distinct zone-change event (CR 603.6c-d), not the dies event (CR 700.4).
     const entersOrDies = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i.exec(line);
     if (entersOrDies) {
       const rec = recognizeSentence(entersOrDies[1]!.replace(/^you\s+may\s+/i, "").replace(/^it\s+(deals|gets|gains)/i, "~ $1"));
@@ -4647,21 +4451,6 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
-    // "Whenever a <Subtype> you control attacks, X" (Atarka, World Render): a
-    // tribal filter on the attacking creature itself, distinct from a
-    // board-count condition.
-    const subtypeAttacks = /^whenever\s+an?\s+([A-Za-z][A-Za-z'’-]*)\s+you\s+control\s+attacks,?\s*(.+)$/i.exec(line);
-    if (subtypeAttacks && !/^(?:creature|permanent|player)$/i.test(subtypeAttacks[1]!)) {
-      const rec = recognizeSentence(subtypeAttacks[2]!);
-      if (rec) {
-        triggers.push({
-          event: "attacks", subject: "creature-you-control", effect: rec.effect,
-          optional: false, targetKind: rec.target, sourceText: line,
-          requireSubtype: subtypeAttacks[1]!
-        });
-        continue;
-      }
-    }
     // "When ~ enters, it deals N damage to up to one target creature" (Mjölnir,
     // CR 603.2, 601.2c): the target is optional, so `minimumTargets: 0` lets
     // the existing multi-target choice machinery offer "finish with none".
@@ -4721,8 +4510,6 @@ function recognizeText(text: string): RecognizedText {
       });
       continue;
     }
-    const linkedLeavesReturn = /~\s+leaves\s+the\s+battlefield,?\s+return\s+the\s+exiled\s+card\s+to\s+the\s+battlefield\s+under\s+its\s+owner[\x27\u2019]?s\s+control/i.test(line);
-    const leavesLine = linkedLeavesReturn ? line : line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
     // Modern Oracle splits Bane of Progress's dependent instruction into a
     // second sentence. Keep it attached to the ETB trigger so the existing
     // counted sweep primitive remains reusable across printings (CR 603.2,
@@ -4751,12 +4538,14 @@ function recognizeText(text: string): RecognizedText {
     // Ability words are presentation labels, not part of the trigger grammar.
     // Normalize both current and legacy-import separators here as a second
     // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
-    const triggerLine = (leavesLine !== line ? leavesLine : line)
+    const triggerLine = line
       .replace(/^(?:landfall|morbid)\s+[—–-\uFFFD]\s*/i, "");
     const triggered = matchTriggerLine(triggerLine);
     if (triggered) {
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggered.effectText);
-      const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
+      // Oracle uses both "if" and "while" for this intervening condition;
+      // the reusable condition is the same (CR 603.4).
+      const powerCondition = /^(?:if|while)\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggered.effectText);
       const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggered.effectText);
       const countConditionAmount = countCondition ? toNumber(countCondition[1]!) : null;
       const diedCondition = /^if\s+a\s+creature\s+died\s+this\s+turn,\s*(.+)$/i.exec(triggered.effectText);
@@ -5060,18 +4849,20 @@ export function cardProfile(card: CardData): CardProfile {
     ? parseEquipmentModification(text) : null;
   const auraModification = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraModification(text) : null;
+  const auraLandManaBonus = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
+    ? parseAuraLandManaBonus(text) : null;
   const auraControlTarget = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraControlTarget(text) : null;
   const auraActivatedAbility = subtypes.some((subtype) => subtype.toLowerCase() === "aura")
     ? parseAuraGrantedActivatedAbility(text) : null;
   const staticKeywordGrants = parseStaticKeywordGrants(text);
-  const staticManaAbilityGrants = parseManaAbilityGrants(text);
   const keywordsDuringYourTurn = parseKeywordsDuringYourTurn(text);
   const grantsCreatureActivationHaste = text.split("\n").some((line) =>
     /^you may activate abilities of creatures you control as though those creatures had haste\.?$/i.test(line.trim()));
   const untapColorsDuringOtherPlayersUntap = parseUntapColorsDuringOtherPlayersUntap(text);
   const triggerDoublers = parseTriggerDoublers(text);
   const preventsLifeGain = text.split("\n").some((line) => /^players can't gain life\.?$/i.test(line.trim()));
+  const preventsOpponentLifeGain = text.split("\n").some((line) => /^your opponents can't gain life\.?$/i.test(line.trim()));
   const noMaximumHandSize = text.split("\n").some((line) => /^you have no maximum hand size\.?$/i.test(line.trim()));
   const noMaximumHandSizeForAllPlayers = text.split("\n").some((line) => /^players have no maximum hand size\.?$/i.test(line.trim()));
   const locksOpponentsOnYourTurn = /during your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments\.?/i.test(text);
@@ -5084,13 +4875,13 @@ export function cardProfile(card: CardData): CardProfile {
   const hasRebound = /(?:^|\n)rebound\.?(?:$|\n)/i.test(text);
   const additionalCostSacrificeLand = /as an additional cost to cast ~, sacrifice a land\.?/i.test(text);
   const additionalCostSacrificeCreature = /as an additional cost to cast ~, sacrifice a creature\.?/i.test(text);
-  const additionalCostSacrificeCreatureColorMatch = /as an additional cost to cast ~, sacrifice an? (white|blue|black|red|green) creature\.?/i.exec(text);
-  const additionalCostSacrificeCreatureColor = additionalCostSacrificeCreatureColorMatch ? DAMAGE_AMPLIFY_COLOR_LETTER[additionalCostSacrificeCreatureColorMatch[1]!.toLowerCase()]! : null;
   const freeCastIfCommander = text.split("\n").some((line) => /^if you control a commander, you may cast ~ without paying its mana cost\.?$/i.test(line.trim()));
   const payLifeInsteadMatch = text.split("\n").map((line) => /^if you control an? ([A-Za-z][A-Za-z'’-]*), you may pay (\d+) life rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payLifeInsteadOfManaCost = payLifeInsteadMatch ? { life: Number(payLifeInsteadMatch[2]), controlLandType: payLifeInsteadMatch[1]! } : null;
-  const returnLandInsteadMatch = text.split("\n").map((line) => /^you may return an? ([A-Za-z][A-Za-z'’-]*) you control to its owner's hand rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
-  const returnLandInsteadOfManaCost = returnLandInsteadMatch ? { subtype: returnLandInsteadMatch[1]! } : null;
+  const returnLandInsteadMatch = text.split("\n").map((line) => /^you may return (a|an|one|two|three|four|five|\d+) ([A-Za-z][A-Za-z'’-]*?)(?:s)? you control to (?:its|their) owner'?s hand rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
+  const returnLandInsteadOfManaCost = returnLandInsteadMatch
+    ? { amount: toNumber(returnLandInsteadMatch[1]!)!, subtype: singularSubtype(returnLandInsteadMatch[2]!) }
+    : null;
   const payReducedCostMatch = text.split("\n").map((line) => /^you may pay ((?:\{[^}]+\})+) rather than pay ~'s mana cost\.?$/i.exec(line.trim())).find((match): match is RegExpExecArray => match !== null);
   const payReducedCostInstead = payReducedCostMatch ? parseManaCost(payReducedCostMatch[1]!) : null;
   const giftDrawsCard = text.split("\n").some((line) => /^gift a card$/i.test(line.trim().replace(/\.$/, "")));
@@ -5104,8 +4895,6 @@ export function cardProfile(card: CardData): CardProfile {
     .map((line) => /^you\s+may\s+play\s+(a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns$/i.exec(line.trim().replace(/\.$/, "")))
     .find((match): match is RegExpExecArray => match !== null);
   const extraLandDropsPerTurn = extraLandDropsMatch ? toNumber(extraLandDropsMatch[1]) ?? 1 : 0;
-  const playLandsFromTopOfLibrary = text.split("\n").some((line) => /^you may play lands from the top of your library$/i.test(line.trim().replace(/\.$/, "")));
-  const revealsTopOfLibrary = text.split("\n").some((line) => /^play with the top card of your library revealed$/i.test(line.trim().replace(/\.$/, "")));
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
@@ -5176,14 +4965,15 @@ export function cardProfile(card: CardData): CardProfile {
     equipWorthyCost,
     equipmentModification,
     auraModification,
+    auraLandManaBonus,
     auraControlTarget,
     auraActivatedAbility,
     staticKeywordGrants,
-    staticManaAbilityGrants,
     keywordsDuringYourTurn,
     untapColorsDuringOtherPlayersUntap,
     triggerDoublers,
     preventsLifeGain,
+    preventsOpponentLifeGain,
     noMaximumHandSize,
     noMaximumHandSizeForAllPlayers,
     locksOpponentsOnYourTurn,
@@ -5240,8 +5030,6 @@ export function cardProfile(card: CardData): CardProfile {
     preparedCast,
     entersPrepared,
     extraLandDropsPerTurn,
-    playLandsFromTopOfLibrary,
-    revealsTopOfLibrary,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],
     kickedKeywords: recognized.kickedKeywords ?? [],
@@ -5249,7 +5037,6 @@ export function cardProfile(card: CardData): CardProfile {
     hasRebound,
     additionalCostSacrificeLand,
     additionalCostSacrificeCreature,
-    additionalCostSacrificeCreatureColor,
     freeCastIfCommander,
     payLifeInsteadOfManaCost,
     returnLandInsteadOfManaCost,
