@@ -2211,7 +2211,6 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
   const fight = /^Target Beast creature you control fights target creature an opponent controls\.?$/i.test(parsedEffectText);
-  const fightOfChoice = /^Target creature you control fights another target creature of your choice\.?$/i.test(parsedEffectText);
   const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
@@ -2228,8 +2227,6 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopConditional, target: "none" as TargetKind }
     : revealTopToHand
     ? { effect: revealTopToHand, target: "none" as TargetKind }
-    : fightOfChoice
-    ? { effect: { kind: "fight" } as SpellEffect, target: "creature-you-control" as TargetKind, targetKinds: ["creature-you-control", "creature"] as const }
     : fight
     ? { effect: { kind: "fight" } as SpellEffect, target: "creature-you-control" as TargetKind, targetKinds: ["creature-you-control", "creature-opponent"] as const }
     : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
@@ -3989,6 +3986,21 @@ function recognizeText(text: string): RecognizedText {
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
   const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  const magusOfArena = /^\{3\},\s*\{T\}:\s*Tap target creature you control and target creature of an opponent['’]s choice they control\.\s*Those creatures fight each other\.?$/i.test(joined);
+  if (magusOfArena) {
+    return {
+      effects: [], triggers: [], modalChoices: [], targetKind: "creature-you-control", unimplementedText: [], covered: true,
+      activatedAbilities: [{
+        index: 0, requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: parseManaCost("{3}"),
+        effect: {
+          kind: "compound",
+          effects: [{ kind: "tap-target-permanent" }, { kind: "tap-target-permanent" }, { kind: "fight" }],
+          targetOffsets: [0, 1, 0]
+        },
+        targetKind: "creature-you-control", targetKinds: ["creature-you-control", "creature-opponent"], text: joined
+      }]
+    };
+  }
   if (/^(?:Marath|~) enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/i.test(body[0]!.text)
     && body.some((entry) => /\{X\},\s*Remove X \+1\/\+1 counters from (?:Marath|~): Choose one/i.test(entry.text))) {
     const manaCost = parseManaCost("{X}")!;
