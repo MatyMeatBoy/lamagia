@@ -1555,6 +1555,13 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
+    // "{T}, Sacrifice this artifact: Add one mana of any color." (Treasure,
+    // CR 111.10): the only common mana ability whose cost includes
+    // sacrificing its own source. `normalizedOracle` already folds "this
+    // artifact"/"this permanent" (and the other self-nouns matched here) into
+    // `~` before this text is ever seen, so `~` alone would cover Treasure,
+    // but the fuller alternation stays as defense in depth.
+    const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText);
     // Modern Oracle uses either the printed name, `~`, or `this card` here.
     // All three mean the same hand-based mana ability (CR 605.1a); do not let
     // a wording variant make a fast-mana card look like a normal cast only.
@@ -1614,15 +1621,10 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const manaSymbols = (costText.match(/\{[^}]+\}/g) ?? []).filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
     const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
     if (manaSymbols.length && !manaCost) continue;
-    // "{T}, Sacrifice this artifact: Add one mana of any color." (Treasure,
-    // CR 111.10): the only common mana ability whose cost includes
-    // sacrificing its own source. `normalizedOracle` already folds "this
-    // artifact"/"this permanent" into `~` before this text is ever seen here.
-    const sacrificesSelf = /sacrifice\s+~/i.test(costText);
     const leftovers = costText
       .replace(/exile\s+(?:~|this\s+card)\s+from\s+your\s+hand/gi, "")
       .replace(new RegExp(`exile\\s+(?:${escapedSelfNames.join("|")})\\s+from\\s+your\\s+hand`, "gi"), "")
-      .replace(/sacrifice\s+~/gi, "")
+      .replace(/sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
       .replace(/\{T\}/g, "")
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")

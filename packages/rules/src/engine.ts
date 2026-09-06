@@ -8472,10 +8472,10 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     ...current,
     life: current.life - ability.lifeCost + lifeGain,
     commanderMana: current.commanderMana + (ability.commanderEntryCounters ? ability.amount : 0),
-    manaPool: restrictedOutput.length
+    manaPool: restrictedOutput.length || ability.sacrificesSelf
       ? current.manaPool
       : outputTypes.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool),
-    ...(restrictedOutput.length ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {}),
+    ...(restrictedOutput.length && !ability.sacrificesSelf ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {}),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
       const counters = { ...permanent.counters };
@@ -8488,14 +8488,28 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const withManaTapEvent = ability.requiresTap
     ? raiseEvent(tapped, { kind: "taps-for-mana", permanentId: source.instance_id, controller: seat, card: source.card })
     : tapped;
-  const withSacrifice = ability.sacrificesSelf
-    ? (() => {
-        const toSacrifice = playerAt(withManaTapEvent, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
-        return toSacrifice ? movePermanentToZone(withManaTapEvent, toSacrifice, "graveyard") : withManaTapEvent;
-      })()
-    : withManaTapEvent;
+  if (ability.sacrificesSelf) {
+    const paid = playerAt(withManaTapEvent, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
+    if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
+    const sacrificed = movePermanentToZone(withManaTapEvent, paid, "graveyard");
+    // Token sacrifice is a mana ability's cost.  `movePermanentToZone` emits
+    // triggers and may rebuild the controller state, so apply the mana after
+    // the zone change (CR 605.3b), preserving both the cost and the result.
+    const funded = withPlayer(sacrificed, seat, (current) => ({
+      ...current,
+      manaPool: restrictedOutput.length
+        ? current.manaPool
+        : outputTypes.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool),
+      ...(restrictedOutput.length ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {})
+    }));
+    // Keep this explicit rather than relying on the generic mana branch: token
+    // cards cease to exist on zone change, while the mana ability still must
+    // resolve in full.
+    if (!outputTypes.length && !restrictedOutput.length) throw new Error("La habilidad de maná no produce maná.");
+    return logged(funded, seat, `${player.name} sacrifica ${source.card.name} y agrega ${outputTypes.map((mana) => `{${mana}}`).join("")}.`);
+  }
   const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
-  return logged(withSacrifice, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
+  return logged(withManaTapEvent, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
 
 function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {

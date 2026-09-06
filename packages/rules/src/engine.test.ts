@@ -162,7 +162,7 @@ describe("smart counter response and safe mana undo", () => {
   });
   it("executes a Treasure token's sacrifice-for-mana ability", () => {
     let game = twoSeatGame([], []);
-    game = putOnBattlefield(game, 0, [make({ name: "Treasure", type_line: "Artifact — Treasure", oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color." })]);
+    game = putOnBattlefield(game, 0, [make({ name: "Treasure", type_line: "Artifact — Treasure", oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color.", scryfall_id: "fixture-treasure-mana" })]);
     const treasure = game.players[0]!.battlefield[0]!;
     const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
       && entry.cardId === treasure.instance_id && entry.action.mana === "G");
