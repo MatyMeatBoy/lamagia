@@ -7255,6 +7255,33 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.life).toBe(32);
   });
 
+  it("doubles +1/+1 counters on every creature you control when Kalonian Hydra attacks", () => {
+    const hydra = make({ name: "Kalonian Hydra", type_line: "Creature — Hydra", mana_cost: "{2}{G}{G}", cmc: 4, power: "0", toughness: "0", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with four +1/+1 counters on it.\nWhenever this creature attacks, double the number of +1/+1 counters on each creature you control." });
+    const profile = profileOf(hydra);
+    expect(profile.entersWithCounters).toEqual([{ kind: "+1/+1", amount: 4 }]);
+    expect(profile.triggers[0]).toMatchObject({
+      event: "attacks", subject: "self",
+      effect: { kind: "double-counter-creatures-you-control", counter: "+1/+1" }
+    });
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [hydra, BEAR()]);
+    const hydraInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Kalonian Hydra")!;
+    const bearInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    // Give the Bear an unrelated existing +1/+1 counter to confirm doubling
+    // applies across every creature you control, not just the source.
+    game = { ...game, players: game.players.map((player) => player.seat === 0
+      ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.instance_id === bearInPlay.instance_id
+        ? { ...permanent, counters: { "+1/+1": 2 } }
+        : permanent) }
+      : player) };
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: hydraInPlay.instance_id, defender: 1 }] });
+    const hydraAfter = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === hydraInPlay.instance_id)!;
+    const bearAfter = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bearInPlay.instance_id)!;
+    expect(hydraAfter.counters["+1/+1"]).toBe(8);
+    expect(bearAfter.counters["+1/+1"]).toBe(4);
+  });
+
   it("puts a counter on a deathtouch creature after it damages an opponent", () => {
     const profile = profileOf(VRASKA_SWARMS_EMINENCE());
     expect(profile.triggers[0]).toMatchObject({

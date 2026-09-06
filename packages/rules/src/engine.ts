@@ -5396,6 +5396,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return logged(next, controller, `${sourceName} pone ${amount} contador(es) ${effect.counter} en cada criatura.`);
     }
+    case "double-counter-creatures-you-control": {
+      return withPlayer(state, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) * 2 } }
+          : permanent)
+      }));
+    }
     case "remove-all-counters-target": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

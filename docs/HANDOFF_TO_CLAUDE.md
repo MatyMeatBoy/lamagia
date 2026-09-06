@@ -5978,3 +5978,37 @@ Dragon's 5), proving the entering creature genuinely attacks rather
 than just entering the battlefield inertly. Validation: full **899**
 rules tests green (1 new), `npm run check` across all four workspaces,
 200/200 simulated games.
+
+## Kalonian Hydra: doubling +1/+1 counters across your board (2026-09-06)
+
+"Whenever ~ attacks, double the number of +1/+1 counters on each
+creature you control" needed a genuinely new effect: every existing
+`add-counter-*` kind adds a FIXED (or `X`-variable-from-elsewhere)
+amount, but here the amount added is dynamic PER CREATURE, equal to
+whatever that creature already has. Added `SpellEffect` kind
+`double-counter-creatures-you-control` (`{ counter: string }`, no
+target — modeled directly on `add-counter-creatures-you-control`'s
+existing iterate-your-battlefield-and-mutate-counters shape) and an
+`applyEffect` case that multiplies each creature's existing count of
+that counter kind by 2 (`(permanent.counters[effect.counter] ?? 0) *
+2`), applied uniformly whether the creature has 0, 2, or 4 already.
+The ETB half of the card ("This creature enters with four +1/+1
+counters on it") and the "Whenever ~ attacks" trigger shape were both
+already fully working before this change (only the doubling line was
+unrecognized), confirming this really was the last missing line for
+this and similarly-templated cards (any "double the number of [X]
+counters on each creature you control" effect, not just +1/+1,
+reuses this same primitive by construction — the counter kind is a
+free parameter, not hardcoded). Verified **+2** in the export count
+(10,917 → 10,919; the 10,917 baseline itself reflects a −2 net
+correction on the shared branch merged in just before this card,
+confirmed via an isolated detached worktree at the shared branch's
+tip exporting to 10,916 in isolation — not a regression from
+combining changes). Set coverage holds at 33.1%. Scenario-tested: a
+fixture Hydra enters with 4 counters (from the pre-existing ETB
+primitive), a second creature is given 2 counters directly, and
+attacking with the Hydra doubles both independently (4→8, 2→4) in the
+same resolution — proving the effect iterates every creature you
+control rather than only the trigger's source. Validation: full
+**900** rules tests green (1 new), `npm run check` across all four
+workspaces, 200/200 simulated games.

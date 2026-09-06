@@ -683,6 +683,8 @@ export type SpellEffect =
   /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
   | { readonly kind: "add-counter-creatures-and-other-planeswalkers"; readonly counter: string; readonly amount: number; readonly planeswalkerAmount: number }
   | { readonly kind: "add-counter-all-creatures"; readonly counter: string; readonly amount: number | "X" }
+  /** Kalonian Hydra: doubles whatever count of a counter kind is already present, per creature you control. */
+  | { readonly kind: "double-counter-creatures-you-control"; readonly counter: string }
   | { readonly kind: "remove-all-counters-target" }
   | { readonly kind: "remove-all-counters-all-and-exile-tokens" }
   | { readonly kind: "destroy-target-creature" }
@@ -4001,6 +4003,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Put (X|a|an|one|two|three|four|five|\d+) (\+1\/\+1|-1\/-1) counters? on each creature$/i.exec(text))) {
     const amount = /^X$/i.test(match[1]!) ? "X" as const : toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "add-counter-all-creatures", counter: match[2]!, amount }, target: "none" };
+  }
+  if ((match = /^Double the number of (\+1\/\+1|-1\/-1) counters on each creature you control$/i.exec(text))) {
+    return { effect: { kind: "double-counter-creatures-you-control", counter: match[1]! }, target: "none" };
   }
   if (/^Remove all counters from target permanent$/i.test(text)) return { effect: { kind: "remove-all-counters-target" }, target: "permanent" };
   if (/^Remove all counters from all permanents and exile all tokens$/i.test(text)) return { effect: { kind: "remove-all-counters-all-and-exile-tokens" }, target: "none" };
