@@ -125,7 +125,7 @@ function phaseRailHtml(): string {
     <span class="phase-turn">Turno ${view!.turn}</span>
     ${STEP_ORDER.map((step, index) => `<button class="phase-step${step === view!.step ? " current" : index < currentIndex ? " done" : ""}${ui.stops.has(step) ? " stopped" : ""}" type="button" data-phase-stop="${step}" title="${ui.stops.has(step) ? "Quitar stopper" : "Añadir stopper"}: ${STEP_LABELS[step]}"${view!.finished ? " disabled" : ""}><i aria-hidden="true"></i>${escapeHtml(STEP_LABELS[step])}</button>`).join("")}
     <span class="spacer"></span>
-    <span class="priority-readout"><span class="pulse${view!.waitingOn === view!.viewerSeat ? "" : " muted"}"></span>Decide: <b style="color: var(--seat-${view!.waitingOn ?? 0})">${escapeHtml(seatOf(view!.waitingOn ?? -1)?.name ?? "nadie")}</b></span>
+    <span class="priority-readout"><span class="pulse${view!.waitingOn === view!.viewerSeat ? "" : " muted"}"></span>${view!.waitingOn === view!.viewerSeat ? "Decide tú" : "Decide"}: <b style="color: var(--seat-${view!.waitingOn ?? 0})">${escapeHtml(seatOf(view!.waitingOn ?? -1)?.name ?? "nadie")}</b></span>
   </nav>`;
 }
 
