@@ -9029,7 +9029,11 @@ function targetLabel(state: GameState, target: Target): string {
   if (target.kind === "player") return playerAt(state, target.seat).name;
   if (target.kind === "permanent") return findPermanent(state, target.instanceId)?.card.name ?? "permanente";
   if (target.kind === "graveyard-card") return playerAt(state, target.seat).graveyard.find((card) => card.instance_id === target.instanceId)?.name ?? "carta del cementerio";
-  return state.stack.find((entry) => entry.id === target.stackId)?.card.name ?? "hechizo";
+  const stackObject = state.stack.find((entry) => entry.id === target.stackId);
+  if (!stackObject) return "objeto de la pila";
+  return stackObject.trigger ? `${stackObject.card.name} (habilidad disparada)`
+    : stackObject.activated ? `${stackObject.card.name} (habilidad activada)`
+    : `${stackObject.card.name} (hechizo)`;
 }
 
 function triggerStackObject(trigger: TriggerInstance, targets: readonly Target[]): StackObject {
