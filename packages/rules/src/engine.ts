@@ -702,7 +702,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string; readonly discardCardId?: string }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -6712,6 +6712,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (player.cantCastSpellsUntilEndOfTurn) return { legal: false };
   // Diabolic Intent (CR 601.2b): the additional cost must be payable to cast at all.
   if (profile.additionalCostSacrificeCreature && !player.battlefield.some((permanent) => isCreature(cardProfile(permanent.card)))) return { legal: false };
+  if (profile.additionalCostSacrificeArtifact && !player.battlefield.some((permanent) => cardProfile(permanent.card).types.includes("Artifact"))) return { legal: false };
+  if (profile.additionalCostDiscardCard && player.hand.filter((candidate) => candidate.instance_id !== card.instance_id).length === 0) return { legal: false };
   // Natural Order (CR 601.2b): same idea, restricted to a specific color.
   if (profile.additionalCostSacrificeCreatureColor && !player.battlefield.some((permanent) =>
     isCreature(cardProfile(permanent.card)) && cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === profile.additionalCostSacrificeCreatureColor))) return { legal: false };
@@ -8550,6 +8552,20 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     if (!lands.length) throw new Error(`No tienes una tierra para sacrificar por ${card.name}.`);
     next = movePermanentToZone(next, lands[0]!, "graveyard");
     next = logged(next, seat, `${player.name} sacrifica ${lands[0]!.card.name} por ${card.name}.`);
+  }
+  if (profile.additionalCostSacrificeArtifact) {
+    const artifacts = playerAt(next, seat).battlefield.filter((p) => cardProfile(p.card).types.includes("Artifact"));
+    const chosen = action.sacrificeId ? artifacts.find((p) => p.instance_id === action.sacrificeId) : artifacts[0];
+    if (!chosen) throw new Error(`No tienes un artefacto para sacrificar por ${card.name}.`);
+    next = movePermanentToZone(next, chosen, "graveyard");
+    next = logged(next, seat, `${player.name} sacrifica ${chosen.card.name} por ${card.name}.`);
+  }
+  if (profile.additionalCostDiscardCard) {
+    const discardable = playerAt(next, seat).hand.filter((candidate) => candidate.instance_id !== card.instance_id);
+    const chosen = action.discardCardId ? discardable.find((candidate) => candidate.instance_id === action.discardCardId) : discardable[0];
+    if (!chosen) throw new Error(`No tienes una carta para descartar por ${card.name}.`);
+    next = discardCard(next, seat, chosen);
+    next = logged(next, seat, `${player.name} descarta ${chosen.name} por ${card.name}.`);
   }
   let sacrificedPower: number | undefined;
   if (profile.additionalCostSacrificeCreature) {

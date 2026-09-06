@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,019**
-- Cards with a reusable existing primitive hint: **11,264**
-- Cards needing new primitive review: **3,755**
-- Templates: **12,031**
+- One-line cards: **15,013**
+- Cards with a reusable existing primitive hint: **11,257**
+- Cards needing new primitive review: **3,756**
+- Templates: **12,035**
 
 ## Worker rule
 
@@ -386,7 +386,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Glacial Ray | `e65a8ab8-84a7-4fe2-b009-ceb87bec6b4e` | activated | new primitive review | Splice onto Arcane {1}{R} |
 | reuse-existing | Armadillo Cloak | `15397a59-70a8-441f-abf7-230405a1602b` | damage | damage / life | Whenever enchanted creature deals damage, you gain that much life. |
 | reuse-existing | Wall of Roots | `3a21a6ae-b2f2-4f0c-acfd-5f3e8d63fd2f` | counters | activated ability / mana | Put a -0/-1 counter on ~: Add {G}. Activate only once each turn. |
-| reuse-existing | Shrapnel Blast | `d3c623f3-c7c9-47c0-8096-6dee3267baff` | sacrifice | sacrifice | As an additional cost to cast ~, sacrifice an artifact. |
 | reuse-existing | Circle of Flame | `c31801e6-2444-4158-8e19-2afe751d7cff` | damage | damage / life | Whenever a creature without flying attacks you or a planeswalker you control, ~ deals 1 damage to that creature. |
 | reuse-existing | Squadron Hawk | `00ab9841-934f-4a66-a98d-68d01661b1c9` | library-look | trigger / ETB | When ~ enters, you may search your library for up to three cards named ~, reveal them, put them into your hand, then shuffle. |
 | needs-new-primitive | Boggart Ram-Gang | `30d2437a-87c9-4f88-8fb8-b686d6522677` | activated | new primitive review | Wither |
@@ -518,5 +517,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Wedding Announcement // Wedding Festivity | `259ac30c-cc05-4c04-9b23-71283f84b808` | token | trigger / ETB | At the beginning of your end step, put an invitation counter on ~. If you attacked with two or more creatures this turn, draw a card. Otherwise, create a 1/1 white Human creature token. Then if ~ has three or more invitation counters on it, transform it. |
 | reuse-existing | Necroduality | `d36acdfe-2b1b-4c19-8b81-0b3127e480fe` | token | trigger / ETB | Whenever a nontoken Zombie you control enters, create a token that's a copy of that creature. |
 | reuse-existing | Sanctum Weaver | `acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47` | activated | activated ability / mana | {T}: Add X mana of any one color, where X is the number of enchantments you control. |
+| reuse-existing | Briarbridge Tracker | `8fe6e954-f19b-4d11-83d3-74c634d51bad` | pump | create / token | As long as you control a token, ~ gets +2/+0. |
 
-The JSON contains the remaining 14,519 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,513 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

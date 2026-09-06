@@ -7240,6 +7240,32 @@ describe("triggered abilities", () => {
     expect(game.players[0]!.yieldedTriggerSources![0]).toMatch(new RegExp(`^${source.instance_id}:[01]$`));
   });
 
+  it("pays 'discard a card' / 'sacrifice an artifact' additional cast costs", () => {
+    const looter = make({
+      name: "Test Loot Spell", type_line: "Sorcery", mana_cost: "{1}{U}", cmc: 2,
+      oracle_text: "As an additional cost to cast this spell, discard a card.\nDraw two cards."
+    });
+    expect(profileOf(looter)).toMatchObject({ fullyImplemented: true, additionalCostDiscardCard: true });
+    let game = readyToCast([looter, BEAR(), BOLT()], [ISLAND(), ISLAND()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, library: toHand(0, [FLIER(), FOREST(), SOL_RING()], "lib") }));
+    const bear = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand.find((card) => card.name === "Test Loot Spell")!.instance_id, discardCardId: bear.instance_id });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    // Discarded one, drew two → net +1 from a two-card hand minus the spell.
+    expect(game.players[0]!.hand.filter((card) => ["Storm Crow", "Forest"].includes(card.name)).length).toBe(2);
+
+    const shatter = make({
+      name: "Test Shatter Spree", type_line: "Instant", mana_cost: "{R}", cmc: 1,
+      oracle_text: "As an additional cost to cast this spell, sacrifice an artifact.\nDestroy target artifact."
+    });
+    let g2 = readyToCast([shatter], [MOUNTAIN()]);
+    // No artifact to sacrifice → illegal.
+    expect(legalActions(g2, 0).some((entry) => entry.action.type === "cast" && entry.cardId === g2.players[0]!.hand[0]!.instance_id)).toBe(false);
+    g2 = putOnBattlefield(g2, 0, [SOL_RING()]);
+    expect(legalActions(g2, 0).some((entry) => entry.action.type === "cast" && entry.cardId === g2.players[0]!.hand[0]!.instance_id)).toBe(true);
+  });
+
   it("taps the enchanted creature and keeps it tapped (Claustrophobia)", () => {
     const claustro = make({
       name: "Test Claustrophobia", type_line: "Enchantment — Aura", mana_cost: "{2}{U}", cmc: 3,
