@@ -181,7 +181,7 @@ describe("smart counter response and safe mana undo", () => {
       }
     };
     const activated = { ...trigger, id: "activated-subject", label: "Trigger Source · activated", trigger: undefined,
-      activated: { index: 0, text: "{T}: Draw a card.", cost: { manaValue: 0, raw: "{T}", symbols: [], hasVariable: false }, effect: { kind: "draw", amount: 1 } as const, sourceZone: "battlefield" as const, targetKind: "none" as const,
+      activated: { index: 0, text: "{T}: Draw a card.", cost: { manaValue: 0, raw: "{T}", symbols: [], hasVariable: false }, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const,
         requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: null } };
     expect(hasRealChoice({ ...source, stack: [trigger] }, 0)).toBe(false);
     expect(hasRealChoice({ ...source, stack: [activated] }, 0)).toBe(false);
