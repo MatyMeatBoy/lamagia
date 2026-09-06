@@ -9012,6 +9012,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     ? (selectedCrewIds.length ? selectedCrewIds.map((id) => crewCandidates.find((candidate) => candidate.instance_id === id)).filter((candidate): candidate is Permanent => Boolean(candidate)) : crewCandidates.slice(0, ability.tapCost.amount))
     : [];
   if (ability.tapCost && (selectedCrewIds.length && new Set(selectedCrewIds).size !== selectedCrewIds.length)) throw new Error("No puedes elegir la misma criatura dos veces para tripular.");
+  if (ability.tapCost && selectedCrewIds.length !== crewSelection.length) throw new Error("La selección de tripulación contiene una criatura inválida.");
   if (ability.tapCost && crewSelection.length !== ability.tapCost.amount) throw new Error(`Debes girar ${ability.tapCost.amount} criaturas para tripular.`);
   let discard: GameCard | undefined;
   if (ability.discardsCard || ability.discardsCreatureCard) {
