@@ -1005,6 +1005,12 @@ function stackDetailHtml(): string {
   </section>`;
 }
 
+function closeStackDetailOnBackdrop(event: MouseEvent): void {
+  if (!(event.target instanceof HTMLElement) || !event.target.classList.contains("stack-detail-overlay")) return;
+  ui.stackDetail = null;
+  render();
+}
+
 /**
  * Every legal action, as a compact menu inside the dock.
  *
@@ -1312,6 +1318,7 @@ function wireBoard(): void {
   on("#undo-pending-target", undoPendingTarget);
   on("#close-card-action-menu", () => { ui.cardActionMenu = null; ui.notice = ""; render(); });
   on("#close-stack-detail", () => { ui.stackDetail = null; render(); });
+  document.querySelector<HTMLElement>(".stack-detail-overlay")?.addEventListener("click", closeStackDetailOnBackdrop);
   on("#card-action-info", () => {
     const cardId = ui.cardActionMenu;
     ui.cardActionMenu = null;
