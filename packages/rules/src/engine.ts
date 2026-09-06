@@ -712,6 +712,18 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly sourcePermanentId: string;
       readonly candidateIds: readonly string[];
+    }
+  | {
+      /** "Put up to N creature cards from your hand onto the battlefield" (Tooth and Nail). */
+      readonly type: "hand-to-battlefield-multi";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+      readonly selectedIds: readonly string[];
+      readonly maxCount: number;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
     };
 
 export type GameAction =
@@ -755,6 +767,8 @@ export type GameAction =
   | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-proliferate"; readonly sourceId: string }
   | { readonly type: "choose-exploit"; readonly sourceId: string; readonly sacrificeId?: string }
+  | { readonly type: "choose-hand-battlefield-card"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "finish-hand-to-battlefield"; readonly sourceId: string }
   | { readonly type: "declare-attackers"; readonly attackers: readonly AttackerDeclaration[] }
   | { readonly type: "declare-blockers"; readonly blockers: readonly BlockerDeclaration[] }
   | { readonly type: "concede" };
@@ -5436,6 +5450,9 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "search-library-multi":
       // Multi-card searches are completed through the explicit choice action below.
       return state;
+    case "put-hand-creatures-onto-battlefield":
+      // Resolved through the explicit hand-to-battlefield choice action below.
+      return state;
     case "scry":
       // Scry is completed through the private top-card choice below.
       return state;
@@ -5882,6 +5899,18 @@ function resolveTop(state: GameState): GameState {
       if (!object.activated) next = retire(next);
       return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en el campo${search.tapped ? " giradas" : ""}.`);
     }
+    // Same deterministic policy for "up to N ... cards ... into your hand"
+    // (Tooth and Nail): the single-card `search-library` PendingChoice below
+    // has no counter field, so it would otherwise stop after the first pick.
+    if (search.count && search.count > 1 && search.destination === "hand") {
+      const picked = options.slice(0, search.count);
+      const pickedSet = new Set(picked);
+      const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
+      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
+      next = withPlayer(next, object.controller, (player) => ({ ...player, hand: [...player.hand, ...fetched] }));
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
+      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en su mano.`);
+    }
     return {
       ...next,
       pendingChoice: {
@@ -5928,6 +5957,35 @@ function resolveTop(state: GameState): GameState {
         search: multiSearch,
         returnSourceToGraveyard: !object.activated && !object.fromCopy,
         exileSourceAfterResolution: Boolean(object.flashback)
+      }
+    };
+  }
+
+  const handToBattlefield = activatedEffect?.kind === "put-hand-creatures-onto-battlefield"
+    ? activatedEffect
+    : selectedEffect?.kind === "put-hand-creatures-onto-battlefield"
+      ? selectedEffect
+      : profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "put-hand-creatures-onto-battlefield" }> => effect.kind === "put-hand-creatures-onto-battlefield");
+  if (handToBattlefield) {
+    const options = playerAt(next, object.controller).hand
+      .filter((card) => isCreature(cardProfile(card)))
+      .map((card) => card.instance_id);
+    if (!options.length) {
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
+      return logged(next, object.controller, `${object.card.name} se resuelve: no hay criaturas en la mano.`);
+    }
+    return {
+      ...next,
+      pendingChoice: {
+        type: "hand-to-battlefield-multi",
+        seat: object.controller,
+        sourceId: object.id,
+        sourceCard: object.card,
+        optionIds: options,
+        selectedIds: [],
+        maxCount: handToBattlefield.amount,
+        returnSourceToGraveyard: !object.activated && !object.fromCopy,
+        exileSourceAfterResolution: Boolean(object.flashback) || profile.effects.some((effect) => effect.kind === "exile-self")
       }
     };
   }
@@ -7226,6 +7284,25 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           note: `${choice.sourceCard.name}: sacrifica ${candidate.card.name} para Exploit.`
         });
       }
+      return actions;
+    }
+    if (choice.type === "hand-to-battlefield-multi") {
+      for (const candidateId of choice.optionIds) {
+        if (choice.selectedIds.includes(candidateId)) continue;
+        const card = player.hand.find((candidate) => candidate.instance_id === candidateId);
+        if (!card) continue;
+        actions.push({
+          action: { type: "choose-hand-battlefield-card", sourceId: choice.sourceId, cardId: candidateId },
+          label: `Poner ${card.name} en el campo de batalla`,
+          cardId: candidateId,
+          note: `${choice.sourceCard.name}: elige hasta ${choice.maxCount} criatura(s) de tu mano.`
+        });
+      }
+      actions.push({
+        action: { type: "finish-hand-to-battlefield", sourceId: choice.sourceId },
+        label: choice.selectedIds.length ? "Terminar de elegir criaturas" : "No poner ninguna criatura",
+        note: `${choice.sourceCard.name}: puedes elegir menos de ${choice.maxCount}.`
+      });
       return actions;
     }
     if (choice.type === "discard-cards") {
@@ -9260,6 +9337,50 @@ function applyFinishLibrarySearch(state: GameState, seat: SeatId, action: Extrac
   return finishMultiLibrarySearch(state, seat, choice, choice.selectedIds);
 }
 
+function finishHandToBattlefield(
+  state: GameState,
+  seat: SeatId,
+  choice: Extract<PendingChoice, { type: "hand-to-battlefield-multi" }>,
+  selectedIds: readonly string[]
+): GameState {
+  const player = playerAt(state, seat);
+  const selected = selectedIds
+    .map((id) => player.hand.find((card) => card.instance_id === id))
+    .filter((card): card is GameCard => Boolean(card));
+  const selectedSet = new Set(selected.map((card) => card.instance_id));
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    hand: current.hand.filter((card) => !selectedSet.has(card.instance_id)),
+    graveyard: [
+      ...current.graveyard,
+      ...(choice.returnSourceToGraveyard && !choice.exileSourceAfterResolution ? [choice.sourceCard] : [])
+    ],
+    exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
+  }));
+  for (const card of selected) next = putOntoBattlefield(next, seat, card, false, false);
+  const names = selected.map((card) => card.name).join(", ");
+  return logged(next, seat, `${player.name} ${selected.length ? `pone ${names} en el campo de batalla` : "no pone ninguna criatura en el campo de batalla"}.`);
+}
+
+function applyChooseHandBattlefieldCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-hand-battlefield-card" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hand-to-battlefield-multi" || choice.seat !== seat) throw new Error("No tienes una elección de mano pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes elegir una carta de la elección pendiente.");
+  if (choice.selectedIds.includes(action.cardId)) throw new Error("Esa carta ya fue elegida.");
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está disponible para esta elección.");
+  const selectedIds = [...choice.selectedIds, action.cardId];
+  if (selectedIds.length >= choice.maxCount) return finishHandToBattlefield(state, seat, choice, selectedIds);
+  const card = playerAt(state, seat).hand.find((candidate) => candidate.instance_id === action.cardId)!;
+  return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${card.name}.`);
+}
+
+function applyFinishHandToBattlefield(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-hand-to-battlefield" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hand-to-battlefield-multi" || choice.seat !== seat) throw new Error("No tienes una elección de mano pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Debes terminar la elección pendiente.");
+  return finishHandToBattlefield(state, seat, choice, choice.selectedIds);
+}
+
 /** Closes the private "look at target player's hand" view (Gitaxian Probe, CR 701.20). */
 function applyAcknowledgeViewHand(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "acknowledge-view-hand" }>): GameState {
   const choice = state.pendingChoice;
@@ -10051,6 +10172,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;
     case "finish-proliferate": next = applyFinishProliferate(state, seat, action); break;
     case "choose-exploit": next = applyChooseExploit(state, seat, action); break;
+    case "choose-hand-battlefield-card": next = applyChooseHandBattlefieldCard(state, seat, action); break;
+    case "finish-hand-to-battlefield": next = applyFinishHandToBattlefield(state, seat, action); break;
     case "declare-attackers": next = applyDeclareAttackers(state, seat, action.attackers); break;
     case "declare-blockers": next = applyDeclareBlockers(state, seat, action.blockers); break;
     case "concede": {

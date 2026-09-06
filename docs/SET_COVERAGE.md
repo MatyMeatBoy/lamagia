@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,709** · cobertura: **31.4%**
+Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,714** · cobertura: **31.4%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -121,7 +121,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | 2003-07-26 | Eighth Edition Promos (`P8ED`) | promos | eighth-edition | other | 1 | 1 | 0 | 100.0% |
 | 2003-07-28 | Eighth Edition (`8ED`) | core | 2000s | main | 342 | 196 | 146 | 57.3% |
 | 2003-09-20 | Mirrodin Promos (`PMRD`) | promos | mirrodin | other | 1 | 0 | 1 | 0.0% |
-| 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 123 | 168 | 42.3% |
+| 2003-10-02 | Mirrodin (`MRD`) | expansion | mirrodin | main | 291 | 124 | 167 | 42.6% |
 | 2003-12-31 | Magic Online Promos (`PRM`) | promos | magic-online | other | 2689 | 617 | 2072 | 22.9% |
 | 2004-01-01 | Arena League 2004 (`PAL04`) | promos | arena-2004 | other | 14 | 7 | 7 | 50.0% |
 | 2004-01-01 | Friday Night Magic 2004 (`F04`) | promos | fnm-2004 | other | 12 | 7 | 5 | 58.3% |
@@ -291,7 +291,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | 2013-04-06 | World Magic Cup Qualifiers (`WMC`) | promos | world-magic-cup-qualifiers | other | 5 | 1 | 4 | 20.0% |
 | 2013-04-27 | Dragon's Maze Promos (`PDGM`) | promos | dragon-s-maze | other | 6 | 2 | 4 | 33.3% |
 | 2013-05-03 | Dragon's Maze (`DGM`) | expansion | 2010s | main | 156 | 59 | 97 | 37.8% |
-| 2013-06-07 | Modern Masters (`MMA`) | masters-remastered | modern-masters | other | 229 | 66 | 163 | 28.8% |
+| 2013-06-07 | Modern Masters (`MMA`) | masters-remastered | modern-masters | other | 229 | 67 | 162 | 29.3% |
 | 2013-07-18 | Magic 2014 Promos (`PM14`) | promos | magic-2014 | other | 6 | 1 | 5 | 16.7% |
 | 2013-07-18 | San Diego Comic-Con 2013 (`PSDC`) | promos | comic-con-2013 | other | 5 | 0 | 5 | 0.0% |
 | 2013-07-19 | Magic 2014 (`M14`) | core | 2010s | main | 234 | 117 | 117 | 50.0% |
@@ -454,7 +454,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | 2019-11-07 | The List (`PLST`) | masters-remastered | the-list | other | 5221 | 1624 | 3597 | 31.1% |
 | 2019-11-15 | Game Night 2019 (`GN2`) | boxed-products | game-night-2019 | other | 59 | 21 | 38 | 35.6% |
 | 2019-11-21 | Historic Anthology 1 (`HA1`) | anthologies | historic-anthology-1 | other | 20 | 14 | 6 | 70.0% |
-| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 446 | 1250 | 26.3% |
+| 2019-12-03 | Secret Lair Drop (`SLD`) | secret-lair | secret-lair-drop | secret-lair | 1696 | 447 | 1249 | 26.4% |
 | 2020-01-01 | Judge Gift Cards 2020 (`J20`) | promos | judge-2020 | other | 10 | 5 | 5 | 50.0% |
 | 2020-01-01 | MagicFest 2020 (`PF20`) | promos | magicfest-2020 | other | 6 | 5 | 1 | 83.3% |
 | 2020-01-24 | Theros Beyond Death (`THB`) | expansion | theros | main | 273 | 63 | 210 | 23.1% |
@@ -578,9 +578,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | 2023-06-23 | The Lord of the Rings: Tales of Middle-earth (`LTR`) | supplemental | the-lord-of-the-rings-tales-of-middle-earth | other | 291 | 32 | 259 | 11.0% |
 | 2023-07-01 | MagicFest 2023 (`PF23`) | promos | magicfest-2023 | other | 4 | 2 | 2 | 50.0% |
 | 2023-07-18 | Explorer Anthology 3 (`EA3`) | anthologies | explorer-anthology-3 | other | 25 | 11 | 14 | 44.0% |
-| 2023-07-18 | Historic Anthology 7 (`HA7`) | anthologies | historic-anthology-7 | other | 25 | 11 | 14 | 44.0% |
+| 2023-07-18 | Historic Anthology 7 (`HA7`) | anthologies | historic-anthology-7 | other | 25 | 12 | 13 | 48.0% |
 | 2023-08-01 | 2022 Heroes of the Realm (`PH22`) | funny-special | 2022-heroes-of-the-realm | other | 5 | 0 | 5 | 0.0% |
-| 2023-08-04 | Commander Masters (`CMM`) | masters-remastered | 2023 | other | 737 | 219 | 518 | 29.7% |
+| 2023-08-04 | Commander Masters (`CMM`) | masters-remastered | 2023 | other | 737 | 220 | 517 | 29.9% |
 | 2023-09-01 | 30th Anniversary Celebration Tokyo (`P30T`) | promos | 30th-anniversary-celebration-tokyo | other | 2 | 2 | 0 | 100.0% |
 | 2023-09-08 | Magic × Duel Masters Promos (`PMDA`) | masters-remastered | magic-duel-masters | other | 4 | 3 | 1 | 75.0% |
 | 2023-09-08 | Time Spiral Remastered Promos (`PTSR`) | masters-remastered | time-spiral-remastered | other | 3 | 0 | 3 | 0.0% |
@@ -715,7 +715,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | anthologies | historic-anthology-4 | 1 | 25 | 4 | 21 | 16.0% |
 | anthologies | historic-anthology-5 | 1 | 25 | 7 | 18 | 28.0% |
 | anthologies | historic-anthology-6 | 1 | 20 | 14 | 6 | 70.0% |
-| anthologies | historic-anthology-7 | 1 | 25 | 11 | 14 | 44.0% |
+| anthologies | historic-anthology-7 | 1 | 25 | 12 | 13 | 48.0% |
 | anthologies | pioneer-anthology-1 | 1 | 11 | 2 | 9 | 18.2% |
 | archenemy | 2010s | 2 | 242 | 113 | 129 | 46.7% |
 | boxed-products | 2017-gift-pack | 1 | 5 | 5 | 0 | 100.0% |
@@ -812,7 +812,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | expansion | lorwyn | 2 | 559 | 132 | 427 | 23.6% |
 | expansion | masques | 1 | 335 | 103 | 232 | 30.7% |
 | expansion | mirage | 1 | 335 | 90 | 245 | 26.9% |
-| expansion | mirrodin | 3 | 675 | 254 | 421 | 37.6% |
+| expansion | mirrodin | 3 | 675 | 255 | 420 | 37.8% |
 | expansion | odyssey | 1 | 335 | 110 | 225 | 32.8% |
 | expansion | onslaught | 1 | 335 | 81 | 254 | 24.2% |
 | expansion | phyrexia | 4 | 787 | 134 | 653 | 17.0% |
@@ -867,7 +867,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | masterpieces | wilds-of-eldraine-enchanting-tales | 1 | 63 | 12 | 51 | 19.0% |
 | masterpieces | zendikar-expeditions | 1 | 45 | 42 | 3 | 93.3% |
 | masterpieces | zendikar-rising-expeditions | 1 | 30 | 25 | 5 | 83.3% |
-| masters-remastered | 2023 | 1 | 737 | 219 | 518 | 29.7% |
+| masters-remastered | 2023 | 1 | 737 | 220 | 517 | 29.9% |
 | masters-remastered | amonkhet-remastered | 1 | 309 | 98 | 211 | 31.7% |
 | masters-remastered | chronicles | 1 | 116 | 28 | 88 | 24.1% |
 | masters-remastered | chronicles-foreign-black-border | 1 | 116 | 28 | 88 | 24.1% |
@@ -885,7 +885,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | masters-remastered | masters-edition-ii | 1 | 245 | 71 | 174 | 29.0% |
 | masters-remastered | masters-edition-iii | 1 | 220 | 94 | 126 | 42.7% |
 | masters-remastered | masters-edition-iv | 1 | 260 | 97 | 163 | 37.3% |
-| masters-remastered | modern-masters | 1 | 229 | 66 | 163 | 28.8% |
+| masters-remastered | modern-masters | 1 | 229 | 67 | 162 | 29.3% |
 | masters-remastered | modern-masters-2015 | 1 | 249 | 94 | 155 | 37.8% |
 | masters-remastered | modern-masters-2017 | 1 | 249 | 116 | 133 | 46.6% |
 | masters-remastered | mystery-booster-2 | 1 | 384 | 80 | 304 | 20.8% |
@@ -1195,7 +1195,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 | promos | zendikar | 1 | 5 | 3 | 2 | 60.0% |
 | promos | zendikar-rising | 1 | 84 | 11 | 73 | 13.1% |
 | secret-lair | secret-lair-countdown | 1 | 58 | 16 | 42 | 27.6% |
-| secret-lair | secret-lair-drop | 1 | 1696 | 446 | 1250 | 26.3% |
+| secret-lair | secret-lair-drop | 1 | 1696 | 447 | 1249 | 26.4% |
 | secret-lair | secret-lair-promo | 1 | 52 | 19 | 33 | 36.5% |
 | secret-lair | secret-lair-ultimate-edition | 1 | 16 | 15 | 1 | 93.8% |
 | spellbooks | 2010s | 2 | 16 | 6 | 10 | 37.5% |
@@ -8937,7 +8937,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Thought Prison — `da1ea03f-747f-46c9-8ff5-7e85996df804`
 - [ ] Timesifter — `99f8805f-6618-4838-a4e7-a3660e3b087f`
 - [ ] Titanium Golem — `84fa0c22-4e11-4d57-9a45-633f0e1686de`
-- [ ] Tooth and Nail — `382b7873-e78d-473b-8346-d92d16e8f634`
 - [ ] Trash for Treasure — `e69279f6-50a1-4db5-83be-30a2ea7fc6a9`
 - [ ] Vedalken Archmage — `568cf486-0261-4634-ac36-a6507101b2d0`
 - [ ] Vermiculos — `88cadf97-4b24-481a-9136-96c017fd96e9`
@@ -19233,7 +19232,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Thundercloud Shaman — `eb812ea7-3301-4774-86a2-64c4ed6766fc`
 - [ ] Tidehollow Sculler — `51b55057-8b14-4277-894b-4813b4f7eb39`
 - [ ] Tombstalker — `944735ad-3f17-421a-b8fa-40f3bb8456f2`
-- [ ] Tooth and Nail — `382b7873-e78d-473b-8346-d92d16e8f634`
 - [ ] Torrent of Stone — `bc6ee33a-4245-4edb-a6b3-0bdcc2883fbc`
 - [ ] Tribal Flames — `c82eda61-d195-49c9-8ff0-a78dfa650689`
 - [ ] Tromp the Domains — `5b5dece6-b1e0-4844-bbf9-3b44008ffa70`
@@ -34869,7 +34867,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Titanic Ultimatum — `0cd28580-d718-4d0b-96e3-a836c2911c27`
 - [ ] Tocasia's Welcome — `25c983e0-a8c9-4784-91a4-8fe04c6df882`
 - [ ] Tomb Tyrant — `0fb2c61a-9e74-4ee2-810a-b77a3b45f446`
-- [ ] Tooth and Nail — `382b7873-e78d-473b-8346-d92d16e8f634`
 - [ ] Toothy, Imaginary Friend — `41d6cce0-b852-4d0e-aee2-081df13dd9b8`
 - [ ] Torment of Hailfire — `30a0a6c2-1fbb-4784-ab96-22611d57e62c`
 - [ ] Tormenting Voice — `f307b5b4-e949-4f69-8dc7-856e33a45a16`
@@ -48590,7 +48587,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Repeal — `b1f2b26c-91b2-4f3c-9f48-6429ec3fde48`
 - [ ] Sun Titan — `b2e950fb-cb7e-40a0-a311-5bbdd0477b29`
 - [ ] Sword of Fire and Ice — `2ccdc60a-49a9-44b9-a7af-0ebf18b26785`
-- [ ] Tooth and Nail — `382b7873-e78d-473b-8346-d92d16e8f634`
 - [ ] Tribal Flames — `c82eda61-d195-49c9-8ff0-a78dfa650689`
 - [ ] Unearth — `4e0b647a-6e1a-421b-bca9-8d5e346bda80`
 - [ ] Vendilion Clique — `244d4807-0802-41bc-9460-55ac38a28a72`
@@ -49070,7 +49066,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **26,70
 - [ ] Titan of Littjara — `f62250c6-0832-46c8-a800-806589504f5f`
 - [ ] Titan's Presence — `b011d6b2-8930-4192-aa94-82869faa991b`
 - [ ] Tomb of the Spirit Dragon — `22f6391e-2634-440f-af1b-9581d1bff818`
-- [ ] Tooth and Nail — `382b7873-e78d-473b-8346-d92d16e8f634`
 - [ ] Torrential Gearhulk — `a6395447-677d-4c39-8eda-2d57e527c94e`
 - [ ] Transmogrifying Wand — `921345ce-2eaf-4b95-b65d-1c27204665ed`
 - [ ] Treasure Nabber — `20a6d576-a5b2-43b4-8be9-75be001e567d`

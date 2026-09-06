@@ -222,6 +222,12 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const decline = available.find((entry) => entry.action.type === "choose-exploit" && !entry.action.sacrificeId);
     if (decline) return { action: decline.action, label: decline.label };
   }
+  if (state.pendingChoice?.type === "hand-to-battlefield-multi" && state.pendingChoice.seat === seat) {
+    const choose = available.find((entry) => entry.action.type === "choose-hand-battlefield-card");
+    const finish = available.find((entry) => entry.action.type === "finish-hand-to-battlefield");
+    const chosen = choose ?? finish;
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "proliferate" && state.pendingChoice.seat === seat) {
     const target = available.find((entry) => entry.action.type === "choose-proliferate-target");
     if (target) return { action: target.action, label: target.label };

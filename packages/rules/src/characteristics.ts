@@ -497,6 +497,8 @@ export type SpellEffect =
   | { readonly kind: "exile-source-from-graveyard" }
   /** "Exile ~ unless you discard a creature card" (Body Snatcher): the source permanent, still on the battlefield. */
   | { readonly kind: "exile-source-permanent" }
+  /** "Put up to N creature cards from your hand onto the battlefield" (Tooth and Nail). */
+  | { readonly kind: "put-hand-creatures-onto-battlefield"; readonly amount: number }
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
@@ -3872,6 +3874,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
       effect: { kind: "compound", effects: [{ kind: "exile-source-from-graveyard" }, { kind: "return-target-creature-card-from-graveyard-to-battlefield" }] },
       target: "creature-card-in-your-graveyard"
     };
+  }
+  if ((match = /^Put up to (\w+) creature cards from your hand onto the battlefield$/i.exec(text))) {
+    const amount = toNumber(match[1]!);
+    if (amount !== null) return { effect: { kind: "put-hand-creatures-onto-battlefield", amount }, target: "none" };
   }
   if (/^Return target creature card from your graveyard to the battlefield\. You lose life equal to that card's (?:mana value|converted mana cost)$/i.test(text)) {
     return { effect: { kind: "reanimate-target-creature-lose-mana-value-life" }, target: "creature-card-in-your-graveyard" };

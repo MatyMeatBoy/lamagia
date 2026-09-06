@@ -4973,3 +4973,64 @@ simulated games.
 
 Prossh decklist status after this pass: **84 of 97 unique cards fully
 implemented (86.6%)**.
+
+Tooth and Nail ("Choose one — Search your library for up to two
+creature cards, reveal them, put them into your hand, then shuffle. /
+Put up to two creature cards from your hand onto the battlefield.
+Entwine {2}.") needed exactly one new primitive: mode 1 (the search)
+and Entwine itself were both already fully supported by the existing
+modal/entwine machinery, confirmed by the probe showing mode 1's
+bullet text never appearing in `unimplementedText`. Added `{kind:
+"put-hand-creatures-onto-battlefield", amount}` for mode 2, resolved
+via a brand new `"hand-to-battlefield-multi"` `PendingChoice` modeled
+directly on `search-library-multi`'s shape (`optionIds`/`selectedIds`/
+a `finish` action) but simpler — no shuffle, no name-based query
+matching, since a controller's own hand is never hidden from them, so
+cards are chosen directly by `instance_id`. Wired the same way every
+interactive modal effect this session has been: a special-cased check
+in `resolveTop` (against `activatedEffect`, `selectedEffect`, or a
+bare `profile.effects` entry, exactly mirroring `multiSearch`'s three-
+way lookup) positioned before the generic `if (selectedEffect)`
+fallback that would otherwise resolve the effect as an inert no-op
+value with `applyEffect`'s deliberate `case "put-hand-creatures-onto-
+battlefield": return state;` and immediately retire the spell. Added a
+`bot.ts` handler up front this time (unlike Body Snatcher, learning
+from the Exploit lesson): a brand-new choice type never fits an
+existing generic bot fallback, so a stall was avoided proactively
+rather than discovered via a failing simulation. Testing this surfaced
+a THIRD real, previously-latent bug this session: the existing
+"up to N ... cards ... into your hand" search template (parsed via the
+already-existing `multiHand` regex, producing `kind: "search-library"`
+with `count > 1` and `destination: "hand"`) has been silently broken
+since before this session touched it — `applyChooseLibraryCard`, the
+completion handler for the single-slot `search-library` `PendingChoice`,
+has no counter field and always closes the choice after the FIRST
+pick regardless of `count`, so any "search for up to two X cards, put
+them into your hand" card only ever delivered one. Fixed by extending
+the pre-existing "up to N: fetch deterministically, skip the
+interactive choice" fast path (previously `battlefield`-only) to also
+cover `destination: "hand"`, matching the exact same non-interactive,
+first-N-matching-options policy already used for the battlefield case
+— consistent with this codebase's established simplification for
+"up to N" auto-fetches elsewhere. Verified **+1** in the export count
+(10,279 → 10,280); set coverage holds at 31.4%. NOTE: Entwine
+(choosing BOTH modes together) still inherits a pre-existing,
+independent limitation this session did not create or fix — an
+entwined pair's combined effect is wrapped as `{kind: "compound",
+effects: [mode1, mode2]}`, and EVERY interactive-choice special case in
+`resolveTop` (search-library, search-library-multi, and now this one)
+is matched by exact `kind`, never by unwrapping a `compound`, so an
+interactive mode entwined with anything silently no-ops when actually
+entwined. This affects any already-implemented entwined modal card
+with an interactive mode, not just this one; out of scope for this
+pass. Scenario-tested: casting with mode 2 lets the controller choose
+two named creature cards from hand to battlefield and sends Tooth and
+Nail to the graveyard; casting with mode 1 delivers both matching
+library cards to hand deterministically without an interactive prompt
+and does not put them on the battlefield. Validation: **811 rules
+tests** (3 new), `npm run check` across all four workspaces, `npx
+vitest run services/match-server/src` (5 passed), 10,280 global
+profiles, 200/200 simulated games.
+
+Prossh decklist status after this pass: **85 of 97 unique cards fully
+implemented (87.6%)**.

@@ -11433,6 +11433,59 @@ describe("Body Snatcher's discard-or-exile ETB and its dies-triggered reanimatio
   });
 });
 
+describe("Tooth and Nail's modal tutor-to-hand and hand-to-battlefield modes", () => {
+  const TOOTH_AND_NAIL = () => make({
+    name: "Tooth and Nail", type_line: "Sorcery", mana_cost: "{5}{G}{G}", cmc: 7,
+    oracle_text: "Choose one —\n• Search your library for up to two creature cards, reveal them, put them into your hand, then shuffle.\n• Put up to two creature cards from your hand onto the battlefield.\nEntwine {2} (Choose both if you pay the entwine cost.)"
+  });
+
+  it("recognizes both modes and the entwine cost", () => {
+    const profile = profileOf(TOOTH_AND_NAIL());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.modalChoices[0]).toMatchObject({ effect: { kind: "search-library", types: ["Creature"], destination: "hand", count: 2 } });
+    expect(profile.modalChoices[1]).toMatchObject({ effect: { kind: "put-hand-creatures-onto-battlefield", amount: 2 } });
+    expect(profile.entwineCost).toMatchObject({ raw: "{2}" });
+  });
+
+  it("puts up to two chosen creature cards from hand onto the battlefield with mode 2", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({
+      hand: toHand(0, [TOOTH_AND_NAIL(), BEAR(), TRAMPLER()], "tn-hand"),
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "tn-hand-0", mode: 1 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "hand-to-battlefield-multi");
+    let choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "hand-to-battlefield-multi" }>;
+    const bear = game.players[0]!.hand.find((card) => card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-hand-battlefield-card", sourceId: choice.sourceId, cardId: bear.instance_id });
+    choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "hand-to-battlefield-multi" }>;
+    const stomper = game.players[0]!.hand.find((card) => card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "choose-hand-battlefield-card", sourceId: choice.sourceId, cardId: stomper.instance_id });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Tooth and Nail")).toBe(true);
+  });
+
+  it("searches for up to two creature cards to hand with mode 1", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({
+      hand: toHand(0, [TOOTH_AND_NAIL()], "tn-hand"),
+      library: [...toHand(0, [BEAR(), TRAMPLER()], "tn-library"), ...player.library],
+      autoPass: false
+    }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
+    game = applyAction(game, 0, { type: "cast", cardId: "tn-hand-0", mode: 0 });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.hand.some((card) => card.name === "Big Stomper")).toBe(true);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Tooth and Nail")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
