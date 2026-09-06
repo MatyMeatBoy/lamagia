@@ -4264,6 +4264,41 @@ simulate:engine` 200/200, 10,116 global profiles.
 Prossh decklist status after this pass: **72 of 97 unique cards fully
 implemented (74.2%)**.
 
+Mana Crypt's mana ability ({T}: Add {C}{C}) was already covered
+generically; its upkeep trigger ("flip a coin. If you lose the flip,
+this deals 3 damage to you") needed a genuinely random primitive the
+engine had never modeled as a card effect before. The engine already
+carries a seeded, deterministic RNG (`GameState.rngState` /
+`nextRandom`, used today for shuffling and a couple of "destroy a
+random permanent" effects), so a coin flip reuses the exact same
+primitive rather than adding a second source of randomness — a real
+requirement here, since the whole simulator and test suite depend on
+every game being exactly reproducible from its seed. Added a new
+`coin-flip-self-damage-if-lost` effect kind and a matching `applyEffect`
+case that rolls via `nextRandom`, advances `rngState`, and on a loss
+reuses the existing `dealDamageFromObject` helper (which already builds
+the right `DamageSource` from a triggered ability's `StackObject`) —
+no new damage-dealing logic needed, just the roll. Scenario-testing this
+surfaced a real trap in the test harness itself, not the engine: driving
+the game forward with `passUntil` until "the trigger is visible on the
+stack" never works for a mandatory, choiceless trigger, because the
+engine resolves it atomically between two priority-decision points with
+nothing external to act on in between — the test spun through 60+
+turns of repeated real coin flips before hitting `passUntil`'s
+step budget. Fixed by asserting on the effect (the first observed life
+change, or a turn count reached with life unchanged) rather than an
+intermediate stack state that is never actually observable at this
+trigger's granularity. Verified **+1** in the export count (10,116 →
+10,117) and set coverage holds at 30.7%. Scenario-tested with two fixed
+`rngState` seeds precomputed to land on either side of the coin's 0.5
+threshold: one deterministically loses the first flip and takes exactly
+3 damage, the other deterministically wins and stays at full life.
+Validation: **760 rules tests**, `npm run check`, `npm run
+simulate:engine` 200/200, 10,117 global profiles.
+
+Prossh decklist status after this pass: **73 of 97 unique cards fully
+implemented (75.3%)**.
+
 ## Gameplay interaction baseline (2026-09-05)
 
 The current client contract for card interactions is:

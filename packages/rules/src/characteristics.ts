@@ -696,6 +696,8 @@ export type SpellEffect =
   /** "Add one mana of any color" as a one-shot resolution, not a mana ability (Lotus Cobra's Landfall): the color is chosen when the effect resolves. */
   | { readonly kind: "add-mana-any-color" }
   | { readonly kind: "karoo-bounce"; readonly subtype: string }
+  /** "Flip a coin. If you lose the flip, ~ deals N damage to you" (Mana Crypt's upkeep trigger). */
+  | { readonly kind: "coin-flip-self-damage-if-lost"; readonly amount: number }
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
@@ -3664,6 +3666,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if ((match = /^sacrifice it unless you return an untapped (Plains|Island|Swamp|Mountain|Forest) you control to its owner'?s hand$/i.exec(text))) {
     return { effect: { kind: "karoo-bounce", subtype: match[1]![0]!.toUpperCase() + match[1]!.slice(1).toLowerCase() }, target: "none" };
+  }
+  if ((match = /^Flip a coin\.\s*If you lose the flip,\s*~ deals (\d+) damage to you$/i.exec(text))) {
+    return { effect: { kind: "coin-flip-self-damage-if-lost", amount: Number(match[1]) }, target: "none" };
   }
   if (/^Untap target permanent$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "permanent" };
   if (/^Untap target creature$/i.test(text)) return { effect: { kind: "untap-target-permanent" }, target: "creature" };

@@ -4340,6 +4340,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return logged(next, controller, `${sourceName} devuelve ${candidates.length} criatura(s) a la mano.`);
     }
+    case "coin-flip-self-damage-if-lost": {
+      const rolled = nextRandom(state.rngState);
+      const next = { ...state, rngState: rolled.state };
+      const lost = rolled.value < 0.5;
+      if (!lost) return logged(next, controller, `${sourceName}: ${playerAt(next, controller).name} gana el volado.`);
+      return dealDamageFromObject(next, controller, effect.amount, sourceName, object);
+    }
     case "karoo-bounce": {
       // "sacrifice it unless you return an untapped <basic> you control" (Karoo,
       // Coral Atoll, ... CR 603.2). Auto-picks a candidate; otherwise sacrifices.

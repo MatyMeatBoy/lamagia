@@ -10464,6 +10464,36 @@ describe("Lotus Cobra's Landfall any-color mana", () => {
   });
 });
 
+describe("Mana Crypt's upkeep coin flip", () => {
+  const MANA_CRYPT = () => make({
+    name: "Mana Crypt", type_line: "Artifact", mana_cost: "{0}", cmc: 0,
+    oracle_text: "At the beginning of your upkeep, flip a coin. If you lose the flip, this artifact deals 3 damage to you.\n{T}: Add {C}{C}."
+  });
+
+  it("recognizes both the coin-flip trigger and the mana ability", () => {
+    const profile = profileOf(MANA_CRYPT());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers[0]).toMatchObject({ event: "upkeep", subject: "you", effect: { kind: "coin-flip-self-damage-if-lost", amount: 3 } });
+    expect(profile.manaAbilities[0]).toMatchObject({ produces: ["C"], amount: 2 });
+  });
+
+  it("deals 3 damage when the flip is lost", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [MANA_CRYPT()]);
+    game = { ...game, rngState: 0 };
+    game = passUntil(game, (state) => state.players[0]!.life !== 40, 60);
+    expect(game.players[0]!.life).toBe(37);
+  });
+
+  it("deals no damage when the flip is won", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [MANA_CRYPT()]);
+    game = { ...game, rngState: 682 };
+    game = passUntil(game, (state) => state.turn >= 4, 60);
+    expect(game.players[0]!.life).toBe(40);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // State-based actions and privacy
 // ---------------------------------------------------------------------------
