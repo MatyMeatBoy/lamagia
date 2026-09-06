@@ -233,6 +233,19 @@ describe("smart counter response and safe mana undo", () => {
     expect(hasRealChoice({ ...source, stack: [trigger] }, 0)).toBe(false);
     expect(hasRealChoice({ ...source, stack: [activated] }, 0)).toBe(false);
   });
+  it("projects only spells as counter targets when the stack mixes object kinds", () => {
+    const counter = board("Counter target spell.");
+    const source = putOnBattlefield(counter, 1, [make({ name: "Trigger Source", type_line: "Creature", power: "1", toughness: "1", oracle_text: "Whenever you gain life, draw a card." })]);
+    const card = source.players[1]!.battlefield[0]!.card;
+    const spell = { ...BOLT(), instance_id: "mixed-spell", owner: 1 };
+    const trigger = { id: "mixed-trigger", controller: 1 as SeatId, card, label: "Trigger Source · life gained", targets: [], fromCommandZone: false, variableValue: 0, countered: false,
+      trigger: { id: "mixed-trigger", controller: 1 as SeatId, sourcePermanentId: source.players[1]!.battlefield[0]!.instance_id, sourceCard: card,
+        definition: { event: "life-gained" as const, subject: "you" as const, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const, optional: false, sourceText: "Whenever you gain life, draw a card." }, cause: "test" } };
+    const activated = { ...trigger, id: "mixed-activated", label: "Trigger Source · activated", trigger: undefined,
+      activated: { index: 0, text: "{T}: Draw a card.", cost: { manaValue: 0, raw: "{T}", symbols: [], hasVariable: false }, effect: { kind: "draw", amount: 1 } as const, targetKind: "none" as const, requiresTap: true, sacrificesSelf: false, lifeCost: 0, manaCost: null } };
+    const projected = projectGame({ ...source, stack: [trigger, activated, { id: "mixed-spell", controller: 1 as SeatId, card: spell, label: spell.name, targets: [], fromCommandZone: false, variableValue: 0, countered: false }] }, 0);
+    expect(projected.targetOptions.spell).toEqual([{ kind: "spell", stackId: "mixed-spell" }]);
+  });
   it("allows only unchanged-state mana/tap deltas and rejects City of Brass triggers", () => {
     const game = board();
     const action = legalActions(game, 0).find(a => a.action.type === "activate-mana")!.action;
