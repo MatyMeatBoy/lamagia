@@ -6821,8 +6821,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       for (const option of choice.options) {
         actions.push({
           action: { type: "choose-trigger-order", sourceId: choice.sourceId, triggerId: option.id },
-          label: `Poner primero: ${option.sourceCard.name}`,
-          note: option.definition.sourceText
+          label: `Poner ahora en la pila: ${option.sourceCard.name}`,
+          note: `${option.definition.sourceText} · Se coloca ahora; las siguientes quedarán debajo y resolverán después.`
         });
       }
       return actions;
