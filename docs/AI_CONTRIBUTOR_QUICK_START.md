@@ -56,6 +56,12 @@ current explicit completion push is Commander 2013: after checking claims,
 workers should keep drawing unclaimed C13 card clusters until the set is
 closed, while still extracting reusable primitives for every other set:
 
+The integrator has audited the current legacy worker tail. Do not import the
+old Devour implementation wholesale: Devour is a replacement effect applied
+as a creature enters (CR 702.79), not a triggered ability after entry. Rescue
+only focused diffs whose behavior and oracle mappings are verified on the
+current base.
+
 ```text
 npm run rules:engine:export
 npm run rules:near-complete
