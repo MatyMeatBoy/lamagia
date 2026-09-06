@@ -2703,7 +2703,18 @@ function dealDamageToPermanent(
 ): GameState {
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
-  if (sourceProfile && hasProtectionFrom(sourceProfile, cardProfile(permanent.card))) return state;
+  const targetProfile = cardProfile(permanent.card);
+  if (sourceProfile && hasProtectionFrom(sourceProfile, targetProfile)) return state;
+  const preventionCounter = targetProfile.preventsDamageByRemovingCounter;
+  if (preventionCounter && !permanentLosesAbilities(state, permanent) && (permanent.counters[preventionCounter] ?? 0) > 0) {
+    const next = withPlayer(state, permanent.controller, (player) => ({
+      ...player,
+      battlefield: player.battlefield.map((candidate) => candidate.instance_id === instanceId
+        ? { ...candidate, counters: { ...candidate.counters, [preventionCounter]: candidate.counters[preventionCounter]! - 1 } }
+        : candidate)
+    }));
+    return logged(next, permanent.controller, `${permanent.card.name} previene el daño y remueve un contador.`);
+  }
   const multiplier = source ? equippedCreatureDamageMultiplier(state, source.permanentId) : 1;
   const total = amount * multiplier + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller, combat) : 0);
   // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
