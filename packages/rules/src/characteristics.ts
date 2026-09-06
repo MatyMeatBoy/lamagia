@@ -1049,6 +1049,7 @@ export type TargetKind =
   | "creature-toughness-at-least-4"
   | "creature-power-at-most-4"
   | "creature-toughness-at-most-4"
+  | `creature-power-toughness-sum-at-most-${number}`
   | "creature-with-defender"
   | "creature-with-deathtouch"
   | "creature-with-lifelink"
@@ -4145,6 +4146,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target creature with power 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-power-at-most-4" };
   if (/^Destroy target creature with toughness 4 or greater$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-least-4" };
   if (/^Destroy target creature with toughness 4 or less$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-toughness-at-most-4" };
+  {
+    const sum = /^(?:Destroy|Exile) target creature with total power and toughness (\d+) or less$/i.exec(text);
+    if (sum) {
+      return {
+        effect: { kind: /^(?:Destroy)/i.test(text) ? "destroy-target-permanent" : "exile-target-permanent" },
+        target: `creature-power-toughness-sum-at-most-${Number(sum[1])}`
+      };
+    }
+  }
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
   if (/^Destroy target noncreature permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "noncreature-permanent" };
   if (/^Exile target (?:artifact or enchantment|nonland permanent|permanent|creature)$/i.test(text)) {
