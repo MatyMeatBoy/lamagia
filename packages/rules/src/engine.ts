@@ -898,9 +898,11 @@ function auraBonus(state: GameState | undefined, permanent: Permanent): { power:
   if (!state) return { power: 0, toughness: 0 };
   return attachedAuras(state, permanent).reduce((total, aura) => {
     const modification = cardProfile(aura.card).auraModification;
-    return modification
-      ? { power: total.power + modification.power, toughness: total.toughness + modification.toughness }
-      : total;
+    if (!modification) return total;
+    const multiplier = modification.scaling === "other-enchantments-on-battlefield"
+      ? Math.max(0, allPermanents(state).filter((candidate) => isEnchantment(cardProfile(candidate.card))).length - 1)
+      : 1;
+    return { power: total.power + modification.power * multiplier, toughness: total.toughness + modification.toughness * multiplier };
   }, { power: 0, toughness: 0 });
 }
 function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { power: number; toughness: number } {

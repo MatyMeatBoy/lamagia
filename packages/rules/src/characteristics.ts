@@ -312,6 +312,8 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Multiplier for a dynamic Aura bonus. */
+  readonly scaling?: "other-enchantments-on-battlefield";
   /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
   readonly characteristicSetting?: {
     readonly basePower: number;
@@ -1758,6 +1760,11 @@ function parseAuraModification(text: string): EquipmentModification | null {
       };
     }
     let match = /^enchanted creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
+    const counted = /^enchanted creature gets \+(\d+)\/\+(\d+) for each other enchantment on the battlefield$/i.exec(clean);
+    if (counted) return {
+      power: Number(counted[1]), toughness: Number(counted[2]), keywords: [],
+      scaling: "other-enchantments-on-battlefield", text: line.trim()
+    };
     if (match) {
       const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
@@ -4373,6 +4380,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^level\s+\d+(?:-\d+|\+)?$/i.test(line) || /^\d+\/\d+$/.test(line)) continue;
     if (parseEquipmentModification(line)) continue;
     if (parseAuraModification(line)) continue;
+    if (/^Enchanted creature gets \+\d+\/\+\d+ for each other enchantment on the battlefield\.?$/i.test(line)) continue;
     if (parseAuraControlTarget(line)) continue;
     // "Enchant creature/land/permanent/creature you control" (CR 303.4.5) is
     // an Aura's own targeting restriction, not a resolved effect — it becomes
