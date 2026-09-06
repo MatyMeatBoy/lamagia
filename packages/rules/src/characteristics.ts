@@ -781,6 +781,8 @@ export type SpellEffect =
       readonly kind: "add-mana-any-color";
       /** Restricts the offered choice to a fixed subset instead of all five colors (Xenagos, the Reveler). */
       readonly colors?: readonly MagicColor[];
+      /** When present, each unit may independently choose one offered color. */
+      readonly splitAmount?: "creatures-you-control";
       /** "X mana ..., where X is the number of creatures you control" (Xenagos, the Reveler): otherwise a single mana. */
       readonly amount?: "creatures-you-control";
     }
@@ -3055,7 +3057,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // simplification `add-mana-any-color` already makes for a single mana.
   if ((match = /^Add X mana in any combination of (\{[WUBRGC]\})(?:\s+and\/or\s+(\{[WUBRGC]\}))?, where X is the number of creatures you control$/i.exec(text))) {
     const colors = [match[1], match[2]].filter((symbol): symbol is string => Boolean(symbol)).map((symbol) => symbol.slice(1, -1).toUpperCase() as MagicColor);
-    if (colors.length) return { effect: { kind: "add-mana-any-color", colors, amount: "creatures-you-control" }, target: "none" };
+    if (colors.length) return { effect: { kind: "add-mana-any-color", colors, amount: "creatures-you-control", splitAmount: "creatures-you-control" }, target: "none" };
   }
   const targetOpponentToken = /^Target opponent creates (.+)$/i.exec(text)
     ?? /^Create (.+) under target opponent'?s control$/i.exec(text);

@@ -12107,6 +12107,19 @@ describe("Xenagos, the Reveler's creature-scaled mana and exile-batch loyalty ab
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === xenagos.instance_id)?.counters.loyalty).toBe(1);
   });
 
+  it("allows the creature-scaled mana to be split between both offered colors", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [XENAGOS(), BEAR(), TRAMPLER()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    const xenagos = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Xenagos, the Reveler")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: xenagos.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "choose-color");
+    const choice = game.pendingChoice as Extract<typeof game.pendingChoice, { type: "choose-color" }>;
+    game = applyAction(game, 0, { type: "choose-color", sourceId: choice.sourceId, color: "R", amount: 1 });
+    expect(game.players[0]!.manaPool.R).toBe(1);
+    expect(game.players[0]!.manaPool.G).toBe(1);
+  });
+
   it("exiles the top seven and lets the controller put any number of creature/land cards onto the battlefield", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, (player) => ({
