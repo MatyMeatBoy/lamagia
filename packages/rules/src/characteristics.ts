@@ -55,6 +55,8 @@ export interface ManaAbility {
   readonly sourceZone?: "battlefield" | "hand";
   /** Exile the source card as part of a hand-based mana cost (e.g. Simian Spirit Guide). */
   readonly exilesSelf?: boolean;
+  /** Sacrifice the source as part of the mana ability's activation cost (e.g. Treasure). */
+  readonly sacrificesSelf?: boolean;
   /** The mana types the controller may choose between for each mana produced. */
   readonly produces: readonly ManaType[];
   readonly amount: number;
@@ -1549,6 +1551,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const [, costText, effectText] = activated as unknown as [string, string, string];
     if (!/^add\b/i.test(effectText.trim())) continue;
     const requiresTap = /\{T\}/.test(costText);
+    const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText);
     // Modern Oracle uses either the printed name, `~`, or `this card` here.
     // All three mean the same hand-based mana ability (CR 605.1a); do not let
     // a wording variant make a fast-mana card look like a normal cast only.
@@ -1680,6 +1683,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
       ...(instruction.requiresLands === undefined ? {} : { requiresLands: instruction.requiresLands }),
       ...(instruction.activationRestriction === undefined ? {} : { activationRestriction: instruction.activationRestriction }),
       ...(manaCost ? { manaCost } : {}),
+      ...(sacrificesSelf ? { sacrificesSelf: true } : {}),
       requiresTap, lifeCost: lifeCost + (instruction.painDamage ?? 0), text: line.trim()
     });
   }
