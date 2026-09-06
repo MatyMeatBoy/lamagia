@@ -3,7 +3,7 @@
 > Generado por `tools/rules/export_set_coverage.py`. La cobertura se calcula por `oracle_id`: las reimpresiones comparten lógica, pero cada edición conserva su lista de pendientes.
 > Un porcentaje de 100% significa que todas las cartas jugables únicas de esa edición tienen un perfil completamente ejecutable; no es una afirmación de que todas las reglas de Magic estén modeladas.
 
-Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,083** · cobertura: **33.0%**
+Ediciones: **685** · pertenencias únicas: **84,990** · implementadas: **28,085** · cobertura: **33.0%**
 > Fuera del roadmap por ahora: **23** ediciones Alchemy (exclusivas de Arena) y Un- (sets de broma).
 
 ## Resumen cronológico
@@ -28,7 +28,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | 1995-06-03 | Ice Age (`ICE`) | expansion | ice-age | main | 373 | 94 | 279 | 25.2% |
 | 1995-07-01 | Chronicles (`CHR`) | masters-remastered | chronicles | other | 116 | 29 | 87 | 25.0% |
 | 1995-07-01 | Chronicles Foreign Black Border (`BCHR`) | masters-remastered | chronicles-foreign-black-border | other | 116 | 29 | 87 | 25.0% |
-| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 97 | 45 | 52 | 46.4% |
+| 1995-07-01 | Media and Collaboration Promos (`PMEI`) | promos | media-and-collaboration | other | 94 | 44 | 50 | 46.8% |
 | 1995-08-01 | Renaissance (`REN`) | masters-remastered | renaissance | other | 122 | 38 | 84 | 31.1% |
 | 1995-08-01 | Rinascimento (`RIN`) | masters-remastered | rinascimento | other | 60 | 12 | 48 | 20.0% |
 | 1995-10-01 | Homelands (`HML`) | expansion | 1990s | main | 115 | 35 | 80 | 30.4% |
@@ -537,7 +537,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | 2022-08-01 | Summer Vacation Promos 2022 (`PSVC`) | promos | summer-vacation-2022 | other | 3 | 2 | 1 | 66.7% |
 | 2022-09-02 | 30th Anniversary Misc Promos (`P30M`) | promos | 30th-anniversary-misc | other | 3 | 2 | 1 | 66.7% |
 | 2022-09-02 | 30th Anniversary Play Promos (`P30A`) | promos | 30th-anniversary-play | other | 30 | 16 | 14 | 53.3% |
-| 2022-09-09 | Dominaria United (`DMU`) | expansion | dominaria | main | 288 | 84 | 204 | 29.2% |
+| 2022-09-09 | Dominaria United (`DMU`) | expansion | dominaria | main | 288 | 85 | 203 | 29.5% |
 | 2022-09-09 | Dominaria United Commander (`DMC`) | commander | 2022 | commander | 192 | 76 | 116 | 39.6% |
 | 2022-09-09 | Dominaria United Promos (`PDMU`) | promos | dominaria-united | other | 81 | 12 | 69 | 14.8% |
 | 2022-10-01 | Regional Championship Qualifiers 2022 (`PRCQ`) | promos | regional-2022 | other | 3 | 2 | 1 | 66.7% |
@@ -607,7 +607,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | 2024-02-23 | Ravnica: Clue Edition (`CLU`) | supplemental | ravnica-clue-edition | other | 268 | 131 | 137 | 48.9% |
 | 2024-03-08 | Fallout (`PIP`) | commander | 2024 | commander | 336 | 118 | 218 | 35.1% |
 | 2024-04-19 | Breaking News (`OTP`) | masterpieces | breaking-news | other | 65 | 12 | 53 | 18.5% |
-| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 2 | 3 | 40.0% |
+| 2024-04-19 | Love Your LGS 2024 (`PLG24`) | promos | lgs-2024 | other | 5 | 3 | 2 | 60.0% |
 | 2024-04-19 | Outlaws of Thunder Junction (`OTJ`) | expansion | thunder-junction | main | 276 | 49 | 227 | 17.8% |
 | 2024-04-19 | Outlaws of Thunder Junction Commander (`OTC`) | commander | 2024 | commander | 306 | 121 | 185 | 39.5% |
 | 2024-04-19 | Outlaws of Thunder Junction Promos (`POTJ`) | promos | outlaws-of-thunder-junction | other | 80 | 5 | 75 | 6.2% |
@@ -688,8 +688,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | 2026-06-26 | Marvel Super Heroes Commander (`MSC`) | commander | 2026 | commander | 616 | 168 | 448 | 27.3% |
 | 2026-08-14 | The Hobbit (`HOB`) | expansion | 2020s | main | 193 | 42 | 151 | 21.8% |
 | 2026-08-14 | The Hobbit Eternal (`HOC`) | eternal | 2020s | other | 117 | 32 | 85 | 27.4% |
-| 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 50 | 71 | 41.3% |
-| 2026-10-02 | Reality Fracture (`FRA`) | expansion | 2020s | main | 24 | 4 | 20 | 16.7% |
+| 2026-09-02 | The Zeta Set (`SLZ`) | boxed-products | the-zeta-set | other | 121 | 51 | 70 | 42.1% |
+| 2026-10-02 | Reality Fracture (`FRA`) | expansion | 2020s | main | 23 | 4 | 19 | 17.4% |
 | 2026-10-02 | Reality Fracture Commander (`FRC`) | commander | 2026 | commander | 1 | 0 | 1 | 0.0% |
 | 2026-11-09 | Mystery Booster Commander Edition (`MBC`) | commander | 2026 | other | 80 | 8 | 72 | 10.0% |
 | 2026-11-13 | Star Trek (`TRK`) | expansion | 2020s | main | 91 | 32 | 59 | 35.2% |
@@ -737,7 +737,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | boxed-products | salvat-2005 | 1 | 285 | 110 | 175 | 38.6% |
 | boxed-products | salvat-2011 | 1 | 209 | 132 | 77 | 63.2% |
 | boxed-products | sega-dreamcast-cards | 1 | 10 | 0 | 10 | 0.0% |
-| boxed-products | the-zeta-set | 1 | 121 | 50 | 71 | 41.3% |
+| boxed-products | the-zeta-set | 1 | 121 | 51 | 70 | 42.1% |
 | commander | 2011 | 1 | 303 | 145 | 158 | 47.9% |
 | commander | 2012 | 1 | 18 | 8 | 10 | 44.4% |
 | commander | 2013 | 1 | 341 | 294 | 47 | 86.2% |
@@ -795,12 +795,12 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | expansion | 1990s | 11 | 1573 | 401 | 1172 | 25.5% |
 | expansion | 2000s | 19 | 3082 | 772 | 2310 | 25.0% |
 | expansion | 2010s | 14 | 2735 | 815 | 1920 | 29.8% |
-| expansion | 2020s | 17 | 3739 | 711 | 3028 | 19.0% |
+| expansion | 2020s | 17 | 3738 | 711 | 3027 | 19.0% |
 | expansion | alara | 2 | 379 | 166 | 213 | 43.8% |
 | expansion | amonkhet | 1 | 272 | 108 | 164 | 39.7% |
 | expansion | bloomburrow | 1 | 280 | 50 | 230 | 17.9% |
 | expansion | capenna | 1 | 310 | 56 | 254 | 18.1% |
-| expansion | dominaria | 2 | 553 | 175 | 378 | 31.6% |
+| expansion | dominaria | 2 | 553 | 176 | 377 | 31.8% |
 | expansion | eldraine | 2 | 567 | 143 | 424 | 25.2% |
 | expansion | ice-age | 1 | 373 | 94 | 279 | 25.2% |
 | expansion | innistrad | 4 | 1103 | 289 | 814 | 26.2% |
@@ -1061,7 +1061,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | promos | lgs-2020 | 1 | 2 | 2 | 0 | 100.0% |
 | promos | lgs-2021 | 1 | 9 | 0 | 9 | 0.0% |
 | promos | lgs-2022 | 1 | 2 | 2 | 0 | 100.0% |
-| promos | lgs-2024 | 1 | 5 | 2 | 3 | 40.0% |
+| promos | lgs-2024 | 1 | 5 | 3 | 2 | 60.0% |
 | promos | lgs-2025 | 1 | 2 | 2 | 0 | 100.0% |
 | promos | lorwyn | 1 | 3 | 1 | 2 | 33.3% |
 | promos | lorwyn-eclipsed | 1 | 80 | 6 | 74 | 7.5% |
@@ -1091,7 +1091,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 | promos | march-of-the-machine-the-aftermath | 1 | 8 | 0 | 8 | 0.0% |
 | promos | marvel-legends-series-inserts | 1 | 4 | 0 | 4 | 0.0% |
 | promos | marvel-s-spider-man | 1 | 68 | 1 | 67 | 1.5% |
-| promos | media-and-collaboration | 1 | 97 | 45 | 52 | 46.4% |
+| promos | media-and-collaboration | 1 | 94 | 44 | 50 | 46.8% |
 | promos | mercadian-masques | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin | 1 | 1 | 0 | 1 | 0.0% |
 | promos | mirrodin-besieged | 1 | 4 | 1 | 3 | 25.0% |
@@ -3726,7 +3726,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 - [ ] Daxos, Blessed by the Sun — `9d3c7c96-056f-408e-a834-fa45a430d3d4`
 - [ ] Duress — `33d405ea-7a9a-4970-b70f-9c05d90dd6f0`
 - [ ] Dáin Ironfoot — `9924c189-3c82-431a-b570-7805b2a406f0`
-- [ ] Final Showdown — `7e7ec3d6-a84f-4cc3-93f4-4d181d41e126`
 - [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
 - [ ] Frantic Search — `16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c`
 - [ ] Gingerbrute — `10b8d4c7-7553-4d76-b643-d98b80701e13`
@@ -3746,7 +3745,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 - [ ] Patchwork Banner — `4fb00dbe-1f82-4ba6-b18c-97e816d10d3a`
 - [ ] Peter Parker // Amazing Spider-Man — `f1b7488c-c675-42e9-818a-24a50347ec2c`
 - [ ] Phantasmal Dragon — `7f32c581-4d4a-4873-8e4b-b95e13790481`
-- [ ] Picard, Steadfast Captain — `cda786aa-1259-45e8-a834-21c7ad0259a6`
 - [ ] Pyromancer's Gauntlet — `5cbb70e7-a52c-4b35-bc31-d9a0a7df893c`
 - [ ] Sandbar Crocodile — `e11926bf-ca14-4e1e-aca5-9ffedb91868c`
 - [ ] Scent of Cinder — `ff50d002-834e-4b5e-8db0-b0c8b4efb21f`
@@ -42861,7 +42859,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 - [ ] Coral Colony — `5e186931-992b-491c-bffc-6877a613d5c3`
 - [ ] Cosmic Epiphany — `fad32e19-2eda-46b7-8d3c-b95a7dbeabc2`
 - [ ] Cult Conscript — `e5762815-5fc3-4ae7-abee-69f27c5e4e90`
-- [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
 - [ ] Danitha, Benalia's Hope — `43b5dbe9-41f7-4082-944b-ea9d6292c6fd`
 - [ ] Defiler of Dreams — `9d4ec5e5-5520-45c3-8071-53191811117d`
 - [ ] Defiler of Faith — `88ac2d09-7993-4bce-8aae-b2683c5c25a5`
@@ -50564,7 +50561,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 
 ### promos / lgs-2024 · Love Your LGS 2024 (`PLG24`)
 
-- [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
 - [ ] Lay Down Arms — `aa91d092-7f4a-4e4d-85db-e200692f3d9d`
 - [ ] Sheoldred's Edict — `217062f5-96f1-454c-9507-17f34ef37070`
 
@@ -59820,7 +59816,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 - [ ] Clown Car — `e0a6947f-3d52-45e0-8fd7-0bc07cc8c784`
 - [ ] Copper Tablet — `16d1023b-2162-4010-8bf4-218dbe7c99a0`
 - [ ] Cruel Reality — `2e3cc9b6-7849-4385-a487-c8f5364174e7`
-- [ ] Cut Down — `1b30210d-10e9-4703-8967-032063bb4f26`
 - [ ] Darksteel Monolith — `fdd3482d-7bce-411b-80c4-956a12fc143d`
 - [ ] Dig Through Time — `f8b17b89-26ce-4208-874a-9e1d66514640`
 - [ ] Disintegrate — `92d6af2f-728e-4e41-87cb-5c90878a2f2f`
@@ -59891,7 +59886,6 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,08
 - [ ] Enlightened Confidant — `a139eb7f-3853-490c-a839-35d0e5aed7b5`
 - [ ] Garruk, Curse Breaker — `184d4672-05a9-4182-8b3f-3561fb33ed62`
 - [ ] Garruk, Veiled Butcher — `4a6972fe-348a-4a19-a1d0-bdf8f1f9c792`
-- [ ] Generous Revival — `f8601f5f-0f7c-4689-9d15-137f1e82c49c`
 - [ ] Liliana the Faultless — `22c2e66d-a2a1-46db-a70a-dff5ad5d6c14`
 - [ ] Liliana the Repentant — `5eb4403f-f199-4f75-a7c6-e76783f9b07d`
 - [ ] Perfected Theory — `d824a319-fa74-42e4-9cbe-dba1576d6bad`
