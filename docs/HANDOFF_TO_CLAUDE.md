@@ -5682,3 +5682,58 @@ plus every other catalog card sharing Chandra's Outrage's damage
 template); set coverage holds at 32.9%. Validation: full **862** rules
 tests green, `npm run check` across all four workspaces, 200/200
 simulated games.
+
+Pushing that merge-fix was ALSO rejected: another worker had, in the
+meantime, pushed their own fix for the same broken commit
+(`1885a52`, "fix(rules): resolve Phantom Nantuko merge markers") —
+merging it produced genuine, correctly-flagged conflicts (unlike the
+silent one that started this). Their fix took the opposite, more
+conservative approach: rather than completing Phantom Nantuko's
+feature, they just deleted BOTH sides' substantive content at each
+marker site, effectively reverting their own broken commit to nothing.
+Resolved in favor of keeping this session's completed, tested version
+(already 862 green tests) over discarding real, working functionality —
+BUT re-auditing my own prior resolution one more time in the process
+caught a genuine mistake in it: a skip-line for Marath, Will of the
+Wild's "~ enters with a number of +1/+1 counters on it equal to the
+amount of mana spent to cast it" had been kept from the broken
+commit's conflict hunk alongside Phantom Nantuko's (legitimate) one,
+but grepping the whole codebase for `entersWithSpentManaCounters` (and
+any consuming logic for "mana spent to cast it" as a counters trigger)
+turns up nothing — that skip-line has NO backing implementation, so
+keeping it alone would make Marath falsely claim `fullyImplemented`
+while doing nothing at runtime, which is worse than correctly flagging
+it unimplemented. Removed just that one line (with an explanatory
+comment marking Marath as an unclaimed near-complete card) while
+keeping Phantom Nantuko's own skip-line, which DOES have real backing
+(`preventsDamageByRemovingCounter`, already tested and passing).
+
+The re-merged tree also pulled in two more of that same worker's
+commits (`9abe84e`/`5c3b214`, wiring Treasure's predefined token text
+to `"{T}, Sacrifice this artifact: Add one mana of any color."`),
+which surfaced a SECOND genuine, previously-latent gap: `ManaAbility`
+had no way to model a mana ability whose OWN cost sacrifices its
+source (`parseManaAbilities`'s leftover-stripping explicitly excluded
+sacrifice costs by design, per its own comment, since real Magic
+rarely combines the two outside of Treasure). Added a new
+`sacrificesSelf?: boolean` field, a strip for `sacrifice ~` in the
+leftover computation (case-sensitive to `normalizedOracle`'s own
+`this artifact/permanent` → `~` folding — note the trailing `\b` in an
+early draft of this regex silently never matched after `~`, since `~`
+is a non-word character and generally sits next to other non-word
+punctuation, catching this via direct probing rather than just trusting
+the type-checker), and an `applyActivateMana` step that sacrifices the
+source (via the existing `movePermanentToZone` helper) once the mana
+resolves. The merged-in Treasure gameplay test itself had a second,
+independent bug — it grabbed WHATEVER color `legalActions` listed
+first for the "any color" choice via a bare `.find()`, then asserted
+that color was specifically green, an assertion that only coincidentally
+could pass and was never actually run before being committed; fixed
+the test to explicitly select the green option it meant to test rather
+than leaving color selection to array-order luck.
+
+Verified the export count holds at **10,844** (Marath's false claim
+removed roughly offsets Treasure's newly-unblocked printings). Set
+coverage holds at 32.9%. Validation: full **864** rules tests green,
+`npm run check` across all four workspaces, `npx vitest run
+services/match-server/src` (6 passed), 200/200 simulated games.

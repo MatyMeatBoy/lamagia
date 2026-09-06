@@ -7,6 +7,13 @@ function card(overrides: Partial<CardData> & { name: string; type_line: string }
   return { scryfall_id: `test-${counter}`, mana_cost: "", cmc: 0, ...overrides };
 }
 
+describe("predefined tokens", () => {
+  it("assigns Treasure its CR 111.10 mana ability text", () => {
+    const profile = cardProfile(card({ name: "Test", type_line: "Artifact", oracle_text: "Create a Treasure token." }));
+    expect(profile.effects[0]).toMatchObject({ kind: "create-token", token: { name: "Treasure", oracleText: "{T}, Sacrifice this artifact: Add one mana of any color." } });
+  });
+});
+
 describe("type line parsing", () => {
   it("splits supertypes, types and subtypes", () => {
     const profile = cardProfile(card({ name: "Test Angel", type_line: "Legendary Creature — Phyrexian Angel" }));

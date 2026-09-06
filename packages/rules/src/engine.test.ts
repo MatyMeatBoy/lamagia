@@ -160,6 +160,18 @@ describe("smart counter response and safe mana undo", () => {
     const battlefieldGuide = putOnBattlefield(twoSeatGame([], []), 0, [guide]);
     expect(projectGame(battlefieldGuide, 0).players[0]!.battlefield[0]!.producesMana).toBe(false);
   });
+  it("executes a Treasure token's sacrifice-for-mana ability", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [make({ name: "Treasure", type_line: "Artifact — Treasure", oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color." })]);
+    const treasure = game.players[0]!.battlefield[0]!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate-mana"
+      && entry.cardId === treasure.instance_id && entry.action.mana === "G");
+    expect(action?.action).toMatchObject({ type: "activate-mana", mana: "G" });
+    game = applyAction(game, 0, action!.action);
+    expect(game.players[0]!.battlefield).toHaveLength(0);
+    expect(game.players[0]!.manaPool.G).toBe(1);
+  });
+
   it("keeps `this card` fast mana and casting as separate legal hand actions", () => {
     let game = twoSeatGame([], []);
     const guide = make({

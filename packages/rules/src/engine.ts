@@ -8488,8 +8488,14 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   const withManaTapEvent = ability.requiresTap
     ? raiseEvent(tapped, { kind: "taps-for-mana", permanentId: source.instance_id, controller: seat, card: source.card })
     : tapped;
+  const withSacrifice = ability.sacrificesSelf
+    ? (() => {
+        const toSacrifice = playerAt(withManaTapEvent, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
+        return toSacrifice ? movePermanentToZone(withManaTapEvent, toSacrifice, "graveyard") : withManaTapEvent;
+      })()
+    : withManaTapEvent;
   const output = [...outputTypes, ...(manaBonus ? [manaBonus] : [])].map((mana) => `{${mana}}`).join("");
-  return logged(withManaTapEvent, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
+  return logged(withSacrifice, seat, `${player.name} activa ${source.card.name} y agrega ${output}.`);
 }
 
 function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cycle" }>): GameState {

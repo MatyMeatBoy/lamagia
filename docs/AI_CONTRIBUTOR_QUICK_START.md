@@ -32,6 +32,9 @@ For token work, read [`TOKEN_INVENTORY.md`](TOKEN_INVENTORY.md) and
 (`token-trigger`, `token-activated`, `token-keyword`, or `token-zone-effect`)
 and preserve the set/printing mapping; do not implement the same token
 definition once per artwork.
+Predefined tokens are not automatically executable: verify their CR 111.10
+abilities and model sacrifice costs/restrictions as shared token primitives
+with scenario tests before marking them complete.
 
 Regenerate the token queue from the catalog before assigning a large batch:
 

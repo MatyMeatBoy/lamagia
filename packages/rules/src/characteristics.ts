@@ -55,6 +55,8 @@ export interface ManaAbility {
   readonly sourceZone?: "battlefield" | "hand";
   /** Exile the source card as part of a hand-based mana cost (e.g. Simian Spirit Guide). */
   readonly exilesSelf?: boolean;
+  /** Sacrifice the source permanent as part of this mana ability's own cost (Treasure, CR 111.10). */
+  readonly sacrificesSelf?: boolean;
   /** The mana types the controller may choose between for each mana produced. */
   readonly produces: readonly ManaType[];
   readonly amount: number;
@@ -426,7 +428,8 @@ export interface TokenDefinition {
  */
 export const PREDEFINED_TOKEN_TEXT: Readonly<Record<string, string>> = {
   clue: "{2}, Sacrifice this artifact: Draw a card.",
-  food: "{2}, {T}, Sacrifice this artifact: You gain 3 life."
+  food: "{2}, {T}, Sacrifice this artifact: You gain 3 life.",
+  treasure: "{T}, Sacrifice this artifact: Add one mana of any color."
 };
 
 /** A closed set of effects the engine executes. Everything else is flagged unimplemented. */
@@ -1605,14 +1608,21 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     const removeCounters = counterMatch && counterAmount
       ? [{ kind: counterMatch[1]!.trim().replace(/\s+/g, " ").toLowerCase(), amount: counterAmount }]
       : [];
-    // Costs beyond tapping, life, counters on the source, and mana are not
-    // modeled here; sacrifice/discard still stay excluded from mana abilities.
+    // Costs beyond tapping, life, counters on the source, mana, and
+    // sacrificing the source itself are not modeled here; discard still
+    // stays excluded from mana abilities.
     const manaSymbols = (costText.match(/\{[^}]+\}/g) ?? []).filter((symbol) => !/^\{[TQ]\}$/i.test(symbol));
     const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
     if (manaSymbols.length && !manaCost) continue;
+    // "{T}, Sacrifice this artifact: Add one mana of any color." (Treasure,
+    // CR 111.10): the only common mana ability whose cost includes
+    // sacrificing its own source. `normalizedOracle` already folds "this
+    // artifact"/"this permanent" into `~` before this text is ever seen here.
+    const sacrificesSelf = /sacrifice\s+~/i.test(costText);
     const leftovers = costText
       .replace(/exile\s+(?:~|this\s+card)\s+from\s+your\s+hand/gi, "")
       .replace(new RegExp(`exile\\s+(?:${escapedSelfNames.join("|")})\\s+from\\s+your\\s+hand`, "gi"), "")
+      .replace(/sacrifice\s+~/gi, "")
       .replace(/\{T\}/g, "")
       .replace(/\{[^}]+\}/g, "")
       .replace(/pay\s+\d+\s+life/gi, "")
@@ -1673,6 +1683,7 @@ function parseManaAbilities(card: CardData, text: string): ManaAbility[] {
     abilities.push({
       index: abilities.length, produces: produced.produces, amount: produced.amount,
       ...(exilesSelfFromHand ? { sourceZone: "hand" as const, exilesSelf: true } : {}),
+      ...(sacrificesSelf ? { sacrificesSelf: true } : {}),
       ...(produced.fixedProduces ? { fixedProduces: produced.fixedProduces } : {}),
       ...(produced.commanderIdentity ? { commanderIdentity: true } : {}),
       ...(instruction.commanderEntryCounters ? { commanderEntryCounters: true } : {}),
@@ -4781,7 +4792,14 @@ function recognizeText(text: string): RecognizedText {
     // unconsumed and still reported as unimplemented.
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
     if (/^~\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+[+\-\w/ ]+?\s+counters?\s+on\s+it\.?$/i.test(line)) continue;
-    if (/^~\s+enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast it\.?$/i.test(line)) continue;
+    // NOTE: a sibling skip-line for "~ enters with a number of +1/+1
+    // counters on it equal to the amount of mana spent to cast it" (Marath,
+    // Will of the Wild) was deliberately NOT restored here — grepping this
+    // codebase for `entersWithSpentManaCounters` and "mana spent to cast it"
+    // (as a counters trigger) turns up no consuming field or engine logic
+    // anywhere, so that skip-line alone would make Marath falsely report
+    // fullyImplemented while doing nothing at runtime. See the merge-fix
+    // commit for the full story; Marath is an unclaimed near-complete card.
     if (/^if damage would be dealt to (?:this creature|~), prevent that damage\. remove a (?:[+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter from (?:this creature|~)\.?$/i.test(line)) continue;
     // Shock lands ("As ~ enters, you may pay 2 life. If you don't, it enters
     // tapped.") and reveal lands ("...you may reveal a <type> card from your

@@ -35,6 +35,17 @@ predefined/no-text tokens. The latter still require the engine's CR 111.10
 definition when their built-in abilities matter (for example Treasure, Food,
 Clue, and Blood); artwork completeness does not imply rules completeness.
 
+## Predefined-token implementation queue
+
+The current engine executes Clue and Food token activations through explicit
+token Oracle text. Treasure, Gold, Blood, Powerstone, Map, Junk, Lander,
+Mutagen, and other predefined tokens remain artwork/data-complete but must not
+be marked fully executable until their sacrifice costs, mana restrictions,
+target choices, and activation-speed rules have scenario coverage. Implement
+these as shared token primitives keyed by normalized `tokenKey`, never as
+card-name branches. Each worker must claim one token cluster, add a rules
+scenario, and preserve the originating set for artwork selection.
+
 The rules engine carries the creating card's `set_code` through every generated
 token, including copy, amass, replacement, and targeted-player effects. The
 match server uses that value only for artwork selection; it never affects rules
