@@ -5612,3 +5612,24 @@ the identical `grantedManaAbilities` code path — a second full
 scenario run would only re-exercise, not add, coverage). Validation:
 full **858** rules tests green (1 new), `npm run check` across all
 four workspaces, 200/200 simulated games.
+
+Ramunap Excavator ("You may play lands from your graveyard.") is the
+exact graveyard-side sibling of Oracle of Mul Daya's existing
+"play lands from the top of your library" static permission — same
+shape (a `CardProfile` boolean flag, a `canPlayLandsFromX(state, seat)`
+board-check helper, an offering loop in `legalActions`, and an
+acceptance branch in `applyPlayLand`), just reading `player.graveyard`
+instead of `player.library[0]`. Added `CardProfile.playLandsFromGraveyard`,
+a `canPlayLandsFromGraveyard` helper, a loop over every land card in
+the graveyard in `legalActions` (unlike the top-of-library case, which
+only ever has ONE candidate, the graveyard can hold several playable
+lands at once), and a `fromGraveyard` branch in `applyPlayLand`
+removing the played card from the graveyard instead of the hand or
+library. Verified **+5** in the export count (10,831 → 10,836 —
+Crucible of Worlds shares this exact wording); set coverage holds at
+32.9%. Scenario-tested: with a Mountain staged in the graveyard,
+`legalActions` offers playing it and doing so moves it to the
+battlefield and out of the graveyard; without the static permission
+the same action is absent. Validation: full **861** rules tests green
+(3 new), `npm run check` across all four workspaces, 200/200 simulated
+games.

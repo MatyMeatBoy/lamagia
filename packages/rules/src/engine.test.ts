@@ -11146,6 +11146,37 @@ describe("Oracle of Mul Daya's top-of-library land drop and public reveal", () =
   });
 });
 
+describe("Ramunap Excavator's graveyard land drop", () => {
+  const RAMUNAP_EXCAVATOR = () => make({ name: "Ramunap Excavator", type_line: "Creature — Snake Cleric", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "3", oracle_text: "You may play lands from your graveyard." });
+
+  it("recognizes the static permission", () => {
+    expect(profileOf(RAMUNAP_EXCAVATOR())).toMatchObject({ fullyImplemented: true, playLandsFromGraveyard: true });
+  });
+
+  it("offers and resolves playing a land straight from the graveyard", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [RAMUNAP_EXCAVATOR()]);
+    game = stage(game, 0, (player) => ({ graveyard: [...toHand(0, [MOUNTAIN()], "excavator-yard"), ...player.graveyard] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+
+    const actions = legalActions(game, 0);
+    expect(actions.some((entry) => entry.action.type === "play-land" && entry.action.cardId === "excavator-yard-0")).toBe(true);
+
+    const graveyardSizeBefore = game.players[0]!.graveyard.length;
+    game = applyAction(game, 0, { type: "play-land", cardId: "excavator-yard-0" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Mountain")).toBe(true);
+    expect(game.players[0]!.graveyard).toHaveLength(graveyardSizeBefore - 1);
+  });
+
+  it("does not offer a graveyard land drop without the static permission", () => {
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, (player) => ({ graveyard: [...toHand(0, [MOUNTAIN()], "no-excavator-yard"), ...player.graveyard] }));
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const actions = legalActions(game, 0);
+    expect(actions.some((entry) => entry.action.type === "play-land" && entry.action.cardId === "no-excavator-yard-0")).toBe(false);
+  });
+});
+
 describe("Ogre Battledriver pumps and hastes another entering creature", () => {
   const OGRE_BATTLEDRIVER = () => make({
     name: "Ogre Battledriver", type_line: "Creature — Ogre Warrior", mana_cost: "{3}{R}{R}", cmc: 5, power: "4", toughness: "4",

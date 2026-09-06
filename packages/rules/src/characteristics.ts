@@ -1163,6 +1163,8 @@ export interface CardProfile {
   readonly extraLandDropsPerTurn: number;
   /** "You may play lands from the top of your library" (Oracle of Mul Daya, CR 305.1). */
   readonly playLandsFromTopOfLibrary: boolean;
+  /** "You may play lands from your graveyard" (Ramunap Excavator, CR 305.1). */
+  readonly playLandsFromGraveyard: boolean;
   /** "Play with the top card of your library revealed" (Oracle of Mul Daya): public information, not merely visible to its controller. */
   readonly revealsTopOfLibrary: boolean;
   /** "As an additional cost to cast ~, exile X cards from your graveyard" (Skeletal Scrying, CR 601.2b). */
@@ -4833,6 +4835,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^you\s+may\s+play\s+(?:a|an|one|two|three)\s+additional\s+lands?\s+on\s+each\s+of\s+your\s+turns\.?$/i.test(line)) continue;
     // Oracle of Mul Daya (CR 305.1): consumed into CardProfile.playLandsFromTopOfLibrary.
     if (/^you\s+may\s+play\s+lands\s+from\s+the\s+top\s+of\s+your\s+library\.?$/i.test(line)) continue;
+    // Ramunap Excavator (CR 305.1): consumed into CardProfile.playLandsFromGraveyard.
+    if (/^you\s+may\s+play\s+lands\s+from\s+your\s+graveyard\.?$/i.test(line)) continue;
     // Consumed into CardProfile.revealsTopOfLibrary; the engine exposes the top
     // card as public information in the projection rather than a one-shot effect.
     if (/^play\s+with\s+the\s+top\s+card\s+of\s+your\s+library\s+revealed\.?$/i.test(line)) continue;
@@ -5633,6 +5637,7 @@ export function cardProfile(card: CardData): CardProfile {
     .find((match): match is RegExpExecArray => match !== null);
   const extraLandDropsPerTurn = extraLandDropsMatch ? toNumber(extraLandDropsMatch[1]) ?? 1 : 0;
   const playLandsFromTopOfLibrary = text.split("\n").some((line) => /^you may play lands from the top of your library$/i.test(line.trim().replace(/\.$/, "")));
+  const playLandsFromGraveyard = text.split("\n").some((line) => /^you may play lands from your graveyard$/i.test(line.trim().replace(/\.$/, "")));
   const revealsTopOfLibrary = text.split("\n").some((line) => /^play with the top card of your library revealed$/i.test(line.trim().replace(/\.$/, "")));
   const giftPromisedMatch = text.split("\n").flatMap((line) => line.split(SENTENCE_SPLIT)).map((sentence) => /^if the gift was promised, instead (.+)$/i.exec(sentence.trim().replace(/\.$/, ""))).find((match): match is RegExpExecArray => match !== null);
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
@@ -5773,6 +5778,7 @@ export function cardProfile(card: CardData): CardProfile {
     entersPrepared,
     extraLandDropsPerTurn,
     playLandsFromTopOfLibrary,
+    playLandsFromGraveyard,
     revealsTopOfLibrary,
     flashbackCost,
     kickedEffects: recognized.kickedEffects ?? [],

@@ -7052,6 +7052,11 @@ function canPlayLandsFromLibraryTop(state: GameState, seat: SeatId): boolean {
   return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).playLandsFromTopOfLibrary);
 }
 
+/** "You may play lands from your graveyard" (Ramunap Excavator, CR 305.1). */
+function canPlayLandsFromGraveyard(state: GameState, seat: SeatId): boolean {
+  return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).playLandsFromGraveyard);
+}
+
 /** "Play with the top card of your library revealed": public information, exposed in the projection for every viewer. */
 export function revealsTopOfLibrary(state: GameState, seat: SeatId): boolean {
   return playerAt(state, seat).battlefield.some((permanent) => cardProfile(permanent.card).revealsTopOfLibrary);
@@ -7707,6 +7712,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const topCard = player.library[0];
     if (topCard && isLand(cardProfile(topCard)) && canPlayLandsFromLibraryTop(state, seat)) {
       actions.push({ action: { type: "play-land", cardId: topCard.instance_id }, label: `Jugar ${topCard.name} (desde arriba de tu biblioteca)`, cardId: topCard.instance_id });
+    }
+    if (canPlayLandsFromGraveyard(state, seat)) {
+      for (const card of player.graveyard) {
+        if (!isLand(cardProfile(card))) continue;
+        actions.push({ action: { type: "play-land", cardId: card.instance_id }, label: `Jugar ${card.name} (desde tu cementerio)`, cardId: card.instance_id });
+      }
     }
   }
 
@@ -9198,12 +9209,15 @@ function applyPlayLand(state: GameState, seat: SeatId, cardId: string): GameStat
   const fromHand = player.hand.find((candidate) => candidate.instance_id === cardId);
   const fromLibraryTop = !fromHand && player.library[0]?.instance_id === cardId && canPlayLandsFromLibraryTop(state, seat)
     ? player.library[0] : undefined;
-  const card = fromHand ?? fromLibraryTop;
+  const fromGraveyard = !fromHand && !fromLibraryTop && canPlayLandsFromGraveyard(state, seat)
+    ? player.graveyard.find((candidate) => candidate.instance_id === cardId) : undefined;
+  const card = fromHand ?? fromLibraryTop ?? fromGraveyard;
   if (!card || !isLand(cardProfile(card))) throw new Error("Esa carta no es una tierra jugable.");
   let next = withPlayer(state, seat, (current) => ({
     ...current,
     hand: fromHand ? current.hand.filter((candidate) => candidate.instance_id !== cardId) : current.hand,
     library: fromLibraryTop ? current.library.slice(1) : current.library,
+    graveyard: fromGraveyard ? current.graveyard.filter((candidate) => candidate.instance_id !== cardId) : current.graveyard,
     landsPlayedThisTurn: current.landsPlayedThisTurn + 1
   }));
   next = putOntoBattlefield(next, seat, card, false);
