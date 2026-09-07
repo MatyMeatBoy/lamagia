@@ -71,6 +71,11 @@ regenerates them after acceptance. If the patch does not apply cleanly, stop
 and send the compact report instead of force-merging or resolving by deleting
 either side.
 
+The integrator may have already rescued commits from this fork. Before
+starting a new task, compare against the published tip and do not resubmit
+`Flickerform`, `From the Ashes`, `Order of Succession`, `Mystic Barrier`, or
+any card already marked `[x]` in `docs/SET_COVERAGE.md`.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
