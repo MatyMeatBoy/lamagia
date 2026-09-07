@@ -777,6 +777,8 @@ export type SpellEffect =
   /** "You may return a [type] card from your graveyard to your hand" (Grapple with the Past): a non-targeted, type-filtered choice, not the normal target system (the Oracle text carries no "target"). */
   | { readonly kind: "return-graveyard-card-choice"; readonly types: readonly CardType[] }
   | { readonly kind: "return-target-artifact-and-gain-mana-value" }
+  /** Reincarnation remembers a chosen creature and watches it die this turn. */
+  | { readonly kind: "remember-target-creature-for-death-reanimate" }
   /** Return N random instant/sorcery cards from your graveyard to hand. */
   | { readonly kind: "return-random-instant-or-sorcery-from-graveyard"; readonly amount: number }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
