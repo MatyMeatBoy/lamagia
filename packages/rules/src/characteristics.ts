@@ -703,6 +703,7 @@ export type SpellEffect =
   | { readonly kind: "remove-all-counters-target" }
   | { readonly kind: "remove-all-counters-all-and-exile-tokens" }
   | { readonly kind: "destroy-target-creature" }
+  | { readonly kind: "destroy-target-creature-no-regeneration" }
   | { readonly kind: "destroy-target-creature-then-life-loss" }
   | { readonly kind: "destroy-target-creature-then-controller-token"; readonly token: TokenDefinition }
   | { readonly kind: "destroy-target-permanent-then-controller-token"; readonly token: TokenDefinition }
@@ -1032,6 +1033,8 @@ export interface TriggerDefinition {
   readonly discardedCardType?: "creature" | "land" | "noncreature-nonland";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
+  /** Specific optional kicker index required by this trigger (CR 702.33e). */
+  readonly requiresKicker?: number;
   /** "sacrifice it unless {U} was spent to cast it" gate (CR 603.4). */
   readonly requiresManaTypeNotSpent?: ManaType;
   /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
@@ -1187,6 +1190,8 @@ export interface CardProfile {
   /** Generic mana added for each target beyond the first (CR 601.2f). */
   readonly extraTargetCost: number | null;
   readonly kickerCost: ManaCost | null;
+  /** Independent optional kicker costs for "and/or" kicker (CR 702.33). */
+  readonly kickerOptions: readonly ManaCost[];
   /** Entwine additional cost for selecting every modal branch (CR 702.42). */
   readonly entwineCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
@@ -2484,6 +2489,7 @@ interface RecognizedText {
   overloadedEffects?: SpellEffect[];
   extraTargetCost?: number | null;
   kickerCost?: ManaCost | null;
+  kickerOptions?: ManaCost[];
   entwineCost?: ManaCost | null;
   graftAmount?: number | null;
   kickedEffects?: SpellEffect[];
@@ -3916,6 +3922,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target nonland permanent$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonland" };
   if (/^Destroy target nonartifact creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-creature" };
   if (/^Destroy target nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonblack-creature" };
+  if (/^Destroy target nonblack creature\. That creature can(?:'|’)t be regenerated$/i.test(text)) {
+    return { effect: { kind: "destroy-target-creature-no-regeneration" }, target: "nonblack-creature" };
+  }
   if (/^Destroy target nonartifact,? nonblack creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonartifact-nonblack-creature" };
   if (/^Destroy target non-Demon creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "non-demon-creature" };
   if (/^Destroy all creatures with flying$/i.test(text)) return { effect: { kind: "destroy-all-creatures", flyingOnly: true }, target: "none" };
@@ -4524,6 +4533,7 @@ function recognizeText(text: string): RecognizedText {
   let combatOnly = false;
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  let kickerOptions: ManaCost[] = [];
   let overloadCost: ManaCost | null = null;
   let extraTargetCost: number | null = null;
   let entwineCost: ManaCost | null = null;
@@ -4606,6 +4616,11 @@ function recognizeText(text: string): RecognizedText {
     const miracle = /^Miracle\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (miracle) { miracleCost = parseManaCost(miracle[1]!); continue; }
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
+    const multiKicker = /^Kicker\s+((?:\{[^}]+\})+)\s+and\/or\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (multiKicker) {
+      kickerOptions = [parseManaCost(multiKicker[1]!), parseManaCost(multiKicker[2]!)].filter((cost): cost is ManaCost => Boolean(cost));
+      continue;
+    }
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
     // Overload is an alternative cost that rewrites the spell's targets (CR 702.96).
@@ -5326,9 +5341,14 @@ function recognizeText(text: string): RecognizedText {
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
+      const kickerGate = /^if (?:it|this creature|this permanent|~) was kicked with its ((?:\{[^}]+\})+) kicker,\s*(.+)$/i.exec(effectText);
       const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
-      const requiresKicked = Boolean(kickedGate);
-      if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      const requiredKicker = kickerGate
+        ? kickerOptions.findIndex((cost) => cost.raw === kickerGate[1] || cost.raw.replace(/\s+/g, "") === kickerGate[1]!.replace(/\s+/g, ""))
+        : -1;
+      const requiresKicked = Boolean(kickedGate || kickerGate);
+      if (kickerGate) effectText = kickerGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      else if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // Well of Lost Dreams: X is chosen on resolution and capped by the life
       // gain event (CR 107.3, 118.3). Keep this as a reusable variable-cost
       // trigger shape instead of hard-coding the card in the engine.
@@ -5393,6 +5413,7 @@ function recognizeText(text: string): RecognizedText {
           ...(triggered.nontoken ? { nontoken: true } : {}),
           ...(triggered.discardedCardType ? { discardedCardType: triggered.discardedCardType } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
+          ...(requiredKicker >= 0 ? { requiresKicker: requiredKicker } : {}),
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
           ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
            ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {}),
@@ -5487,7 +5508,7 @@ function recognizeText(text: string): RecognizedText {
     ? [{ kind: "damage-each-opponent-creature" as const, amount: effects[0]!.amount, filter: "without-flying" as const }]
     : [];
   if (overloadCost && !overloadedEffects.length) unimplementedText.push(`Overload ${overloadCost.raw}`);
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, combatOnly, overloadCost, overloadedEffects, extraTargetCost, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, combatOnly, overloadCost, overloadedEffects, extraTargetCost, kickerCost, kickerOptions, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5827,6 +5848,7 @@ export function cardProfile(card: CardData): CardProfile {
   overloadedEffects: recognized.overloadedEffects ?? [],
     extraTargetCost: recognized.extraTargetCost ?? null,
     kickerCost: recognized.kickerCost ?? null,
+    kickerOptions: recognized.kickerOptions ?? [],
     suspendAmount: suspend?.amount ?? null,
     suspendCost: suspend?.cost ?? null,
     entwineCost: recognized.entwineCost ?? null,

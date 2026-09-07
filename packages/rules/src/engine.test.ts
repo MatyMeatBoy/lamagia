@@ -153,6 +153,12 @@ const C13_RUBINIA = () => make({
   oracle_text: "You may choose not to untap ~ during your untap step.\n{T}: Gain control of target creature for as long as you control ~ and ~ remains tapped.",
   oracle_id: "bd3eeaba-964b-49ea-bb11-5875a78b8a4c", scryfall_id: "bd3eeaba-964b-49ea-bb11-5875a78b8a4c"
 });
+const C13_STORMSCAPE_BATTLEMAGE = () => make({
+  name: "Stormscape Battlemage", type_line: "Creature — Human Wizard", mana_cost: "{2}{W}", cmc: 3,
+  power: "2", toughness: "2",
+  oracle_text: "Kicker {W} and/or {2}{B} (You may pay an additional {W} and/or {2}{B} as you cast this spell.)\nWhen this creature enters, if it was kicked with its {W} kicker, you gain 3 life.\nWhen this creature enters, if it was kicked with its {2}{B} kicker, destroy target nonblack creature. That creature can't be regenerated.",
+  oracle_id: "38ee748d-adcd-41df-9b23-d2a34829784c", scryfall_id: "38ee748d-adcd-41df-9b23-d2a34829784c"
+});
 const TREASURE_TOKEN = () => make({
   name: "Treasure", type_line: "Artifact — Treasure", token: true,
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
@@ -257,6 +263,23 @@ describe("Rubinia tapped-source control primitive", () => {
     game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: false } : permanent) }));
     game = settle(game);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(true);
+  });
+});
+
+describe("Independent kicker primitive", () => {
+  it("offers neither, either, and both kicker choices with the matching ETB gates", () => {
+    const battlemage = C13_STORMSCAPE_BATTLEMAGE();
+    const profile = cardProfile(battlemage);
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.kickerOptions.map((cost) => cost.raw)).toEqual(["{W}", "{2}{B}"]);
+    expect(profile.triggers.filter((trigger) => trigger.requiresKicker !== undefined)).toHaveLength(2);
+    let game = twoSeatGame([], [battlemage]);
+    game = { ...game, step: "precombat-main", activeSeat: 1, prioritySeat: 1, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: player.seat === 1 ? toHand(1, [battlemage]) : [], commandZone: [] })) };
+    game = putOnBattlefield(game, 0, [BEAR()]);
+    game = putOnBattlefield(game, 1, [PLAINS(), PLAINS(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
+    const both = legalActions(game, 1).find((entry) => entry.action.type === "cast" && entry.action.kickerOptions?.join(",") === "0,1");
+    expect(both).toBeDefined();
   });
 });
 

@@ -100,6 +100,7 @@ export interface Permanent {
   readonly counters: Readonly<Record<string, number>>;
   /** The spell that became this permanent was kicked (CR 702.33e). */
   readonly kicked?: boolean;
+  readonly kickerOptions?: readonly number[];
   readonly evoked?: boolean;
   /** This permanent's spell was cast from hand, as opposed to put onto the battlefield another way (CR 601). */
   readonly castFromHand?: boolean;
@@ -255,6 +256,8 @@ export interface StackObject {
   readonly counteredToLibrary?: "top" | "bottom";
   /** The spell was cast for its kicker cost (CR 702.33). */
   readonly kicked?: boolean;
+  /** Selected independent optional kicker indexes (CR 702.33). */
+  readonly kickerOptions?: readonly number[];
   /** The spell was cast for its Overload cost (CR 702.96). */
   readonly overloaded?: boolean;
   readonly evoked?: boolean;
@@ -799,7 +802,7 @@ export type PendingChoice =
 export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
-  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly overloaded?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly returnPermanentIds?: readonly string[]; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
+  | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly kickerOptions?: readonly number[]; readonly overloaded?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly returnPermanentIds?: readonly string[]; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
   | { readonly type: "suspend"; readonly cardId: string }
   | { readonly type: "cast-suspended"; readonly sourceId: string; readonly targets?: readonly Target[]; readonly variableValue?: number }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
@@ -2075,7 +2078,7 @@ function tokenAmount(state: GameState, amount: number): number {
   return doubled ? amount * 2 : amount;
 }
 
-function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = [], castVariableValue = 0): GameState {
+function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCommander: boolean, forceTapped = false, kicked = false, evoked = false, castFromHand = false, commanderEntryCounters = 0, castSpentMana: readonly ManaType[] = [], additionalCounters: readonly CounterCost[] = [], castVariableValue = 0, kickerOptions: readonly number[] = []): GameState {
   const enteringCard = uniqueTokenCard(state, card);
   const profile = cardProfile(enteringCard);
   const entryAdditionalCounters = [...additionalCounters, ...staticEntryCountersFor(state, seat, profile)];
@@ -2105,6 +2108,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     damage: 0,
     deathtouched: false,
     ...(kicked ? { kicked: true } : {}),
+    ...(kickerOptions.length ? { kickerOptions } : {}),
     ...(evoked ? { evoked: true } : {}),
     ...(castFromHand ? { castFromHand: true } : {}),
     ...(castSpentMana.length ? { castSpentMana } : {}),
@@ -2485,6 +2489,7 @@ function raiseEvent(
       if (!triggerMatches(state, { instanceId: watcher.instance_id, controller: watcher.controller }, definition, event)) continue;
       // "if it was kicked" gate (CR 702.33e): only the kicked cast fires it.
       if (definition.requiresKicked && !watcher.kicked) continue;
+      if (definition.requiresKicker !== undefined && !(watcher.kickerOptions ?? []).includes(definition.requiresKicker)) continue;
       if (definition.requiresEvoked && !watcher.evoked) continue;
       // "if you cast it from your hand" gate (Angel of the Dire Hour, CR 601.2a).
       if (definition.condition?.kind === "cast-from-hand" && !watcher.castFromHand) continue;
@@ -4507,6 +4512,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
+    }
+    case "destroy-target-creature-no-regeneration": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const marked = withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, cantRegenerateUntilEndOfTurn: true }
+          : candidate)
+      }));
+      const updated = findPermanent(marked, permanent.instance_id);
+      return updated ? destroyPermanent(marked, updated) : marked;
     }
     case "put-target-nonland-permanent-under-top": {
       const target = object.targets[0];
@@ -6646,7 +6665,7 @@ function resolveTop(state: GameState): GameState {
       ? [{ kind: profile.entersWithVariableCounters.kind, amount: object.variableValue }] : [];
     next = putOntoBattlefield(next, object.controller, object.card, isCommander, false, Boolean(object.kicked), Boolean(object.evoked), castFromHand,
       isCommander && object.commanderEntryCounters ? (playerAt(next, object.controller).commanderCasts[object.card.instance_id] ?? 0) : 0,
-      object.spentMana ?? [], [...(object.additionalCounters ?? []), ...variableEntryCounters], object.variableValue);
+      object.spentMana ?? [], [...(object.additionalCounters ?? []), ...variableEntryCounters], object.variableValue, object.kickerOptions ?? []);
     // CR 303.4h: an Aura enters the battlefield attached to the permanent it targeted.
     const enchantTarget = hasSubtype(profile, "Aura")
       ? object.targets.find((target) => target.kind === "permanent" || target.kind === "player")
@@ -7600,10 +7619,12 @@ function combinedModalChoice(profile: CardProfile): ModalChoice | null {
 }
 
 /** The mana cost a cast actually pays, after kicker/entwine (added) or evoke (replaces base). */
-function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean, entwined = false, overloaded = false): ManaCost {
+function spellCostOf(profile: CardProfile, kicked: boolean, evoked: boolean, entwined = false, overloaded = false, kickerIndexes: readonly number[] = []): ManaCost {
   if (evoked && profile.evokeCost) return profile.evokeCost;
   if (overloaded && profile.overloadCost) return profile.overloadCost;
-  const cost = withKicker(profile.cost!, kicked ? profile.kickerCost : null);
+  const cost = profile.kickerOptions.length
+    ? withKickerOptions(profile.cost!, kickerIndexes.map((index) => profile.kickerOptions[index]).filter((cost): cost is ManaCost => Boolean(cost)))
+    : withKicker(profile.cost!, kicked ? profile.kickerCost : null);
   return withKicker(cost, entwined ? profile.entwineCost : null);
 }
 
@@ -7615,7 +7636,7 @@ function controlsLandType(state: GameState, seat: SeatId, subtype: string): bool
   return playerAt(state, seat).battlefield.some((permanent) => isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), subtype));
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false, returnPermanentIds?: readonly string[], overloaded = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false, returnPermanentIds?: readonly string[], overloaded = false, kickerIndexes: readonly number[] = []): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (splitSecondActive(state)) return { legal: false };
@@ -7646,14 +7667,16 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
     ? profile.payReducedCostInstead
     : flashback
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
-    : spellCostOf(profile, kicked, evoked, entwined, overloaded);
+    : spellCostOf(profile, kicked, evoked, entwined, overloaded, kickerIndexes);
   const lifeCost = flashback
     ? profile.flashbackLifeCost
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? variableValue : 0);
   if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
   if (!payLifeCost && lifeCost >= player.life) return { legal: false };
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
-  if (!flashback && kicked && !profile.kickerCost) return { legal: false };
+  if (!flashback && kicked && !profile.kickerCost && !profile.kickerOptions.length) return { legal: false };
+  if (!flashback && kickerIndexes.some((index) => index < 0 || index >= profile.kickerOptions.length)
+    || new Set(kickerIndexes).size !== kickerIndexes.length) return { legal: false };
   if (!flashback && overloaded && !profile.overloadCost) return { legal: false };
   if (!flashback && evoked && !profile.evokeCost) return { legal: false };
   if (entwined && (!profile.entwineCost || !profile.modalChoices.length)) return { legal: false };
@@ -8118,17 +8141,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (profile.overloadCost) variants.push({ kicked: false, overloaded: true, evoked: false, entwined: false });
     if (profile.evokeCost) variants.push({ kicked: false, overloaded: false, evoked: true, entwined: false });
     if (profile.entwineCost && profile.modalChoices.length) variants.push({ kicked: false, overloaded: false, evoked: false, entwined: true });
-    for (const variableValue of values) for (const mode of modes) for (const { kicked, overloaded, evoked, entwined } of variants) for (const sacrifice of sacrificeOptions) {
+    const kickerSelections: (readonly number[] | undefined)[] = profile.kickerOptions.length
+      ? Array.from({ length: 1 << profile.kickerOptions.length }, (_, mask) => profile.kickerOptions.map((_, index) => index).filter((index) => (mask & (1 << index)) !== 0))
+      : [undefined];
+    for (const variableValue of values) for (const mode of modes) for (const { kicked, overloaded, evoked, entwined } of variants) for (const kickerSelection of kickerSelections) for (const sacrifice of sacrificeOptions) {
+      const multiKicked = Boolean(kickerSelection?.length);
+      const effectiveKicked = kicked || multiKicked;
       if (entwined && mode !== modes[0]) continue;
       const selectedMode = entwined ? undefined : mode;
-      const check = castableCard(state, seat, card, false, variableValue, selectedMode, kicked, evoked, false, entwined, false, false, undefined, false, false, undefined, overloaded);
+      const check = castableCard(state, seat, card, false, variableValue, selectedMode, effectiveKicked, evoked, false, entwined, false, false, undefined, false, false, undefined, overloaded, kickerSelection);
       if (!check.legal) continue;
       const modal = entwined ? combinedModalChoice(profile) : selectedMode === undefined ? undefined : profile.modalChoices[selectedMode];
       actions.push({
-        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(kicked ? { kicked: true } : {}), ...(overloaded ? { overloaded: true } : {}), ...(evoked ? { evoked: true } : {}), ...(entwined ? { entwined: true } : {}), ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}) },
-        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${kicked ? " (kicker)" : ""}${overloaded ? " (overload)" : ""}${evoked ? " (evocar)" : ""}${entwined ? " (entwine)" : ""}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${modal ? ` — ${modal.text}` : ""}`,
+        action: { type: "cast", cardId: card.instance_id, ...(profile.cost?.hasVariable ? { variableValue } : {}), ...(selectedMode === undefined ? {} : { mode: selectedMode }), ...(effectiveKicked ? { kicked: true } : {}), ...(kickerSelection?.length ? { kickerOptions: kickerSelection } : {}), ...(overloaded ? { overloaded: true } : {}), ...(evoked ? { evoked: true } : {}), ...(entwined ? { entwined: true } : {}), ...(sacrifice ? { sacrificeId: sacrifice.instance_id } : {}) },
+        label: `${profile.cost?.hasVariable ? `Lanzar ${card.name} (X=${variableValue})` : `Lanzar ${card.name}`}${effectiveKicked ? ` (kicker${kickerSelection?.length ? ` ${kickerSelection.map((index) => profile.kickerOptions[index]!.raw).join(" + ")}` : ""})` : ""}${overloaded ? " (overload)" : ""}${evoked ? " (evocar)" : ""}${entwined ? " (entwine)" : ""}${sacrifice ? ` — Sacrifice ${sacrifice.card.name}` : ""}${modal ? ` — ${modal.text}` : ""}`,
         cardId: card.instance_id,
-        manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0) + (overloaded ? (profile.overloadCost?.manaValue ?? 0) : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
+        manaValue: cardProfile(card).manaValue + (profile.cost?.hasVariable ? variableValue : 0) + (kickerSelection?.reduce((sum, index) => sum + profile.kickerOptions[index]!.manaValue, 0) ?? (kicked ? (profile.kickerCost?.manaValue ?? 0) : 0)) + (overloaded ? (profile.overloadCost?.manaValue ?? 0) : 0) + (entwined ? (profile.entwineCost?.manaValue ?? 0) : 0),
         ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
         ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
         ...(check.note ? { note: check.note } : {})
@@ -8643,7 +8671,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
 // Action application
 // ---------------------------------------------------------------------------
 
-function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false, sacrificedPower?: number, overloaded = false): GameState {
+function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: readonly Target[], fromCommandZone: boolean, variableValue: number, selectedEffect?: SpellEffect, kicked = false, evoked = false, flashback = false, commanderEntryCounters = false, spentMana: readonly ManaType[] = [], castViaAlternativeCost = false, fromCopy = false, cantBeCountered = false, sacrificedPower?: number, overloaded = false, kickerOptions: readonly number[] = []): GameState {
   const object: StackObject = {
     id: `stack:${state.version}:${card.instance_id}`,
     controller: seat,
@@ -8660,6 +8688,7 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     ...(spentMana.length ? { spentMana } : {}),
     ...(selectedEffect ? { selectedEffect } : {}),
     ...(kicked ? { kicked: true } : {}),
+    ...(kickerOptions.length ? { kickerOptions } : {}),
     ...(evoked ? { evoked: true } : {}),
     ...(flashback ? { fromFlashback: true } : {}),
     ...(castViaAlternativeCost ? { castViaAlternativeCost: true } : {}),
@@ -8685,6 +8714,10 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     sourcePermanentId: source.instance_id
   };
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
+}
+
+function withKickerOptions(cost: ManaCost, options: readonly ManaCost[]): ManaCost {
+  return options.reduce((total, option) => withKicker(total, option), cost);
 }
 
 /** Removes one time counter from this player's suspended cards at their upkeep
@@ -9517,7 +9550,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const fromYard = fromGraveyard ? player.graveyard.find((card) => card.instance_id === action.cardId) : undefined;
   const card = fromHand ?? fromCommand ?? fromYard;
   if (!card) throw new Error("Esa carta no está en tu mano, cementerio ni zona de mando.");
-  const kicked = Boolean(action.kicked);
+  const kickerOptions = action.kickerOptions ?? [];
+  const kicked = Boolean(action.kicked || kickerOptions.length);
   const overloaded = Boolean(action.overloaded);
   const evoked = Boolean(action.evoked);
   const entwined = Boolean(action.entwined);
@@ -9527,7 +9561,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const returnPermanentIds = action.returnPermanentIds ?? (returnPermanentId ? [returnPermanentId] : []);
   const payReducedCost = Boolean(action.payReducedCost);
   const giftPromised = Boolean(action.giftPromised);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost, giftPromised, returnPermanentIds, overloaded);
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost, giftPromised, returnPermanentIds, overloaded, kickerOptions);
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
@@ -9536,7 +9570,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? profile.payReducedCostInstead
     : fromGraveyard
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
-    : spellCostOf(profile, kicked, evoked, entwined, overloaded);
+    : spellCostOf(profile, kicked, evoked, entwined, overloaded, kickerOptions);
   const targetTax = profile.extraTargetCost && requested.length > 1
     ? parseManaCost(`{${profile.extraTargetCost * (requested.length - 1)}}`)
     : null;
@@ -9651,7 +9685,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.modalChoices[action.mode ?? -1]?.effect;
   if (profile.modalChoices.length && !selectedEffect) throw new Error(`Debes elegir un modo válido para ${card.name}.`);
   next = pushOnStack(next, seat, card, action.targets ?? [], Boolean(fromCommand), action.variableValue ?? 0, selectedEffect, kicked, evoked, fromGraveyard, commanderEntryCounters,
-    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower, overloaded);
+    paymentSpentTypes, payReducedCost, false, Boolean(payment.spentRestricted?.some((mana) => mana.restriction.makesSpellUncounterable)), sacrificedPower, overloaded, kickerOptions);
   next = queueWardChoice(next, next.stack.at(-1)!);
   const selfCastTriggers = cardProfile(card).triggers.some((definition) => definition.event === "spell-cast"
     && definition.subject === "you" && /^when\s+you\s+cast\s+~/i.test(definition.sourceText));
