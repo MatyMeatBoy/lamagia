@@ -606,7 +606,7 @@ export type SpellEffect =
   /** Remove one source counter, then gain life (Sun Droplet, CR 121.1, 118.1). */
   | { readonly kind: "remove-source-counter-gain-life"; readonly counter: string; readonly amount: number }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
-  | { readonly kind: "damage-divided-targets"; readonly amount: number | "X"; readonly evenly?: boolean }
+  | { readonly kind: "damage-divided-targets"; readonly amount: number | "X"; readonly evenly?: boolean; readonly lastTargetGainLife?: number }
   /** Damage from the ability source equal to that source's current power. */
   | { readonly kind: "damage-source-power" }
   /** True-Name Nemesis: choose a player and grant this source protection from them. */
@@ -4099,6 +4099,12 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "reincarnation-setup" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature",
       unimplementedText: [], covered: true
+    };
+  }
+  if (/^~ deals 5 damage divided as you choose among any number of targets\.\s*Target opponent gains 5 life\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "damage-divided-targets", amount: 5, lastTargetGainLife: 5 }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "any", unimplementedText: [], covered: true
     };
   }
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));

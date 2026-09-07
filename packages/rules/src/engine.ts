@@ -3896,23 +3896,34 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!targets.length) return state;
       let next = state;
       const amount = effectAmount(effect.amount, object);
+      const damageTargets = effect.lastTargetGainLife !== undefined ? targets.slice(0, -1) : targets;
+      const lifeTarget = effect.lastTargetGainLife !== undefined ? targets.at(-1) : undefined;
+      const lifeAmount = effect.lastTargetGainLife;
       if (effect.evenly) {
-        const share = Math.floor(amount / targets.length);
+        const share = Math.floor(amount / damageTargets.length);
         if (share <= 0) return state;
-        for (const target of targets) {
+        for (const target of damageTargets) {
           if (target.kind === "player") next = dealDamageFromObject(next, target.seat, share, sourceName, object);
           else if (target.kind === "permanent") next = dealDamageToPermanent(next, target.instanceId, share, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+        }
+        if (lifeTarget?.kind === "player" && lifeAmount !== undefined && lifeAmount > 0 && !playerCantGainLife(next, lifeTarget.seat)) {
+          next = withPlayer(next, lifeTarget.seat, (player) => ({ ...player, life: player.life + lifeAmount }));
+          next = raiseEvent(next, { kind: "life-gained", seat: lifeTarget.seat, amount: lifeAmount });
         }
         return next;
       }
       let remaining = amount;
-      for (let index = 0; index < targets.length && remaining > 0; index += 1) {
-        const target = targets[index]!;
+      for (let index = 0; index < damageTargets.length && remaining > 0; index += 1) {
+        const target = damageTargets[index]!;
         const share = index === 0 ? remaining - (targets.length - 1) + 0 : 1;
         if (share <= 0) continue;
         if (target.kind === "player") next = dealDamageFromObject(next, target.seat, share, sourceName, object);
         else if (target.kind === "permanent") next = dealDamageToPermanent(next, target.instanceId, share, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
         remaining -= share;
+      }
+      if (lifeTarget?.kind === "player" && lifeAmount !== undefined && lifeAmount > 0 && !playerCantGainLife(next, lifeTarget.seat)) {
+        next = withPlayer(next, lifeTarget.seat, (player) => ({ ...player, life: player.life + lifeAmount }));
+        next = raiseEvent(next, { kind: "life-gained", seat: lifeTarget.seat, amount: lifeAmount });
       }
       return next;
     }
@@ -8771,6 +8782,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
     const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
     if (!valid) throw new Error(`Objetivo ilegal para ${card.name}.`);
+    const playerRider = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "damage-divided-targets" }> =>
+      effect.kind === "damage-divided-targets" && effect.lastTargetGainLife !== undefined);
+    const lastTarget = chosen.at(-1);
+    if (playerRider && (chosen.length < 2 || lastTarget?.kind !== "player" || lastTarget.seat === seat)) {
+      throw new Error(`${card.name} necesita al menos un objetivo de daño y un oponente como último objetivo.`);
+    }
     action = { ...action, targets: chosen };
   }
 

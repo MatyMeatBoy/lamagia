@@ -193,8 +193,8 @@ describe("Ward keyword", () => {
 describe("Commander 2013 opponent life-gain target", () => {
   it("recognises Fiery Justice's opponent-only life target", () => {
     const profile = cardProfile(C13_FIERY_JUSTICE());
-    expect(profile.effects).toContainEqual({ kind: "gain-life-target-player", amount: 5 });
-    expect(profile.targetKind).toBe("opponent");
+    expect(profile.effects).toContainEqual({ kind: "damage-divided-targets", amount: 5, lastTargetGainLife: 5 });
+    expect(profile.targetKind).toBe("any");
     const game = twoSeatGame([], []);
     expect(legalTargets(game, 0, "opponent", profile)).toEqual([{ kind: "player", seat: 1 }]);
   });
@@ -6174,6 +6174,20 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-1", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears"));
     expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(1);
+  });
+
+  it("divides Fiery Justice damage and keeps its opponent life-gain target distinct", () => {
+    const profile = profileOf(C13_FIERY_JUSTICE());
+    expect(profile).toMatchObject({ fullyImplemented: true, targetKind: "any", effects: [{ kind: "damage-divided-targets", amount: 5, lastTargetGainLife: 5 }] });
+    let game = readyToCast([C13_FIERY_JUSTICE()], [MOUNTAIN(), FOREST(), PLAINS()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [
+      { kind: "permanent", instanceId: bear.instance_id },
+      { kind: "player", seat: 1 }
+    ] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)).toBeUndefined();
+    expect(game.players[1]!.life).toBe(45);
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {
