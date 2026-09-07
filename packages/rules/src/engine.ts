@@ -3251,6 +3251,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       };
       return { ...state, stack: [...state.stack, copy] };
     }
+    case "copy-target-spell": {
+      const target = object.targets[targetIndex];
+      const original = target?.kind === "spell" ? state.stack.find((entry) => entry.id === target.stackId) : undefined;
+      if (!original || original.activated || original.trigger || original.controller !== object.controller
+        || !cardProfile(original.card).types.some((type) => type === "Instant" || type === "Sorcery")) return state;
+      const copy: StackObject = {
+        ...original,
+        id: `copy:${object.id}`,
+        card: { ...original.card, instance_id: `copy:${object.id}` },
+        label: `${original.card.name} (copy)`,
+        fromCopy: true,
+        trigger: undefined,
+        activated: undefined,
+        sourcePermanentId: undefined,
+        triggeredPermanentId: undefined,
+        targetLabels: original.targetLabels ?? original.targets.map((entry) => targetLabel(state, entry))
+      };
+      return { ...state, stack: [...state.stack, copy] };
+    }
     case "exchange-source-power-with-blocking-creature": {
       const blockerId = object.trigger?.eventPermanentId;
       if (!blockerId) return state;
@@ -9075,9 +9094,10 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         : !isCreature(cardProfile(entry.card)))
       .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   }
-  if (kind === "instant-or-sorcery-spell") {
+  if (kind === "instant-or-sorcery-spell" || kind === "instant-or-sorcery-spell-you-control") {
     return state.stack
       .filter((entry) => !entry.activated && !entry.trigger)
+      .filter((entry) => kind !== "instant-or-sorcery-spell-you-control" || entry.controller === seat)
       .filter((entry) => cardProfile(entry.card).types.some((type) => type === "Instant" || type === "Sorcery"))
       .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   }
