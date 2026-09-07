@@ -429,6 +429,15 @@ from the verified export. Draw one unclaimed generated cluster at random after
 refreshing the published base; do not both take Gambit/Hideaway or any row
 already marked active/merged. Report the exact oracle IDs before editing.
 
+Current handoff to `MTG Worker` (2026-09-07): start from
+`origin/feat/activated-abilities-and-triggers`, not the divergent historical
+`codex/c13-darksteel-mutation` tree. The worker must claim one disjoint batch
+from the 47-card list above, re-check this ledger immediately before editing,
+and push a focused commit (maximum 20 oracle IDs). The integrator will review
+and adapt compatible code; historical commits are evidence, not mergeable
+truth. Required report: `CLAIM/BASE/COMMIT/FILES/TESTS/SCENARIOS/LIMITS` plus
+`<name> | <oracle_id>` for every completed card.
+
 `0238a577` is documentation-only and claims a 341/341 direct rescan, while the
 current reproducible local engine export is 294/341. Until the catalog database
 and the exact export inputs are available, treat the 294/341 engine scan as the
