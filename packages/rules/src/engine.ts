@@ -858,6 +858,23 @@ function attachedAuras(state: GameState, permanent: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === permanent.instance_id
     && hasSubtype(cardProfile(candidate.card), "Aura"));
 }
+function equipmentTeamBonus(state: GameState | undefined, creature: Permanent): { power: number; toughness: number } {
+  if (!state || !isCreaturePermanent(creature)) return { power: 0, toughness: 0 };
+  return allPermanents(state)
+    .filter((equipment) => equipment.controller === creature.controller && equipment.attachedTo !== undefined)
+    .reduce((total, equipment) => {
+      const modification = cardProfile(equipment.card).equipmentModification;
+      const equipped = findPermanent(state, equipment.attachedTo!);
+      if (!modification || !equipped || !modification.conditionalTeamBonuses) return total;
+      for (const bonus of modification.conditionalTeamBonuses) {
+        if ((equipped.tapped ? "tapped" : "untapped") !== bonus.equippedCreatureState) continue;
+        if ((creature.tapped ? "tapped" : "untapped") !== bonus.targetState) continue;
+        total.power += bonus.power;
+        total.toughness += bonus.toughness;
+      }
+      return total;
+    }, { power: 0, toughness: 0 });
+}
 function auraLandManaBonusTypes(state: GameState, land: Permanent): readonly ManaType[] {
   return attachedAuras(state, land).flatMap((aura) => {
     const bonus = cardProfile(aura.card).auraLandManaBonus;
@@ -965,7 +982,7 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? auraSetting?.basePower ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? auraSetting?.basePower ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + equipmentTeamBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -981,7 +998,7 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     .reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? auraSetting?.baseToughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus;
+  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? auraSetting?.baseToughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + equipmentTeamBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus;
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const auraSetting = auraCharacteristicSetting(state, permanent);
@@ -4816,6 +4833,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ...player,
         battlefield: player.battlefield.map((permanent) =>
           permanent.instance_id === attachedId ? { ...permanent, tapped: false } : permanent)
+      }));
+    }
+    case "tap-or-untap-equipped-creature": {
+      const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
+      const attachedId = equipment?.attachedTo;
+      if (!attachedId) return state;
+      return withPlayer(state, equipment.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) =>
+          permanent.instance_id === attachedId ? { ...permanent, tapped: !permanent.tapped } : permanent)
       }));
     }
     case "untap-all-other-creatures-you-control": {

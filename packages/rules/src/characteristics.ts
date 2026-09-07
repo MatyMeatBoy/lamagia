@@ -330,6 +330,13 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Team-wide bonus gated by the attached creature and each target's tap state (CR 611.3). */
+  readonly conditionalTeamBonuses?: readonly {
+    readonly equippedCreatureState: "tapped" | "untapped";
+    readonly targetState: "tapped" | "untapped";
+    readonly power: number;
+    readonly toughness: number;
+  }[];
   /** Multiplier for a dynamic Aura bonus. */
   readonly scaling?: "other-enchantments-on-battlefield";
   /** Aura characteristic-setting layer (CR 613.1): replaces base values/types and may remove abilities. */
@@ -733,6 +740,7 @@ export type SpellEffect =
   /** Replaces a resolving spell's normal graveyard destination (CR 701.19). */
   | { readonly kind: "shuffle-source-into-library" }
   | { readonly kind: "untap-equipped-creature" }
+  | { readonly kind: "tap-or-untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean; readonly xThreshold?: number; readonly excludeSource?: boolean }
   /** Kirtar's Wrath: threshold chooses the token-producing replacement mode (CR 702.34, 608.2h). */
@@ -1819,22 +1827,36 @@ function parseLevelDefinitions(text: string): LevelDefinition[] {
 }
 
 function parseEquipmentModification(text: string): EquipmentModification | null {
+  const conditionalTeamBonuses: Array<NonNullable<EquipmentModification["conditionalTeamBonuses"]>[number]> = [];
+  let standard: EquipmentModification | null = null;
   for (const line of text.split("\n")) {
     const clean = line.trim().replace(/\.$/, "");
+    const conditional = /^as long as equipped creature is (tapped|untapped), (tapped|untapped) creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+    if (conditional) {
+      conditionalTeamBonuses.push({
+        equippedCreatureState: conditional[1]!.toLowerCase() as "tapped" | "untapped",
+        targetState: conditional[2]!.toLowerCase() as "tapped" | "untapped",
+        power: Number(conditional[3]), toughness: Number(conditional[4])
+      });
+      continue;
+    }
     let match = /^equipped creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
     if (match) {
       const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
-      return { power: Number(match[1]), toughness: Number(match[2]), keywords, text: line.trim() };
+      standard = { power: Number(match[1]), toughness: Number(match[2]), keywords, text: line.trim() };
+      continue;
     }
     match = /^equipped creature has\s+(.+)$/i.exec(clean);
     if (match) {
       const keywords = match[1]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
-      if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
+      if (keywords.length) { standard = { power: 0, toughness: 0, keywords, text: line.trim() }; continue; }
     }
   }
-  return null;
+  if (!standard && !conditionalTeamBonuses.length) return null;
+  return { ...(standard ?? { power: 0, toughness: 0, keywords: [], text: text.trim() }),
+    ...(conditionalTeamBonuses.length ? { conditionalTeamBonuses } : {}) };
 }
 
 /** Static bonuses granted by an Aura to the permanent it's attached to (CR 303.4.5). */
@@ -3910,6 +3932,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Shuffle target card from your graveyard into your library$/i.test(text)) return { effect: { kind: "shuffle-target-card-into-library" }, target: "card-in-your-graveyard" };
   if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-source-into-library" }, target: "none" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
+  if (/^You may tap or untap equipped creature$/i.test(text)) return { effect: { kind: "tap-or-untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };

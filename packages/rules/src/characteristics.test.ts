@@ -222,6 +222,16 @@ describe("mana abilities", () => {
     expect(cases[2]!.activatedAbilities.map((ability) => ability.effect.kind)).toEqual([
       "untap-equipped-creature", "untap-all-other-creatures-you-control"
     ]);
+    const swordOfTheParuns = cardProfile(card({
+      name: "Sword of the Paruns", type_line: "Artifact — Equipment",
+      oracle_text: "As long as equipped creature is tapped, tapped creatures you control get +2/+0.\nAs long as equipped creature is untapped, untapped creatures you control get +0/+2.\n{3}: You may tap or untap equipped creature.\nEquip {3}"
+    }));
+    expect(swordOfTheParuns.equipmentModification?.conditionalTeamBonuses).toEqual([
+      { equippedCreatureState: "tapped", targetState: "tapped", power: 2, toughness: 0 },
+      { equippedCreatureState: "untapped", targetState: "untapped", power: 0, toughness: 2 }
+    ]);
+    expect(swordOfTheParuns.activatedAbilities[0]?.effect).toEqual({ kind: "tap-or-untap-equipped-creature" });
+    expect(swordOfTheParuns.fullyImplemented).toBe(true);
     expect(cases.every((profile) => profile.fullyImplemented)).toBe(true);
   });
 });

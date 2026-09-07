@@ -9214,6 +9214,28 @@ describe("activated abilities", () => {
     expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(false);
   });
 
+  it("applies Sword of the Paruns' state-gated team bonuses", () => {
+    const sword = make({ name: "Stateful Sword", type_line: "Artifact — Equipment", mana_cost: "{4}", cmc: 4,
+      oracle_text: "As long as equipped creature is tapped, tapped creatures you control get +2/+0.\nAs long as equipped creature is untapped, untapped creatures you control get +0/+2.\n{3}: You may tap or untap equipped creature.\nEquip {3}" });
+    let game = readyOnBoard([sword, BEAR(), FLIER(), FOREST(), FOREST(), FOREST()], { hold: true });
+    const bear = permanentNamed(game, 0, "Grizzly Bears")!;
+    const flier = permanentNamed(game, 0, "Storm Crow")!;
+    const swordPermanent = permanentNamed(game, 0, "Stateful Sword")!;
+    game = applyAction(game, 0, { type: "equip", sourceId: swordPermanent.instance_id, targetId: bear.instance_id });
+    game = applyAction(game, 0, { type: "pass" });
+    expect([powerOf(bear, game), toughnessOf(bear, game), powerOf(flier, game), toughnessOf(flier, game)]).toEqual([2, 4, 1, 4]);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) =>
+      permanent.instance_id === bear.instance_id || permanent.instance_id === flier.instance_id ? { ...permanent, tapped: true } : permanent) }));
+    const tappedBear = permanentNamed(game, 0, "Grizzly Bears")!;
+    const tappedFlier = permanentNamed(game, 0, "Storm Crow")!;
+    expect([powerOf(tappedBear, game), toughnessOf(tappedBear, game), powerOf(tappedFlier, game), toughnessOf(tappedFlier, game)]).toEqual([4, 2, 3, 2]);
+    game = stage(game, 0, (player) => ({ manaPool: { ...player.manaPool, C: 3 } }));
+    const toggle = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === swordPermanent.instance_id)!;
+    game = applyAction(game, 0, toggle.action);
+    game = applyAction(game, 0, { type: "pass" });
+    expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(false);
+  });
+
   it("uses one reusable Level up activation for counters, level stats, and keywords", () => {
     let game = readyOnBoard([LEVELER(), ISLAND(), ISLAND(), ISLAND(), ISLAND()], { hold: true });
     const leveler = permanentNamed(game, 0, "Test Leveler")!;
