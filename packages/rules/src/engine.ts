@@ -6285,6 +6285,11 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "look-top-select":
       // Top-card selection is completed through the private choice below.
       return state;
+    case "look-top-select-by-removed-counters":
+      // CR 107.3: X is the quantity recorded while paying the activation cost.
+      // The source counter has already been removed, so use the stack value.
+      return beginLookTopSelection(state, controller, object.id, object.card,
+        Math.max(0, object.variableValue), [], "hand");
     case "attach-equipment": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -9609,6 +9614,9 @@ function activatableAbility(
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
     return { legal: false };
   }
+  if (ability.removeAllCounters && (permanent.counters[ability.removeAllCounters] ?? 0) < 1) {
+    return { legal: false };
+  }
   if (ability.manaCost && ability.manaCost.symbols.length) {
     // The cost is paid as one lump, so the check has to look at the board the
     // payment will actually see: life already spent on the ability, and the
@@ -9899,6 +9907,17 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       })
     }));
   }
+  const removedAllCounters = ability.removeAllCounters
+    ? (playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id)?.counters[ability.removeAllCounters] ?? 0)
+    : 0;
+  if (ability.removeAllCounters) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) => permanent.instance_id !== source.instance_id
+        ? permanent
+        : { ...permanent, counters: { ...permanent.counters, [ability.removeAllCounters!]: 0 } })
+    }));
+  }
 
   if (ability.sacrificesSelf) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
@@ -9980,7 +9999,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   const counterValue = ability.effect.kind === "destroy-n-creatures" && ability.effect.counter
     ? source.counters[ability.effect.counter] ?? 0
     : 0;
-  next = pushActivatedOnStack(next, seat, source, ability, targets, effectVariable || counterValue);
+  next = pushActivatedOnStack(next, seat, source, ability, targets, ability.removeAllCounters ? removedAllCounters : (effectVariable || counterValue));
   return logged(next, seat, `${player.name} activa la habilidad de ${source.card.name}${targetsText(next, targets)}.`);
 }
 

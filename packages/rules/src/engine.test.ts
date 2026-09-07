@@ -758,6 +758,7 @@ const C13_WELL_OF_LOST_DREAMS = () => make({ name: "Well of Lost Dreams", type_l
 const C13_OLORO = () => make({ name: "Oloro, Ageless Ascetic", type_line: "Legendary Creature — Giant Soldier", mana_cost: "{3}{W}{U}{B}", cmc: 6, power: "4", toughness: "5", oracle_text: "At the beginning of your upkeep, you gain 2 life.\nWhenever you gain life, you may pay {1}. If you do, draw a card and each opponent loses 1 life.\nAt the beginning of your upkeep, if Oloro, Ageless Ascetic is in the command zone, you gain 2 life.", scryfall_id: "abf8df47-405c-42d8-be9e-0f0d0a49589b", oracle_id: "620ff5f2-7d3f-467f-943d-3b62c2135023" });
 const C13_JACES_ARCHIVIST = () => make({ name: "Jace's Archivist", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "{U}, {T}: Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way.", scryfall_id: "b6c8ac69-daa7-4e2e-a1d9-439731a81870" });
 const C13_AUGUR_OF_BOLAS = () => make({ name: "Augur of Bolas", type_line: "Creature — Merfolk Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "3", oracle_text: "When Augur of Bolas enters the battlefield, look at the top three cards of your library. You may reveal an instant or sorcery card from among them and put it into your hand. Put the rest on the bottom of your library in any order.", scryfall_id: "c13-augur-of-bolas" });
+const C13_JAR_OF_EYEBALLS = () => make({ name: "Jar of Eyeballs", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "Whenever a creature you control dies, put two eyeball counters on this artifact.\n{3}, {T}, Remove all eyeball counters from this artifact: Look at the top X cards of your library, where X is the number of eyeball counters removed this way. Put one of them into your hand and the rest on the bottom of your library in any order.", scryfall_id: "3075dadd-240f-4455-9286-9f1d48f53a3f", oracle_id: "3075dadd-240f-4455-9286-9f1d48f53a3f" });
 const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "Enchantment", mana_cost: "{3}{W}", cmc: 4, oracle_text: "When this enchantment enters, you may exile target artifact or enchantment.\nAt the beginning of your upkeep, you may exile target artifact or enchantment. If you do, its controller gains control of this enchantment.", scryfall_id: "c13-act-of-authority" });
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
@@ -3449,6 +3450,44 @@ describe("casting", () => {
     }
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[0]!.library.slice(-3).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears", "Lightning Bolt"]);
+  });
+
+  it("uses Jar of Eyeballs counters as the dynamic top-library quantity", () => {
+    const jar = C13_JAR_OF_EYEBALLS();
+    expect(profileOf(jar)).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ event: "dies", effect: { kind: "add-counter-source", counter: "eyeball", amount: 2 } }],
+      activatedAbilities: [{ removeAllCounters: "eyeball", effect: { kind: "look-top-select-by-removed-counters", counter: "eyeball" } }]
+    });
+    let game = twoSeatGame([], []);
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = stage(game, 0, () => ({
+      autoPass: false,
+      library: toHand(0, [FOREST(), BOLT(), BEAR()], "jar-library"),
+      manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 3 }
+    }));
+    game = putOnBattlefield(game, 0, [jar]);
+    const sourceId = game.players[0]!.battlefield.at(-1)!.instance_id;
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === sourceId
+        ? { ...permanent, counters: { eyeball: 3 } }
+        : permanent)
+    }));
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === sourceId);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, activation!.action);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === sourceId)!.counters.eyeball).toBe(0);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice).toMatchObject({ type: "look-top-select", lookedCount: 3, destination: "hand" });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "look-top-select" }>;
+    game = applyAction(game, 0, { type: "choose-look-top", sourceId: choice.sourceId, ordinal: 1 });
+    game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId: choice.sourceId, ordinal: 0 });
+    game = applyAction(game, 0, { type: "choose-look-top-bottom", sourceId: choice.sourceId, ordinal: 0 });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.hand.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.players[0]!.library.slice(-2).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears"]);
   });
 
   it("filters Harald, King of Skemfar's top-five review by creature subtype, not card type", () => {

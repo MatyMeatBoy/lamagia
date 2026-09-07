@@ -145,6 +145,8 @@ export interface ActivatedAbility {
   readonly exilesGraveyardCards?: { readonly amount: number; readonly scope: "single-graveyard" };
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
+  /** Remove every counter of this kind and expose the removed quantity to the resolving effect. */
+  readonly removeAllCounters?: string;
   readonly lifeCost: number;
   /** Mana part of the activation cost, or null when the ability needs none. */
   readonly manaCost: ManaCost | null;
@@ -478,6 +480,8 @@ export type SpellEffect =
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly subtypes?: readonly string[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number; readonly tapped?: boolean }
+  /** Jar of Eyeballs-style dynamic review: X is the number of counters removed as the cost. */
+  | { readonly kind: "look-top-select-by-removed-counters"; readonly counter: string }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
   | { readonly kind: "look-top-reorder"; readonly amount: number }
   /** Jeleva exiles each player's top cards using the mana spent on entry (CR 603.6). */
@@ -2532,6 +2536,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     const kind = match[2]?.trim().replace(/\s+/g, " ").toLowerCase();
     if (amount !== null && kind) removedCounters.push({ kind, amount });
   }
+  const removeAllCountersMatch = /remove\s+all\s+([A-Za-z][A-Za-z'’/-]*)\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/i.exec(costText);
   const lifeMatch = /pay\s+(\d+)\s+life/i.exec(costText);
   const lifeCost = lifeMatch ? Number(lifeMatch[1]) : 0;
   const leftovers = costText
@@ -2552,6 +2557,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+(?:[+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*?)\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi, "")
+    .replace(/remove\s+all\s+[A-Za-z][A-Za-z'’/-]*\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi, "")
     .replace(/[,\s]/g, "");
   if (leftovers.length) return null;
   return {
@@ -2575,6 +2581,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
     ...(controlledCountGate && controlledCountAmount !== null ? { requiresControlledCount: { word: controlledCountGate[2]!, amount: controlledCountAmount } } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
+    ...(removeAllCountersMatch ? { removeAllCounters: removeAllCountersMatch[1]!.trim().toLowerCase() } : {}),
     ...(energyCost ? { energyCost } : {}),
     ...(requiresUntap ? { requiresUntap: true } : {}),
     ...(requiresOpponentLands !== null ? { requiresOpponentLands } : {}),
@@ -2990,6 +2997,14 @@ function parseLookTopSelection(text: string): SpellEffect | null {
   };
 }
 
+/** "Look at the top X ... where X is the number of counters removed this way".
+ * The activation parser supplies the removed quantity through the stack's
+ * variable-value channel (CR 107.3, 601.2f). */
+function parseLookTopSelectionByRemovedCounters(text: string): SpellEffect | null {
+  const match = /^Look at the top X cards? of your library, where X is the number of ([A-Za-z][A-Za-z'’ -]*) counters? removed this way\. Put one of them into your hand and the rest on the bottom of your library in any order$/i.exec(text.trim().replace(/\.$/, ""));
+  return match ? { kind: "look-top-select-by-removed-counters", counter: match[1]!.trim().replace(/\s+/g, " ").toLowerCase() } : null;
+}
+
 /**
  * "Look at the top five cards of your library. You may put a land card from
  * among them onto the battlefield tapped. Put the rest on the bottom of your
@@ -3319,6 +3334,8 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   const simple = simpleEffectIR(text);
   const simpleResult = simple ? simpleEffectFromIR(simple) : null;
   if (simpleResult) return simpleResult;
+  const lookTopByRemovedCounters = parseLookTopSelectionByRemovedCounters(text);
+  if (lookTopByRemovedCounters) return { effect: lookTopByRemovedCounters, target: "none" };
   // Two independently-recognized simpleEffectIR clauses joined by "and"
   // (Underhanded Designs: "each opponent loses 1 life and you gain 1
   // life"), a generalization of the drawAndOpponentLoss special case below -
