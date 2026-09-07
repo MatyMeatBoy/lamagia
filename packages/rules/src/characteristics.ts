@@ -616,6 +616,8 @@ export type SpellEffect =
   | { readonly kind: "lose-life-each-player-equal-hand" }
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
+  /** Overloaded Street Spasm: damage each opponent's creature without flying. */
+  | { readonly kind: "damage-each-opponent-creature"; readonly amount: number | "X"; readonly filter?: "without-flying" }
   | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" | "with-flying"; readonly alsoPlaneswalkers?: boolean }
   /** Sudden Demise: damage each creature of a chosen color (CR 105.2, 609.3). */
   | { readonly kind: "damage-all-creatures-of-color"; readonly amount: number | "X"; readonly color: MagicColor | "chosen" }
@@ -1041,6 +1043,7 @@ export type TargetKind =
   | "creature-with-hexproof"
   | "creature-with-shroud"
   | "creature-with-reach"
+  | "creature-opponent-without-flying"
   | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-your-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | "instant-or-sorcery-card-in-your-graveyard" | "permanent-card-in-your-graveyard-mv-3-or-less" | `creature-card-in-your-graveyard-mv-${number}-or-less` | `subtype:${string}` | "none" | "nontoken-creature"
   | "card-in-your-graveyard" | "card-in-a-graveyard" | "creature-card-in-your-graveyard" | "creature-card-in-a-graveyard" | "artifact-card-in-your-graveyard" | "artifact-card-in-a-graveyard" | "enchantment-card-in-your-graveyard" | "enchantment-card-in-a-graveyard" | "land-card-in-a-graveyard" | "permanent-card-in-your-graveyard" | "permanent-card-in-a-graveyard" | "legendary-creature-card-in-your-graveyard" | `subtype:${string}` | "none";
   
@@ -1142,6 +1145,10 @@ export interface CardProfile {
   readonly targetKind: TargetKind;
   /** Ordered target requirements for non-modal spells with multiple targets. */
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** Alternative Overload cost (CR 702.96), when the spell has one. */
+  readonly overloadCost: ManaCost | null;
+  /** Effects used when the spell is cast for its Overload cost. */
+  readonly overloadedEffects: readonly SpellEffect[];
   readonly kickerCost: ManaCost | null;
   /** Entwine additional cost for selecting every modal branch (CR 702.42). */
   readonly entwineCost: ManaCost | null;
@@ -2407,6 +2414,8 @@ interface RecognizedText {
   readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  overloadCost?: ManaCost | null;
+  overloadedEffects?: SpellEffect[];
   kickerCost?: ManaCost | null;
   entwineCost?: ManaCost | null;
   graftAmount?: number | null;
@@ -3138,6 +3147,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
+  }
+  if ((match = /^~ deals (\w+) damage to target creature without flying you don't control$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature-opponent-without-flying" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "creature-opponent-without-flying" };
   }
   if (/^~ deals damage equal to the sacrificed creature's power to any target$/i.test(text)) {
     return { effect: { kind: "damage-any-target-equal-sacrificed-creature-power" }, target: "any" };
@@ -4321,6 +4335,7 @@ function recognizeText(text: string): RecognizedText {
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  let overloadCost: ManaCost | null = null;
   let entwineCost: ManaCost | null = null;
   let graftAmount: number | null = null;
   let echoCost: ManaCost | null = null;
@@ -4398,6 +4413,9 @@ function recognizeText(text: string): RecognizedText {
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Overload is an alternative cost that rewrites the spell's targets (CR 702.96).
+    const overload = /^Overload\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (overload) { overloadCost = parseManaCost(overload[1]!); continue; }
     // Partner (CR 702.123): purely a deck-construction rule — createGame
     // already accepts multiple declared commanderNames, so the printed line
     // carries no per-card state here. Reminder text (parenthetical) is
@@ -5249,7 +5267,11 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  const overloadedEffects = overloadCost && targetKind === "creature-opponent-without-flying" && effects.length === 1 && effects[0]!.kind === "damage-any-target"
+    ? [{ kind: "damage-each-opponent-creature" as const, amount: effects[0]!.amount, filter: "without-flying" as const }]
+    : [];
+  if (overloadCost && !overloadedEffects.length) unimplementedText.push(`Overload ${overloadCost.raw}`);
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, overloadCost, overloadedEffects, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5581,6 +5603,8 @@ export function cardProfile(card: CardData): CardProfile {
     triggers: [...gatedTriggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
+    overloadCost: recognized.overloadCost ?? null,
+    overloadedEffects: recognized.overloadedEffects ?? [],
     kickerCost: recognized.kickerCost ?? null,
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,

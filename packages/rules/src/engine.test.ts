@@ -669,6 +669,7 @@ const VALLEY_RANNET = () => make({
 });
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
+const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
 const OFFER_YOU_CANT_REFUSE = () => make({ name: "Test An Offer You Can't Refuse", type_line: "Instant", mana_cost: "{1}{U}", cmc: 2, oracle_text: "Counter target noncreature spell. Its controller creates two Treasure tokens." });
@@ -6099,6 +6100,26 @@ describe("casting", () => {
     const profile = cardProfile(FIREBALL());
     expect(profile.fullyImplemented).toBe(false);
     expect(profile.unimplementedText.some((text) => /costs.*more.*target/i.test(text))).toBe(true);
+  });
+
+  it("casts Street Spasm for Overload and damages only opposing nonfliers", () => {
+    const profile = profileOf(C13_STREET_SPASM());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      overloadCost: { raw: "{X}{X}{R}{R}" },
+      effects: [{ kind: "damage-any-target", amount: "X" }],
+      overloadedEffects: [{ kind: "damage-each-opponent-creature", amount: "X", filter: "without-flying" }]
+    });
+    let game = readyToCast([C13_STREET_SPASM()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    const flyer = make({ name: "Test Flyer", type_line: "Creature — Bird", power: "2", toughness: "2", keywords: ["Flying"] });
+    game = putOnBattlefield(game, 1, [BEAR(), flyer]);
+    const overload = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0" && entry.action.overloaded);
+    expect(overload).toBeDefined();
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, overloaded: true });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")).toBeUndefined();
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Flyer")).toBeDefined();
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Street Spasm")).toBe(true);
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {
