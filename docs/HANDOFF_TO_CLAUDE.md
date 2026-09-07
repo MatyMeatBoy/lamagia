@@ -6789,3 +6789,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Mass Mutiny | d96763a0-6a6e-4520-899a-468b4bb307c8`: repaired the current-Oracle recognition path. The earlier implementation only covered a sentence-level fixture and was not reached by the card-level parser, so the catalog still reported all three lines as unresolved. The reusable temporary-control effect now handles target control, untap, haste, and cleanup restoration.
 - Verification: authoritative C13 coverage advances from `326/341` to `327/341`; the fresh export reports `Mass Mutiny fullyImplemented: true`; targeted scenario and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 copy-spell reconciliation — Nivix Guildmage (2026-09-07)
+
+- Base: `8401dcca`.
+- `Nivix Guildmage | d04356f1-0e1a-4689-8e54-f88c4c6dd936`: restored the reusable `copy-target-spell` primitive and current Oracle parser path. The historical implementation was outside this worker branch; its target restriction now accepts only an instant or sorcery spell controlled by the activating player and copies it onto the stack.
+- Verification: authoritative C13 coverage advances from `327/341` to `328/341`; the fresh export reports `Nivix Guildmage fullyImplemented: true`; targeted Nivix/Mass scenarios and rules typecheck pass.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
