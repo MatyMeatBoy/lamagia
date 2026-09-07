@@ -162,7 +162,7 @@ export interface ActivatedAbility {
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
-  readonly sourceZone?: "hand" | "graveyard";
+  readonly sourceZone?: "hand" | "graveyard" | "command-zone";
   /** Printed upkeep restriction (Forecast, CR 702.57). */
   readonly upkeepOnly?: boolean;
   /** The same source ability can be activated only once during its controller's turn. */
@@ -1141,6 +1141,8 @@ export interface CardProfile {
   readonly cyclingSearches: readonly CyclingSearchAbility[];
   /** Echo cost paid at the controller's next upkeep (CR 702.30). */
   readonly echoCost: ManaCost | null;
+  readonly suspendAmount: number | null;
+  readonly suspendCost: ManaCost | null;
   readonly wardCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
@@ -1330,6 +1332,14 @@ const WORD_NUMBERS: Record<string, number> = {
   a: 1, an: 1, one: 1, first: 1, two: 2, second: 2, three: 3, third: 3, four: 4, fourth: 4, five: 5, fifth: 5, six: 6, sixth: 6, seven: 7, seventh: 7,
   eight: 8, eighth: 8, nine: 9, ninth: 9, ten: 10, tenth: 10, eleven: 11, twelve: 12, thirteen: 13, twenty: 20
 };
+
+function parseSuspend(text: string): { amount: number; cost: ManaCost } | null {
+  const match = /(?:^|\n)Suspend\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*[—-]\s*((?:\{[^}]+\})+)\s*$/im.exec(text.trim());
+  if (!match) return null;
+  const amount = toNumber(match[1]);
+  const cost = parseManaCost(match[2]!);
+  return amount === null || !cost ? null : { amount, cost };
+}
 
 function toNumber(token: string | undefined): number | null {
   if (!token) return null;
@@ -2331,6 +2341,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const activated = /^([^:]{1,120}):\s*(.+)$/.exec(line.trim());
   if (!activated) return null;
   const [, costText, effectText] = activated as unknown as [string, string, string];
+  const commandZoneReturn = /^Put ~ onto the battlefield from the command zone\.?$/i.test(effectText.trim());
   // Forecast is an activated ability whose source remains in hand (CR 702.57).
   // Parse it through the shared sentence grammar so every supported effect is
   // reusable by both the printed spell and its Forecast ability.
@@ -2408,7 +2419,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
   const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
-  const recognized = selfUntap
+  const recognized = commandZoneReturn
+    ? { effect: { kind: "put-source-from-command-zone" } as unknown as SpellEffect, target: "none" as TargetKind }
+    : selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
@@ -2496,6 +2509,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(discardsCreatureCard ? { discardsCreatureCard: true } : {}),
     ...(discardsSelf ? { discardsSelf: true, sourceZone: "hand" as const } : {}),
+    ...(commandZoneReturn ? { sourceZone: "command-zone" as const } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
@@ -2571,6 +2585,8 @@ interface RecognizedText {
   kickedKeywords?: EnforcedKeyword[];
   kickedEntersWithCounters?: CounterCost[];
   echoCost?: ManaCost | null;
+  suspendAmount?: number | null;
+  suspendCost?: ManaCost | null;
   evokeCost?: ManaCost | null;
   flashbackCost?: ManaCost | null;
   miracleCost?: ManaCost | null;
@@ -5888,7 +5904,7 @@ function recognizeText(text: string): RecognizedText {
       ? { ...trigger, effect: { kind: "lose-life-target-player-remembered" as const, amount: trigger.effect.amount } }
       : trigger)
     : triggers;
-  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5913,10 +5929,12 @@ export function cardProfile(card: CardData): CardProfile {
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
   const wardMatch = /^Ward\s+((?:\{[^}]+\})+)\s*$/im.exec(text);
   const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
+  const suspend = parseSuspend(text);
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
     .replace(/^Affinity for .+$/gim, "")
-    .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, ""));
+    .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, "")
+    .replace(/^Suspend\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*[—-]\s*(?:\{[^}]+\})+\s*$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
   const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
@@ -6162,6 +6180,8 @@ export function cardProfile(card: CardData): CardProfile {
     cyclingCost,
     cyclingSearches,
     echoCost: recognized.echoCost ?? null,
+    suspendAmount: suspend?.amount ?? null,
+    suspendCost: suspend?.cost ?? null,
     wardCost,
     flashbackLifeCost,
     additionalLifeCost,
@@ -6197,7 +6217,7 @@ export function cardProfile(card: CardData): CardProfile {
     levelDefinitions,
     classLevels,
     protectionFrom,
-    activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand")
+    activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand" || ability.sourceZone === "command-zone")
       ? [
           ...recognized.activatedAbilities,
           ...(levelUpCost ? [{

@@ -11,6 +11,17 @@ import { projectGame } from "./projection.js";
 import { isSafeManaUndo } from "./undo.js";
 
 describe("smart counter response and safe mana undo", () => {
+  it("offers Derevi's command-zone return ability without treating it as a cast", () => {
+    let game = twoSeatGame([], []);
+    const derevi = C13_DEREVI();
+    game = stage(game, 0, () => ({ commandZone: toHand(0, [derevi], "derevi"), hand: [], autoPass: false, manaPool: { W: 1, U: 1, B: 0, R: 0, G: 1, C: 1 } }));
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true };
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === "derevi-0");
+    expect(action).toBeDefined();
+    game = applyAction(game, 0, action!.action);
+    expect(game.players[0]!.commandZone).toHaveLength(0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === derevi.name)).toBe(true);
+  });
   it("resolves Sudden Spoiling's target-player layer and clears it at cleanup", () => {
     const card = make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2." });
     let game = twoSeatGame([], []);
@@ -439,6 +450,7 @@ const C13_DIVINITY_OF_PRIDE = () => make({ name: "Divinity of Pride", type_line:
 const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creature — Zombie", mana_cost: "1B", cmc: 2, power: "1", toughness: "1", oracle_text: "This creature gets +1/+1 for each creature card in your opponents' graveyards.", scryfall_id: "6397c046-4c59-4f0b-9b44-2a804eb95edf" });
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
+const C13_DEREVI = () => make({ name: "Derevi, Empyrial Tactician", type_line: "Legendary Creature — Bird Wizard", mana_cost: "{1}{G}{W}{U}", cmc: 4, power: "2", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.", oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });

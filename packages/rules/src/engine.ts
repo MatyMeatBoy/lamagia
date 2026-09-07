@@ -968,6 +968,10 @@ function handActivationSource(card: GameCard, controller: SeatId): Permanent {
   };
 }
 
+function commandZoneActivationSource(card: GameCard, controller: SeatId): Permanent {
+  return handActivationSource(card, controller);
+}
+
 function activationKey(sourceId: string, abilityIndex: number): string {
   return `${sourceId}:${abilityIndex}`;
 }
@@ -8352,6 +8356,19 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         ...(check.note ? { note: check.note } : {})
       });
     }
+    const source = commandZoneActivationSource(card, seat);
+    for (const ability of profile.activatedAbilities.filter((candidate) => candidate.sourceZone === "command-zone")) {
+      const check = activatableAbility(state, seat, source, ability);
+      if (!check.legal) continue;
+      actions.push({
+        action: { type: "activate", sourceId: card.instance_id, abilityIndex: ability.index },
+        label: `${card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}`,
+        cardId: card.instance_id,
+        ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+        ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
+        note: ability.text
+      });
+    }
   }
 
   if (!splitSecondActive(state)) for (const card of player.hand) {
@@ -9146,6 +9163,7 @@ function activatableAbility(
   if (permanent.controller !== seat) return { legal: false };
   if (ability.sourceZone === "hand" && !player.hand.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
   if (ability.sourceZone === "graveyard" && !player.graveyard.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
+  if (ability.sourceZone === "command-zone" && !player.commandZone.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
   if (!ability.sourceZone && !player.battlefield.some((candidate) => candidate.instance_id === permanent.instance_id)) return { legal: false };
   if (ability.upkeepOnly && (state.activeSeat !== seat || state.step !== "upkeep")) return { legal: false };
   if (ability.oncePerTurn && (player.oncePerTurnActivations ?? []).includes(activationKey(permanent.instance_id, ability.index))) return { legal: false };
@@ -9300,18 +9318,21 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   const battlefieldSource = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   const handSource = player.hand.find((card) => card.instance_id === action.sourceId);
   const graveyardSource = player.graveyard.find((card) => card.instance_id === action.sourceId);
-  const source = battlefieldSource
+  const commandZoneSource = player.commandZone.find((card) => card.instance_id === action.sourceId);
+  const candidateSource = battlefieldSource
     ?? (handSource ? handActivationSource(handSource, seat) : undefined)
     ?? (graveyardSource ? graveyardActivationSource(graveyardSource, seat) : undefined);
-  if (!source) throw new Error("Ese permanente o carta ya no está bajo tu control.");
+  const resolvedSource = candidateSource ?? (commandZoneSource ? commandZoneActivationSource(commandZoneSource, seat) : undefined);
+  if (!resolvedSource) throw new Error("Ese permanente o carta ya no está bajo tu control.");
+  const source = resolvedSource;
   const ability = battlefieldSource
     ? activatedAbilitiesFor(state, battlefieldSource).find((candidate) => candidate.index === action.abilityIndex)
-    : cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
+    : cardProfile(resolvedSource.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
-  if (ability.sourceZone === "hand" ? !handSource : ability.sourceZone === "graveyard" ? !graveyardSource : !battlefieldSource) {
+  if (ability.sourceZone === "hand" ? !handSource : ability.sourceZone === "graveyard" ? !graveyardSource : ability.sourceZone === "command-zone" ? !commandZoneSource : !battlefieldSource) {
     throw new Error("La zona de esa habilidad ya no es válida.");
   }
-  const check = activatableAbility(state, seat, source, ability, action.variableValue ?? 0);
+  const check = activatableAbility(state, seat, resolvedSource, ability, action.variableValue ?? 0);
   if (!check.legal) throw new Error(`No puedes activar la habilidad de ${source.card.name} ahora.`);
 
   // Targets are chosen while the ability is announced, before any cost is paid
@@ -9561,6 +9582,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       }));
     }
     next = logged(next, seat, `${player.name} exilia ${exiles.map((card) => card.name).join(", ")} de un cementerio.`);
+  }
+
+  if ((ability.effect as { kind: string }).kind === "put-source-from-command-zone") {
+    next = withPlayer(next, seat, (current) => ({ ...current, commandZone: current.commandZone.filter((card) => card.instance_id !== source.instance_id) }));
+    next = putOntoBattlefield(next, seat, source.card, false);
+    return logged(next, seat, `${player.name} pone ${source.card.name} en el campo de batalla desde la zona de mando.`);
   }
 
   const effectVariable = ability.manaCost?.hasVariable ? abilityX
