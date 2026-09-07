@@ -82,6 +82,14 @@ upkeep counter advancement, mandatory cast trigger, target revalidation, and
 scenario tests together. Do not submit partial Suspend work or use a fake
 Scryfall ID; use the card's stable oracle ID.
 
+Before sending another commit, compare the worker branch with the current
+published integration SHA. A commit based on an older fork is rescue material,
+not a direct merge: submit only the smallest focused diff, with a reproducible
+scenario against the current APIs. Do not report coverage changes as card
+implementations unless the authoritative rescan and tests prove them. If a
+feature depends on another unmerged primitive, list that dependency and stop
+instead of duplicating or bundling unrelated infrastructure.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
