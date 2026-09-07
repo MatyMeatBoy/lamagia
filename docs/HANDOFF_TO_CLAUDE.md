@@ -6752,5 +6752,5 @@ integrator review; do not count the old `11440733` as integrated.
 
 - Base: `aee0674b`.
 - `Jar of Eyeballs | 3075dadd-240f-4455-9286-9f1d48f53a3f`: added a reusable activated-cost primitive for removing all source counters, recording the removed quantity on the stack, and feeding it into the existing private top-library selection/bottoming flow. The profile now parses both the dies trigger and the `{3}, {T}` activation as fully implemented.
-- Verification: authoritative C13 coverage advances to `322/341` unique cards on the current integration base; Jar scenario, full rules suite (**826 tests**) and rules typecheck pass. The near-complete queue remains empty.
+- Verification: authoritative C13 coverage advances to `320/341` unique cards; Jar scenario, full rules suite (**826 tests**) and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
