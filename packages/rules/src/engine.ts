@@ -306,6 +306,8 @@ export interface TriggerInstance {
   readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand" };
   /** Reincarnation delayed return data retained after the target dies. */
   readonly delayedDeathReturn?: { readonly card: GameCard; readonly owner: SeatId };
+  /** Spinal Embrace's next-end-step sacrifice payload. */
+  readonly delayedSacrifice?: { readonly targetPermanentId: string; readonly controller: SeatId };
   /** Card linked to a Fiend Hunter-style leaves-the-battlefield trigger (CR 607.1). */
   readonly linkedExiledCard?: GameCard;
   /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
@@ -353,6 +355,16 @@ export interface DelayedDeathReturn {
   readonly targetPermanentId: string;
   readonly card: GameCard;
   readonly owner: SeatId;
+  readonly sourceCard: GameCard;
+  readonly controller: SeatId;
+  readonly sourceText: string;
+}
+
+/** Spinal Embrace-style delayed sacrifice (CR 603.7). */
+export interface DelayedSacrifice {
+  readonly id: string;
+  readonly triggerAtTurn: number;
+  readonly targetPermanentId: string;
   readonly sourceCard: GameCard;
   readonly controller: SeatId;
   readonly sourceText: string;
@@ -429,6 +441,8 @@ export interface GameState {
   readonly delayedReturns: readonly DelayedReturn[];
   /** Reincarnation delayed death triggers waiting for their target to die. */
   readonly delayedDeathReturns: readonly DelayedDeathReturn[];
+  /** Delayed sacrifices waiting for the next end step. */
+  readonly delayedSacrifices: readonly DelayedSacrifice[];
   /** Delayed mana triggers waiting for their owner's next main phase. */
   readonly delayedManaAdds: readonly DelayedManaAdd[];
   readonly combat: CombatState;
@@ -1641,6 +1655,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     delayedDraws: [],
     delayedReturns: [],
     delayedDeathReturns: [],
+    delayedSacrifices: [],
     delayedManaAdds: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
     log: [],
@@ -4558,6 +4573,47 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return logged(next, controller, `${sourceName}: ${moved.card.name} queda bajo tu control hasta el final del turno.`);
     }
+    case "spinal-embrace": {
+      const target = object.targets[targetIndex];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || permanent.controller === controller || !isCreature(cardProfile(permanent.card))) return state;
+      const previousController = permanent.temporaryControllerFrom ?? permanent.controller;
+      let next = changePermanentController(state, permanent, controller);
+      const moved = findPermanent(next, permanent.instance_id);
+      if (!moved) return next;
+      next = withPlayer(next, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === moved.instance_id
+          ? {
+              ...candidate,
+              tapped: false,
+              temporaryControllerFrom: previousController,
+              temporaryKeywords: [...new Set([...(candidate.temporaryKeywords ?? []), "haste" as EnforcedKeyword])]
+            }
+          : candidate)
+      }));
+      const delayed = {
+        id: `${object.id}:sacrifice`, triggerAtTurn: state.step === "end" ? state.turn + 1 : state.turn,
+        targetPermanentId: moved.instance_id, sourceCard: object.card, controller,
+        sourceText: `${sourceName}: sacrifice the creature at the beginning of the next end step`
+      };
+      return logged({ ...next, delayedSacrifices: [...next.delayedSacrifices, delayed] }, controller,
+        `${sourceName}: ${moved.card.name} queda bajo tu control hasta el próximo paso final.`);
+    }
+    case "sacrifice-delayed-creature-gain-toughness": {
+      const delayed = object.trigger?.delayedSacrifice;
+      if (!delayed) return state;
+      const permanent = findPermanent(state, delayed.targetPermanentId);
+      if (!permanent) return state;
+      const toughness = toughnessOf(permanent, state);
+      let next = movePermanentToZone(state, permanent, "graveyard", true);
+      if (toughness > 0 && !playerCantGainLife(next, delayed.controller)) {
+        next = withPlayer(next, delayed.controller, (player) => ({ ...player, life: player.life + toughness }));
+        next = raiseEvent(next, { kind: "life-gained", seat: delayed.controller, amount: toughness });
+      }
+      return logged(next, delayed.controller, `${sourceName}: sacrifica ${permanent.card.name} y gana ${toughness} vidas.`);
+    }
     case "exile-target-permanent-delayed-return": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -6728,6 +6784,31 @@ function queueDelayedReturns(state: GameState): GameState {
   return { ...state, delayedReturns: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
 }
 
+/** Queues Spinal Embrace-style sacrifices at the next end step (CR 603.7). */
+function queueDelayedSacrifices(state: GameState): GameState {
+  const due = state.delayedSacrifices.filter((delayed) => delayed.triggerAtTurn === state.turn);
+  if (!due.length) return state;
+  const remaining = state.delayedSacrifices.filter((delayed) => delayed.triggerAtTurn !== state.turn);
+  const triggers: TriggerInstance[] = due.map((delayed) => ({
+    id: delayed.id,
+    controller: delayed.controller,
+    sourcePermanentId: `delayed:${delayed.id}`,
+    sourceCard: delayed.sourceCard,
+    definition: {
+      event: "end-step",
+      subject: "you",
+      effect: { kind: "sacrifice-delayed-creature-gain-toughness" },
+      optional: false,
+      targetKind: "none",
+      sourceText: delayed.sourceText
+    },
+    cause: `${delayed.sourceCard.name}: delayed end-step sacrifice`,
+    delayedSacrifice: { targetPermanentId: delayed.targetPermanentId, controller: delayed.controller },
+    eventController: delayed.controller
+  }));
+  return { ...state, delayedSacrifices: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
+}
+
 /** Queues Echo once, at the controller's next upkeep (CR 702.30a-b). */
 function queueEchoTriggers(state: GameState): GameState {
   const due = allPermanents(state).filter((permanent) =>
@@ -6883,6 +6964,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
   }
   if (step === "end") {
     next = queueDelayedReturns(next);
+    next = queueDelayedSacrifices(next);
     next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });
   }
 
@@ -7047,6 +7129,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (!cost) return { legal: false };
   if (!Number.isInteger(variableValue) || variableValue < 0) return { legal: false, note: "El valor de X debe ser un entero no negativo." };
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
+  const inCombat = ["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step);
+  if (profile.combatOnly && !inCombat) return { legal: false };
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));

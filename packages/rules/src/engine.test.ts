@@ -673,6 +673,7 @@ const C13_FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_c
 const C13_TRUE_NAME = () => make({ name: "True-Name Nemesis", type_line: "Creature — Merfolk Rogue", mana_cost: "{1}{U}{U}", cmc: 3, power: "3", toughness: "1", oracle_text: "As this creature enters, choose a player.\nThis creature has protection from the chosen player.", oracle_id: "112322ad-8f66-4cd4-98a1-f425d61a69ce" });
 const C13_REINCARNATION = () => make({ name: "Reincarnation", type_line: "Instant", mana_cost: "{1}{G}{G}", cmc: 3, oracle_text: "Choose target creature. When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner.", oracle_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a" });
 const C13_MASS_MUTINY = () => make({ name: "Mass Mutiny", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "For each opponent, gain control of up to one target creature that player controls until end of turn. Untap those creatures. They gain haste until end of turn.", oracle_id: "d96763a0-6a6e-4520-899a-468b4bb307c8" });
+const C13_SPINAL_EMBRACE = () => make({ name: "Spinal Embrace", type_line: "Instant", mana_cost: "{3}{U}{U}{B}", cmc: 6, oracle_text: "Cast this spell only during combat.\nUntap target creature you don't control and gain control of it. It gains haste until end of turn. At the beginning of the next end step, sacrifice it. If you do, you gain life equal to its toughness.", oracle_id: "4cf3fb65-9107-428a-8853-029ec97112b5" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6201,6 +6202,24 @@ describe("casting", () => {
     const stolen = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
     expect(stolen).toMatchObject({ controller: 0, tapped: false, temporaryControllerFrom: 1 });
     expect(stolen.temporaryKeywords).toContain("haste");
+  });
+
+  it("casts Spinal Embrace only in combat, then sacrifices the creature and gains its toughness", () => {
+    const profile = profileOf(C13_SPINAL_EMBRACE());
+    expect(profile).toMatchObject({ fullyImplemented: true, combatOnly: true, effects: [{ kind: "spinal-embrace" }], targetKind: "creature-opponent" });
+    let game = readyToCast([C13_SPINAL_EMBRACE()], [ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), SWAMP() ], [], [BEAR()]);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast" && entry.cardId === "hand-0")).toBe(false);
+    game = { ...game, step: "begin-combat", priorityOpen: true, prioritySeat: 0, passedSeats: [] };
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.delayedSacrifices.length === 1);
+    const stolen = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(stolen).toMatchObject({ controller: 0, tapped: false, temporaryControllerFrom: 1 });
+    expect(stolen.temporaryKeywords).toContain("haste");
+    game = { ...game, step: "postcombat-main", priorityOpen: true, prioritySeat: 0, passedSeats: [] };
+    game = passUntil(game, (state) => !state.players.some((player) => player.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)) && state.players[0]!.life === 42);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {

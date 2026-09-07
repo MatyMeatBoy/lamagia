@@ -703,6 +703,10 @@ export type SpellEffect =
   | { readonly kind: "gain-control-of-source-random-opponent" }
   /** Mass Mutiny: temporarily control the selected opposing creature, untap it, and grant haste. */
   | { readonly kind: "gain-control-target-until-end-of-turn" }
+  /** Spinal Embrace: take an opposing creature through the next end step, then sacrifice it. */
+  | { readonly kind: "spinal-embrace" }
+  /** Resolves Spinal Embrace's delayed sacrifice and toughness-based life gain. */
+  | { readonly kind: "sacrifice-delayed-creature-gain-toughness" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Destroy one random permanent from an already-selected target group. */
@@ -1247,6 +1251,8 @@ export interface CardProfile {
   readonly graftAmount: number | null;
   readonly isPermanent: boolean;
   readonly castableFromHand: boolean;
+  /** Spell may only be cast during a combat step (CR 601.2b). */
+  readonly combatOnly: boolean;
   /** True when every printed instruction is covered by the engine. */
   readonly fullyImplemented: boolean;
   /** Normalized clauses preventing the card from being marked implemented. */
@@ -2424,6 +2430,8 @@ interface RecognizedText {
   readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** Printed cast restriction: this spell may only be cast during combat. */
+  readonly combatOnly?: boolean;
   overloadCost?: ManaCost | null;
   overloadedEffects?: SpellEffect[];
   extraTargetCost?: number | null;
@@ -4115,6 +4123,12 @@ function recognizeText(text: string): RecognizedText {
       targetKind: "creature-opponent", unimplementedText: [], covered: true
     };
   }
+  if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "spinal-embrace" }], triggers: [], activatedAbilities: [], modalChoices: [],
+      targetKind: "creature-opponent", combatOnly: true, unimplementedText: [], covered: true
+    };
+  }
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
   const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   const magusOfArena = /^\{3\},\s*\{T\}:\s*Tap target creature you control and target creature of an opponent['’]s choice they control\.\s*Those creatures fight each other\.?$/i.test(joined);
@@ -4375,6 +4389,7 @@ function recognizeText(text: string): RecognizedText {
   const modalChoices: ModalChoice[] = [];
   const combatRuleLines = parseCombatRules(body.map((entry) => entry.text)).consumed;
   let targetKind: TargetKind = "none";
+  let combatOnly = false;
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
   let overloadCost: ManaCost | null = null;
@@ -4391,6 +4406,10 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    if (/^Cast ~ only during combat\.?$/i.test(line)) {
+      combatOnly = true;
+      continue;
+    }
     if (/^You may choose new targets for the cop(?:y|ies)\.?$/i.test(line)
       && /copy target instant or sorcery spell/i.test(body[lineIndex - 1]?.text ?? "")) continue;
     // Sun Droplet's two abilities are a reusable counter-bank shape: damage
@@ -5319,7 +5338,7 @@ function recognizeText(text: string): RecognizedText {
     ? [{ kind: "damage-each-opponent-creature" as const, amount: effects[0]!.amount, filter: "without-flying" as const }]
     : [];
   if (overloadCost && !overloadedEffects.length) unimplementedText.push(`Overload ${overloadCost.raw}`);
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, overloadCost, overloadedEffects, extraTargetCost, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, combatOnly, overloadCost, overloadedEffects, extraTargetCost, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5650,6 +5669,7 @@ export function cardProfile(card: CardData): CardProfile {
     effects: recognized.effects,
     triggers: [...gatedTriggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
+    combatOnly: recognized.combatOnly ?? false,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
   overloadCost: recognized.overloadCost ?? null,
   overloadedEffects: recognized.overloadedEffects ?? [],
