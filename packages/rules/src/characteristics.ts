@@ -548,6 +548,8 @@ export type SpellEffect =
   | { readonly kind: "you-and-opponent-each"; readonly effect: SpellEffect }
   /** Tempting offer: resolve the base effect, then let each opponent accept the opponent effect; each acceptance repeats the reward for you. */
   | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
+  /** Cruel Ultimatum's fixed sequence of target and controller effects. */
+  | { readonly kind: "cruel-ultimatum" }
   | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
@@ -4153,6 +4155,12 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "tempting-offer", base: search, opponent: search, reward: search }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life\.\s*You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "cruel-ultimatum" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "opponent", unimplementedText: [], covered: true
     };
   }
   if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {

@@ -663,6 +663,8 @@ export type PendingChoice =
       readonly thenDraw?: number;
       /** Geier Reach Sanitarium: seats still owed their own discard choice, in APNAP order. */
       readonly nextSeats?: readonly SeatId[];
+      /** Cruel Ultimatum continues with life loss and controller rewards after the discard choice. */
+      readonly cruelUltimatum?: { readonly controller: SeatId; readonly targetSeat: SeatId };
     }
   | {
       /** Scry (CR 701.17) and Surveil (CR 701.42) share this shape: inspect the
@@ -2735,6 +2737,21 @@ function queueTemptingOfferChoice(
   };
 }
 
+function finishCruelUltimatum(state: GameState, object: StackObject, targetSeat: SeatId): GameState {
+  let next = applyEffect(state, object, { kind: "lose-life-target-player", amount: 5 });
+  const returned = playerAt(next, object.controller).graveyard.find((card) => isCreature(cardProfile(card)));
+  if (returned) {
+    next = withPlayer(next, object.controller, (player) => ({
+      ...player,
+      graveyard: player.graveyard.filter((card) => card.instance_id !== returned.instance_id),
+      hand: [...player.hand, returned]
+    }));
+  }
+  next = applyEffect(next, object, { kind: "draw", amount: 3 });
+  next = applyEffect(next, object, { kind: "gain-life", amount: 5 });
+  return logged(next, object.controller, `${object.card.name}: el oponente pierde 5; tú recuperas una criatura, robas tres y ganas 5.`);
+}
+
 function applyEffect(state: GameState, object: StackObject, effect: SpellEffect, targetIndex = 0): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
@@ -3606,6 +3623,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const victim = [...candidates].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
       const next = movePermanentToZone(state, victim, "graveyard", true);
       return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
+    }
+    case "cruel-ultimatum": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      let next = applyEffect(state, object, { kind: "target-player-sacrifice-creature" });
+      const amount = Math.min(3, playerAt(next, target.seat).hand.length);
+      if (amount > 0) {
+        return {
+          ...next,
+          priorityOpen: false,
+          pendingChoice: {
+            type: "discard-cards",
+            seat: target.seat,
+            sourceId: object.id,
+            sourceCard: object.card,
+            amount,
+            remaining: amount,
+            cruelUltimatum: { controller, targetSeat: target.seat }
+          }
+        };
+      }
+      return finishCruelUltimatum(next, object, target.seat);
     }
     case "each-player-gains-life": {
       let next = state;
@@ -10227,6 +10266,19 @@ function applyChooseDiscard(state: GameState, seat: SeatId, action: Extract<Game
   let next = discardCard(stateWithChoice, seat, card);
   if (remaining <= 0 && nextSeat === undefined && (choice.thenDrawSame || choice.thenDraw !== undefined)) {
     next = drawCards(next, seat, choice.thenDraw ?? choice.amount);
+  }
+  if (remaining <= 0 && nextSeat === undefined && choice.cruelUltimatum) {
+    const continuation = choice.cruelUltimatum;
+    next = finishCruelUltimatum(next, {
+      id: choice.sourceId,
+      controller: continuation.controller,
+      card: choice.sourceCard,
+      targets: [{ kind: "player", seat: continuation.targetSeat }],
+      label: choice.sourceCard.name,
+      fromCommandZone: false,
+      variableValue: 0,
+      countered: false
+    }, continuation.targetSeat);
   }
   return logged(next, seat, `${playerAt(next, seat).name} descarta ${card.name}.`);
 }
