@@ -6726,3 +6726,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Deadwood Treefolk | b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`: added the reusable Vanishing primitive (enters with time counters, removes one at its controller's upkeep, sacrifices when the last one is removed) and connected it to the existing ETB/LTB implementation.
 - Verification: authoritative C13 near-complete rescan now reports `0 cards; 0 reusable`; rules check passes and the full suite is green.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 reusable delayed-return cluster (2026-09-07)
+
+- Base: `dfc95af3`.
+- `Mistmeadow Witch | 38e274e2-bd04-48de-a1df-44f0ee987ba8` and `Roon of the Hidden Realm | fd336830-4a11-42b8-9fc7-d7526f569124`: reuse `exile-target-permanent-delayed-return` for creature targets and the next-end-step return; “another” excludes the source permanent for Roon.
+- Verification: C13 authoritative coverage is `317/341` unique cards; the full rules suite is green.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.

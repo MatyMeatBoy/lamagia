@@ -2119,6 +2119,51 @@ describe("casting", () => {
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 
+  it("reuses delayed creature return for Mistmeadow Witch and Roon", () => {
+    const witch = make({
+      name: "Mistmeadow Witch", type_line: "Creature — Kithkin Wizard", mana_cost: "{2}{W}{U}", cmc: 4,
+      power: "1", toughness: "1",
+      oracle_text: "{2}{W}{U}: Exile target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step."
+    });
+    const roon = make({
+      name: "Roon, Test of the Hidden Realm", type_line: "Creature — Rhino Soldier", mana_cost: "{2}{G}{W}{U}", cmc: 5,
+      power: "4", toughness: "4",
+      oracle_text: "{2}, {T}: Exile another target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step."
+    });
+    expect(cardProfile(witch)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ effect: { kind: "exile-target-permanent-delayed-return" }, targetKind: "creature" }]
+    });
+    expect(cardProfile(roon)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ effect: { kind: "exile-target-permanent-delayed-return" }, targetKind: "creature", excludesSourceFromTargets: true }]
+    });
+
+    let game = readyToCast([witch], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), ISLAND(), ISLAND(), ISLAND(), ISLAND()], [], [BEAR()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Mistmeadow Witch"));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mistmeadow Witch")!;
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = stage(game, 0, (player) => ({ ...player, manaPool: { W: 2, U: 2, B: 0, R: 0, G: 0, C: 0 }, autoPass: false }));
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: bear.instance_id }]
+    });
+    game = passUntil(game, (state) => state.delayedReturns.length === 1);
+    expect(game.players[1]!.exile.some((card) => card.instance_id === bear.card.instance_id)).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)).toBe(false);
+    game = passUntil(game, (state) => state.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears"));
+    expect(game.delayedReturns).toHaveLength(0);
+
+    let sourceOnly = readyToCast([roon], [FOREST(), FOREST(), PLAINS(), ISLAND(), MOUNTAIN()]);
+    sourceOnly = applyAction(sourceOnly, 0, { type: "cast", cardId: "hand-0" });
+    sourceOnly = passUntil(sourceOnly, (state) => state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Roon, Test of the Hidden Realm"));
+    sourceOnly = stage(sourceOnly, 0, (player) => ({ ...player, manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 2 }, autoPass: false }));
+    sourceOnly = { ...sourceOnly, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    expect(legalActions(sourceOnly, 0).some((entry) => entry.action.type === "activate")).toBe(false);
+  });
+
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {
     expect(cardProfile(EYE_OF_DOOM())).toMatchObject({ fullyImplemented: true, activatedAbilities: [{ effect: { kind: "destroy-doomed-permanents" } }] });
   });

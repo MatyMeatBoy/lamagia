@@ -151,6 +151,8 @@ export interface ActivatedAbility {
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** Activated target phrase uses “another”, so the source permanent is excluded (CR 601.2c). */
+  readonly excludesSourceFromTargets?: boolean;
   /** Level up is an activated ability with a sorcery-speed restriction. */
   readonly sorcerySpeed?: boolean;
   /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
@@ -2448,6 +2450,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // The effect grammar is shared by spells, triggers and activations; do not
   // duplicate card-text patterns in the activation-cost parser.
   const selfPump = /^~ gets ([+-]\d+)\/([+-]\d+) until end of turn\.?$/i.exec(parsedEffectText);
+  const excludesSourceFromTargets = /^Exile another target (?:nontoken )?creature\./i.test(parsedEffectText);
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
   const fight = /^Target Beast creature you control fights target creature an opponent controls\.?$/i.test(parsedEffectText);
@@ -2573,6 +2576,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     effect: recognized.effect,
     targetKind: recognized.target,
     ...("targetKinds" in recognized && recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
+    ...(excludesSourceFromTargets ? { excludesSourceFromTargets: true } : {}),
     text: line.trim()
   };
 }
@@ -3322,6 +3326,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
     return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
+  }
+  const delayedCreatureReturn = /^Exile (another )?target (nontoken )?creature\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.exec(text);
+  if (delayedCreatureReturn) {
+    return {
+      effect: { kind: "exile-target-permanent-delayed-return" },
+      target: delayedCreatureReturn[2] ? "nontoken-creature" : "creature"
+    };
   }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
