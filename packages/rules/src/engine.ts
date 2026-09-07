@@ -11185,6 +11185,7 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
       if (source) { sourceProfile = cardProfile(source.card); const ability = sourceProfile.activatedAbilities[action.abilityIndex]; if (ability) effects = [ability.effect]; }
     }
     if (effects?.length && effects.every(isCounterOnlyEffect)) {
+      if (!effects.some(hasCounterTarget)) return true;
       const targetKinds = entry.requiresTargets ?? (entry.requiresTarget ? [entry.requiresTarget] : []);
       if (!targetKinds.length) return true;
       return targetKinds.some((targetKind) => legalTargets(state, seat, targetKind, sourceProfile).some(target => target.kind === "spell"
@@ -11215,6 +11216,11 @@ export function canCounterSpell(spell: StackObject, state?: GameState): boolean 
 function isCounterOnlyEffect(effect: SpellEffect): boolean {
   return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-battlefield"
     || (effect.kind === "compound" && effect.effects.length > 0 && effect.effects.every(isCounterOnlyEffect));
+}
+
+function hasCounterTarget(effect: SpellEffect): boolean {
+  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-battlefield"
+    || (effect.kind === "compound" && effect.effects.some(hasCounterTarget));
 }
 
 function shouldAutoPass(state: GameState, seat: SeatId): boolean {

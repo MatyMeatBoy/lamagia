@@ -1219,6 +1219,16 @@ describe("turn structure", () => {
     expect(game.turn).toBe(1);
   });
 
+  it("does not treat a counter-only card with no counter target as a real auto-pass choice", () => {
+    const game = twoSeatGame([], []);
+    const profile = cardProfile(make({
+      name: "Counter Placeholder", type_line: "Instant", mana_cost: "{U}",
+      oracle_text: "Counter target spell."
+    }));
+    expect(profile.effects).toEqual([{ kind: "counter-target-spell" }]);
+    expect(hasRealChoice({ ...game, stack: [], players: game.players.map((player) => ({ ...player, hand: [] })) }, 0)).toBe(false);
+  });
+
   it("does not skip the rest of the active turn after playing the only land", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({ hand: toHand(0, [FOREST()], "checkpoint-forest"), autoPass: true }));
