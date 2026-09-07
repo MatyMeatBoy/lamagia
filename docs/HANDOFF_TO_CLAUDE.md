@@ -6796,3 +6796,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Nivix Guildmage | d04356f1-0e1a-4689-8e54-f88c4c6dd936`: restored the reusable `copy-target-spell` primitive and current Oracle parser path. The historical implementation was outside this worker branch; its target restriction now accepts only an instant or sorcery spell controlled by the activating player and copies it onto the stack.
 - Verification: authoritative C13 coverage advances from `327/341` to `328/341`; the fresh export reports `Nivix Guildmage fullyImplemented: true`; targeted Nivix/Mass scenarios and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 copy-spell cost cluster — Uyo, Silent Prophet (2026-09-07)
+
+- Base: `cf6e9432`.
+- `Uyo, Silent Prophet | 93da1e63-54d6-4b05-af91-f13e7e111176`: added the structured `returnLands` activation cost, enumerated valid land combinations, returned exactly two selected lands to their owners, and reused `copy-target-spell` for the current Oracle wording without a controller restriction.
+- Verification: authoritative C13 coverage advances from `328/341` to `329/341`; the fresh export reports `Uyo fullyImplemented: true`; targeted Uyo/Nivix/Mass scenarios and rules typecheck pass.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
