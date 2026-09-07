@@ -5546,6 +5546,23 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // Derevi's printed ability combines an ETB trigger with a combat-damage
+    // trigger. They share one optional, targeted instruction, but the second
+    // event is about any creature you control rather than Derevi itself
+    // (CR 603.2, 603.3d, 701.21).
+    const dereviCombined = /^when\s+~\s+enters(?:\s+the\s+battlefield)?\s+and\s+whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i.exec(line);
+    if (dereviCombined) {
+      const rec = recognizeSentence(dereviCombined[1]!.replace(/^you\s+may\s+/i, ""));
+      if (rec) {
+        for (const [event, subject] of [
+          ["enters-battlefield", "self"],
+          ["deals-combat-damage-to-player", "creature-you-control"]
+        ] as const) {
+          triggers.push({ event, subject, effect: rec.effect, optional: true, targetKind: rec.target, sourceText: line });
+        }
+        continue;
+      }
+    }
     // "When this Class becomes level N, X" (CR 702.134): self-gated by the
     // reached level, so it needs no positional block-splitting like the other
     // Class ability lines do.

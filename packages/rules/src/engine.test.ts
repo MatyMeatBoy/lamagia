@@ -6534,6 +6534,34 @@ describe("casting", () => {
     expect(game.players[1]!.life).toBe(34);
   });
 
+  it("splits Derevi's combined ETB and combat-damage triggers", () => {
+    const derevi = C13_DEREVI();
+    expect(profileOf(derevi)).toMatchObject({
+      triggers: [
+        { event: "enters-battlefield", subject: "self", optional: true, effect: { kind: "tap-or-untap-target-permanent" }, targetKind: "permanent" },
+        { event: "deals-combat-damage-to-player", subject: "creature-you-control", optional: true, effect: { kind: "tap-or-untap-target-permanent" }, targetKind: "permanent" }
+      ],
+      activatedAbilities: [{ effect: { kind: "put-source-from-command-zone" } }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([derevi], [PLAINS(), ISLAND(), FOREST(), MOUNTAIN()], [], [BEAR()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    for (let index = 0; index < 4 && !game.pendingChoice; index += 1) game = applyAction(game, game.prioritySeat, { type: "pass" });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(targetChoice.type).toBe("trigger-target");
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: bear.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(optional.trigger?.definition.effect.kind).toBe("tap-or-untap-target-permanent");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    const mode = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "tap-or-untap" }>;
+    expect(mode.type).toBe("tap-or-untap");
+    game = applyAction(game, 0, { type: "choose-tap-or-untap", sourceId: mode.sourceId, mode: "tap" });
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.tapped).toBe(true);
+  });
+
   it("lets Brainstorm draw three then put two back on top in the chosen order", () => {
     const profile = profileOf(BRAINSTORM());
     expect(profile.fullyImplemented).toBe(true);
