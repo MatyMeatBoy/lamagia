@@ -443,6 +443,10 @@ current reproducible local engine export is 294/341. Until the catalog database
 and the exact export inputs are available, treat the 294/341 engine scan as the
 authoritative integration metric; do not copy the 100% claim into coverage UI.
 
+`7ae7b67c` (`c13-jeleva-current-base-rescue`) is a separate current-base rescue
+with parser, engine flow, and Jeleva scenarios. It is queued for integration;
+do not duplicate Jeleva in another worker batch.
+
 The follow-up audit confirms `f84cb14d` remains rescue material only: its Gambit
 and Hideaway changes require current-base adaptation and dedicated zone/combat
 scenarios. Preserve its card mappings, but do not merge its legacy engine files.
