@@ -6615,3 +6615,49 @@ offers only that Bear and excludes an untouched second Bear;
 resolving Reciprocate exiles the marked Bear while the other survives
 untouched. Validation: full **917** rules tests green (1 new), `npm
 run check` across all four workspaces, 200/200 simulated games.
+
+## Laquatus's Champion: remembering an ETB target across to a later LTB trigger (2026-09-06)
+
+Laquatus's Champion ("When ~ enters, target player loses 6 life.
+When ~ leaves the battlefield, that player gains 6 life.") needed a
+new cross-trigger memory mechanism: the SECOND trigger's "that
+player" refers to whoever the FIRST trigger's own target was, which
+must survive from the ETB's resolution all the way to the (separate)
+LTB trigger, potentially turns later. Added `Permanent.
+rememberedTargetPlayer?: SeatId`, set by a new `lose-life-target-
+player-remembered` effect (otherwise identical to the existing
+`lose-life-target-player`) when the ETB trigger resolves, and read
+back via a new `gain-life-remembered-player` effect on the LTB side.
+The read path reuses the EXISTING generic `eventPlayer` field on
+`TriggerInstance` (already carrying `victim`/`defender` payloads for
+other triggers) rather than inventing a new one — widened the
+`leaves-battlefield`/`dies` TriggerInstance construction to also pull
+`eventPlayer` from `watcher.rememberedTargetPlayer` when set (CR
+603.6d: a leaves-the-battlefield trigger's watcher retains its
+last-known state, including this field, at the exact resolution
+instant). A card-specific post-processing pass over the parsed
+`triggers` array detects the paired "target player loses N life" ETB
++ "that player gains N life" LTB shape and swaps the ETB's effect
+kind to the remembering variant only when both are present — kept
+narrow and card-specific (matching this session's established
+practice for two-line special-case fusions, e.g. Smothering
+Abomination) rather than a generic mechanism, since only this
+specific pairing needs it. **Bug found and fixed while testing**: the
+remembering effect's first draft read `object.sourcePermanentId ??
+object.id` to find which battlefield permanent to mark, but for a
+resolving TRIGGER (not a spell) the correct field is `object.trigger?.
+sourcePermanentId` — `object.sourcePermanentId` is undefined for
+triggers, and `object.id` is the STACK OBJECT's own synthetic id
+(e.g. `trigger:1:0:...`), matching no permanent at all; the write
+silently no-opped. Fixed to `object.trigger?.sourcePermanentId ??
+object.sourcePermanentId ?? object.card.instance_id`, the same
+fallback chain already used at several other sites in the file.
+Verified **+2** in the export count (11,094 → 11,096); `docs/
+SET_COVERAGE.md` holds at its stale 33.2%/true-33.7% split.
+Scenario-tested: casting Laquatus's Champion and choosing the
+opponent as its ETB target drops them from 40 to 34 life; later
+destroying the Champion correctly returns exactly 6 life to that SAME
+opponent (not the Champion's own controller, who cast the destroy
+spell that killed it), restoring them to 40. Validation: full **918**
+rules tests green (1 new), `npm run check` across all four
+workspaces, 200/200 simulated games.

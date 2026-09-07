@@ -571,6 +571,9 @@ export type SpellEffect =
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "target-player-sacrifice-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
+  /** Laquatus's Champion: remembers the targeted player on the source permanent for a later "that player" LTB trigger. */
+  | { readonly kind: "lose-life-target-player-remembered"; readonly amount: number }
+  | { readonly kind: "gain-life-remembered-player"; readonly amount: number }
   /** Peer into the Abyss: both halves are rounded up and computed independently at resolution (CR 107.1a). */
   | { readonly kind: "draw-half-library-then-lose-half-life-target-player" }
   /** Target loses the amount carried by the life-gain/loss event that caused this trigger. */
@@ -3695,6 +3698,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     if (amount) return { effect: { kind: "lose-life-target-player", amount }, target: "player" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "lose-life-target-player", amount: "X" }, target: "player" };
   }
+  // Laquatus's Champion: "that player" in a later leaves-the-battlefield
+  // trigger reads back whoever this ETB targeted, not a fresh target.
+  if ((match = /^That player gains (\w+) life$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount) return { effect: { kind: "gain-life-remembered-player", amount }, target: "none" };
+  }
   // Blood Artist pattern: the chosen player pays the life, the controller
   // heals for the same source event. Deliberately numeric-only — an "X" here
   // is always defined by a card-specific source (sacrificed creature's power,
@@ -5805,7 +5814,16 @@ function recognizeText(text: string): RecognizedText {
       optional: false, targetKind: "none", sourceText: "Evoke", requiresEvoked: true
     });
   }
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  // Laquatus's Champion: an ETB "target player loses N life" is paired with
+  // a later LTB "that player gains N life" - only in that combination does
+  // the ETB effect need to remember its target on the source permanent.
+  const hasRememberedGain = triggers.some((trigger) => trigger.effect.kind === "gain-life-remembered-player");
+  const resolvedTriggers = hasRememberedGain
+    ? triggers.map((trigger) => trigger.effect.kind === "lose-life-target-player" && trigger.effect.amount !== "X" && trigger.event === "enters-battlefield" && trigger.subject === "self"
+      ? { ...trigger, effect: { kind: "lose-life-target-player-remembered" as const, amount: trigger.effect.amount } }
+      : trigger)
+    : triggers;
+  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();

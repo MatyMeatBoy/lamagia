@@ -8615,6 +8615,29 @@ describe("triggered abilities", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === other.instance_id)).toBe(true);
   });
 
+  it("remembers Laquatus's Champion's ETB target for its own leaves-the-battlefield life gain", () => {
+    const champion = make({ name: "Laquatus's Champion", type_line: "Creature — Human Soldier", mana_cost: "{4}{U}{U}", cmc: 6, power: "3", toughness: "3", oracle_text: "When this creature enters, target player loses 6 life.\nWhen this creature leaves the battlefield, that player gains 6 life.\n{B}: Regenerate this creature." });
+    const destroySpell = make({ name: "Destroy Target Creature", type_line: "Instant", mana_cost: "{1}{B}", cmc: 2, oracle_text: "Destroy target creature." });
+    const profile = profileOf(champion);
+    expect(profile.triggers[0]).toMatchObject({ event: "enters-battlefield", subject: "self", effect: { kind: "lose-life-target-player-remembered", amount: 6 } });
+    expect(profile.triggers[1]).toMatchObject({ effect: { kind: "gain-life-remembered-player", amount: 6 } });
+    let game = readyToCast([champion, destroySpell], [ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), SWAMP(), SWAMP()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice).toMatchObject({ type: "trigger-target" });
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "player", seat: 1 } });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[1]!.life).toBe(34);
+    const championInPlay = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Laquatus's Champion")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-1", targets: [{ kind: "permanent", instanceId: championInPlay.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.triggerQueue.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Laquatus's Champion")).toBe(false);
+    // The life comes back to seat 1 (the ETB's original target), not seat 0
+    // (the controller who cast the destroy spell that killed it).
+    expect(game.players[1]!.life).toBe(40);
+    expect(game.players[0]!.life).toBe(40);
+  });
+
   it("pumps Towashi Songshaper when another artifact its controller controls enters", () => {
     const songshaper = make({ name: "Towashi Songshaper", type_line: "Creature — Human Samurai", mana_cost: "{1}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever another artifact you control enters, this creature gets +1/+0 until end of turn." });
     const artifact = make({ name: "Test Relic", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });

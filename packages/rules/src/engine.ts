@@ -153,6 +153,8 @@ export interface Permanent {
   readonly controllerBeforeAuraControl?: SeatId;
   /** The last card exiled by an imprint ability, if any. */
   readonly exiledWith?: GameCard;
+  /** Player targeted by this permanent's own ETB effect, read back by a later "that player" LTB trigger (Laquatus's Champion). */
+  readonly rememberedTargetPlayer?: SeatId;
   /** Current Class level (CR 702.134); absent means level 1, a Class's starting level. */
   readonly classLevel?: number;
   /** Prepared (new mechanic): while true, may cast a copy of the back face's spell. */
@@ -2593,7 +2595,9 @@ function raiseEvent(
          ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
           ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
-          ...("victim" in event ? { eventPlayer: event.victim } : "defender" in event ? { eventPlayer: event.defender } : {}),
+          ...("victim" in event ? { eventPlayer: event.victim }
+            : "defender" in event ? { eventPlayer: event.defender }
+              : (event.kind === "leaves-battlefield" || event.kind === "dies") && watcher.rememberedTargetPlayer !== undefined ? { eventPlayer: watcher.rememberedTargetPlayer } : {}),
           ...(event.kind === "card-discarded" ? { eventCard: event.card } : {})
         });
       }
@@ -3754,6 +3758,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
+    }
+    case "lose-life-target-player-remembered": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      let next = loseLife(state, target.seat, effect.amount);
+      next = withPlayer(next, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) =>
+          permanent.instance_id === sourceId ? { ...permanent, rememberedTargetPlayer: target.seat } : permanent)
+      }));
+      return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${effect.amount} vidas.`);
+    }
+    case "gain-life-remembered-player": {
+      if (playersCantGainLife(state)) return state;
+      const victim = object.trigger?.eventPlayer;
+      if (victim === undefined) return state;
+      const next = withPlayer(state, victim, (player) => ({ ...player, life: player.life + effect.amount }));
+      return logged(raiseEvent(next, { kind: "life-gained", seat: victim, amount: effect.amount }), controller, `${playerAt(next, victim).name} gana ${effect.amount} vidas.`);
     }
     case "draw-half-library-then-lose-half-life-target-player": {
       const target = object.targets[0];
