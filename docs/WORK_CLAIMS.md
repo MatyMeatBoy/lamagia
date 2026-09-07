@@ -400,6 +400,14 @@ declared, it must update the claim before touching the additional files.
 Claims coordinate contributors but do not replace review: CI, scenario tests,
 rules citations and the integrator review remain mandatory.
 
+## Rejected rescue notes
+
+- `28bbb693` (Eye of Doom) is not integrable as-is: its enter-the-battlefield
+  effect silently marks the first eligible permanent for each player instead of
+  creating a choice for each player. Do not copy that implementation; use a
+  per-player pending choice and preserve the chosen permanent's stable instance
+  id before adding the doom counter.
+
 Integration note (2026-09-06): worker-05 currently contains useful rules
 commits based on an incompatible rewritten tree. Do not merge that branch as a
 whole. Resubmit from the published integration SHA with a focused diff; the
