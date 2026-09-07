@@ -5982,7 +5982,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return logged(next, controller, `${sourceName} queda preparada.`);
     }
     case "tap-target-permanent": {
-      const target = object.targets[0];
+      const target = object.targets[targetIndex];
       if (!target || target.kind !== "permanent") return state;
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || permanent.tapped) return state;

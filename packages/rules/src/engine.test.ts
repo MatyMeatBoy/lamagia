@@ -431,6 +431,7 @@ const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery"
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
 const C13_INCENDIARY_COMMAND = () => make({ name: "Incendiary Command", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "Choose two —\n• Incendiary Command deals 4 damage to target player or planeswalker.\n• Incendiary Command deals 2 damage to each creature.\n• Destroy target nonbasic land.\n• Each player discards all the cards in their hand, then draws that many cards.", oracle_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870", scryfall_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870" });
+const C13_MAGUS_OF_THE_ARENA = () => make({ name: "Magus of the Arena", type_line: "Creature — Human Wizard", mana_cost: "{3}{R}{R}", cmc: 5, power: "5", toughness: "5", oracle_text: "{3}, {T}: Tap target creature you control and target creature of an opponent's choice they control. Those creatures fight each other. (Each deals damage equal to its power to the other.)", oracle_id: "44865261-16f8-42d2-a388-a57173142eb0", scryfall_id: "44865261-16f8-42d2-a388-a57173142eb0" });
 const C13_REINCARNATION = () => make({ name: "Reincarnation", type_line: "Instant", mana_cost: "{1}{G}{G}", cmc: 3, oracle_text: "Choose target creature. When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner.", oracle_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a", scryfall_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a" });
 const C13_ENDREK = () => make({ name: "Endrek Sahr, Master Breeder", type_line: "Legendary Creature — Human Wizard", mana_cost: "{4}{B}", cmc: 5, power: "2", toughness: "2", oracle_text: "Whenever you cast a creature spell, create X 1/1 black Thrull creature tokens, where X is that spell's mana value.\nWhen you control seven or more Thrulls, sacrifice ~.", oracle_id: "47a0079f-3544-45bc-a32a-bd93844c8c43", scryfall_id: "47a0079f-3544-45bc-a32a-bd93844c8c43" });
 const THRULL = () => make({ name: "Thrull", type_line: "Creature — Thrull", power: "1", toughness: "1" });
@@ -3508,6 +3509,37 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Lightning Bolt", "Island"]);
     expect(game.players[1]!.graveyard.map((card) => card.name)).toEqual(["Grizzly Bears", "Forest"]);
+  });
+
+  it("taps both Magus of the Arena targets before they fight", () => {
+    const magus = C13_MAGUS_OF_THE_ARENA();
+    expect(profileOf(magus)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{
+        targetKinds: ["creature-you-control", "creature-opponent"],
+        effect: { kind: "compound" }
+      }]
+    });
+    let game = twoSeatGame([], []);
+    const fighter = () => make({ name: "Arena Fighter", type_line: "Creature — Warrior", power: "3", toughness: "4" });
+    game = stage(game, 0, () => ({ autoPass: false, manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0, C: 3 } }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [magus, fighter()]);
+    game = putOnBattlefield(game, 1, [fighter()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === magus.name)!;
+    const own = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Arena Fighter")!;
+    const opposing = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Arena Fighter")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, {
+      type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: own.instance_id }, { kind: "permanent", instanceId: opposing.instance_id }]
+    });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === own.instance_id)).toMatchObject({ tapped: true, damage: 3 });
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === opposing.instance_id)).toMatchObject({ tapped: true, damage: 3 });
   });
 
   it("filters Harald, King of Skemfar's top-five review by creature subtype, not card type", () => {

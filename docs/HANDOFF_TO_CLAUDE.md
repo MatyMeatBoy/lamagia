@@ -6761,3 +6761,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Incendiary Command | d45a4924-daa0-4ac3-afd7-b66f636ce870`: generalized modal parsing for exact `Choose N` headings (CR 700.2), then added the reusable “each player discards their hand, then draws that many cards” effect. The fourth mode now participates in the existing `Choose two` combination generation instead of being reported as unresolved.
 - Verification: authoritative C13 coverage is `323/341` unique cards; Incendiary profile is fully implemented, the hand-size scenario passes, full rules suite (**828 tests**) and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 multi-target fight cluster — Magus of the Arena (2026-09-07)
+
+- Base: `da9bcc65`.
+- `Magus of the Arena | 44865261-16f8-42d2-a388-a57173142eb0`: added the reusable two-target activation shape that taps both selected creatures and then applies the existing fight primitive. It also fixed `tap-target-permanent` to honor compound target offsets, preserving the old single-target behavior while making multi-target compounds correct.
+- Verification: authoritative C13 coverage advances to `324/341` unique cards; Magus profile is fully implemented, the two-target tap/fight scenario passes, full rules suite (**829 tests**) and rules typecheck pass.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.

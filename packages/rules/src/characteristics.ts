@@ -2482,6 +2482,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const revealTopConditional = parseRevealTopCardConditional(parsedEffectText);
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
   const fight = /^Target Beast creature you control fights target creature an opponent controls\.?$/i.test(parsedEffectText);
+  const tapTwoCreaturesFight = /^Tap target creature you control and target creature (?:of an opponent's choice )?they control\. Those creatures fight each other\.?$/i.test(parsedEffectText);
   const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
@@ -2505,6 +2506,16 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: revealTopToHand, target: "none" as TargetKind }
     : fight
     ? { effect: { kind: "fight" } as SpellEffect, target: "creature-you-control" as TargetKind, targetKinds: ["creature-you-control", "creature-opponent"] as const }
+    : tapTwoCreaturesFight
+    ? {
+      effect: {
+        kind: "compound",
+        effects: [{ kind: "tap-target-permanent" }, { kind: "tap-target-permanent" }, { kind: "fight" }],
+        targetOffsets: [0, 1, null]
+      } as SpellEffect,
+      target: "creature-you-control" as TargetKind,
+      targetKinds: ["creature-you-control", "creature-opponent"] as const
+    }
     : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
     ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
     : sacrificedToughnessLife
