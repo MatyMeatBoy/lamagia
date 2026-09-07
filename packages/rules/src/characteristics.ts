@@ -918,6 +918,8 @@ export type SpellEffect =
  * always a trigger that fires.
  */
 export type TriggerEvent =
+  /** State-trigger evaluation pass (CR 603.8), not a player-visible event. */
+  | "state-change"
   | "enters-battlefield"
   | "dies"
   | "attacks"
@@ -981,6 +983,7 @@ export type TriggerSubject =
   | "shuffle-controller";
 
 export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
+  "state-change": "state trigger",
   "enters-battlefield": "habilidad de entrada",
   dies: "habilidad de muerte",
   attacks: "habilidad de ataque",
@@ -5808,6 +5811,26 @@ function recognizeText(text: string): RecognizedText {
         optional: true, targetKind: "none", sourceText: line
       });
       continue;
+    }
+    // State triggers (CR 603.8) are checked whenever the game state changes,
+    // then fire only on the false-to-true transition. Keep the board-count
+    // condition parameterized so the same primitive covers any subtype and
+    // threshold, not just Endrek Sahr's Thrulls.
+    const controlledCountState = /^(?:when|whenever)\s+you\s+control\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*)s?,?\s*(.+)$/i.exec(triggerLine);
+    if (controlledCountState) {
+      const amount = toNumber(controlledCountState[1]!);
+      const effectText = controlledCountState[3]!.trim();
+      const recognized = /^sacrifice\s+~\.?$/i.test(effectText)
+        ? { effect: { kind: "sacrifice-source" } as SpellEffect, target: "none" as TargetKind }
+        : recognizeSentence(effectText);
+      if (amount !== null && recognized) {
+        triggers.push({
+          event: "state-change", subject: "you", effect: recognized.effect,
+          optional: false, targetKind: recognized.target, sourceText: line,
+          condition: { kind: "controlled-subtype-at-least", subtype: singularSubtype(controlledCountState[2]!), amount }
+        });
+        continue;
+      }
     }
     const spellManaValueTokens = /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*create\s+(x|a|an|one|two|three|four|five|\d+)\s+1\/1\s+black\s+([A-Za-z][A-Za-z'’-]*)\s+creature\s+tokens?,?\s*where\s+x\s+is\s+that\s+spell['’]?s\s+mana\s+value\.?$/i.exec(triggerLine);
     if (spellManaValueTokens) {

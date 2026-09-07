@@ -385,6 +385,7 @@ export interface DelayedSacrifice {
  * player would receive priority (CR 603.3).
  */
 export type GameEvent =
+  | { readonly kind: "state-change" }
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "permanent-sacrificed"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
@@ -448,6 +449,8 @@ export interface GameState {
   readonly delayedReturns: readonly DelayedReturn[];
   /** Reincarnation delayed death triggers waiting for their target to die. */
   readonly delayedDeathReturns: readonly DelayedDeathReturn[];
+  /** State-trigger keys whose conditions are currently true (CR 603.8). */
+  readonly activeStateTriggerKeys: readonly string[];
   readonly delayedSacrifices: readonly DelayedSacrifice[];
   /** Delayed mana triggers waiting for their owner's next main phase. */
   readonly delayedManaAdds: readonly DelayedManaAdd[];
@@ -1984,6 +1987,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     delayedDraws: [],
     delayedReturns: [],
     delayedDeathReturns: [],
+    activeStateTriggerKeys: [],
     delayedSacrifices: [],
     delayedManaAdds: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
@@ -2460,6 +2464,10 @@ function triggerMatches(
   }
   const subject = definition.subject;
 
+  // State triggers have no event object: their condition is evaluated by the
+  // settle pass, and the subject only establishes whose board is checked.
+  if (event.kind === "state-change") return subject === "you";
+
   // Turn-structure triggers are about a player, not an object.
   if (event.kind === "upkeep" || event.kind === "draw-step" || event.kind === "end-step" || event.kind === "first-main-phase") {
     if (subject === "you") return event.activeSeat === watcher.controller;
@@ -2622,6 +2630,7 @@ function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boo
 function causeOf(state: GameState, event: GameEvent): string {
   const object = eventObject(event);
   switch (event.kind) {
+    case "state-change": return "the game state changed";
     case "enters-battlefield": return `${object!.card.name} entra al campo de batalla`;
     case "leaves-battlefield": return `${object!.card.name} deja el campo de batalla`;
     case "permanent-sacrificed": return `${object!.card.name} es sacrificado`;
@@ -2646,6 +2655,51 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "exploits": return `${event.card.name} explota a ${event.exploitedCard.name}`;
     default: return `comienza el ${STEP_LABELS[event.kind === "upkeep" ? "upkeep" : event.kind === "draw-step" ? "draw" : "end"]} de ${playerAt(state, event.activeSeat).name}`;
   }
+}
+
+/**
+ * Evaluates state-triggered abilities after state-based actions (CR 603.8).
+ * A key remains armed while its condition is true, so a persistent condition
+ * produces one trigger on the false-to-true transition and re-arms only after
+ * the condition becomes false again.
+ */
+function evaluateStateTriggers(state: GameState): GameState {
+  const active = new Set(state.activeStateTriggerKeys);
+  const queued: TriggerInstance[] = [];
+  const liveKeys = new Set<string>();
+  for (const watcher of allPermanents(state)) {
+    if (permanentLosesAbilities(state, watcher)) continue;
+    const definitions = cardProfile(watcher.card).triggers.concat(watcher.temporaryTriggers ?? []);
+    for (const [index, definition] of definitions.entries()) {
+      if (definition.event !== "state-change") continue;
+      const key = `${watcher.instance_id}:${index}`;
+      liveKeys.add(key);
+      if (!triggerMatches(state, { instanceId: watcher.instance_id, controller: watcher.controller }, definition, { kind: "state-change" })) {
+        active.delete(key);
+        continue;
+      }
+      if (active.has(key)) continue;
+      active.add(key);
+      queued.push({
+        id: `state-trigger:${state.version}:${state.triggerQueue.length + queued.length}:${watcher.instance_id}:${index}`,
+        controller: watcher.controller,
+        sourcePermanentId: watcher.instance_id,
+        sourceCard: watcher.card,
+        definition,
+        cause: `${watcher.card.name}: state condition became true`,
+        eventController: watcher.controller
+      });
+    }
+  }
+  for (const key of [...active]) if (!liveKeys.has(key)) active.delete(key);
+  const activeKeys = [...active];
+  if (!queued.length && activeKeys.length === state.activeStateTriggerKeys.length
+    && activeKeys.every((key, index) => key === state.activeStateTriggerKeys[index])) return state;
+  return {
+    ...state,
+    activeStateTriggerKeys: activeKeys,
+    ...(queued.length ? { triggerQueue: [...state.triggerQueue, ...queued] } : {})
+  };
 }
 
 /**
@@ -11920,6 +11974,7 @@ export function settle(state: GameState): GameState {
   for (let guard = 0; guard < 4096; guard += 1) {
     next = applyStateBasedActions(next);
     next = pruneCombat(next);
+    next = evaluateStateTriggers(next);
     if (next.finished) return next;
 
     // A land's "as it enters" choice is resolved before the game can open

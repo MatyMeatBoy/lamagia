@@ -6738,5 +6738,12 @@ integrator review; do not count the old `11440733` as integrated.
 
 - Base: `21a886a5`.
 - `Reincarnation | d6bf5e22-8d33-43a9-8824-435068e0a87a`: remembers the chosen creature for the current turn, watches its battlefield-to-graveyard death, and returns that recorded card under its owner's control using the existing delayed-trigger flow.
-- Verification: targeted Reincarnation scenario and full rules suite pass; authoritative C13 coverage advances to `318/341` unique cards and the near-complete queue leaves Endrek Sahr as the next reusable state-trigger candidate.
+- Verification: targeted Reincarnation scenario and full rules suite pass; authoritative C13 coverage advances to `318/341` unique cards before the next cluster.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 state-trigger cluster (2026-09-07)
+
+- Base: `360ed9c6`.
+- `Endrek Sahr, Master Breeder | 47a0079f-3544-45bc-a32a-bd93844c8c43`: added the reusable CR 603.8 false-to-true state-trigger primitive for “when you control N or more [subtype]”, including one-shot arming and rearming after the condition stops being true; Endrek's seven-Thrull sacrifice now resolves correctly.
+- Verification: Endrek scenario and typecheck pass; authoritative C13 coverage is now `319/341` unique cards and the near-complete queue is empty.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
