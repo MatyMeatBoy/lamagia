@@ -76,6 +76,12 @@ starting a new task, compare against the published tip and do not resubmit
 `Flickerform`, `From the Ashes`, `Order of Succession`, `Mystic Barrier`, or
 any card already marked `[x]` in `docs/SET_COVERAGE.md`.
 
+Suspend is currently an infrastructure-sized task: do not claim it as a
+parser-only change. It requires the CardProfile fields, public actions,
+upkeep counter advancement, mandatory cast trigger, target revalidation, and
+scenario tests together. Do not submit partial Suspend work or use a fake
+Scryfall ID; use the card's stable oracle ID.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
