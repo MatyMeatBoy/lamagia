@@ -51,6 +51,16 @@ Commander 2013 is a priority queue, not a global scope restriction. Continue
 with its remaining unclaimed clusters when assigned, but reusable primitives
 must be implemented globally and their regressions checked across all sets.
 
+### Fork handoff for C13
+
+The fork is support-only and must never repeat an active or merged claim from
+the main worker. Fetch the current branch, read `docs/WORK_CLAIMS.md`, choose
+one random **unclaimed C13** cluster from the latest
+`docs/PRIMITIVE_WORKERS_C13.md`, and claim it with the exact cluster name and
+base SHA before editing. If it is already listed, choose again. Do not work
+from a stale card list. Push one focused commit and report `CLAIM`, `BASE`,
+`COMMIT`, changed files, Oracle IDs, tests, and limits for overlap auditing.
+
 ## Generate the next task
 
 Do not choose cards by name or by an old status count. Refresh the engine-first
