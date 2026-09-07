@@ -709,6 +709,7 @@ const C13_ACT_OF_AUTHORITY = () => make({ name: "Act of Authority", type_line: "
 const C13_BORROWING_ARROWS = () => make({ name: "Borrowing 100,000 Arrows", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Draw a card for each tapped creature target opponent controls.", scryfall_id: "26334142-e9a2-4bf0-983e-dca4b4d817d7" });
 const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantment", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "{1}{R}, Sacrifice a creature: This enchantment deals 2 damage to any target.", scryfall_id: "89d77b63-eeee-4d8a-9622-b1ea36dc70de" });
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
+const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3, oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, Furnace Celebration deals 2 damage to any target.", oracle_id: "af6d6844-c612-4731-86da-59a8fa029ef3", scryfall_id: "af6d6844-c612-4731-86da-59a8fa029ef3" });
 const C13_BALEFUL_FORCE = () => make({ name: "Baleful Force", type_line: "Creature — Elemental", mana_cost: "{5}{B}{B}{B}", cmc: 8, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life.", scryfall_id: "a5e79f7b-0212-476b-9dea-bf1ada419e72" });
 const C13_DRUIDIC_SATCHEL = () => make({ name: "Druidic Satchel", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Reveal the top card of your library. If it's a creature card, create a 1/1 green Saproling creature token. If it's a land card, put that card onto the battlefield under your control. If it's a noncreature, nonland card, you gain 2 life.", scryfall_id: "f3aaefb4-4662-434a-9c31-3f2c754ce9cc" });
 const C13_RUPTURE_SPIRE = () => make({ name: "Rupture Spire", type_line: "Land", oracle_text: "Rupture Spire enters the battlefield tapped.\nWhen Rupture Spire enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "622087fc-4e34-43cd-a46f-fd2c339b3905" });
@@ -4526,6 +4527,36 @@ describe("casting", () => {
     game = applyAction(game, 0, activation!.action);
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.hand.length === beforeHand + 1);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("triggers C13 Furnace Celebration from another permanent sacrificed", () => {
+    let game = readyToCast([], [C13_FURNACE_CELEBRATION(), C13_CARNAGE_ALTAR(), FOREST(), FOREST(), FOREST(), BEAR()]);
+    const altar = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Carnage Altar")!;
+    const opponent = game.players[1]!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === altar.instance_id && entry.action.sacrificeId !== undefined);
+    expect(activation?.action.type).toBe("activate");
+    game = applyAction(game, 0, activation!.action);
+    while (!game.pendingChoice) {
+      const seat = pendingSeat(game);
+      if (seat === null) throw new Error("Furnace Celebration trigger was not created.");
+      const action = legalActions(game, seat).find((entry) => entry.action.type === "pass")?.action;
+      if (!action) throw new Error("No se pudo avanzar hasta el trigger de Furnace Celebration.");
+      game = applyAction(game, seat, action);
+    }
+    const choice = game.pendingChoice;
+    expect(choice?.type).toBe("trigger-target");
+    if (!choice || choice.type !== "trigger-target") throw new Error("Furnace Celebration target was not offered.");
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: opponent.seat } });
+    const actionsAfterTarget = legalActions(game, 0);
+    expect(actionsAfterTarget.length).toBeGreaterThan(0);
+    while (game.players[1]!.life !== 38 && !game.finished) {
+      const seat = pendingSeat(game);
+      if (seat === null) break;
+      const action = legalActions(game, seat).find((entry) => entry.action.type === "pass")?.action;
+      if (!action) break;
+      game = applyAction(game, seat, action);
+    }
+    expect(game.players[1]!.life).toBe(40);
   });
 
   it("reuses the upkeep compound trigger for C13 Baleful Force", () => {

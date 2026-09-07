@@ -367,6 +367,7 @@ export interface DelayedSacrifice {
 export type GameEvent =
   | { readonly kind: "enters-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "leaves-battlefield"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "permanent-sacrificed"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "dies"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly power?: number }
   | { readonly kind: "attacks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly defender: SeatId }
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
@@ -2040,7 +2041,7 @@ function millCards(state: GameState, seat: SeatId, amount: number): GameState {
 }
 
 /** Moves a permanent off the battlefield, honouring the commander-zone replacement. */
-function movePermanentToZone(state: GameState, permanent: Permanent, zone: "graveyard" | "exile" | "library-bottom"): GameState {
+function movePermanentToZone(state: GameState, permanent: Permanent, zone: "graveyard" | "exile" | "library-bottom", sacrificed = false): GameState {
   const destinationZone = zone === "graveyard" && permanent.exileIfWouldDieUntilEndOfTurn ? "exile" : zone;
   const ownerSeat = permanent.card.owner;
   let next = withPlayer(state, permanent.controller, (player) => ({
@@ -2055,6 +2056,7 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
     controller: permanent.controller,
     card: permanent.card
   }, [permanent]);
+  if (sacrificed) next = raiseEvent(next, { kind: "permanent-sacrificed", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card }, [permanent]);
   if (permanent.isCommander) {
     // Rule 903.9: the owner may put the commander into the command zone instead.
     next = withPlayer(next, ownerSeat, (player) => ({ ...player, commandZone: [...player.commandZone, permanent.card] }));
@@ -2542,6 +2544,7 @@ function causeOf(state: GameState, event: GameEvent): string {
   switch (event.kind) {
     case "enters-battlefield": return `${object!.card.name} entra al campo de batalla`;
     case "leaves-battlefield": return `${object!.card.name} deja el campo de batalla`;
+    case "permanent-sacrificed": return `${object!.card.name} es sacrificado`;
     case "dies": return `${object!.card.name} muere`;
     case "attacks": return `${object!.card.name} ataca`;
     case "blocks": return `${object!.card.name} bloquea`;
@@ -9014,7 +9017,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
       throw new Error("Debes elegir la cantidad correcta de criaturas para sacrificar.");
     }
     for (const paid of selected as Permanent[]) {
-      activationState = movePermanentToZone(activationState, paid, "graveyard");
+      activationState = movePermanentToZone(activationState, paid, "graveyard", true);
       activationState = logged(activationState, seat, `${player.name} sacrifica ${paid.card.name}.`);
     }
     sacrificedCount = selected.length;
@@ -9084,7 +9087,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (ability.sacrificesSelf) {
     const paid = playerAt(withManaTapEvent, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
     if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
-    const sacrificed = movePermanentToZone(withManaTapEvent, paid, "graveyard");
+    const sacrificed = movePermanentToZone(withManaTapEvent, paid, "graveyard", true);
     // Token sacrifice is a mana ability's cost.  `movePermanentToZone` emits
     // triggers and may rebuild the controller state, so apply the mana after
     // the zone change (CR 605.3b), preserving both the cost and the result.
@@ -9605,7 +9608,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.sacrificesSelf) {
     const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
     if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
-    next = movePermanentToZone(next, paid, "graveyard");
+    next = movePermanentToZone(next, paid, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${source.card.name}.`);
   }
   if (ability.discardsSelf) {
@@ -9621,7 +9624,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       ?? board.find((permanent) => permanent.instance_id !== source.instance_id) ?? board[0];
     if (!paid) throw new Error("No hay un artefacto para sacrificar.");
     sacrificedArtifactMv = cardProfile(paid.card).manaValue;
-    next = movePermanentToZone(next, paid, "graveyard");
+    next = movePermanentToZone(next, paid, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   if (ability.discardsCard || ability.discardsCreatureCard) {
@@ -9638,7 +9641,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     const lands = playerAt(next, seat).battlefield.filter((permanent) => isLand(cardProfile(permanent.card)));
     const paid = lands.find((permanent) => permanent.instance_id === action.sacrificeId) ?? lands[0];
     if (!paid) throw new Error("No tienes una tierra para sacrificar.");
-    next = movePermanentToZone(next, paid, "graveyard");
+    next = movePermanentToZone(next, paid, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   let sacrificedPower = 0;
@@ -9650,7 +9653,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     sacrificedPower = Math.max(0, powerOf(paid, next));
     sacrificedToughness = Math.max(0, toughnessOf(paid, next));
     sacrificedManaValue = cardProfile(paid.card).manaValue;
-    next = movePermanentToZone(next, paid, "graveyard");
+    next = movePermanentToZone(next, paid, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${paid.card.name}.`);
   }
   if (discard) {
@@ -9844,14 +9847,14 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     // needs its last-known information when it resolves (CR 608.2h).
     sacrificedPower = Math.max(0, powerOf(sacrificed, next));
     sacrificedManaValue = cardProfile(sacrificed.card).manaValue;
-    next = movePermanentToZone(next, sacrificed, "graveyard");
+    next = movePermanentToZone(next, sacrificed, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${sacrificed.card.name} por ${card.name}.`);
   }
   if (profile.additionalCostSacrificeCreatureColor) {
     const color = profile.additionalCostSacrificeCreatureColor;
     const creatures = playerAt(next, seat).battlefield.filter((p) => isCreature(cardProfile(p.card)) && cardProfile(p.card).colors.some((candidate) => candidate.toUpperCase() === color));
     if (!creatures.length) throw new Error(`No tienes una criatura de ese color para sacrificar por ${card.name}.`);
-    next = movePermanentToZone(next, creatures[0]!, "graveyard");
+    next = movePermanentToZone(next, creatures[0]!, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${creatures[0]!.card.name} por ${card.name}.`);
   }
   if (giftPromised && profile.giftDrawsCard) {
@@ -11470,7 +11473,7 @@ function applyChooseExploit(state: GameState, seat: SeatId, action: Extract<Game
   const sacrificed = findPermanent(next, action.sacrificeId);
   if (!sacrificed) throw new Error("Esa criatura ya no está en el campo de batalla.");
   const sacrificedCard = sacrificed.card;
-  next = movePermanentToZone(next, sacrificed, "graveyard");
+  next = movePermanentToZone(next, sacrificed, "graveyard", true);
   next = logged(next, seat, `${playerAt(next, seat).name} sacrifica ${sacrificedCard.name} para explotar.`);
   // The exploited card and the exploiter's own last-known identity are read
   // from the pending choice, not re-found on the battlefield: Exploit
