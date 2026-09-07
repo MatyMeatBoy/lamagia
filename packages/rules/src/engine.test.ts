@@ -669,6 +669,7 @@ const VALLEY_RANNET = () => make({
 });
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
+const C13_FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell costs {1} more to cast for each target beyond the first.\nFireball deals X damage divided evenly, rounded down, among any number of targets.", oracle_id: "aa7714b0-2bfb-458a-8ebf-37ec2c53383e" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6120,6 +6121,26 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")).toBeUndefined();
     expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Flyer")).toBeDefined();
     expect(game.players[0]!.graveyard.some((card) => card.name === "Street Spasm")).toBe(true);
+  });
+
+  it("casts C13 Fireball with evenly divided damage and its per-target cost", () => {
+    const profile = profileOf(C13_FIREBALL());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      extraTargetCost: 1,
+      effects: [{ kind: "damage-divided-targets", amount: "X", evenly: true }],
+      targetKind: "any"
+    });
+    let game = readyToCast([C13_FIREBALL()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [
+      make({ name: "Three-Toughness Bear", type_line: "Creature — Bear", power: "3", toughness: "3" }),
+      make({ name: "Three-Toughness Ape", type_line: "Creature — Ape", power: "3", toughness: "3" })
+    ]);
+    const targets = game.players[1]!.battlefield.map((permanent) => ({ kind: "permanent" as const, instanceId: permanent.instance_id }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 4, targets });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Three-Toughness Bear")).toMatchObject({ damage: 2 });
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Three-Toughness Ape")).toMatchObject({ damage: 2 });
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {

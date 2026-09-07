@@ -602,7 +602,7 @@ export type SpellEffect =
   /** Remove one source counter, then gain life (Sun Droplet, CR 121.1, 118.1). */
   | { readonly kind: "remove-source-counter-gain-life"; readonly counter: string; readonly amount: number }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
-  | { readonly kind: "damage-divided-targets"; readonly amount: number }
+  | { readonly kind: "damage-divided-targets"; readonly amount: number | "X"; readonly evenly?: boolean }
   /** Damage from the ability source equal to that source's current power. */
   | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
@@ -1149,6 +1149,8 @@ export interface CardProfile {
   readonly overloadCost: ManaCost | null;
   /** Effects used when the spell is cast for its Overload cost. */
   readonly overloadedEffects: readonly SpellEffect[];
+  /** Generic mana added for each target beyond the first (CR 601.2f). */
+  readonly extraTargetCost: number | null;
   readonly kickerCost: ManaCost | null;
   /** Entwine additional cost for selecting every modal branch (CR 702.42). */
   readonly entwineCost: ManaCost | null;
@@ -2416,6 +2418,7 @@ interface RecognizedText {
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   overloadCost?: ManaCost | null;
   overloadedEffects?: SpellEffect[];
+  extraTargetCost?: number | null;
   kickerCost?: ManaCost | null;
   entwineCost?: ManaCost | null;
   graftAmount?: number | null;
@@ -3147,6 +3150,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "any" };
     if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };
+  }
+  if ((match = /^~ deals (\w+) damage divided evenly, rounded down, among any number of targets\.?$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-divided-targets", amount, evenly: true }, target: "any" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-divided-targets", amount: "X", evenly: true }, target: "any" };
   }
   if ((match = /^~ deals (\w+) damage to target creature without flying you don't control$/i.exec(text))) {
     const amount = toNumber(match[1]);
@@ -4336,6 +4344,7 @@ function recognizeText(text: string): RecognizedText {
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
   let overloadCost: ManaCost | null = null;
+  let extraTargetCost: number | null = null;
   let entwineCost: ManaCost | null = null;
   let graftAmount: number | null = null;
   let echoCost: ManaCost | null = null;
@@ -4416,6 +4425,11 @@ function recognizeText(text: string): RecognizedText {
     // Overload is an alternative cost that rewrites the spell's targets (CR 702.96).
     const overload = /^Overload\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (overload) { overloadCost = parseManaCost(overload[1]!); continue; }
+    // Fireball-style additional cost for each target beyond the first
+    // (CR 601.2f). Keep the amount as a reusable profile attribute so any
+    // future multi-target spell can use the same casting primitive.
+    const extraTargets = /^(?:~|This spell) costs \{(\d+)\} more to cast for each target beyond the first\.?$/i.exec(line);
+    if (extraTargets) { extraTargetCost = Number(extraTargets[1]); continue; }
     // Partner (CR 702.123): purely a deck-construction rule — createGame
     // already accepts multiple declared commanderNames, so the printed line
     // carries no per-card state here. Reminder text (parenthetical) is
@@ -5271,7 +5285,7 @@ function recognizeText(text: string): RecognizedText {
     ? [{ kind: "damage-each-opponent-creature" as const, amount: effects[0]!.amount, filter: "without-flying" as const }]
     : [];
   if (overloadCost && !overloadedEffects.length) unimplementedText.push(`Overload ${overloadCost.raw}`);
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, overloadCost, overloadedEffects, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, overloadCost, overloadedEffects, extraTargetCost, kickerCost, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5603,8 +5617,9 @@ export function cardProfile(card: CardData): CardProfile {
     triggers: [...gatedTriggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
-    overloadCost: recognized.overloadCost ?? null,
-    overloadedEffects: recognized.overloadedEffects ?? [],
+  overloadCost: recognized.overloadCost ?? null,
+  overloadedEffects: recognized.overloadedEffects ?? [],
+    extraTargetCost: recognized.extraTargetCost ?? null,
     kickerCost: recognized.kickerCost ?? null,
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,

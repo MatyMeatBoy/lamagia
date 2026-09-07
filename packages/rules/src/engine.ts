@@ -3824,7 +3824,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const targets = object.targets;
       if (!targets.length) return state;
       let next = state;
-      let remaining = effect.amount;
+      const amount = effectAmount(effect.amount, object);
+      if (effect.evenly) {
+        const share = Math.floor(amount / targets.length);
+        if (share <= 0) return state;
+        for (const target of targets) {
+          if (target.kind === "player") next = dealDamageFromObject(next, target.seat, share, sourceName, object);
+          else if (target.kind === "permanent") next = dealDamageToPermanent(next, target.instanceId, share, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+        }
+        return next;
+      }
+      let remaining = amount;
       for (let index = 0; index < targets.length && remaining > 0; index += 1) {
         const target = targets[index]!;
         const share = index === 0 ? remaining - (targets.length - 1) + 0 : 1;
@@ -8639,23 +8649,27 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
+  const requested = action.targets ?? [];
   const spellCost = payReducedCost && profile.payReducedCostInstead
     ? profile.payReducedCostInstead
     : fromGraveyard
     ? withKicker(profile.flashbackCost!, entwined ? profile.entwineCost : null)
     : spellCostOf(profile, kicked, evoked, entwined, overloaded);
+  const targetTax = profile.extraTargetCost && requested.length > 1
+    ? parseManaCost(`{${profile.extraTargetCost * (requested.length - 1)}}`)
+    : null;
   const lifeCost = fromGraveyard
     ? profile.flashbackLifeCost
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? (action.variableValue ?? 0) : 0);
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
+  const actualSpellCost = withKicker(spellCost, targetTax);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
   const allowLegendaryMana = profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary");
   const alternativeReturn = returnPermanentIds.length > 0;
-  const plan = (freeCast || payLifeCost || alternativeReturn) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
+  const plan = (freeCast || payLifeCost || alternativeReturn) ? null : planManaPayment(actualSpellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowLegendaryMana });
   if (!freeCast && !payLifeCost && !alternativeReturn && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
-  const requested = action.targets ?? [];
   if (check.targetKinds?.length) {
     const chosen = requested.length
       ? requested
@@ -8680,7 +8694,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
     : alternativeReturn
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
-    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowLegendaryMana);
+    : payPlayerCost(actualSpellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowLegendaryMana);
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   if (alternativeReturn) {
     const returned = returnPermanentIds.map((id) => playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === id));
