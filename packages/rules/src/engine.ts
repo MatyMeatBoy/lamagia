@@ -13,7 +13,7 @@
  */
 
 import {
-  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
+  backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, isCreatureSubtypeName, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
   addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaRestrictionKind, type ManaType, type RestrictedMana
@@ -56,12 +56,12 @@ function matchesSacrificeType(permanent: Permanent, type: "Artifact" | "Enchantm
   return isLand(profile);
 }
 
-function matchesSacrificeCreatureCost(permanent: Permanent, ability: ActivatedAbility, sourceId: string): boolean {
+function matchesSacrificeCreatureCost(permanent: Permanent, ability: ActivatedAbility, sourceId: string, state?: GameState): boolean {
   if (!isCreature(cardProfile(permanent.card))) return false;
   if (ability.sacrificesCreature && ability.sacrificesCreature === "another" && permanent.instance_id === sourceId) return false;
   const typed = ability.sacrificesCreatureSubtype;
   if (typed && typed.mode === "another" && permanent.instance_id === sourceId) return false;
-  return !typed || cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === typed.subtype.toLowerCase());
+  return !typed || (state ? hasPermanentSubtype(state, permanent, typed.subtype) : hasSubtype(cardProfile(permanent.card), typed.subtype));
 }
 
 function combinations<T>(items: readonly T[], amount: number): T[][] {
@@ -1015,11 +1015,7 @@ function isCreaturePermanent(permanent: Permanent): boolean {
 function hasPermanentSubtype(state: GameState, permanent: Permanent, subtype: string): boolean {
   if (hasSubtype(cardProfile(permanent.card), subtype)) return true;
   if (!permanent.temporaryAllCreatureTypes || !isCreaturePermanent(permanent)) return false;
-  // Mirror Entity grants creature subtypes, not artifact/land/enchantment
-  // subtypes. Unknown named subtypes are treated as creature subtypes here;
-  // this keeps the engine extensible as new creature types are printed.
-  return !new Set(["equipment", "aura", "vehicle", "fortification", "blood", "clue", "food", "treasure", "powerstone", "map", "incubator", "attraction", "contraption", "plains", "island", "swamp", "mountain", "forest", "wastes", "desert", "gate", "locus", "sphere", "cave", "lair"])
-    .has(subtype.toLowerCase());
+  return isCreatureSubtypeName(subtype);
 }
 function attachedEquipment(state: GameState, creature: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === creature.instance_id
@@ -1105,7 +1101,7 @@ function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { po
       .filter((grant) => grant.scope === "creatures-you-control"
         || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id)
         || (grant.scope === "other-subtype-creatures-you-control" && source.instance_id !== permanent.instance_id
-          && (hasSubtype(cardProfile(permanent.card), grant.subtype!)
+          && (hasPermanentSubtype(state, permanent, grant.subtype!)
             || cardProfile(permanent.card).types.some((type) => type.toLowerCase() === grant.subtype!.toLowerCase()))))
       .map((grant) => ({ source, grant })))
     .filter(({ grant }) => !grant.color || cardProfile(permanent.card).colors.some((color) => color.toUpperCase() === grant.color))
@@ -1254,11 +1250,11 @@ function splitSecondActive(state: GameState): boolean {
 }
 
 /** Creatures that can be paid for a variable typed-sacrifice mana ability. */
-function manaSacrificeCandidates(player: PlayerState, source: Permanent, ability: ManaAbility): Permanent[] {
+function manaSacrificeCandidates(player: PlayerState, source: Permanent, ability: ManaAbility, state?: GameState): Permanent[] {
   const cost = ability.sacrificesCreatures;
   if (!cost) return [];
   return player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
-    && (!cost.subtype || hasSubtype(cardProfile(candidate.card), cost.subtype))
+    && (!cost.subtype || (state ? hasPermanentSubtype(state, candidate, cost.subtype) : hasSubtype(cardProfile(candidate.card), cost.subtype)))
     && candidate.instance_id !== source.instance_id);
 }
 
@@ -1281,7 +1277,7 @@ function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: M
   if (!(ability.removeCounters ?? []).every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) return false;
   if (ability.variableAmountCounter && (permanent.counters[ability.variableAmountCounter] ?? 0) < 1) return false;
   if (ability.sacrificesCreatures) {
-    const available = manaSacrificeCandidates(player, permanent, ability).length;
+    const available = manaSacrificeCandidates(player, permanent, ability, state).length;
     if (available < (ability.sacrificesCreatures.amount === "X" ? 1 : ability.sacrificesCreatures.amount)) return false;
   }
   if (ability.exilesCreature && !exileCreatureCandidates(player, permanent).length) return false;
@@ -1343,7 +1339,7 @@ function grantedManaAbilities(state: GameState, permanent: Permanent): ManaAbili
       if (grant.scope === "you-control" && source.controller !== permanent.controller) continue;
       if (grant.excludesSelf && source.instance_id === permanent.instance_id) continue;
       if (grant.type && !profile.types.includes(grant.type)) continue;
-      if (grant.subtype && !hasSubtype(profile, grant.subtype)) continue;
+      if (grant.subtype && !hasPermanentSubtype(state, permanent, grant.subtype)) continue;
       if (grant.minLevel !== undefined && (source.counters.level ?? 0) < grant.minLevel) continue;
       granted.push({ ...grant.ability, index: nextIndex });
       nextIndex += 1;
@@ -1362,7 +1358,7 @@ function manaAbilitiesFor(state: GameState | undefined, permanent: Permanent): r
 function manaScaleAmount(scalesWith: NonNullable<ManaAbility["scalesWith"]>, player: PlayerState, state?: GameState): number {
   const subtype = scalesWith.subtype;
   const pool = scalesWith.kind === "subtype-you-control" || !state ? player.battlefield : allPermanents(state);
-  return pool.filter((permanent) => hasSubtype(cardProfile(permanent.card), subtype)).length;
+  return pool.filter((permanent) => state ? hasPermanentSubtype(state, permanent, subtype) : hasSubtype(cardProfile(permanent.card), subtype)).length;
 }
 
 /** Which restricted-mana pools a spell of this profile may draw from (CR 106.7). */
@@ -2355,7 +2351,7 @@ function triggerMatches(
   const condition = definition.condition;
   if (condition?.kind === "no-controlled-subtype") {
     const subtype = condition.subtype.toLowerCase();
-    if (playerAt(state, watcher.controller).battlefield.some((permanent) => hasSubtype(cardProfile(permanent.card), subtype))) return false;
+    if (playerAt(state, watcher.controller).battlefield.some((permanent) => hasPermanentSubtype(state, permanent, subtype))) return false;
   }
   if (condition?.kind === "controlled-creature-power-at-least") {
     if (!playerAt(state, watcher.controller).battlefield.some((permanent) => isCreature(cardProfile(permanent.card))
@@ -2368,7 +2364,7 @@ function triggerMatches(
     // named "Land") - check both so the type-word phrasing works too.
     const count = playerAt(state, watcher.controller).battlefield.filter((permanent) => {
       const profile = cardProfile(permanent.card);
-      return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype)
+      return hasPermanentSubtype(state, permanent, subtype)
         || profile.types.some((type) => type.toLowerCase() === subtype);
     }).length;
     if (count < condition.amount) return false;
@@ -2533,7 +2529,7 @@ function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boo
   switch (condition.kind) {
     case "no-controlled-subtype":
       return !playerAt(state, trigger.controller).battlefield.some((permanent) =>
-        hasSubtype(cardProfile(permanent.card), condition.subtype));
+        hasPermanentSubtype(state, permanent, condition.subtype));
     case "controlled-creature-power-at-least":
       return playerAt(state, trigger.controller).battlefield.some((permanent) =>
         isCreature(cardProfile(permanent.card)) && powerOf(permanent, state) >= condition.amount);
@@ -2541,7 +2537,7 @@ function interveningIfStillTrue(state: GameState, trigger: TriggerInstance): boo
       const subtype = condition.subtype.toLowerCase();
       return playerAt(state, trigger.controller).battlefield.filter((permanent) => {
         const profile = cardProfile(permanent.card);
-        return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype)
+        return hasPermanentSubtype(state, permanent, subtype)
           || profile.types.some((type) => type.toLowerCase() === subtype);
       }).length >= condition.amount;
     }
@@ -3639,7 +3635,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "gain-life-each-subtype": {
       if (playersCantGainLife(state)) return state;
       const amount = allPermanents(state).filter((permanent) =>
-        cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length * effect.amount;
+        hasPermanentSubtype(state, permanent, effect.subtype)).length * effect.amount;
       if (amount === 0) return state;
       const next = withPlayer(state, controller, (player) => ({ ...player, life: player.life + amount }));
       return logged(raiseEvent(next, { kind: "life-gained", seat: controller, amount }), controller, `${playerAt(next, controller).name} gana ${amount} vidas.`);
@@ -3734,7 +3730,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (target?.kind !== "permanent") return state;
       const amount = playerAt(state, controller).battlefield.filter((permanent) =>
-        cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+        hasPermanentSubtype(state, permanent, effect.subtype)).length;
       if (amount <= 0) return state;
       let next = dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
       if (!playersCantGainLife(next)) {
@@ -4364,7 +4360,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     }
     case "modify-all-creatures-per-land": {
       const count = playerAt(state, controller).battlefield.filter((permanent) =>
-        cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+        hasPermanentSubtype(state, permanent, effect.subtype)).length;
       const next = modifyCreatures(state, effect.power * count, effect.toughness * count, () => true);
       return logged(next, controller, `${sourceName} da ${effect.power * count}/${effect.toughness * count} a todas las criaturas hasta el final del turno.`);
     }
@@ -4617,7 +4613,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
       const pool = effect.anywhere ? allPermanents(state) : playerAt(state, controller).battlefield;
-      const count = pool.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      const count = pool.filter((p) => hasPermanentSubtype(state, p, effect.subtype)).length;
       return modifyCreatures(state, count, count, (candidate) => candidate.instance_id === permanent.instance_id);
     }
     case "add-counter-target-per-subtype": {
@@ -4626,7 +4622,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, target.instanceId);
       if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
       const pool = effect.anywhere ? allPermanents(state) : playerAt(state, controller).battlefield;
-      const count = pool.filter((p) => cardProfile(p.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase())).length;
+      const count = pool.filter((p) => hasPermanentSubtype(state, p, effect.subtype)).length;
       if (count === 0) return state;
       return withPlayer(state, permanent.controller, (player) => ({
         ...player,
@@ -5200,7 +5196,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!source) return state;
       const land = playerAt(state, source.controller).battlefield.find((permanent) =>
         permanent.instance_id !== sourceId && !permanent.tapped
-        && cardProfile(permanent.card).subtypes.some((subtype) => subtype.toLowerCase() === effect.subtype.toLowerCase()));
+        && hasPermanentSubtype(state, permanent, effect.subtype));
       if (!land) {
         return logged(movePermanentToZone(state, source, "graveyard"), source.controller, `${source.card.name} es sacrificado.`);
       }
@@ -5695,7 +5691,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ...player,
         battlefield: player.battlefield.map((permanent) => {
           const profile = cardProfile(permanent.card);
-          if (!isCreature(profile) || !hasSubtype(profile, subtype)) return permanent;
+          if (!isCreature(profile) || !hasPermanentSubtype(state, permanent, subtype)) return permanent;
           return { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } };
         })
       }));
@@ -8649,7 +8645,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const options = manaOptionsFor(player, ability, state);
       if (!options.length) continue;
       if (ability.sacrificesCreatures?.amount === "X") {
-        const candidates = manaSacrificeCandidates(player, permanent, ability);
+        const candidates = manaSacrificeCandidates(player, permanent, ability, state);
         for (let amount = 1; amount <= candidates.length; amount += 1) {
           for (const sacrificeSet of combinations(candidates, amount)) for (const mana of options) actions.push({
             action: {
@@ -8715,9 +8711,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       const sacrificeCandidates = ability.sacrificesCreatures
         ? player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
           && (!ability.sacrificesCreatures!.subtype
-            || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())))
+            || hasPermanentSubtype(state, candidate, ability.sacrificesCreatures!.subtype!)))
         : ability.sacrificesCreature || ability.sacrificesCreatureSubtype
-          ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))
+          ? player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id, state))
           : ability.sacrificesPermanent
             ? player.battlefield.filter((candidate) => matchesSacrificeType(candidate, ability.sacrificesPermanent!.type)
               && (!ability.sacrificesPermanent!.nontoken || !candidate.card.token)
@@ -9111,7 +9107,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
   if (!currentSource) throw new Error("Ese permanente ya no está bajo tu control.");
   let sacrificedCount = 0;
   if (ability.sacrificesCreatures) {
-    const candidates = manaSacrificeCandidates(currentPlayer, currentSource, ability);
+    const candidates = manaSacrificeCandidates(currentPlayer, currentSource, ability, activationState);
     const requestedAmount = ability.sacrificesCreatures.amount === "X" ? action.variableAmount : ability.sacrificesCreatures.amount;
     const ids = action.sacrificeIds ?? (action.sacrificeId ? [action.sacrificeId] : []);
     const selected = ids.map((id) => candidates.find((candidate) => candidate.instance_id === id));
@@ -9363,7 +9359,7 @@ function activatableAbility(
     const gateWord = ability.requiresControlledCount.word.toLowerCase();
     const count = player.battlefield.filter((candidate) => {
       const candidateProfile = cardProfile(candidate.card);
-      return candidateProfile.subtypes.some((subtype) => subtype.toLowerCase() === gateWord)
+      return hasPermanentSubtype(state, candidate, gateWord)
         || candidateProfile.types.some((type) => type.toLowerCase() === gateWord);
     }).length;
     if (count < ability.requiresControlledCount.amount) return { legal: false };
@@ -9395,16 +9391,16 @@ function activatableAbility(
   }
   if (ability.lifeCost >= player.life) return { legal: false };
   if (ability.sacrificesCreature) {
-    const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));
+    const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id, state));
     if (!candidates.length) return { legal: false };
   }
   if (ability.sacrificesCreatures) {
     const candidates = player.battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
       && (!ability.sacrificesCreatures!.subtype
-        || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())));
+        || hasPermanentSubtype(state, candidate, ability.sacrificesCreatures!.subtype!)));
     if (candidates.length < ability.sacrificesCreatures!.amount) return { legal: false };
   }
-  if (ability.sacrificesCreatureSubtype && !player.battlefield.some((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id))) {
+  if (ability.sacrificesCreatureSubtype && !player.battlefield.some((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id, state))) {
     return { legal: false };
   }
   if (ability.sacrificesPermanent) {
@@ -9470,7 +9466,7 @@ function tapCostCandidates(
   return playerAt(state, seat).battlefield.filter((candidate) => {
     if (candidate.tapped || !isCreature(cardProfile(candidate.card))) return false;
     if (cost.mode === "another" && candidate.instance_id === source.instance_id) return false;
-    return !cost.subtype || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === cost.subtype!.toLowerCase());
+    return !cost.subtype || hasPermanentSubtype(state, candidate, cost.subtype);
   });
 }
 
@@ -9489,7 +9485,7 @@ function triggerTapCostCandidates(
   return playerAt(state, seat).battlefield.filter((candidate) => {
     if (candidate.tapped || !isCreature(cardProfile(candidate.card))) return false;
     if (cost.mode === "another" && candidate.instance_id === sourceId) return false;
-    return !cost.subtype || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === cost.subtype!.toLowerCase());
+    return !cost.subtype || hasPermanentSubtype(state, candidate, cost.subtype);
   });
 }
 
@@ -9533,7 +9529,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.sacrificesCreatures) {
     const candidates = playerAt(state, seat).battlefield.filter((candidate) => isCreature(cardProfile(candidate.card))
       && (!ability.sacrificesCreatures!.subtype
-        || cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === ability.sacrificesCreatures!.subtype!.toLowerCase())));
+        || hasPermanentSubtype(state, candidate, ability.sacrificesCreatures!.subtype!)));
     const selectedIds = action.sacrificeIds ?? (action.sacrificeId ? [action.sacrificeId] : []);
     const selected = selectedIds.map((id) => candidates.find((candidate) => candidate.instance_id === id));
     if (selected.length !== ability.sacrificesCreatures!.amount || selected.some((candidate) => !candidate)
@@ -9542,12 +9538,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     }
     sacrifices = selected as Permanent[];
   } else if (ability.sacrificesCreature) {
-    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id, state));
     const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error("Debes elegir una criatura para sacrificar.");
     sacrifices = [sacrifice];
   } else if (ability.sacrificesCreatureSubtype) {
-    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id));
+    const candidates = playerAt(state, seat).battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, source.instance_id, state));
     const sacrifice = action.sacrificeId ? candidates.find((candidate) => candidate.instance_id === action.sacrificeId) : candidates[0];
     if (!sacrifice) throw new Error(`Debes elegir un ${ability.sacrificesCreatureSubtype.subtype} para sacrificar.`);
     sacrifices = [sacrifice];

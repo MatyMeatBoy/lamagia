@@ -41,6 +41,17 @@ export type CardType =
 
 const CARD_TYPES: readonly CardType[] = ["Land", "Creature", "Artifact", "Enchantment", "Planeswalker", "Instant", "Sorcery", "Battle", "Kindred"];
 
+/** CR 205.3m.  Changelings and effects such as Mirror Entity grant this set,
+ * never land, artifact, enchantment, planeswalker, or spell subtypes. */
+const CREATURE_SUBTYPES = new Set(`
+advisor aetherborn alien ally angel antelope ape archer archon armadillo army artificer assassin assembly-worker astartes atog aurochs avatar azra badger balloon barbarian bard basilisk bat bear beast beaver beeble beholder berserker bird bison blinkmoth boar bringer brushwagg camarid camel capybara caribou carrier cat centaur child chimera citizen cleric clown cockatrice construct coward coyote crab crocodile c’tan custodes cyberman cyclops dalek dauthi demigod demon deserter detective devil dinosaur djinn doctor dog dragon drake dreadnought drix drone druid dryad dwarf echidna efreet egg elder eldrazi elemental elephant elf elk employee eternal eye faerie ferret fish flagbearer fox fractal frog fungus gamer gamma gargoyle germ giant giraffe gith glimmer gnoll gnome goat goblin god golem gorgon graveborn gremlin griffin guest hag halfling hamster harpy hedgehog hellion hero hippo hippogriff homarid homunculus horror horse human hydra hyena illusion imp incarnation inhuman inkling inquisitor insect jackal jellyfish juggernaut kangaroo kavu kirin kithkin knight kobold kor kraken kree llama lamia lammasu leech lemur leviathan lhurgoyf licid lizard lobster manticore masticore mercenary merfolk metathran minion minotaur mite mole monger mongoose monk monkey moogle moonfolk mount mouse mutant myr mystic nautilus necron nephilim nightmare nightstalker ninja noble noggle nomad nymph octopus ogre ooze orb orc orgg otter ouphe ox oyster pangolin peasant pegasus pentavite performer pest phelddagrif phoenix phyrexian pilot pincher pirate plant platypus porcupine possum praetor primarch prism processor qu rabbit raccoon ranger rat rebel reflection rhino rigger robot rogue sable salamander samurai sand saproling satyr scarecrow scientist scion scorpion scout sculpture seal serf serpent servo shade shaman shark sheep shi’ar siren skeleton skrull skunk slith sliver sloth slug snail snake soldier soltari sorcerer spawn specter spellshaper sphinx spider spike spirit splinter sponge spy squid squirrel starfish surrakar survivor symbiote synth tentacle tetravite thalakos thopter thrull tiefling time-lord toy treefolk trilobite triskelavite troll turtle tyranid unicorn utrom vampire varmint vedalken villain volver wall walrus warlock warrior weasel weird werewolf whale wizard wolf wolverine wombat worm wraith wurm yeti zombie zubera
+`.trim().split(/\s+/));
+CREATURE_SUBTYPES.add("shapeshifter");
+
+export function isCreatureSubtypeName(subtype: string): boolean {
+  return CREATURE_SUBTYPES.has(subtype.toLowerCase()) || subtype.toLowerCase() === "time lord";
+}
+
 /** Combat- and priority-relevant keywords the engine actually enforces. */
 export const ENFORCED_KEYWORDS = [
   "flying", "reach", "first strike", "double strike", "deathtouch", "trample",
@@ -1487,7 +1498,17 @@ function splitTypeLine(typeLine: string): { supertypes: string[]; types: CardTyp
   const words = (left ?? "").trim().split(/\s+/).filter(Boolean);
   const types = words.filter((word): word is CardType => (CARD_TYPES as readonly string[]).includes(word));
   const supertypes = words.filter((word) => !types.includes(word as CardType));
-  const subtypes = (right ?? "").trim().split(/\s+/).filter(Boolean);
+  const subtypeWords = (right ?? "").trim().split(/\s+/).filter(Boolean);
+  const subtypes = types.includes("Creature") || types.includes("Kindred")
+    ? subtypeWords.reduce<string[]>((result, word, index) => {
+      if (word.toLowerCase() === "time" && subtypeWords[index + 1]?.toLowerCase() === "lord") {
+        result.push("Time Lord");
+      } else if (word.toLowerCase() !== "lord" || subtypeWords[index - 1]?.toLowerCase() !== "time") {
+        result.push(word);
+      }
+      return result;
+    }, [])
+    : subtypeWords;
   return { supertypes, types, subtypes };
 }
 
@@ -6455,5 +6476,5 @@ export function hasKeyword(profile: CardProfile, keyword: EnforcedKeyword): bool
 /** CR 702.73a: a changeling creature has every creature type in every zone. */
 export function hasSubtype(profile: CardProfile, subtype: string): boolean {
   return profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype.toLowerCase())
-    || (profile.changeling && isCreature(profile));
+    || (profile.changeling && isCreatureSubtypeName(subtype));
 }

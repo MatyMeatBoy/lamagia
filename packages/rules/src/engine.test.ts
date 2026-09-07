@@ -642,6 +642,7 @@ const C13_WITCH_HUNT = () => make({ name: "Witch Hunt", type_line: "Enchantment"
 const C13_NAYA_SOULBEAST = () => make({ name: "Naya Soulbeast", type_line: "Creature — Beast", mana_cost: "{6}{G}{G}", cmc: 8, power: "0", toughness: "0", oracle_text: "When you cast this spell, each player reveals the top card of their library. This creature enters with X +1/+1 counters on it, where X is the total mana value of all cards revealed this way.\nTrample", oracle_id: "5ea0c608-2c56-4889-a5d3-d435df515950" });
 const C13_ETERNAL_DRAGON = () => make({ name: "Eternal Dragon", type_line: "Creature — Dragon Spirit", mana_cost: "{5}{W}{W}", cmc: 7, power: "5", toughness: "5", oracle_text: "Flying\n{3}{W}{W}: Return this card from your graveyard to your hand. Activate only during your upkeep.\nPlainscycling {2} ({2}, Discard this card: Search your library for a Plains card, reveal it, put it into your hand, then shuffle.)", oracle_id: "04d8615c-3883-4251-9790-1d8a4a40e142" });
 const C13_MIRROR_ENTITY = () => make({ name: "Mirror Entity", type_line: "Creature — Shapeshifter", mana_cost: "{2}{W}", cmc: 3, power: "1", toughness: "1", oracle_text: "Changeling (This card is every creature type.)\n{X}: Until end of turn, creatures you control have base power and toughness X/X and gain all creature types.", oracle_id: "17e905ca-c0bd-473d-95a7-e180ba5fea43" });
+const MISTY_RAINFOREST = () => make({ name: "Misty Rainforest", type_line: "Land", oracle_text: "{T}, Pay 1 life, Sacrifice Misty Rainforest: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle.", oracle_id: "560d3f6e-5a2f-4b5a-a2f7-0b8b9e6f8a9e" });
 const C13_FAERIE_CONCLAVE = () => make({ name: "Faerie Conclave", type_line: "Land", oracle_text: "This land enters tapped.\n{T}: Add {U}.\n{1}{U}: This land becomes a 2/1 blue Faerie creature with flying until end of turn. It's still a land.", scryfall_id: "0c25f6b1-8fb3-4406-9605-0282d2dbbcec", oracle_id: "0c25f6b1-8fb3-4406-9605-0282d2dbbcec" });
 const C13_ARMY_OF_THE_DAMNED = () => {
   const card = TAPPED_ZOMBIES();
@@ -3043,7 +3044,7 @@ describe("casting", () => {
       activatedAbilities: [{ manaCost: { raw: "{X}" }, effect: { kind: "set-creatures-you-control-base-pt-all-types", power: "X", toughness: "X" } }]
     });
     let game = twoSeatGame([], []);
-    game = putOnBattlefield(game, 0, [mirror, BEAR(), FOREST(), FOREST(), FOREST()]);
+    game = putOnBattlefield(game, 0, [mirror, BEAR(), FOREST(), MISTY_RAINFOREST(), FOREST()]);
     game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null };
     const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mirror Entity")!;
     const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate"
@@ -3057,6 +3058,10 @@ describe("casting", () => {
     expect(toughnessOf(bear, game)).toBe(2);
     expect(legalTargets(game, 0, "subtype:Wizard")).toContainEqual({ kind: "permanent", instanceId: bear.instance_id });
     expect(legalTargets(game, 0, "subtype:Equipment")).not.toContainEqual({ kind: "permanent", instanceId: bear.instance_id });
+    expect(legalTargets(game, 0, "subtype:Forest")).not.toContainEqual({ kind: "permanent", instanceId: source.instance_id });
+    expect(legalTargets(game, 0, "subtype:Equipment")).not.toContainEqual({ kind: "permanent", instanceId: source.instance_id });
+    expect(legalTargets(game, 0, "subtype:Forest")).not.toContainEqual({ kind: "permanent", instanceId: bear.instance_id });
+    expect(legalTargets(game, 0, "subtype:Forest")).not.toContainEqual({ kind: "permanent", instanceId: game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Misty Rainforest")!.instance_id });
   });
 
   it("animates Faerie Conclave as a blue Faerie land creature", () => {

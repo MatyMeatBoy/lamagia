@@ -39,8 +39,17 @@ describe("type line parsing", () => {
     expect(profile.changeling).toBe(true);
     expect(hasSubtype(profile, "Elf")).toBe(true);
     expect(hasSubtype(profile, "Goblin")).toBe(true);
+    expect(hasSubtype(profile, "Forest")).toBe(false);
+    expect(hasSubtype(profile, "Equipment")).toBe(false);
+    expect(hasSubtype(profile, "Class")).toBe(false);
     expect(profile.fullyImplemented).toBe(true);
     expect(profile.unimplementedText).toEqual([]);
+  });
+
+  it("keeps the two-word Time Lord creature subtype intact", () => {
+    const profile = cardProfile(card({ name: "Time Lord", type_line: "Creature — Time Lord" }));
+    expect(profile.subtypes).toEqual(["Time Lord"]);
+    expect(hasSubtype(profile, "Time Lord")).toBe(true);
   });
 });
 
