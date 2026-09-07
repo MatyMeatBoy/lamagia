@@ -615,6 +615,8 @@ export type SpellEffect =
   | { readonly kind: "put-event-player-hand-card-on-library-top" }
   /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
   | { readonly kind: "copy-triggered-spell" }
+  /** Copy a target instant or sorcery spell controlled by the activating player (CR 707.10). */
+  | { readonly kind: "copy-target-spell" }
   /** Swap a blocking source's power with the creature it blocked until combat ends (CR 701.10). */
   | { readonly kind: "exchange-source-power-with-blocking-creature" }
   /** Exchange control of two targeted permanents without changing zones (CR 701.10). */
@@ -1135,7 +1137,7 @@ export type MagicColor = "W" | "U" | "B" | "R" | "G";
 export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
-  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
+  | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "instant-or-sorcery-spell-you-control" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
   | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "nonlegendary-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
@@ -3818,6 +3820,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
     return { effect: { kind: "copy-triggered-spell" }, target: "none" };
+  }
+  if (/^Copy target instant or sorcery spell you control\. You may choose new targets for the copy\.?$/i.test(text)) {
+    return { effect: { kind: "copy-target-spell" }, target: "instant-or-sorcery-spell-you-control" };
   }
   if (/^Exchange its power and the power of target creature it's blocking until end of combat$/i.test(text)) {
     return { effect: { kind: "exchange-source-power-with-blocking-creature" }, target: "blocked-creature" };
