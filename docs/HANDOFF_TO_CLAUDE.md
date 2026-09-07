@@ -20,7 +20,9 @@ library placement, Cut Down's total-power/toughness target filter, and Cloud's
 equipped self-and-attached-Equipment trigger doubler, event-controller life-gain
 trigger, Aura-enchanted-land mana bonus, and counted-enchantment Aura scaling;
 The current source also includes the reusable multi-card discard activation
-cost primitive with exact hand-card combinations and battlefield-source return.
+cost primitive with exact hand-card combinations and battlefield-source return,
+plus the final C13 Illusionist's Gambit combat-reset and Mosswort Bridge
+Hideaway primitives.
 verify the
 Pages run before reporting
 a new client asset as live.
@@ -32,9 +34,10 @@ Coverage numbers have two deliberate units:
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 337 / 341 unique cards (98.8%) in the source profile rescan; the
-  checked-in derived cache still shows the prior generated count until the catalog
-  database is restored and `npm run rules:oracle:c13` can run.
+- **Commander 2013:** **341 / 341 unique cards (100%)** in a fresh direct Scryfall
+  `set:c13` rescan against the current source profile. The checked-in derived
+  cache remains stale because this worktree has no local catalog database; rerun
+  `npm run rules:oracle:c13` after restoring `data/catalog/prossh.sqlite`.
 - **Commander 2014:** 203 / 322 unique cards (63.0%), 119 pending.
 
 ### Derived-index refresh — 2026-09-05
@@ -55,15 +58,17 @@ equipped self-and-attached-Equipment trigger-doubler, event-controller
 life-gain, Aura-enchanted-land mana-bonus, and counted-enchantment Aura-scaling
 primitives
 were added;
-the C13
-dictionary remains 341 profiles with 292 complete.
+the checked-in generated C13 dictionary remains a historical 341-profile/292-complete
+snapshot until the local catalog is restored and the derived indexes are regenerated.
 
-The latest C13 commits include `b483c101` (Suspend, starting with Phthisis),
+The latest C13 commits include `f84cb14d` (Illusionist's Gambit and Mosswort
+Bridge), `11440733` (Jeleva), `8f365775` (Lim-Dûl's Vault), and `b483c101` (Suspend, starting with Phthisis),
 `f08677ae` (Derevi's command-zone activation and tap/untap triggers),
 `94f88da0` (Rubinia's tapped-source control duration), and `f0b40bf1`
 (independent and/or kicker choices, starting with Stormscape Battlemage). The
-remaining source-rescan queue is four cards: Illusionist's Gambit, Lim-Dûl's
-Vault, Mosswort Bridge, and Jeleva, Nephalia's Scourge.
+the previous four-card source-rescan queue is now closed: Illusionist's Gambit,
+Lim-Dûl's Vault, Mosswort Bridge, and Jeleva, Nephalia's Scourge all profile as
+fully implemented. Their scenario coverage is in `packages/rules/src/engine.test.ts`.
 
 Commit `2d45d2ad` adds the `global-multi-card-discard-cost` primitive and a
 Fae of Wishes scenario (`c0abbed2-d213-47ef-8d6c-4a21efb9a55f`). The source
