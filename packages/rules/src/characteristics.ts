@@ -4157,6 +4157,13 @@ function recognizeText(text: string): RecognizedText {
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
+  if (/^Tempting offer\s*[—–-]\s*Return a creature card from your graveyard to the battlefield\.\s*Each opponent may return a creature card from their graveyard to the battlefield\.\s*For each opponent who does, return a creature card from your graveyard to the battlefield\.?$/i.test(joined)) {
+    const reanimate = { kind: "reanimate-own-best-creature-from-graveyard" as const };
+    return {
+      effects: [{ kind: "tempting-offer", base: reanimate, opponent: reanimate, reward: reanimate }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
   if (/^Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life\.\s*You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life\.?$/i.test(joined)) {
     return {
       effects: [{ kind: "cruel-ultimatum" }],

@@ -679,6 +679,7 @@ const C13_TEMPT_WITH_GLORY = () => make({ name: "Tempt with Glory", type_line: "
 const C13_TEMPT_WITH_REFLECTIONS = () => make({ name: "Tempt with Reflections", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Tempting offer — Choose target creature you control. Create a token that's a copy of that creature. Each opponent may create a token that's a copy of that creature. For each opponent who does, create a token that's a copy of that creature.", oracle_id: "76c142ef-0f07-4215-8d11-d25f7114c70d" });
 const C13_TEMPT_WITH_DISCOVERY = () => make({ name: "Tempt with Discovery", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Tempting offer — Search your library for a land card and put it onto the battlefield. Each opponent may search their library for a land card and put it onto the battlefield. For each opponent who searches a library this way, search your library for a land card and put it onto the battlefield. Then each player who searched a library this way shuffles.", oracle_id: "4baa6145-216e-476b-b178-aaaa1e633701" });
 const C13_CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "Sorcery", mana_cost: "{U}{B}{B}{B}{R}{R}{R}", cmc: 7, oracle_text: "Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life.", oracle_id: "01294ac9-1a06-4ee8-b3b1-db1f07c9d94e" });
+const C13_TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", type_line: "Sorcery", mana_cost: "{4}{B}", cmc: 5, oracle_text: "Tempting offer — Return a creature card from your graveyard to the battlefield. Each opponent may return a creature card from their graveyard to the battlefield. For each opponent who does, return a creature card from your graveyard to the battlefield.", oracle_id: "06e1c0fa-767c-4204-972f-d98f770d85f3" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6296,6 +6297,22 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain" || permanent.card.name === "Forest").length).toBeGreaterThanOrEqual(2);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Tempt with Discovery")).toBe(true);
+  });
+
+  it("reuses Tempting Offer for graveyard reanimation", () => {
+    const profile = profileOf(C13_TEMPT_WITH_IMMORTALITY());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "tempting-offer" }], targetKind: "none" });
+    let game = readyToCast([C13_TEMPT_WITH_IMMORTALITY()], [SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()], [], [BEAR()]);
+    game = stage(game, 0, (player) => ({ graveyard: toHand(0, [BEAR(), BEAR()], "immortality-caster") }));
+    game = stage(game, 1, (player) => ({ graveyard: toHand(1, [BEAR()], "immortality-opponent") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    const offer = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: offer.sourceId, accept: true });
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(2);
+    expect(game.pendingChoice).toBeNull();
   });
 
   it("resolves Cruel Ultimatum as a reusable compound primitive", () => {
