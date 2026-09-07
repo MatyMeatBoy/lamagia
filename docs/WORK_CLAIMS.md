@@ -407,6 +407,10 @@ rules citations and the integrator review remain mandatory.
   creating a choice for each player. Do not copy that implementation; use a
   per-player pending choice and preserve the chosen permanent's stable instance
   id before adding the doom counter.
+- `11440733` (Jeleva) is not integrable as-is: it assumes a legacy
+  `castSpentMana`/stack contract and uses inconsistent trigger/source IDs for
+  the linked exile choice. Adapt it to the current APIs before claiming the
+  card; do not cherry-pick the historical branch wholesale.
 
 Integration note (2026-09-06): worker-05 currently contains useful rules
 commits based on an incompatible rewritten tree. Do not merge that branch as a
