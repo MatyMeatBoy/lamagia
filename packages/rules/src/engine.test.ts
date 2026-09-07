@@ -765,6 +765,7 @@ const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifa
 const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3, oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, Furnace Celebration deals 2 damage to any target.", oracle_id: "af6d6844-c612-4731-86da-59a8fa02956b", scryfall_id: "af6d6844-c612-4731-86da-59a8fa02956b" });
 const PRIMAL_VIGOR = () => make({ name: "Primal Vigor", type_line: "Enchantment", mana_cost: "{4}{G}", cmc: 5, oracle_text: "If one or more +1/+1 counters would be put on a creature you control, twice that many +1/+1 counters are put on that creature instead.\nIf one or more tokens would be created under your control, twice that many of those tokens are created instead.", oracle_id: "c665544f-557b-4631-a1dc-39571470ca2e", scryfall_id: "c665544f-557b-4631-a1dc-39571470ca2e" });
 const C13_DEADWOOD_TREEFOLK = () => make({ name: "Deadwood Treefolk", type_line: "Creature — Treefolk", mana_cost: "{4}{G}", cmc: 5, power: "3", toughness: "6", oracle_text: "Vanishing 3 (This creature enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this creature enters or leaves the battlefield, return another target creature card from your graveyard to your hand.", oracle_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd", scryfall_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd" });
+const C13_THRAXIMUNDAR = () => make({ name: "Thraximundar", type_line: "Legendary Creature — Zombie Assassin", mana_cost: "{4}{U}{B}{R}", cmc: 7, power: "6", toughness: "6", keywords: ["Haste"], oracle_text: "Haste\nWhenever Thraximundar attacks, defending player sacrifices a creature of their choice.\nWhenever a player sacrifices a creature, you may put a +1/+1 counter on Thraximundar.", oracle_id: "9e0e4217-fefe-48dd-9153-032460192b19", scryfall_id: "9e0e4217-fefe-48dd-9153-032460192b19" });
 const C13_BALEFUL_FORCE = () => make({ name: "Baleful Force", type_line: "Creature — Elemental", mana_cost: "{5}{B}{B}{B}", cmc: 8, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life.", scryfall_id: "a5e79f7b-0212-476b-9dea-bf1ada419e72" });
 const C13_DRUIDIC_SATCHEL = () => make({ name: "Druidic Satchel", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Reveal the top card of your library. If it's a creature card, create a 1/1 green Saproling creature token. If it's a land card, put that card onto the battlefield under your control. If it's a noncreature, nonland card, you gain 2 life.", scryfall_id: "f3aaefb4-4662-434a-9c31-3f2c754ce9cc" });
 const C13_RUPTURE_SPIRE = () => make({ name: "Rupture Spire", type_line: "Land", oracle_text: "Rupture Spire enters the battlefield tapped.\nWhen Rupture Spire enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "622087fc-4e34-43cd-a46f-fd2c339b3905" });
@@ -6322,6 +6323,28 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.step === "declare-blockers" && state.stack.length === 0 && state.triggerQueue.length === 0);
     const attackingTerra = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === terra.instance_id)!;
     expect(powerOf(attackingTerra, game)).toBe(3);
+  });
+
+  it("resolves Thraximundar's defending-player sacrifice and optional sacrifice counter trigger", () => {
+    const thrax = C13_THRAXIMUNDAR();
+    const profile = profileOf(thrax);
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.triggers).toMatchObject([
+      { event: "attacks", subject: "self", optional: false, effect: { kind: "event-player-sacrifice-creature" } },
+      { event: "permanent-sacrificed", subject: "any-creature", optional: true, effect: { kind: "add-counter-source", counter: "+1/+1", amount: 1 } }
+    ]);
+    let game = twoSeatGame([], []);
+    game = { ...game, step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [], players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = putOnBattlefield(game, 0, [thrax], { sick: false });
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Thraximundar")!;
+    const victim = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: source.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    expect(game.players[1]!.graveyard.some((card) => card.instance_id === victim.card.instance_id)).toBe(true);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: game.pendingChoice!.sourceId, accept: true });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.triggerQueue.length === 0 && state.pendingChoice === null);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)?.counters["+1/+1"]).toBe(1);
   });
 
   it("keeps C13 Basalt Monolith tapped through untap and resolves its untap activation", () => {
