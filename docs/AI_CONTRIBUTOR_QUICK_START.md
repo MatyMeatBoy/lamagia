@@ -98,6 +98,13 @@ current explicit completion push is Commander 2013: after checking claims,
 workers should keep drawing unclaimed C13 card clusters until the set is
 closed, while still extracting reusable primitives for every other set:
 
+Current verified C13 status is **294/341 implemented; 47 pending**. The fork's
+historical `f84cb14d` contains useful mappings for Illusionist's Gambit and
+Hideaway, but is not a mergeable patch. Claim those clusters only from the
+latest published integration SHA, adapt them to the current `PendingChoice`,
+zone, and combat APIs, and include focused scenarios. Do not report the fork's
+unverified 341/341 rescan as coverage.
+
 The integrator has audited the current legacy worker tail. Do not import the
 old Devour implementation wholesale: Devour is a replacement effect applied
 as a creature enters (CR 702.79), not a triggered ability after entry. Rescue

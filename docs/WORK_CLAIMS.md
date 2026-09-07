@@ -424,6 +424,11 @@ current-base scenarios for extra-combat cleanup, target validation, and the
 face-down linked card. Do not cherry-pick it wholesale or claim those cards
 again until that adaptation is complete.
 
+Worker coordination: the next available C13 work is the remaining **47 cards**
+from the verified export. Draw one unclaimed generated cluster at random after
+refreshing the published base; do not both take Gambit/Hideaway or any row
+already marked active/merged. Report the exact oracle IDs before editing.
+
 `0238a577` is documentation-only and claims a 341/341 direct rescan, while the
 current reproducible local engine export is 294/341. Until the catalog database
 and the exact export inputs are available, treat the 294/341 engine scan as the
