@@ -4984,7 +4984,7 @@ function recognizeText(text: string): RecognizedText {
   // Jeleva's two linked abilities share one Oracle block. Keep them as two
   // reusable trigger effects so the ETB and attack paths retain their own
   // source identity and private choice timing.
-  if (/^When ~ enters(?: the battlefield)?, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~\.\s*Whenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost\.?$/i.test(joined)) {
+  if (/^(?:Flying\s+)?When ~ enters(?: the battlefield)?, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~\.\s*Whenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost\.?$/i.test(joined)) {
     return {
       effects: [],
       triggers: [
