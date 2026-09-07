@@ -9584,7 +9584,7 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     next = logged(next, seat, `${player.name} exilia ${exiles.map((card) => card.name).join(", ")} de un cementerio.`);
   }
 
-  if ((ability.effect as { kind: string }).kind === "put-source-from-command-zone") {
+  if ((ability.effect as unknown as { readonly kind?: string }).kind === "put-source-from-command-zone") {
     next = withPlayer(next, seat, (current) => ({ ...current, commandZone: current.commandZone.filter((card) => card.instance_id !== source.instance_id) }));
     next = putOntoBattlefield(next, seat, source.card, false);
     return logged(next, seat, `${player.name} pone ${source.card.name} en el campo de batalla desde la zona de mando.`);
