@@ -79,6 +79,8 @@ export interface GameCard extends CardData {
   readonly token?: boolean;
   /** Jeleva linkage for cards exiled by that permanent. */
   readonly exiledWithSourceId?: string;
+  /** Face-down exiled card, visible only to its entitled controller. */
+  readonly faceDown?: boolean;
   /** Edition of the card/effect that created this token, for visual matching. */
   readonly token_source_set_code?: string;
 }
@@ -778,6 +780,16 @@ export type PendingChoice =
       readonly optionIds: readonly string[];
     }
   | {
+      /** Mosswort Bridge's private Hideaway top-card selection. */
+      readonly type: "hideaway-review";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourcePermanentId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+      readonly mode: "review" | "cast";
+    }
+  | {
       readonly type: "draw-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -895,6 +907,8 @@ export type GameAction =
   | { readonly type: "finish-look-top"; readonly sourceId: string }
   | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "choose-jeleva-cast"; readonly sourceId: string; readonly cardId?: string; readonly targets?: readonly Target[] }
+  | { readonly type: "choose-hideaway-card"; readonly sourceId: string; readonly cardId: string }
+  | { readonly type: "choose-hideaway-cast"; readonly sourceId: string; readonly cardId?: string; readonly targets?: readonly Target[] }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
@@ -6003,6 +6017,32 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }
       };
     }
+    case "hideaway": {
+      const sourcePermanentId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      if (!sourcePermanentId) return state;
+      const visible = playerAt(state, controller).library.slice(0, effect.amount);
+      if (!visible.length) return state;
+      return {
+        ...state,
+        pendingChoice: {
+          type: "hideaway-review", seat: controller, sourceId: object.trigger?.id ?? object.id,
+          sourcePermanentId, sourceCard: object.card, optionIds: visible.map((card) => card.instance_id), mode: "review"
+        }
+      };
+    }
+    case "play-hideaway-card": {
+      const sourcePermanentId = object.sourcePermanentId;
+      if (!sourcePermanentId) return state;
+      const linked = playerAt(state, controller).exile.find((card) => card.exiledWithSourceId === sourcePermanentId);
+      if (!linked) return logged(state, controller, `${object.card.name}: no hay una carta exiliada de Hideaway para jugar.`);
+      return {
+        ...state,
+        pendingChoice: {
+          type: "hideaway-review", seat: controller, sourceId: object.id,
+          sourcePermanentId, sourceCard: object.card, optionIds: [linked.instance_id], mode: "cast"
+        }
+      };
+    }
     case "draw-then-source-to-library-top": {
       const sourceId = object.sourcePermanentId;
       const permanent = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -8202,6 +8242,40 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       });
       return actions;
     }
+    if (choice.type === "hideaway-review") {
+      if (choice.mode === "review") {
+        for (const cardId of choice.optionIds) {
+          const card = player.library.find((candidate) => candidate.instance_id === cardId);
+          if (!card) continue;
+          actions.push({
+            action: { type: "choose-hideaway-card", sourceId: choice.sourceId, cardId },
+            label: `Exiliar ${card.name} boca abajo`, cardId,
+            note: `${choice.sourceCard.name}: mira las cartas superiores y exilia una boca abajo.`
+          });
+        }
+      } else {
+        const card = player.exile.find((candidate) => candidate.instance_id === choice.optionIds[0]);
+        if (card) {
+          const profile = cardProfile(card);
+          if (!profile.targetKinds?.some((kind) => !legalTargets(state, seat, kind, profile).length)
+            && (profile.targetKind === "none" || legalTargets(state, seat, profile.targetKind, profile).length > 0)) {
+            actions.push({
+              action: { type: "choose-hideaway-cast", sourceId: choice.sourceId, cardId: card.instance_id },
+              label: `Jugar ${card.name} sin pagar su coste`, cardId: card.instance_id,
+              ...(profile.targetKind !== "none" ? { requiresTarget: profile.targetKind } : {}),
+              ...(profile.targetKinds?.length ? { requiresTargets: profile.targetKinds } : {}),
+              note: `${choice.sourceCard.name}: juega la carta exiliada si controlas criaturas con poder total suficiente.`
+            });
+          }
+        }
+        actions.push({
+          action: { type: "choose-hideaway-cast", sourceId: choice.sourceId },
+          label: "No jugar la carta de Hideaway",
+          note: `${choice.sourceCard.name}: deja la carta exiliada para una activación posterior.`
+        });
+      }
+      return actions;
+    }
     if (choice.type === "hand-card-to-library-top") {
       for (const cardId of choice.optionIds) {
         const card = player.hand.find((candidate) => candidate.instance_id === cardId);
@@ -9491,6 +9565,14 @@ function activatableAbility(
     }).length;
     if (count < ability.requiresControlledCount.amount) return { legal: false };
   }
+  if (ability.requiresControlledPowerAtLeast !== undefined) {
+    const totalPower = player.battlefield
+      .filter((candidate) => isCreature(cardProfile(candidate.card)))
+      .reduce((sum, candidate) => sum + Math.max(0, powerOf(candidate, state)), 0);
+    if (totalPower < ability.requiresControlledPowerAtLeast) return { legal: false };
+  }
+  if (ability.effect.kind === "play-hideaway-card"
+    && !player.exile.some((card) => card.exiledWithSourceId === permanent.instance_id)) return { legal: false };
   if (ability.loyaltyCost !== undefined) {
     // One loyalty ability per planeswalker per turn (CR 606.3); a minus ability
     // needs enough loyalty to pay it (CR 606.5).
@@ -11245,6 +11327,53 @@ function applyChooseJelevaCast(state: GameState, seat: SeatId, action: Extract<G
   return logged(next, seat, `${playerAt(next, seat).name} casts ${entry.card.name} for free with Jeleva.`);
 }
 
+function applyChooseHideawayCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-hideaway-card" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hideaway-review" || choice.mode !== "review" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes una elección de Hideaway pendiente.");
+  }
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está entre las cartas de Hideaway.");
+  const player = playerAt(state, seat);
+  const selected = player.library.find((card) => card.instance_id === action.cardId);
+  if (!selected) throw new Error("La carta elegida de Hideaway ya no está en la biblioteca.");
+  const rest = player.library.slice(choice.optionIds.length);
+  const without = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({ ...current, library: rest }));
+  const shuffled = shuffleLibrary(without, seat, rest);
+  const hidden = { ...selected, faceDown: true, exiledWithSourceId: choice.sourcePermanentId };
+  const next = withPlayer(shuffled, selected.owner, (current) => ({
+    ...current,
+    exile: [...current.exile, hidden]
+  }));
+  return logged(next, seat, `${player.name} exilia una carta boca abajo con Hideaway y pone las demás al fondo de su biblioteca.`);
+}
+
+function applyChooseHideawayCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-hideaway-cast" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hideaway-review" || choice.mode !== "cast" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes una carta de Hideaway pendiente para jugar.");
+  }
+  if (!action.cardId) return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} no juega la carta de Hideaway.`);
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no está exiliada con Hideaway.");
+  const ownerEntry = state.players.find((player) => player.exile.some((card) => card.instance_id === action.cardId));
+  const entry = ownerEntry?.exile.find((card) => card.instance_id === action.cardId);
+  if (!ownerEntry || !entry || entry.exiledWithSourceId !== choice.sourcePermanentId) throw new Error("La carta de Hideaway ya no está disponible.");
+  const profile = cardProfile(entry);
+  let targets: readonly Target[] = action.targets ?? [];
+  if (profile.targetKinds?.length) {
+    targets = targets.length ? targets : profile.targetKinds.flatMap((kind) => legalTargets(state, seat, kind, profile).slice(0, 1));
+    if (targets.length !== profile.targetKinds.length || targets.some((target, index) => !legalTargets(state, seat, profile.targetKinds![index]!, profile).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) throw new Error(`${entry.name} necesita objetivos legales.`);
+  } else if (profile.targetKind !== "none") {
+    const allowed = legalTargets(state, seat, profile.targetKind, profile);
+    targets = targets.length ? targets : allowed.slice(0, 1);
+    if (!targets.length || targets.some((target) => !allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) throw new Error(`${entry.name} necesita un objetivo legal.`);
+  }
+  let next = withPlayer({ ...state, pendingChoice: null }, ownerEntry.seat, (player) => ({ ...player, exile: player.exile.filter((card) => card.instance_id !== entry.instance_id) }));
+  next = pushOnStack(next, seat, entry, targets, false, 0);
+  next = queueWardPayment(next, next.stack.at(-1)!);
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card: entry, spell: next.stack.at(-1)! });
+  return logged(next, seat, `${playerAt(next, seat).name} juega ${entry.name} gratis con Hideaway.`);
+}
+
 function applyChooseDraw(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-draw" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "draw-cards" || choice.seat !== seat) throw new Error("No tienes una elección de robo pendiente.");
@@ -11831,6 +11960,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "reorder-top": next = applyReorderTop(state, seat, action); break;
     case "choose-lim-dul": next = applyChooseLimDul(state, seat, action); break;
     case "reorder-lim-dul": next = applyReorderLimDul(state, seat, action); break;
+    case "choose-hideaway-card": next = applyChooseHideawayCard(state, seat, action); break;
+    case "choose-hideaway-cast": next = applyChooseHideawayCast(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;

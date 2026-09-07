@@ -459,6 +459,7 @@ const C13_DJINN = () => make({ name: "Djinn of Infinite Deceits", type_line: "Cr
 const C13_ROON = () => make({ name: "Roon of the Hidden Realm", type_line: "Legendary Creature — Rhino Soldier", mana_cost: "{2}{G}{W}{U}", cmc: 5, power: "4", toughness: "4", keywords: ["Vigilance", "Trample"], oracle_text: "Vigilance, trample\n{2}, {T}: Exile another target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "fd336830-4a11-42b8-9fc7-d7526f569124", scryfall_id: "fd336830-4a11-42b8-9fc7-d7526f569124" });
 const C13_LIM_DULS_VAULT = () => make({ name: "Lim-Dûl's Vault", type_line: "Instant", mana_cost: "{U}{B}", cmc: 2, oracle_text: "Look at the top five cards of your library. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library. Then shuffle and put the last cards you looked at this way on top in any order.", oracle_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97", scryfall_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97" });
 const C13_STORMSCAPE_BATTLEMAGE = () => make({ name: "Stormscape Battlemage", type_line: "Creature — Metathran Wizard", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "Kicker {W} and/or {2}{B} (You may pay an additional {W} and/or {2}{B} as you cast this spell.)\nWhen this creature enters, if it was kicked with its {W} kicker, you gain 3 life.\nWhen this creature enters, if it was kicked with its {2}{B} kicker, destroy target nonblack creature. That creature can't be regenerated.", oracle_id: "38ee748d-adcd-41df-9b23-d2a34829784c", scryfall_id: "38ee748d-adcd-41df-9b23-d2a34829784c" });
+const C13_MOSSWORT_BRIDGE = () => make({ name: "Mosswort Bridge", type_line: "Land", oracle_text: "Hideaway 4 (When this land enters, look at the top four cards of your library, exile one face down, then put the rest on the bottom in a random order.)\nThis land enters tapped.\n{T}: Add {G}.\n{G}, {T}: You may play the exiled card without paying its mana cost if creatures you control have total power 10 or greater.", produced_mana: ["G"], oracle_id: "7cb9e29f-835f-4155-a2a5-4b778866c773", scryfall_id: "7cb9e29f-835f-4155-a2a5-4b778866c773" });
 const C13_JELEVA = () => make({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.", oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
@@ -2127,6 +2128,38 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null && state.players[0]!.battlefield.some((permanent) => permanent.card.name === battlemage.name));
     expect(game.players[0]!.life).toBe(43);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("resolves Mosswort Bridge hideaway privately and gates its free play by power", () => {
+    const bridge = C13_MOSSWORT_BRIDGE();
+    expect(cardProfile(bridge)).toMatchObject({
+      fullyImplemented: true,
+      hideawayAmount: 4,
+      triggers: [{ effect: { kind: "hideaway", amount: 4 } }],
+      activatedAbilities: [{ effect: { kind: "play-hideaway-card" }, requiresControlledPowerAtLeast: 10 }]
+    });
+    let game = readyToCast([bridge], [FOREST()]);
+    const library = [BEAR(), FLIER(), ISLAND(), SWAMP(), FOREST(), MOUNTAIN()];
+    game = stage(game, 0, () => ({ library: toHand(0, library, "bridge-library"), autoPass: false }));
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "hideaway-review" && state.pendingChoice.mode === "review");
+    const review = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "hideaway-review" }>;
+    const chosen = review.optionIds[0]!;
+    game = applyAction(game, 0, { type: "choose-hideaway-card", sourceId: review.sourceId, cardId: chosen });
+    const hidden = game.players[0]!.exile.find((card) => card.exiledWithSourceId === "hand-0")!;
+    expect(hidden.faceDown).toBe(true);
+    expect(projectGame(game, 1).players[0]!.exile).toEqual([expect.objectContaining({ name: "Carta exiliada boca abajo", faceDown: true })]);
+    expect(projectGame(game, 0).players[0]!.exile[0]!.name).toBe("Grizzly Bears");
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === "hand-0")).toBe(false);
+    game = putOnBattlefield(game, 0, [make({ name: "Power Ten", type_line: "Creature — Beast", power: "10", toughness: "10", oracle_text: "" })]);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.card.name === bridge.name ? { ...permanent, tapped: false } : permanent) }));
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === "hand-0")!;
+    game = applyAction(game, 0, activation.action);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "hideaway-review" && state.pendingChoice.mode === "cast");
+    const castChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "hideaway-review" }>;
+    game = applyAction(game, 0, { type: "choose-hideaway-cast", sourceId: castChoice.sourceId, cardId: hidden.instance_id });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.players[0]!.battlefield.some((permanent) => permanent.card.name === hidden.name));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === hidden.name)).toBe(true);
   });
 
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {

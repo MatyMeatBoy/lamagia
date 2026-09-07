@@ -176,6 +176,8 @@ export interface ActivatedAbility {
   readonly requiresUntap?: boolean;
   /** "Activate only if you control N or more [type/subtype]" (Metallurgic Summonings). */
   readonly requiresControlledCount?: { readonly word: string; readonly amount: number };
+  /** Mosswort Bridge's live total-power activation gate (CR 702.75). */
+  readonly requiresControlledPowerAtLeast?: number;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
   /** Printed restriction that forbids activation during any combat step. */
@@ -497,6 +499,10 @@ export type SpellEffect =
   | { readonly kind: "look-top-reorder"; readonly amount: number }
   /** Lim-Dûl's Vault: privately inspect, optionally bottom/pay repeatedly, then reorder the final group. */
   | { readonly kind: "lim-duls-vault" }
+  /** Hideaway: privately choose one of the top cards and put the rest below the library. */
+  | { readonly kind: "hideaway"; readonly amount: number }
+  /** Mosswort Bridge's free play of its linked exiled card. */
+  | { readonly kind: "play-hideaway-card" }
   /** Jeleva exiles each player's top cards using the mana spent on entry (CR 603.6). */
   | { readonly kind: "jeleva-exile-top-spent-mana" }
   /** Jeleva offers one instant or sorcery exiled with the source for free (CR 601.2). */
@@ -1269,6 +1275,8 @@ export interface CardProfile {
   readonly kickedEffects: readonly SpellEffect[];
   /** "If ~ was kicked, it enters with N <kind> counters on it" — applied only on a kicked cast. */
   readonly kickedEntersWithCounters: readonly CounterCost[];
+  /** Hideaway amount for a land's enters trigger (CR 702.75). */
+  readonly hideawayAmount: number | null;
   /** Kicker components, in printed order; a cast may pay any subset (CR 702.33). */
   readonly kickerCosts: readonly ManaCost[];
   /** Keywords granted only when the spell is kicked (CR 702.33e). */
@@ -2496,6 +2504,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
       return amount === null ? null : { kind: "remove-counter-then-destroy-all-nonland" as const, counter: removeCounterThenDestroy[2]!.toLowerCase(), amount };
     })()
     : null;
+  const playHideawayPower = /^You may play the exiled card without paying its mana cost if creatures you control have total power (\d+) or greater\.?$/i.exec(parsedEffectText);
   const recognized = commandZoneReturn
     ? { effect: { kind: "put-source-from-command-zone" } as unknown as SpellEffect, target: "none" as TargetKind }
     : selfUntap
@@ -2514,6 +2523,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: { kind: "gain-life-equal-sacrificed-toughness" } as SpellEffect, target: "none" as TargetKind }
     : removeCounterThenDestroyEffect
     ? { effect: removeCounterThenDestroyEffect as SpellEffect, target: "none" as TargetKind }
+    : playHideawayPower
+    ? { effect: { kind: "play-hideaway-card" } as SpellEffect, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 
@@ -2603,6 +2614,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(oncePerTurnOnly ? { oncePerTurn: true } : {}),
     ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
     ...(controlledCountGate && controlledCountAmount !== null ? { requiresControlledCount: { word: controlledCountGate[2]!, amount: controlledCountAmount } } : {}),
+    ...(playHideawayPower ? { requiresControlledPowerAtLeast: Number(playHideawayPower[1]) } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(energyCost ? { energyCost } : {}),
     ...(requiresUntap ? { requiresUntap: true } : {}),
@@ -2673,6 +2685,7 @@ interface RecognizedText {
   kickedEffects?: SpellEffect[];
   kickedKeywords?: EnforcedKeyword[];
   kickedEntersWithCounters?: CounterCost[];
+  hideawayAmount?: number | null;
   echoCost?: ManaCost | null;
   suspendAmount?: number | null;
   suspendCost?: ManaCost | null;
@@ -5036,6 +5049,7 @@ function recognizeText(text: string): RecognizedText {
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
   const kickerCosts: ManaCost[] = [];
+  let hideawayAmount: number | null = null;
   let entwineCost: ManaCost | null = null;
   let graftAmount: number | null = null;
   let devourAmount: number | null = null;
@@ -5050,6 +5064,8 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    const hideaway = /^Hideaway\s+(\d+)\.?$/i.exec(line);
+    if (hideaway) { hideawayAmount = Number(hideaway[1]); continue; }
     // Thousand-Year Elixir-style static permission (CR 302.6). The engine
     // applies this as a characteristic of the controller's battlefield, not
     // as a triggered or activated ability of the artifact.
@@ -6140,7 +6156,7 @@ function recognizeText(text: string): RecognizedText {
       targetKind: "player", sourceText: "As this creature enters, choose a player."
     });
   }
-  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, kickerCosts, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, kickerCosts, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, hideawayAmount, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -6220,6 +6236,11 @@ export function cardProfile(card: CardData): CardProfile {
     effect: { kind: "sacrifice-own-creature-then-draw", amount: 1 },
     optional: false, targetKind: "none",
     sourceText: "At the beginning of your upkeep, sacrifice a creature. Whenever you sacrifice a creature, draw a card."
+  });
+  if (recognized.hideawayAmount !== null && recognized.hideawayAmount !== undefined) synthesizedTriggers.push({
+    event: "enters-battlefield", subject: "self",
+    effect: { kind: "hideaway", amount: recognized.hideawayAmount },
+    optional: false, targetKind: "none", sourceText: `Hideaway ${recognized.hideawayAmount}`
   });
   const manaAbilities = isPermanent ? parseManaAbilities(card, text) : [];
   const cyclingCost = parseCyclingCost(text);
@@ -6498,6 +6519,7 @@ export function cardProfile(card: CardData): CardProfile {
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
     kickerCost: recognized.kickerCost ?? null,
     kickerCosts: recognized.kickerCosts ?? (recognized.kickerCost ? [recognized.kickerCost] : []),
+    hideawayAmount: recognized.hideawayAmount ?? null,
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,
     devourAmount,
