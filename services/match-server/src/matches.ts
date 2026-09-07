@@ -61,6 +61,13 @@ const matches = new Map<string, MatchRecord>();
 const catalogPath = process.env.CATALOG_DB_PATH ?? fileURLToPath(new URL("../../../data/catalog/prossh.sqlite", import.meta.url));
 const tokenArtCache = new Map<string, { image_normal?: string; image_art_crop?: string }>();
 
+/**
+ * Pick the printed token that represents the generated definition.  The
+ * originating set is preferred (e.g. TMNT Treasure -> pizza artwork), then a
+ * regular non-promo token, then the newest remaining printing.  Rules never
+ * consult this: it is strictly a public projection concern.
+ */
+
 export function setGameplayFailureSink(sink: ((record: GameplayFailure) => void) | undefined): void {
   gameplayFailureSink = sink;
 }
@@ -90,6 +97,7 @@ function enrichTokenArt(view: GameView): GameView {
           )
         ORDER BY CASE WHEN LOWER(set_code) = ? THEN 0 ELSE 1 END,
                  CASE WHEN set_type IN ('core','expansion') AND COALESCE(promo,0)=0 AND COALESCE(variation,0)=0 THEN 0 ELSE 1 END,
+                 CASE WHEN image_normal IS NOT NULL AND image_normal <> '' THEN 0 ELSE 1 END,
                  released_at DESC, set_code ASC LIMIT 1`);
       const image = query.get(card.name, card.type_line, card.type_line, card.type_line, sourceSet ?? "") as { image_normal?: string; image_art_crop?: string } | undefined;
       if (image?.image_normal) tokenArtCache.set(cacheKey, image);
