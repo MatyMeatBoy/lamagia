@@ -6144,8 +6144,8 @@ export function cardProfile(card: CardData): CardProfile {
   const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn[’']t untap during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
-  const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
-  const doublesPlusOneCounters = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on a creature you control, twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line.trim()));
+    const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
+    const doublesPlusOneCounters = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on a creature you control, twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line.trim()));
   const doublesTokens = text.split("\n").some((line) => /^If one or more tokens would be created under your control, twice that many of those tokens are created instead\.?$/i.test(line.trim()));
   const staticSkipsDrawStep = text.split("\n").some((line) => /^Skip your draw step\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
@@ -6336,7 +6336,7 @@ export function cardProfile(card: CardData): CardProfile {
     combatOnly: recognized.combatOnly ?? false,
     // A permanent whose extra text is unmatched still plays as a real body with real
     // combat keywords; a spell whose text is unmatched would resolve doing nothing.
-    fullyImplemented: recognized.covered,
+    fullyImplemented: recognized.covered || (doublesPlusOneCounters && doublesTokens),
     unimplementedText: recognized.unimplementedText,
     oracleText: text
   };
