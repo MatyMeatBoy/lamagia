@@ -4646,6 +4646,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, target.instanceId);
       return permanent ? destroyPermanent(state, permanent) : state;
     }
+    case "remove-counter-then-destroy-all-nonland": {
+      const source = object.sourcePermanentId ? findPermanent(state, object.sourcePermanentId) : undefined;
+      if (!source || (source.counters[effect.counter] ?? 0) < effect.amount) {
+        return logged(state, controller, `${sourceName}: no hay suficientes contadores de ${effect.counter}; no destruye permanentes.`);
+      }
+      let next = withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) - effect.amount } }
+          : permanent)
+      }));
+      for (const permanent of allPermanents(next).filter((candidate) => !isLand(cardProfile(candidate.card)))) {
+        const current = findPermanent(next, permanent.instance_id);
+        if (current) next = destroyPermanent(next, current);
+      }
+      return logged(next, controller, `${sourceName}: remueve ${effect.amount} contador${effect.amount === 1 ? "" : "es"} de ${effect.counter} y destruye los permanentes que no son tierras.`);
+    }
     case "put-target-nonland-permanent-under-top": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;

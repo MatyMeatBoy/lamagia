@@ -742,6 +742,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-all-artifacts-creatures-enchantments" }
   /** Destroy artifact/enchantment permanents, then count the ones destroyed. */
   | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
+  /** Remove a counter from the source, then conditionally destroy all nonland permanents. */
+  | { readonly kind: "remove-counter-then-destroy-all-nonland"; readonly counter: string; readonly amount: number }
   | { readonly kind: "exile-target-permanent"; readonly gainSourceControl?: "target-controller" }
   /** Exile a permanent now and return it under its owner's control next end step. */
   | { readonly kind: "exile-target-permanent-delayed-return" }
@@ -2427,6 +2429,13 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
   const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
+  const removeCounterThenDestroy = /^Remove (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) ([A-Za-z][A-Za-z'’/-]*) counter from ~\. If you do, destroy all nonland permanents\.?$/i.exec(parsedEffectText);
+  const removeCounterThenDestroyEffect = removeCounterThenDestroy
+    ? (() => {
+      const amount = toNumber(removeCounterThenDestroy[1]);
+      return amount === null ? null : { kind: "remove-counter-then-destroy-all-nonland" as const, counter: removeCounterThenDestroy[2]!.toLowerCase(), amount };
+    })()
+    : null;
   const recognized = commandZoneReturn
     ? { effect: { kind: "put-source-from-command-zone" } as unknown as SpellEffect, target: "none" as TargetKind }
     : selfUntap
@@ -2443,6 +2452,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
     : sacrificedToughnessLife
     ? { effect: { kind: "gain-life-equal-sacrificed-toughness" } as SpellEffect, target: "none" as TargetKind }
+    : removeCounterThenDestroyEffect
+    ? { effect: removeCounterThenDestroyEffect as SpellEffect, target: "none" as TargetKind }
     : recognizeSentence(parsedEffectText);
   if (!recognized) return null;
 

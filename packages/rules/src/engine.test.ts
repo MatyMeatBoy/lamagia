@@ -333,6 +333,7 @@ const SPINAL_EMBRACE = () => make({ name: "Spinal Embrace", type_line: "Instant"
 const TEMPT_WITH_DISCOVERY = () => make({ name: "Tempt with Discovery", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Tempting offer — Search your library for a land card and put it onto the battlefield. Each opponent may search their library for a land card and put it onto the battlefield. For each opponent who searches a library this way, search your library for a land card and put it onto the battlefield. Then each player who searched a library this way shuffles." });
 const TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", type_line: "Sorcery", mana_cost: "{4}{B}", cmc: 5, oracle_text: "Tempting offer — Return a creature card from your graveyard to the battlefield. Each opponent may return a creature card from their graveyard to the battlefield. For each opponent who does, return a creature card from your graveyard to the battlefield." });
 const TEMPT_WITH_REFLECTIONS = () => make({ name: "Tempt with Reflections", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Tempting offer — Choose target creature you control. Create a token that's a copy of that creature. Each opponent may create a token that's a copy of that creature. For each opponent who does, create a token that's a copy of that creature.", oracle_id: "76c142ef-0f07-4215-8d11-d25f7114c70d", scryfall_id: "76c142ef-0f07-4215-8d11-d25f7114c70d" });
+const PLAGUE_BOILER = () => make({ name: "Plague Boiler", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Plague Boiler enters the battlefield with a plague counter on it.\nAt the beginning of your upkeep, put a plague counter on Plague Boiler.\n{1}{B}{G}, {T}: Remove a plague counter from Plague Boiler. If you do, destroy all nonland permanents.", oracle_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a", scryfall_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a" });
 const EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "When this artifact enters, each player chooses a nonland permanent and puts a doom counter on it. {2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it." });
 const MYSTIC_BARRIER = () => make({ name: "Mystic Barrier", type_line: "Enchantment", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "When this enchantment enters and at the beginning of your upkeep, choose left or right. Each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent.", oracle_id: "0caf42f5-abff-48aa-9bbf-df6cba169ef3" });
 const CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "Sorcery", mana_cost: "{U}{U}{B}{B}{B}{R}{R}", cmc: 7, oracle_text: "Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life." });
@@ -1934,6 +1935,30 @@ describe("casting", () => {
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(3);
     expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(2);
+  });
+
+  it("removes Plague Boiler's counter before destroying every nonland permanent", () => {
+    const profile = cardProfile(PLAGUE_BOILER());
+    expect(profile.activatedAbilities).toMatchObject([{ effect: { kind: "remove-counter-then-destroy-all-nonland", counter: "plague", amount: 1 } }]);
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [PLAGUE_BOILER(), ISLAND(), SWAMP(), FOREST(), BEAR()]);
+    game = putOnBattlefield(game, 1, [BEAR(), ISLAND()]);
+    game = stage(game, 0, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.card.name === "Plague Boiler"
+        ? { ...permanent, counters: { plague: 1 } }
+        : permanent)
+    }));
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const boiler = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Plague Boiler")!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === boiler.instance_id)!;
+    game = applyAction(game, 0, action.action);
+    expect(game.stack).toHaveLength(1);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Island", "Swamp", "Forest"]);
+    expect(game.players[1]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Island"]);
   });
 
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {

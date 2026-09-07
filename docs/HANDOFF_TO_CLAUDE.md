@@ -6684,3 +6684,9 @@ integrator review; do not count the old `11440733` as integrated.
 - Base: `e6ec83df`.
 - `Tempt with Reflections | 76c142ef-0f07-4215-8d11-d25f7114c70d`: reused the existing copy-token and tempting-offer primitives; the scenario verifies the controller's base/reward copies and the opponent's optional copy.
 - Main should cherry-pick the focused commit after review.
+
+## C13 pending-cluster rescue — Plague Boiler (2026-09-07)
+
+- Base: `f88cd7d0`.
+- `Plague Boiler | fef502af-6e79-4c55-a86a-b45adb3fc64a`: added the shared remove-counter-then-destroy-all-nonland activation primitive; the full card still has separate pending counter/upkeep lines.
+- Main should cherry-pick or fast-forward the focused commit after review.
