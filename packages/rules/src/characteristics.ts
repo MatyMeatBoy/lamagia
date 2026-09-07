@@ -1110,7 +1110,7 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
   | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
-  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "nonlegendary-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
+  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "nonlegendary-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonflying-creature-not-you-control" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "creature-dealt-damage-to-you"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
   | "creature-power-at-least-5"
@@ -4169,10 +4169,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Remove all counters from target permanent$/i.test(text)) return { effect: { kind: "remove-all-counters-target" }, target: "permanent" };
   if (/^Remove all counters from all permanents and exile all tokens$/i.test(text)) return { effect: { kind: "remove-all-counters-all-and-exile-tokens" }, target: "none" };
-  if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
+  if ((match = /^~ deals (\w+) damage to target creature( without flying you don't control)?$/i.exec(text))) {
+    const target: TargetKind = match[2] ? "nonflying-creature-not-you-control" : "creature";
     const amount = toNumber(match[1]);
-    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature" };
-    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "creature" };
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target };
   }
   if (/^~ deals damage equal to the sacrificed artifact's mana value to any target$/i.test(text)) {
     return { effect: { kind: "damage-any-target", amount: "X" }, target: "any" };

@@ -1904,6 +1904,35 @@ describe("casting", () => {
     return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
   }
 
+  // CR 601.2c and 608.2b: choose a legal target and recheck on resolution.
+  // https://media.wizards.com/2026/downloads/MagicCompRules%2020260819.txt
+  const streetSpasm = () => make({ name: "Street Spasm", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d", scryfall_id: "753bc05b-cb42-4b83-a69d-cad2b94cfd46", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R}" });
+
+  it("restricts Street Spasm to nonflying creatures outside your control and deals X damage", () => {
+    const card = streetSpasm();
+    expect(cardProfile(card)).toMatchObject({ effects: [{ kind: "damage-any-target", amount: "X" }], fullyImplemented: false, unimplementedText: ["Overload {X}{X}{R}{R}"] });
+    let game = readyToCast([card], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), BEAR()], [], [BEAR(), FLIER(), ISLAND()]);
+    const target = game.players[1]!.battlefield[0]!;
+    expect(legalTargets(game, 0, "nonflying-creature-not-you-control")).toEqual([{ kind: "permanent", instanceId: target.instance_id }]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.graveyard.some((entry) => entry.instance_id === target.card.instance_id)).toBe(true);
+    expect(game.players[0]!.battlefield.some((entry) => entry.card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.some((entry) => entry.card.name === "Storm Crow")).toBe(true);
+  });
+
+  it.each(["flying", "control"] as const)("rechecks Street Spasm when its target gains %s", (change) => {
+    let game = readyToCast([streetSpasm()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [BEAR()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, kind: "human", autoPass: false })) };
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    expect(game.stack).toHaveLength(1);
+    game = stage(game, 1, (player) => ({ battlefield: player.battlefield.map((entry) => entry.instance_id !== target.instance_id ? entry : change === "flying" ? { ...entry, temporaryKeywords: ["flying"] } : { ...entry, controller: 0 }) }));
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.find((entry) => entry.instance_id === target.instance_id)?.damage).toBe(0);
+    expect(game.players[0]!.graveyard.some((entry) => entry.oracle_id === streetSpasm().oracle_id)).toBe(true);
+  });
+
   it("keeps Spinal Embrace unavailable outside combat", () => {
     const game = readyToCast([SPINAL_EMBRACE()], [ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), SWAMP()], [], [BEAR()]);
     expect(cardProfile(SPINAL_EMBRACE())).toMatchObject({ fullyImplemented: true, combatOnly: true });

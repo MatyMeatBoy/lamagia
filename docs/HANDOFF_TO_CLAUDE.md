@@ -6708,3 +6708,13 @@ integrator review; do not count the old `11440733` as integrated.
 - Base: `7d5f1b70`.
 - `Deadwood Treefolk | b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`: added the missing combined enters-or-leaves trigger grammar and reused the existing creature-card graveyard-to-hand primitive. The scenario validates the ETB path and target resolution.
 - Main should cherry-pick or fast-forward the focused commit after review.
+
+
+## C13 pending primitive — Street Spasm (2026-09-07)
+
+- Base: `2da0b6049ad90e98aac02896cb64d653e2db03b3`; claim published as `dbdc1311` on `codex/c13-pending-random`.
+- Random selection among four pending candidates chose Street Spasm | 95385d84-550c-4d6c-a889-62bdbc1d518d.
+- Reused parameterized damage with a nonflying-creature-not-you-control target restriction, including current flying/control checks at resolution for this target primitive.
+- Three focused scenarios verify legal target filtering, X=2 damage, and invalidation after gaining flying or changing controller. CR 601.2c and 608.2b validated against https://media.wizards.com/2026/downloads/MagicCompRules%2020260819.txt.
+- Rules check passed; full suite passed with 936 tests and 6 skipped. An initial concurrent run hit the existing bot test's 10-second timeout; the rerun passed.
+- Authoritative catalog export confirms the damage line is supported; only Overload {X}{X}{R}{R} remains unmatched. The card remains fullyImplemented=false; no full-card completion claimed. One Oracle ID in scope; generated catalog output stays uncommitted.

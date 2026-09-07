@@ -6290,7 +6290,12 @@ function resolveTop(state: GameState): GameState {
   // CR 608.2b: a spell or ability is countered only when all of its targets
   // are illegal.  Effects must receive the original target list so they can
   // skip only the targets that are no longer legal and resolve the rest.
+  const resolvingTargetKind = object.activated?.targetKind ?? object.trigger?.definition.targetKind ?? profile.targetKind;
+  const restrictedDamageTargets = resolvingTargetKind === "nonflying-creature-not-you-control"
+    ? legalTargets(next, object.controller, resolvingTargetKind, profile) : null;
   const targetIsIllegal = (target: Target): boolean =>
+    (restrictedDamageTargets !== null && !restrictedDamageTargets.some((candidate) =>
+      candidate.kind === "permanent" && target.kind === "permanent" && candidate.instanceId === target.instanceId)) ||
     (target.kind === "permanent" && !findPermanent(next, target.instanceId)) ||
     (target.kind === "graveyard-card" && !playerAt(next, target.seat).graveyard.some((card) => card.instance_id === target.instanceId)) ||
     (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId)) ||
@@ -8885,10 +8890,11 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "permanent-you-control") return profile.isPermanent && permanent.controller === seat;
     if (kind === "permanent-opponent") return profile.isPermanent && permanent.controller !== seat;
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "nonlegendary-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind.startsWith("creature-power-toughness-sum-at-most-") || kind.startsWith("creature-power-at-") || kind.startsWith("creature-toughness-at-") || kind.startsWith("creature-power-or-toughness-")) {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "nonflying-creature-not-you-control" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "nonlegendary-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind.startsWith("creature-power-toughness-sum-at-most-") || kind.startsWith("creature-power-at-") || kind.startsWith("creature-toughness-at-") || kind.startsWith("creature-power-or-toughness-")) {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "creature-opponent" && permanent.controller === seat) return false;
+      if (kind === "nonflying-creature-not-you-control" && (permanent.controller === seat || keywordOf(state, permanent, "flying"))) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;
