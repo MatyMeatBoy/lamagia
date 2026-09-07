@@ -712,6 +712,8 @@ export type SpellEffect =
   | { readonly kind: "spinal-embrace" }
   | { readonly kind: "sacrifice-delayed-creature-gain-toughness" }
   | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
+  | { readonly kind: "eye-of-doom-mark" }
+  | { readonly kind: "destroy-doomed-permanents" }
   /** Cruel Ultimatum's fixed sequence of target and controller effects. */
   | { readonly kind: "cruel-ultimatum" }
   /** Return each non-token permanent to its owner's control without changing zones. */
@@ -4587,6 +4589,10 @@ function recognizeText(text: string): RecognizedText {
   if (/^Tempting offer\s*[—–-]\s*Return a creature card from your graveyard to the battlefield\. Each opponent may return a creature card from their graveyard to the battlefield\. For each opponent who does, return a creature card from your graveyard to the battlefield\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
     const reanimate = { kind: "reanimate-own-best-creature-from-graveyard" as const };
     return { effects: [{ kind: "tempting-offer", base: reanimate, opponent: reanimate, reward: reanimate }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
+  }
+  if (/^When (?:this artifact|~) enters, each player chooses a nonland permanent and puts a doom counter on it\. \{2\}, \{T\}, Sacrifice (?:this artifact|~): Destroy each permanent with a doom counter on it\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
+    const sourceText = text.replace(/\s+/g, " ").trim();
+    return { effects: [], triggers: [{ event: "enters-battlefield", subject: "self", effect: { kind: "eye-of-doom-mark" }, optional: false, targetKind: "none", sourceText }], activatedAbilities: [{ index: 0, requiresTap: true, sacrificesSelf: true, lifeCost: 0, manaCost: parseManaCost("{2}")!, effect: { kind: "destroy-doomed-permanents" }, targetKind: "none", text: sourceText }], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
   }
   const body = text.split("\n")
     // Scryfall uses `•`; a few imported historical rows contain U+FFFD in its

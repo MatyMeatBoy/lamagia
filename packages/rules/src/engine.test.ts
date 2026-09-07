@@ -321,6 +321,7 @@ const STARTING_TOWN = () => make({ name: "Starting Town", type_line: "Land — T
 const SPINAL_EMBRACE = () => make({ name: "Spinal Embrace", type_line: "Instant", mana_cost: "{3}{U}{U}{B}", cmc: 6, oracle_text: "Cast this spell only during combat. Untap target creature you don't control and gain control of it. It gains haste until end of turn. At the beginning of the next end step, sacrifice it. If you do, you gain life equal to its toughness." });
 const TEMPT_WITH_DISCOVERY = () => make({ name: "Tempt with Discovery", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Tempting offer — Search your library for a land card and put it onto the battlefield. Each opponent may search their library for a land card and put it onto the battlefield. For each opponent who searches a library this way, search your library for a land card and put it onto the battlefield. Then each player who searched a library this way shuffles." });
 const TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", type_line: "Sorcery", mana_cost: "{4}{B}", cmc: 5, oracle_text: "Tempting offer — Return a creature card from your graveyard to the battlefield. Each opponent may return a creature card from their graveyard to the battlefield. For each opponent who does, return a creature card from your graveyard to the battlefield." });
+const EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "When this artifact enters, each player chooses a nonland permanent and puts a doom counter on it. {2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it." });
 const CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "Sorcery", mana_cost: "{U}{U}{B}{B}{B}{R}{R}", cmc: 7, oracle_text: "Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life." });
 const BEAR = () => make({ name: "Grizzly Bears", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
 const ETB_DRAWER = () => make({ name: "Archivist Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Archivist Bear enters the battlefield, draw a card." });
@@ -1840,6 +1841,10 @@ describe("casting", () => {
 
   it("recognizes Tempt with Immortality as a reusable reanimation offer", () => {
     expect(cardProfile(TEMPT_WITH_IMMORTALITY())).toMatchObject({ fullyImplemented: true, effects: [{ kind: "tempting-offer" }] });
+  });
+
+  it("recognizes Eye of Doom's ETB marker and activated wipe", () => {
+    expect(cardProfile(EYE_OF_DOOM())).toMatchObject({ fullyImplemented: true, activatedAbilities: [{ effect: { kind: "destroy-doomed-permanents" } }] });
   });
 
   it("taps the right mana and resolves a creature onto the battlefield", () => {

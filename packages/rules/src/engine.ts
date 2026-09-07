@@ -2880,6 +2880,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
   const controller = object.controller;
   const sourceName = object.card.name;
   switch (effect.kind) {
+    case "eye-of-doom-mark": {
+      let next = state;
+      for (const player of state.players) {
+        const chosen = playerAt(next, player.seat).battlefield.find((permanent) => !isLand(cardProfile(permanent.card)));
+        if (!chosen) continue;
+        next = withPlayer(next, player.seat, (current) => ({ ...current, battlefield: current.battlefield.map((permanent) => permanent.instance_id === chosen.instance_id ? { ...permanent, counters: { ...permanent.counters, doom: (permanent.counters.doom ?? 0) + 1 } } : permanent) }));
+      }
+      return logged(next, controller, `${sourceName}: cada jugador marca un permanente no tierra.`);
+    }
+    case "destroy-doomed-permanents": {
+      let next = state;
+      for (const permanent of allPermanents(state).filter((candidate) => (candidate.counters.doom ?? 0) > 0)) {
+        const current = findPermanent(next, permanent.instance_id);
+        if (current) next = destroyPermanent(next, current);
+      }
+      return logged(next, controller, `${sourceName}: destruye los permanentes marcados.`);
+    }
     case "compound": {
       let next = state;
       for (const [index, child] of effect.effects.entries()) {
