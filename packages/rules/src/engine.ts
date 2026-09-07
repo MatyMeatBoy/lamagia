@@ -5140,6 +5140,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return putOntoBattlefield(removed, delayed.owner, card, false);
     }
+    case "exchange-control-targets": {
+      const firstTarget = object.targets[0];
+      const secondTarget = object.targets[1];
+      if (firstTarget?.kind !== "permanent" || secondTarget?.kind !== "permanent" || firstTarget.instanceId === secondTarget.instanceId) return state;
+      const first = findPermanent(state, firstTarget.instanceId);
+      const second = findPermanent(state, secondTarget.instanceId);
+      if (!first || !second || !isCreature(cardProfile(first.card)) || !isCreature(cardProfile(second.card))) return state;
+      if (cardProfile(first.card).supertypes.some((value) => value.toLowerCase() === "legendary")
+        || cardProfile(second.card).supertypes.some((value) => value.toLowerCase() === "legendary")) return state;
+      const firstController = first.controller;
+      const secondController = second.controller;
+      let next = changePermanentController(state, first, secondController);
+      const currentSecond = findPermanent(next, second.instance_id);
+      if (currentSecond) next = changePermanentController(next, currentSecond, firstController);
+      return logged(next, controller, `${first.card.name} y ${second.card.name} intercambian el control.`);
+    }
     case "gain-control-of-source-random-opponent": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -9578,6 +9594,7 @@ function activatableAbility(
   if (ability.energyCost !== undefined && (player.counters.energy ?? 0) < ability.energyCost) return { legal: false };
   if (ability.requiresClassLevel !== undefined && (permanent.classLevel ?? 1) !== ability.requiresClassLevel) return { legal: false };
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
+  if (ability.notDuringCombat && ["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step)) return { legal: false };
   if (ability.requiresUntap) {
     if (!permanent.tapped) return { legal: false };
     const hasHaste = cardProfile(permanent.card).keywords.includes("haste") ||

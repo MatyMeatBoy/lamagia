@@ -432,6 +432,7 @@ const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcer
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
 const C13_INCENDIARY_COMMAND = () => make({ name: "Incendiary Command", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "Choose two —\n• Incendiary Command deals 4 damage to target player or planeswalker.\n• Incendiary Command deals 2 damage to each creature.\n• Destroy target nonbasic land.\n• Each player discards all the cards in their hand, then draws that many cards.", oracle_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870", scryfall_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870" });
 const C13_MAGUS_OF_THE_ARENA = () => make({ name: "Magus of the Arena", type_line: "Creature — Human Wizard", mana_cost: "{3}{R}{R}", cmc: 5, power: "5", toughness: "5", oracle_text: "{3}, {T}: Tap target creature you control and target creature of an opponent's choice they control. Those creatures fight each other. (Each deals damage equal to its power to the other.)", oracle_id: "44865261-16f8-42d2-a388-a57173142eb0", scryfall_id: "44865261-16f8-42d2-a388-a57173142eb0" });
+const C13_DJINN_OF_INFINITE_DECEITS = () => make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6, power: "2", toughness: "7", oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat.", oracle_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5", scryfall_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5" });
 const C13_REINCARNATION = () => make({ name: "Reincarnation", type_line: "Instant", mana_cost: "{1}{G}{G}", cmc: 3, oracle_text: "Choose target creature. When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner.", oracle_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a", scryfall_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a" });
 const C13_ENDREK = () => make({ name: "Endrek Sahr, Master Breeder", type_line: "Legendary Creature — Human Wizard", mana_cost: "{4}{B}", cmc: 5, power: "2", toughness: "2", oracle_text: "Whenever you cast a creature spell, create X 1/1 black Thrull creature tokens, where X is that spell's mana value.\nWhen you control seven or more Thrulls, sacrifice ~.", oracle_id: "47a0079f-3544-45bc-a32a-bd93844c8c43", scryfall_id: "47a0079f-3544-45bc-a32a-bd93844c8c43" });
 const THRULL = () => make({ name: "Thrull", type_line: "Creature — Thrull", power: "1", toughness: "1" });
@@ -3540,6 +3541,33 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === own.instance_id)).toMatchObject({ tapped: true, damage: 3 });
     expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === opposing.instance_id)).toMatchObject({ tapped: true, damage: 3 });
+  });
+
+  it("exchanges Djinn's two nonlegendary creature controls and blocks combat activation", () => {
+    const djinn = C13_DJINN_OF_INFINITE_DECEITS();
+    expect(profileOf(djinn)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [{ notDuringCombat: true, targetKinds: ["nonlegendary-creature", "nonlegendary-creature"], effect: { kind: "exchange-control-targets" } }]
+    });
+    const creature = (name: string) => make({ name, type_line: "Creature — Bear", power: "2", toughness: "2" });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [djinn, creature("Blue Bear")]);
+    game = putOnBattlefield(game, 1, [creature("Red Bear")]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === djinn.name)!;
+    const own = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Blue Bear")!;
+    const opposing = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Red Bear")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0, targets: [{ kind: "permanent", instanceId: own.instance_id }, { kind: "permanent", instanceId: opposing.instance_id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === opposing.instance_id)).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === own.instance_id)).toBe(true);
+    const combatState = { ...game, step: "declare-attackers" as const, activeSeat: 0 as SeatId, prioritySeat: 0 as SeatId, priorityOpen: true, passedSeats: [] };
+    expect(legalActions(combatState, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)).toBe(false);
   });
 
   it("filters Harald, King of Skemfar's top-five review by creature subtype, not card type", () => {

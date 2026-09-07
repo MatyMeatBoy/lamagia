@@ -167,6 +167,8 @@ export interface ActivatedAbility {
   readonly requiresControlledCount?: { readonly word: string; readonly amount: number };
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
+  /** Printed restriction that forbids activation during any combat step (CR 602.5). */
+  readonly notDuringCombat?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
   readonly sourceZone?: "hand" | "graveyard" | "command-zone";
   /** Printed upkeep restriction (Forecast, CR 702.57). */
@@ -613,6 +615,8 @@ export type SpellEffect =
   | { readonly kind: "copy-triggered-spell" }
   /** Swap a blocking source's power with the creature it blocked until combat ends (CR 701.10). */
   | { readonly kind: "exchange-source-power-with-blocking-creature" }
+  /** Exchange control of two targeted permanents without changing zones (CR 701.10). */
+  | { readonly kind: "exchange-control-targets" }
   | { readonly kind: "damage-event-player"; readonly amount: number | "X" }
   /** Noncombat damage to the controller of the permanent source. */
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
@@ -2418,12 +2422,14 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const isLoyaltyCost = /^\s*([+−–-])?\s*(\d+)\s*$/.test(costText);
   if (!isLoyaltyCost && /^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
+  const notDuringCombat = /you can['’]t activate this ability during combat/i.test(effectText);
   const oncePerTurnOnly = /activate only once each turn\.?$/i.test(effectText);
   const sorcerySpeedOnly = /(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i.test(effectText);
   const controlledCountGate = /(?:^|[.\s])activate only if you control (\w+) or more ([A-Za-z][A-Za-z'’/-]*?)s?\.?$/i.exec(effectText);
   const controlledCountAmount = controlledCountGate ? toNumber(controlledCountGate[1]!) : null;
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
+    .replace(/\.?\s*You can['’]t activate this ability during combat\.?$/i, "")
     .replace(/(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i, ".")
     .replace(/(?:^|[.\s])activate only once each turn\.?$/i, ".")
     .replace(/\.?\s*activate only if you control \w+ or more [A-Za-z][A-Za-z'’/-]*?s?\.?\s*$/i, "")
@@ -2485,6 +2491,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const revealTopToHand = parseRevealTopCardToHandAndGainManaValue(parsedEffectText);
   const fight = /^Target Beast creature you control fights target creature an opponent controls\.?$/i.test(parsedEffectText);
   const tapTwoCreaturesFight = /^Tap target creature you control and target creature (?:of an opponent's choice )?they control\. Those creatures fight each other\.?$/i.test(parsedEffectText);
+  const exchangeControl = /^Exchange control of two target nonlegendary creatures\.?$/i.test(parsedEffectText);
   const tokenAndLife = /^(Create\s+.+?\s+token(?:s)?(?:\s+named\s+[^,]+)?(?:\s+with\s+.+)?)\.\s*You gain (\w+) life\.?$/i.exec(parsedEffectText);
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
@@ -2518,6 +2525,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
       target: "creature-you-control" as TargetKind,
       targetKinds: ["creature-you-control", "creature-opponent"] as const
     }
+    : exchangeControl
+    ? { effect: { kind: "exchange-control-targets" } as SpellEffect, target: "nonlegendary-creature" as TargetKind, targetKinds: ["nonlegendary-creature", "nonlegendary-creature"] as const }
     : tokenEffect && tokenEffect.kind === "create-token" && tokenLifeAmount !== null
     ? { effect: { kind: "compound", effects: [tokenEffect, { kind: "gain-life", amount: tokenLifeAmount }] } as SpellEffect, target: "none" as TargetKind }
     : sacrificedToughnessLife
@@ -2609,6 +2618,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(returnLandsMatch ? { returnLands: toNumber(returnLandsMatch[1])! } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
+    ...(notDuringCombat ? { notDuringCombat: true } : {}),
     ...(oncePerTurnOnly ? { oncePerTurn: true } : {}),
     ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
     ...(controlledCountGate && controlledCountAmount !== null ? { requiresControlledCount: { word: controlledCountGate[2]!, amount: controlledCountAmount } } : {}),
@@ -5547,6 +5557,16 @@ function recognizeText(text: string): RecognizedText {
     if (activated) {
       activatedAbilities.push(activated);
       continue;
+    }
+    // Some Oracle exports print this restriction as its own sentence after
+    // the activated ability. Attach it to the immediately preceding ability
+    // so every such card shares the same CR 602.5 legality gate.
+    if (/^You can['’]t activate this ability during combat\.?$/i.test(line)) {
+      const previous = activatedAbilities.at(-1);
+      if (previous) {
+        activatedAbilities[activatedAbilities.length - 1] = { ...previous, notDuringCombat: true };
+        continue;
+      }
     }
 
     // Triggered abilities whose source is the permanent itself. The event is
