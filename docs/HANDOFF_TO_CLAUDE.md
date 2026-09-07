@@ -6690,3 +6690,9 @@ integrator review; do not count the old `11440733` as integrated.
 - Base: `f88cd7d0`.
 - `Plague Boiler | fef502af-6e79-4c55-a86a-b45adb3fc64a`: added the shared remove-counter-then-destroy-all-nonland activation primitive; the full card still has separate pending counter/upkeep lines.
 - Main should cherry-pick or fast-forward the focused commit after review.
+
+## C13 pending-cluster rescue — Sun Droplet (2026-09-07)
+
+- Base: `3013f88f`.
+- `Sun Droplet | 1820af5c-9cc2-4b77-b4ca-86084442f087`: added generic player-damage event tracking and event-amount counter handling; the scenario validates damage to charge counters and the optional upkeep counter-to-life conversion.
+- Main should cherry-pick or fast-forward the focused commit after review.

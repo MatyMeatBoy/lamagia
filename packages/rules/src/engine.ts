@@ -373,6 +373,7 @@ export type GameEvent =
   | { readonly kind: "blocks"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "deals-combat-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
   | { readonly kind: "deals-damage-to-player"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly victim: SeatId; readonly amount: number }
+  | { readonly kind: "dealt-damage-to-player"; readonly seat: SeatId; readonly amount: number }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard; readonly spell: StackObject; readonly spentMana?: number }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
@@ -2442,6 +2443,10 @@ function triggerMatches(
     return subject === "you" && event.seat === watcher.controller;
   }
 
+  if (event.kind === "dealt-damage-to-player") {
+    return subject === "you" && event.seat === watcher.controller;
+  }
+
   if (event.kind === "play-land") {
     return subject === "you" && event.seat === watcher.controller;
   }
@@ -2566,6 +2571,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "blocks": return `${object!.card.name} bloquea`;
     case "deals-combat-damage-to-player": return `${object!.card.name} hace daño de combate a ${playerAt(state, event.victim).name}`;
     case "deals-damage-to-player": return `${object!.card.name} hace daño a ${playerAt(state, event.victim).name}`;
+    case "dealt-damage-to-player": return `${playerAt(state, event.seat).name} recibe ${event.amount} daño`;
     case "becomes-tapped": return `${object!.card.name} se gira`;
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "card-cycled": return `${playerAt(state, event.controller).name} cicla ${event.card.name}`;
@@ -2821,6 +2827,7 @@ function dealDamageToPlayer(
 ): GameState {
   if (amount <= 0) return state;
   let next = loseLife(state, seat, amount);
+  next = raiseEvent(next, { kind: "dealt-damage-to-player", seat, amount });
   if (source && emitDamageEvent) {
     next = raiseEvent(next, {
       kind: "deals-damage-to-player",
@@ -5638,6 +5645,30 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
           : permanent)
       }));
+    }
+    case "add-counter-source-event-amount": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourceId);
+      const amount = object.trigger?.eventAmount ?? 0;
+      if (!source || amount <= 0) return state;
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + amount } }
+          : permanent)
+      }));
+    }
+    case "remove-counter-source-then-gain-life": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourceId);
+      if (!source || (source.counters[effect.counter] ?? 0) < effect.amount) return state;
+      const reduced = withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) - effect.amount } }
+          : permanent)
+      }));
+      return applyEffect(reduced, object, { kind: "gain-life", amount: effect.amount });
     }
     case "add-counter-creatures-subtype": {
       const subtype = effect.subtype.toLowerCase();

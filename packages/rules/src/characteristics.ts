@@ -687,6 +687,10 @@ export type SpellEffect =
   /** Cradle of Vitality: counters scale with the life-gain event amount. */
   | { readonly kind: "add-counter-target-creature-per-life-gained"; readonly counter: string }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
+  /** Sun Droplet: add counters equal to damage dealt to its controller. */
+  | { readonly kind: "add-counter-source-event-amount"; readonly counter: string }
+  /** Sun Droplet: remove one charge counter, then gain one life if removal succeeded. */
+  | { readonly kind: "remove-counter-source-then-gain-life"; readonly counter: string; readonly amount: number }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
@@ -901,6 +905,7 @@ export type TriggerEvent =
   | "blocks"
   | "deals-combat-damage-to-player"
   | "deals-damage-to-player"
+  | "dealt-damage-to-player"
   | "becomes-tapped"
   | "spell-cast"
   | "card-cycled"
@@ -963,6 +968,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   blocks: "habilidad de bloqueo",
   "deals-combat-damage-to-player": "habilidad de daño de combate",
   "deals-damage-to-player": "habilidad de daño a un jugador",
+  "dealt-damage-to-player": "habilidad de daño recibido",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
   "card-cycled": "habilidad de cycling",
@@ -4677,6 +4683,20 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  // Sun Droplet's two self-contained abilities are printed on one Oracle line
+  // in older imports. Keep both reusable trigger primitives together instead
+  // of letting the generic one-line trigger parser discard the second clause.
+  const sunDroplet = /^Whenever you're dealt damage, put that many ([A-Za-z][A-Za-z'’-]*) counters? on ~\.\s*At the beginning of each upkeep, you may remove (?:a|one) ([A-Za-z][A-Za-z'’-]*) counter from ~\.\s*If you do, you gain (one|1) life\.?$/i.exec(joined);
+  if (sunDroplet && sunDroplet[1]!.toLowerCase() === sunDroplet[2]!.toLowerCase()) {
+    return {
+      effects: [],
+      triggers: [
+        { event: "dealt-damage-to-player", subject: "you", effect: { kind: "add-counter-source-event-amount", counter: sunDroplet[1]!.toLowerCase() }, optional: false, targetKind: "none", sourceText: body[0]!.text },
+        { event: "upkeep", subject: "you", effect: { kind: "remove-counter-source-then-gain-life", counter: sunDroplet[2]!.toLowerCase(), amount: 1 }, optional: true, targetKind: "none", sourceText: body[0]!.text }
+      ],
+      activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
   // Jeleva's two linked abilities share one Oracle block. Keep them as two
   // reusable trigger effects so the ETB and attack paths retain their own
   // source identity and private choice timing.
@@ -5676,6 +5696,22 @@ function recognizeText(text: string): RecognizedText {
     // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
     const triggerLine = (leavesLine !== line ? leavesLine : line)
       .replace(/^(?:landfall|morbid|revolt)\s+[—–-\uFFFD]\s*/i, "");
+    const sunDropletDamage = /^whenever\s+you(?:'|’)re\s+dealt\s+damage,?\s*put\s+that\s+many\s+([A-Za-z][A-Za-z'’-]*)\s+counters?\s+on\s+~\.?$/i.exec(triggerLine);
+    if (sunDropletDamage) {
+      triggers.push({
+        event: "dealt-damage-to-player", subject: "you", effect: { kind: "add-counter-source-event-amount", counter: sunDropletDamage[1]!.toLowerCase() },
+        optional: false, targetKind: "none", sourceText: line
+      });
+      continue;
+    }
+    const sunDropletUpkeep = /^at\s+the\s+beginning\s+of\s+each\s+upkeep,?\s*you\s+may\s+remove\s+(?:a|one)\s+([A-Za-z][A-Za-z'’-]*)\s+counter\s+from\s+~\.?\s*if\s+you\s+do,?\s*you\s+gain\s+one\s+life\.?$/i.exec(triggerLine);
+    if (sunDropletUpkeep) {
+      triggers.push({
+        event: "upkeep", subject: "you", effect: { kind: "remove-counter-source-then-gain-life", counter: sunDropletUpkeep[1]!.toLowerCase(), amount: 1 },
+        optional: true, targetKind: "none", sourceText: line
+      });
+      continue;
+    }
     const triggeredRaw = matchTriggerLine(triggerLine);
     if (triggeredRaw) {
       // "This ability triggers only once each turn." (Bident of Thassa and

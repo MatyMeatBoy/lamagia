@@ -334,6 +334,7 @@ const TEMPT_WITH_DISCOVERY = () => make({ name: "Tempt with Discovery", type_lin
 const TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", type_line: "Sorcery", mana_cost: "{4}{B}", cmc: 5, oracle_text: "Tempting offer — Return a creature card from your graveyard to the battlefield. Each opponent may return a creature card from their graveyard to the battlefield. For each opponent who does, return a creature card from your graveyard to the battlefield." });
 const TEMPT_WITH_REFLECTIONS = () => make({ name: "Tempt with Reflections", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Tempting offer — Choose target creature you control. Create a token that's a copy of that creature. Each opponent may create a token that's a copy of that creature. For each opponent who does, create a token that's a copy of that creature.", oracle_id: "76c142ef-0f07-4215-8d11-d25f7114c70d", scryfall_id: "76c142ef-0f07-4215-8d11-d25f7114c70d" });
 const PLAGUE_BOILER = () => make({ name: "Plague Boiler", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Plague Boiler enters the battlefield with a plague counter on it.\nAt the beginning of your upkeep, put a plague counter on Plague Boiler.\n{1}{B}{G}, {T}: Remove a plague counter from Plague Boiler. If you do, destroy all nonland permanents.", oracle_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a", scryfall_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a" });
+const SUN_DROPLET = () => make({ name: "Sun Droplet", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Whenever you're dealt damage, put that many charge counters on this artifact. At the beginning of each upkeep, you may remove a charge counter from this artifact. If you do, you gain 1 life.", oracle_id: "1820af5c-9cc2-4b77-b4ca-86084442f087", scryfall_id: "1820af5c-9cc2-4b77-b4ca-86084442f087" });
 const EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "When this artifact enters, each player chooses a nonland permanent and puts a doom counter on it. {2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it." });
 const MYSTIC_BARRIER = () => make({ name: "Mystic Barrier", type_line: "Enchantment", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "When this enchantment enters and at the beginning of your upkeep, choose left or right. Each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent.", oracle_id: "0caf42f5-abff-48aa-9bbf-df6cba169ef3" });
 const CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "Sorcery", mana_cost: "{U}{U}{B}{B}{B}{R}{R}", cmc: 7, oracle_text: "Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life." });
@@ -1959,6 +1960,40 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "pass" });
     expect(game.players[0]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Island", "Swamp", "Forest"]);
     expect(game.players[1]!.battlefield.map((permanent) => permanent.card.name)).toEqual(["Island"]);
+  });
+
+  it("tracks damage received on Sun Droplet and exposes its upkeep life trigger", () => {
+    const profile = cardProfile(SUN_DROPLET());
+    expect(profile.triggers).toMatchObject([
+      { event: "dealt-damage-to-player", effect: { kind: "add-counter-source-event-amount", counter: "charge" } },
+      { event: "upkeep", effect: { kind: "remove-counter-source-then-gain-life", counter: "charge", amount: 1 }, optional: true }
+    ]);
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [BOLT()], "sun-bolt") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [SUN_DROPLET(), MOUNTAIN()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    game = applyAction(game, 0, { type: "cast", cardId: "sun-bolt-0", targets: [{ kind: "player", seat: 0 }] });
+    game = passUntil(game, (state) => (state.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sun Droplet")!.counters.charge ?? 0) === 3);
+    expect(game.players[0]!.life).toBe(37);
+  });
+
+  it("resolves Sun Droplet's optional upkeep conversion", () => {
+    let game = twoSeatGame(Array.from({ length: 8 }, () => BEAR()), []);
+    game = putOnBattlefield(game, 0, [SUN_DROPLET()]);
+    game = {
+      ...game,
+      players: game.players.map((player) => player.seat === 0
+        ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.card.name === "Sun Droplet"
+          ? { ...permanent, counters: { ...permanent.counters, charge: 1 } } : permanent) }
+        : player)
+    };
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger"
+      && state.pendingChoice.sourceCard.name === "Sun Droplet");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.life).toBe(41);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sun Droplet")!.counters.charge).toBe(0);
   });
 
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {
