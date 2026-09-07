@@ -1056,6 +1056,8 @@ export interface TriggerDefinition {
   readonly sourceText: string;
   /** Mana that must be paid when an optional trigger is accepted. */
  readonly manaCost?: ManaCost;
+  /** Specific kicker component required by this conditional trigger (CR 702.33e). */
+  readonly requiresKickerIndex?: number;
   /** Maximum value for an optional `{X}` cost, derived from the triggering event. */
   readonly variablePayCost?: "event-amount";
   /** For "unless that player pays", the opponent is the payer and the trigger controller receives the effect if they decline. */
@@ -1267,6 +1269,8 @@ export interface CardProfile {
   readonly kickedEffects: readonly SpellEffect[];
   /** "If ~ was kicked, it enters with N <kind> counters on it" — applied only on a kicked cast. */
   readonly kickedEntersWithCounters: readonly CounterCost[];
+  /** Kicker components, in printed order; a cast may pay any subset (CR 702.33). */
+  readonly kickerCosts: readonly ManaCost[];
   /** Keywords granted only when the spell is kicked (CR 702.33e). */
   readonly kickedKeywords: readonly EnforcedKeyword[];
   /** Evoke alternative cost (CR 702.34), null when absent. */
@@ -2661,6 +2665,7 @@ interface RecognizedText {
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   combatOnly?: boolean;
   kickerCost?: ManaCost | null;
+  kickerCosts?: ManaCost[];
   entwineCost?: ManaCost | null;
   graftAmount?: number | null;
   devourAmount?: number | null;
@@ -5030,6 +5035,7 @@ function recognizeText(text: string): RecognizedText {
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  const kickerCosts: ManaCost[] = [];
   let entwineCost: ManaCost | null = null;
   let graftAmount: number | null = null;
   let devourAmount: number | null = null;
@@ -5080,8 +5086,15 @@ function recognizeText(text: string): RecognizedText {
     const miracle = /^Miracle\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (miracle) { miracleCost = parseManaCost(miracle[1]!); continue; }
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
-    const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
-    if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    const kicker = /^(?:Multikicker|Kicker)\s+(.+?)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (kicker) {
+      const costs = [...kicker[1]!.matchAll(/((?:\{[^}]+\})+)/g)]
+        .map((match) => parseManaCost(match[1]!))
+        .filter((cost): cost is ManaCost => Boolean(cost));
+      kickerCosts.push(...costs);
+      kickerCost = costs[0] ?? null;
+      continue;
+    }
     // Partner (CR 702.123): purely a deck-construction rule — createGame
     // already accepts multiple declared commanderNames, so the printed line
     // carries no per-card state here. Reminder text (parenthetical) is
@@ -5854,7 +5867,12 @@ function recognizeText(text: string): RecognizedText {
       // target identity is preserved through the whole resolution (CR 109.5).
       const dependentRider = line.split(SENTENCE_SPLIT).slice(1).join(" ").trim();
       const dependentEffect = /^(.+?)\s+(Untap that creature\.\s*It gains haste until end of turn\.?|Untap that creature\.?|It gains (?:flying|reach|first strike|double strike|deathtouch|trample|vigilance|lifelink|menace|defender|haste|indestructible|hexproof|shroud|fear|intimidate) until end of turn\.?)$/i.exec(triggered.effectText);
-      const triggerEffectText = dependentEffect ? `${dependentEffect[1]}. ${dependentEffect[2]}` : triggered.effectText;
+      let triggerEffectText = dependentEffect ? `${dependentEffect[1]}. ${dependentEffect[2]}` : triggered.effectText;
+      // Historical Oracle keeps the obsolete regeneration rider as a second
+      // sentence. Destruction already uses the current default that ignores
+      // regeneration, so discard only this rider while retaining the effect.
+      const regenerationRider = /^(.+?)\.\s*(?:It|That creature) can't be regenerated\.?$/i.exec(triggerEffectText);
+      if (regenerationRider) triggerEffectText = regenerationRider[1]!;
       const subtypeCondition = /^if\s+you\s+control\s+no\s+([A-Za-z][A-Za-z'’/-]*),\s*(.+)$/i.exec(triggerEffectText);
       const powerCondition = /^if\s+you\s+control\s+a\s+creature\s+with\s+power\s+(\d+)\s+or\s+greater,\s*(.+)$/i.exec(triggerEffectText);
       const countCondition = /^if\s+you\s+control\s+([a-z]+|\d+)\s+or\s+more\s+([A-Za-z][A-Za-z'’/-]*?)s?,\s*(.+)$/i.exec(triggerEffectText);
@@ -5889,9 +5907,15 @@ function recognizeText(text: string): RecognizedText {
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
-      const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
+      const specificKickedGate = /^if (?:it|this creature|this permanent|~) was kicked with its ((?:\{[^}]+\})+) kicker,\s*(.+)$/i.exec(effectText);
+      const genericKickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
+      const kickedGate = specificKickedGate ?? genericKickedGate;
       const requiresKicked = Boolean(kickedGate);
-      if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      const requiresKickerIndex = specificKickedGate
+        ? kickerCosts.findIndex((cost) => cost.raw.replace(/\s+/g, "") === specificKickedGate[1]!.replace(/\s+/g, ""))
+        : -1;
+      if (specificKickedGate) effectText = specificKickedGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      else if (genericKickedGate) effectText = genericKickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // Well of Lost Dreams: X is chosen on resolution and capped by the life
       // gain event (CR 107.3, 118.3). Keep this as a reusable variable-cost
       // trigger shape instead of hard-coding the card in the engine.
@@ -5963,6 +5987,7 @@ function recognizeText(text: string): RecognizedText {
           ...(triggered.nontoken ? { nontoken: true } : {}),
           ...(triggered.discardedCardType ? { discardedCardType: triggered.discardedCardType } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
+          ...(requiresKickerIndex >= 0 ? { requiresKickerIndex } : {}),
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
           ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
            ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {}),
@@ -6115,7 +6140,7 @@ function recognizeText(text: string): RecognizedText {
       targetKind: "player", sourceText: "As this creature enters, choose a player."
     });
   }
-  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, kickerCosts, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -6472,6 +6497,7 @@ export function cardProfile(card: CardData): CardProfile {
     targetKind: recognized.targetKind,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
     kickerCost: recognized.kickerCost ?? null,
+    kickerCosts: recognized.kickerCosts ?? (recognized.kickerCost ? [recognized.kickerCost] : []),
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,
     devourAmount,
