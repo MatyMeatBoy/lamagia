@@ -714,6 +714,8 @@ export type SpellEffect =
   | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
   | { readonly kind: "eye-of-doom-mark" }
   | { readonly kind: "destroy-doomed-permanents" }
+  /** Mystic Barrier updates the table-wide nearest-opponent direction. */
+  | { readonly kind: "choose-attack-direction" }
   /** Cruel Ultimatum's fixed sequence of target and controller effects. */
   | { readonly kind: "cruel-ultimatum" }
   /** Return each non-token permanent to its owner's control without changing zones. */
@@ -4589,6 +4591,13 @@ function recognizeText(text: string): RecognizedText {
   if (/^Tempting offer\s*[—–-]\s*Return a creature card from your graveyard to the battlefield\. Each opponent may return a creature card from their graveyard to the battlefield\. For each opponent who does, return a creature card from your graveyard to the battlefield\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
     const reanimate = { kind: "reanimate-own-best-creature-from-graveyard" as const };
     return { effects: [{ kind: "tempting-offer", base: reanimate, opponent: reanimate, reward: reanimate }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
+  }
+  if (/^When (?:this enchantment|~) enters and at the beginning of your upkeep, choose left or right\. Each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
+    const effect = { kind: "choose-attack-direction" as const };
+    return { effects: [], triggers: [
+      { event: "enters-battlefield", subject: "self", effect, optional: false, targetKind: "none", sourceText: text },
+      { event: "upkeep", subject: "you", effect, optional: false, targetKind: "none", sourceText: text }
+    ], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
   }
   if (/^When (?:this artifact|~) enters, each player chooses a nonland permanent and puts a doom counter on it\. \{2\}, \{T\}, Sacrifice (?:this artifact|~): Destroy each permanent with a doom counter on it\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
     const sourceText = text.replace(/\s+/g, " ").trim();

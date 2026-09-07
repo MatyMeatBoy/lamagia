@@ -144,6 +144,11 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const chosen = untapped ?? tapped;
     if (chosen) return { action: chosen.action, label: chosen.label };
   }
+  if (state.pendingChoice?.type === "choose-direction" && state.pendingChoice.seat === seat) {
+    const chosen = available.find((entry) => entry.action.type === "choose-direction" && entry.action.direction === "right")
+      ?? available.find((entry) => entry.action.type === "choose-direction");
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
   if (state.pendingChoice?.type === "mana-payment" && state.pendingChoice.seat === seat) {
     const source = available.find((entry) => entry.action.type === "choose-mana-source");
     const cancel = available.find((entry) => entry.action.type === "cancel-mana-payment");
@@ -310,6 +315,10 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
     const wanted = available.find((entry) => entry.action.type === "choose-scry" && entry.action.ordinal === 0 && entry.action.bottom === flooded)
       ?? available.find((entry) => entry.action.type === "choose-scry" && entry.action.ordinal === 0);
     if (wanted) return { action: wanted.action, label: wanted.label };
+  }
+  if (state.pendingChoice?.type === "choose-direction" && state.pendingChoice.seat === seat) {
+    const chosen = available.find((entry) => entry.action.type === "choose-direction");
+    if (chosen) return { action: chosen.action, label: chosen.label };
   }
 
   if (state.step === "declare-attackers" && !state.combat.attackersDeclared && seat === state.activeSeat) {
