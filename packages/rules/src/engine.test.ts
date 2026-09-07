@@ -717,6 +717,7 @@ const C13_BLOOD_RITES = () => make({ name: "Blood Rites", type_line: "Enchantmen
 const C13_CARNAGE_ALTAR = () => make({ name: "Carnage Altar", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{3}, Sacrifice a creature: Draw a card.", scryfall_id: "c08486d3-3d94-49c7-b8c9-61eb8a3e6428" });
 const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3, oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, Furnace Celebration deals 2 damage to any target.", oracle_id: "af6d6844-c612-4731-86da-59a8fa02956b", scryfall_id: "af6d6844-c612-4731-86da-59a8fa02956b" });
 const PRIMAL_VIGOR = () => make({ name: "Primal Vigor", type_line: "Enchantment", mana_cost: "{4}{G}", cmc: 5, oracle_text: "If one or more +1/+1 counters would be put on a creature you control, twice that many +1/+1 counters are put on that creature instead.\nIf one or more tokens would be created under your control, twice that many of those tokens are created instead.", oracle_id: "c665544f-557b-4631-a1dc-39571470ca2e", scryfall_id: "c665544f-557b-4631-a1dc-39571470ca2e" });
+const C13_PRIMAL_VIGOR = () => make({ name: "Primal Vigor", type_line: "Enchantment", mana_cost: "{4}{G}", cmc: 5, oracle_text: "If one or more tokens would be created, twice that many of those tokens are created instead.\nIf one or more +1/+1 counters would be put on a creature, twice that many +1/+1 counters are put on that creature instead.", oracle_id: "c665544f-557b-4631-a1dc-39571470ca2e", scryfall_id: "c13-primal-vigor-global" });
 const C13_DEADWOOD_TREEFOLK = () => make({ name: "Deadwood Treefolk", type_line: "Creature — Treefolk", mana_cost: "{4}{G}", cmc: 5, power: "3", toughness: "6", oracle_text: "Vanishing 3 (This creature enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this creature enters or leaves the battlefield, return another target creature card from your graveyard to your hand.", oracle_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd", scryfall_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd" });
 const C13_THRAXIMUNDAR = () => make({ name: "Thraximundar", type_line: "Legendary Creature — Zombie Assassin", mana_cost: "{4}{U}{B}{R}", cmc: 7, power: "6", toughness: "6", keywords: ["Haste"], oracle_text: "Haste\nWhenever Thraximundar attacks, defending player sacrifices a creature of their choice.\nWhenever a player sacrifices a creature, you may put a +1/+1 counter on Thraximundar.", oracle_id: "9e0e4217-fefe-48dd-9153-032460192b19", scryfall_id: "9e0e4217-fefe-48dd-9153-032460192b19" });
 const C13_NIVIX_GUILDMAGE = () => make({ name: "Nivix Guildmage", type_line: "Creature — Human Wizard", mana_cost: "{U}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{1}{U}{R}: Draw a card, then discard a card.\n{2}{U}{R}: Copy target instant or sorcery spell you control. You may choose new targets for the copy.", oracle_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936", scryfall_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936" });
@@ -4750,6 +4751,17 @@ describe("casting", () => {
 
   it("profiles Primal Vigor replacement effects", () => {
     expect(profileOf(PRIMAL_VIGOR())).toMatchObject({ fullyImplemented: true, doublesPlusOneCounters: true, doublesTokens: true });
+  });
+
+  it("applies C13 Primal Vigor's counter replacement to an opponent's creature", () => {
+    // CR 614.1, 614.12: Primal Vigor's replacement effect has no controller restriction.
+    const primal = C13_PRIMAL_VIGOR();
+    expect(profileOf(primal)).toMatchObject({ fullyImplemented: true, doublesPlusOneCountersGlobally: true, doublesTokensGlobally: true });
+    let game = readyToCast([GROWTH_SPELL()], [primal, FOREST(), FOREST(), FOREST()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield[0]!.counters["+1/+1"]).toBe(2);
   });
 
   it("reuses the upkeep compound trigger for C13 Baleful Force", () => {
