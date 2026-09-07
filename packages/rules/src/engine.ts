@@ -410,6 +410,10 @@ export interface CombatState {
   readonly blockersDeclaredBy?: readonly SeatId[];
   readonly firstStrikeResolved: boolean;
   readonly damageResolved: boolean;
+  /** Creatures required to attack in an additional combat created by Illusionist's Gambit. */
+  readonly requiredAttackers?: readonly string[];
+  /** Player that the additional-combat attackers cannot attack. */
+  readonly forbiddenDefender?: SeatId;
 }
 
 export interface LogEntry {
@@ -461,6 +465,8 @@ export interface GameState {
   readonly blockingTaxPerCreature?: readonly number[];
   /** Last direction chosen by a Mystic Barrier-style effect. */
   readonly attackDirection?: "left" | "right";
+  /** An additional combat waiting after the current combat phase (CR 506.6). */
+  readonly extraCombat?: { readonly attackerIds: readonly string[]; readonly forbiddenDefender: SeatId };
 }
 
 export interface ManaPaymentSelection {
@@ -4793,6 +4799,25 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const delayed: DelayedSacrifice = { id: `${object.id}:sacrifice`, triggerAtTurn: next.step === "end" ? next.turn + 1 : next.turn, targetPermanentId: moved.instance_id, sourceCard: object.card, controller, sourceText: `${object.card.name}: sacrifice the creature at the beginning of the next end step` };
       return logged({ ...next, delayedSacrifices: [...next.delayedSacrifices, delayed] }, controller, `${object.card.name}: ${moved.card.name} queda bajo tu control hasta el próximo paso final.`);
     }
+    case "illusionist-gambit": {
+      // CR 508.8: remove every current attacker from combat, untap it, then
+      // schedule one additional combat after this phase. The remembered
+      // attacker set is used as a requirement in the new declaration.
+      const attackerIds = state.combat.attackers.map((entry) => entry.instanceId)
+        .filter((id, index, ids) => ids.indexOf(id) === index);
+      const next = {
+        ...state,
+        combat: { ...state.combat, attackers: [], blockers: [] },
+        extraCombat: { attackerIds, forbiddenDefender: controller },
+        players: state.players.map((player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => attackerIds.includes(permanent.instance_id)
+            ? { ...permanent, tapped: false }
+            : permanent)
+        }))
+      };
+      return logged(next, controller, `${object.card.name}: retira ${attackerIds.length} atacante(s) y prepara un combate adicional.`);
+    }
     case "tempting-offer": {
       let next = applyEffect(state, object, effect.base);
       const opponents = opponentsOf(next, controller);
@@ -7167,8 +7192,9 @@ function canAttack(state: GameState, permanent: Permanent): boolean {
  */
 function requiredAttackers(state: GameState, seat: SeatId): Permanent[] {
   const forcedBoardWide = allPermanents(state).some((permanent) => cardProfile(permanent.card).forcesAllCreaturesToAttack);
+  const forcedIds = new Set(state.combat.requiredAttackers ?? []);
   return playerAt(state, seat).battlefield.filter((permanent) =>
-    (forcedBoardWide || cardProfile(permanent.card).combatRules.mustAttack) && canAttack(state, permanent));
+    (forcedIds.has(permanent.instance_id) || forcedBoardWide || cardProfile(permanent.card).combatRules.mustAttack) && canAttack(state, permanent));
 }
 
 /** The tightest defender-controlled attacker limit (CR 508.1d). */
@@ -7656,7 +7682,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     case "end-combat": {
       next = {
         ...next,
-        combat: { ...next.combat, attackers: [], blockers: [] },
+        combat: { ...next.combat, attackers: [], blockers: [], requiredAttackers: undefined, forbiddenDefender: undefined },
         players: next.players.map((player) => ({
           ...player,
           battlefield: player.battlefield.map((permanent) => ({ ...permanent, combatPowerModifier: undefined }))
@@ -7715,6 +7741,18 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 }
 
 function advanceStep(state: GameState): GameState {
+  if (state.step === "end-combat" && state.extraCombat) {
+    const extra = state.extraCombat;
+    return beginStep({
+      ...state,
+      extraCombat: undefined,
+      combat: {
+        attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false,
+        blockersDeclaredBy: [], firstStrikeResolved: false, damageResolved: false,
+        requiredAttackers: extra.attackerIds, forbiddenDefender: extra.forbiddenDefender
+      }
+    }, "begin-combat");
+  }
   const index = TURN_STEPS.indexOf(state.step);
   const isLast = index === TURN_STEPS.length - 1;
   if (!isLast) return beginStep(state, TURN_STEPS[index + 1]!);
@@ -7855,6 +7893,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (profile.combatOnly && !["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step)) return { legal: false };
+  if (profile.declareBlockersOnly && (state.step !== "declare-blockers" || state.activeSeat === seat)) return { legal: false };
   if (splitSecondActive(state)) return { legal: false };
   // Silence (CR 116.3): this function only ever validates casting a spell
   // (playing a land is a separate path), so no type carve-out is needed.
@@ -11396,6 +11435,9 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   for (const entry of attackers) {
     if (!available.has(entry.instanceId)) throw new Error("Esa criatura no puede atacar.");
     if (!defenders.has(entry.defender)) throw new Error("Ese jugador no puede ser atacado.");
+    if (state.combat.forbiddenDefender !== undefined && entry.defender === state.combat.forbiddenDefender) {
+      throw new Error("Esas criaturas no pueden atacar a ese jugador durante este combate.");
+    }
     if (state.attackDirection && nearestOpponentInDirection(state, seat, state.attackDirection) !== entry.defender) {
       throw new Error("Mystic Barrier limits attacks to the nearest opponent in the chosen direction.");
     }
