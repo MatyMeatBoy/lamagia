@@ -4566,6 +4566,14 @@ describe("casting", () => {
     expect(game.players[1]!.life).toBe(38);
   });
 
+  it("recognizes Primal Vigor replacement effects", () => {
+    expect(profileOf(PRIMAL_VIGOR())).toMatchObject({
+      doublesPlusOneCounters: true,
+      doublesTokens: true,
+      fullyImplemented: true
+    });
+  });
+
   it("profiles Primal Vigor replacement effects", () => {
     expect(profileOf(PRIMAL_VIGOR())).toMatchObject({ fullyImplemented: true, doublesPlusOneCounters: true, doublesTokens: true });
   });
