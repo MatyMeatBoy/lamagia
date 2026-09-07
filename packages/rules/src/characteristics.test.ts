@@ -15,6 +15,12 @@ describe("predefined tokens", () => {
 });
 
 describe("type line parsing", () => {
+  it("recognises True-Name Nemesis's chosen-player protection", () => {
+    const profile = cardProfile(card({ name: "True-Name Nemesis", type_line: "Creature — Merfolk Rogue", mana_cost: "{1}{U}{U}", oracle_text: "As this creature enters, choose a player.\nThis creature has protection from the chosen player." }));
+    expect(profile.protectionFrom).toContain("chosen-player");
+    expect(profile.triggers).toContainEqual(expect.objectContaining({ event: "enters-battlefield", targetKind: "player" }));
+    expect(profile.unimplementedText).toEqual([]);
+  });
   it("splits supertypes, types and subtypes", () => {
     const profile = cardProfile(card({ name: "Test Angel", type_line: "Legendary Creature — Phyrexian Angel" }));
     expect(profile.supertypes).toEqual(["Legendary"]);

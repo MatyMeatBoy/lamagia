@@ -319,6 +319,12 @@ const PROTECTION_QUALITIES: Readonly<Record<string, string>> = {
   white: "W", blue: "U", black: "B", red: "R", green: "G"
 };
 
+/**
+ * True-Name Nemesis stores a player choice as it enters, then applies the
+ * normal protection machinery to that player's objects (CR 702.16, 614.9).
+ */
+const PROTECTION_PLAYER_QUALITY = "chosen-player";
+
 /** Reads the common color-only protection line while preserving each quality. */
 function parseProtectionFromLine(line: string): readonly string[] | null {
   const match = /(?:^|,\s*)protection from (.+)$/i.exec(line.trim().replace(/\.$/, ""));
@@ -753,6 +759,7 @@ export type SpellEffect =
   | { readonly kind: "exile-target-permanent"; readonly gainSourceControl?: "target-controller" }
   /** Exile a permanent now and return it under its owner's control next end step. */
   | { readonly kind: "exile-target-permanent-delayed-return" }
+  | { readonly kind: "choose-protection-player" }
   /** Resolves a delayed return created by the previous effect. */
   | { readonly kind: "return-delayed-permanent" }
   | { readonly kind: "exile-target-nontoken-creature"; readonly returnOnSourceLeave?: boolean }
@@ -4636,6 +4643,8 @@ function isIgnorableSentence(sentence: string, hasChosenColorEffect = false): bo
 }
 
 function recognizeText(text: string): RecognizedText {
+  const choosesPlayerOnEntry = /as\s+(?:this\s+creature|~)\s+enters,?\s+choose\s+(?:a\s+)?player\.?/i.test(text);
+  const hasChosenPlayerProtection = /(?:this\s+creature|~)\s+has\s+protection\s+from\s+the\s+chosen\s+player\.?/i.test(text);
   const spinalEmbrace = /^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\. It gains haste until end of turn\. At the beginning of the next end step, sacrifice it\. If you do, you gain life equal to its toughness\.?$/i.test(text.replace(/\s+/g, " ").trim());
   if (spinalEmbrace) return {
     effects: [{ kind: "spinal-embrace" }], triggers: [], activatedAbilities: [], modalChoices: [],
@@ -5289,6 +5298,8 @@ function recognizeText(text: string): RecognizedText {
     // Protection's quality is tracked separately because it affects targeting,
     // blocking and damage prevention, not stack resolution (CR 702.16).
     if (parseProtectionFromLine(line)) continue;
+    if (/^As (?:~|this creature) enters,? choose (?:a )?player\.?$/i.test(line)) continue;
+    if (/^(?:~|this creature) has protection from the chosen player\.?$/i.test(line)) continue;
     if (parseStaticKeywordGrant(line).length) continue;
     if (parseManaAbilityGrant(line)) continue;
     if (parseKeywordDuringYourTurn(line).length) continue;
@@ -6005,6 +6016,16 @@ function recognizeText(text: string): RecognizedText {
       ? { ...trigger, effect: { kind: "lose-life-target-player-remembered" as const, amount: trigger.effect.amount } }
       : trigger)
     : triggers;
+  if (choosesPlayerOnEntry && hasChosenPlayerProtection) {
+    // The chosen player is selected as the permanent enters, not targeted;
+    // the runtime stores that player on the permanent for the existing
+    // protection checks.
+    resolvedTriggers.push({
+      event: "enters-battlefield", subject: "self",
+      effect: { kind: "choose-protection-player" }, optional: false,
+      targetKind: "player", sourceText: "As this creature enters, choose a player."
+    });
+  }
   return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
@@ -6230,6 +6251,8 @@ export function cardProfile(card: CardData): CardProfile {
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
   const protectionFrom = text.split(/\r?\n/).flatMap((line) => parseProtectionFromLine(line) ?? []);
+  const hasChosenPlayerProtection = /(?:this\s+creature|~)\s+has\s+protection\s+from\s+the\s+chosen\s+player\.?/i.test(text);
+  const choosesPlayerOnEntry = /as\s+(?:this\s+creature|~)\s+enters,?\s+choose\s+(?:a\s+)?player\.?/i.test(text);
   const combatRules = parseCombatRules(text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)).rules;
   const damageCounterMatch = /if damage would be dealt to (?:this creature|~), prevent that damage\. remove a ([+\-]\d+\/[+\-]\d+|[A-Za-z][A-Za-z'’-]*) counter from (?:this creature|~)\.?/i.exec(text.replace(/\s+/g, " "));
   // A Class's second/third ability block is inactive until its level is
@@ -6321,7 +6344,7 @@ export function cardProfile(card: CardData): CardProfile {
     levelUpCost,
     levelDefinitions,
     classLevels,
-    protectionFrom,
+    protectionFrom: hasChosenPlayerProtection ? [...protectionFrom, PROTECTION_PLAYER_QUALITY] : protectionFrom,
     activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand" || ability.sourceZone === "command-zone")
       ? [
           ...recognized.activatedAbilities,

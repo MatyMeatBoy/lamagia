@@ -157,6 +157,8 @@ export interface Permanent {
   readonly exiledWith?: GameCard;
   /** Player targeted by this permanent's own ETB effect, read back by a later "that player" LTB trigger (Laquatus's Champion). */
   readonly rememberedTargetPlayer?: SeatId;
+  /** Player chosen for a protection-from-the-chosen-player effect. */
+  readonly chosenProtectionPlayer?: SeatId;
   /** Current Class level (CR 702.134); absent means level 1, a Class's starting level. */
   readonly classLevel?: number;
   /** Prepared (new mechanic): while true, may cast a copy of the back face's spell. */
@@ -2907,7 +2909,11 @@ function dealDamageToPermanent(
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
   const targetProfile = cardProfile(permanent.card);
-  if (sourceProfile && hasProtectionFrom(sourceProfile, targetProfile)) return state;
+  if (sourceProfile && (hasProtectionFrom(sourceProfile, targetProfile)
+    || (source?.permanentId !== undefined && (() => {
+      const sourcePermanent = findPermanent(state, source.permanentId!);
+      return sourcePermanent ? hasChosenPlayerProtection(state, sourcePermanent, permanent) : false;
+    })()))) return state;
   const preventionCounter = targetProfile.preventsDamageByRemovingCounter;
   if (preventionCounter && !permanentLosesAbilities(state, permanent) && (permanent.counters[preventionCounter] ?? 0) > 0) {
     const next = withPlayer(state, permanent.controller, (player) => ({
@@ -2977,6 +2983,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return { ...state, priorityOpen: false, pendingChoice: {
         type: "choose-direction", seat: controller, sourceId: object.id, sourceCard: object.card
       } };
+    }
+    case "choose-protection-player": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      if (!source) return state;
+      const options = state.players.filter((player) => !player.lost).map((player) => ({ kind: "player" as const, seat: player.seat }));
+      if (!options.length) return state;
+      if (options.length === 1) {
+        return withPlayer(state, source.controller, (player) => ({ ...player, battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, chosenProtectionPlayer: options[0]!.seat } : permanent) }));
+      }
+      return { ...state, priorityOpen: false, pendingChoice: { type: "trigger-target", seat: source.controller, sourceId: object.id, trigger: object.trigger!, targetKind: "player", options } };
     }
     case "order-of-succession": {
       return { ...state, priorityOpen: false, pendingChoice: {
@@ -7092,6 +7109,10 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
 function hasProtectionFrom(source: CardProfile, target: CardProfile): boolean {
   return target.protectionFrom.some((quality) => source.colors.includes(quality)
     || (quality === "Artifact" && isArtifact(source)));
+}
+
+function hasChosenPlayerProtection(state: GameState, source: Permanent, target: Permanent): boolean {
+  return source.chosenProtectionPlayer !== undefined && source.chosenProtectionPlayer === target.controller;
 }
 
 export function legalAttackers(state: GameState, seat: SeatId): Permanent[] {
