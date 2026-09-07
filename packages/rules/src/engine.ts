@@ -500,6 +500,17 @@ export type PendingChoice =
       readonly seat: SeatId;
       readonly sourceId: string;
       readonly sourceCard: GameCard;
+      readonly effect?: Extract<SpellEffect, { kind: "order-of-succession" }>;
+    }
+  | {
+      /** Order of Succession's sequential creature choices (CR 701.10, 903.2). */
+      readonly type: "choose-order-creature";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly order: readonly SeatId[];
+      readonly index: number;
+      readonly selections: readonly { chooser: SeatId; instanceId: string }[];
     }
   | {
       readonly type: "reveal-card";
@@ -769,6 +780,7 @@ export type GameAction =
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
   | { readonly type: "choose-direction"; readonly sourceId: string; readonly direction: "left" | "right" }
+  | { readonly type: "choose-order-creature"; readonly sourceId: string; readonly permanentId: string }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
@@ -4651,6 +4663,24 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }
       };
     }
+    case "order-of-succession": {
+      const direction = state.attackDirection;
+      if (!direction) {
+        return {
+          ...state,
+          priorityOpen: false,
+          pendingChoice: {
+            type: "choose-direction",
+            seat: controller,
+            sourceId: object.id,
+            sourceCard: object.card,
+            effect
+          }
+        };
+      }
+      const order = seatsInDirection(state, controller, direction);
+      return beginOrderSuccessionChoice({ ...state, priorityOpen: false }, object, order);
+    }
     case "gain-control-of-source-random-opponent": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -6736,6 +6766,59 @@ function nearestOpponentInDirection(state: GameState, seat: SeatId, direction: "
   return undefined;
 }
 
+function seatsInDirection(state: GameState, start: SeatId, direction: "left" | "right"): SeatId[] {
+  const order = [start];
+  let current = start;
+  while (order.length < state.players.length) {
+    const next = nearestOpponentInDirection(state, current, direction);
+    if (next === undefined || order.includes(next)) break;
+    order.push(next);
+    current = next;
+  }
+  return order;
+}
+
+function orderSuccessionOptions(state: GameState, order: readonly SeatId[], index: number): Permanent[] {
+  if (order.length < 2) return [];
+  const targetSeat = order[(index + 1) % order.length];
+  if (targetSeat === undefined) return [];
+  return playerAt(state, targetSeat).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+}
+
+function finishOrderSuccession(
+  state: GameState,
+  source: StackObject,
+  selections: readonly { chooser: SeatId; instanceId: string }[]
+): GameState {
+  let next: GameState = { ...state, pendingChoice: null };
+  for (const selection of selections) {
+    const permanent = findPermanent(next, selection.instanceId);
+    if (permanent && permanent.controller !== selection.chooser) {
+      next = changePermanentController(next, permanent, selection.chooser);
+    }
+  }
+  return logged(next, source.controller, `${source.card.name}: each player gains control of the chosen creature.`);
+}
+
+function beginOrderSuccessionChoice(state: GameState, source: StackObject, order: readonly SeatId[], index = 0, selections: readonly { chooser: SeatId; instanceId: string }[] = []): GameState {
+  if (order.length < 2 || index >= order.length) return finishOrderSuccession(state, source, selections);
+  const options = orderSuccessionOptions(state, order, index);
+  if (!options.length) return beginOrderSuccessionChoice(state, source, order, index + 1, selections);
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "choose-order-creature",
+      seat: order[index]!,
+      sourceId: source.id,
+      sourceCard: source.card,
+      order,
+      index,
+      selections
+    }
+  };
+}
+
 export function legalBlockers(state: GameState, seat: SeatId): Permanent[] {
   const attackers = state.combat.attackers.filter((entry) => entry.defender === seat);
   if (!attackers.length) return [];
@@ -7454,6 +7537,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           action: { type: "choose-direction", sourceId: choice.sourceId, direction },
           label: direction === "left" ? "Choose left" : "Choose right",
           note: `${choice.sourceCard.name}: choose the attack direction.`
+        });
+      }
+      return actions;
+    }
+    if (choice.type === "choose-order-creature") {
+      for (const permanent of orderSuccessionOptions(state, choice.order, choice.index)) {
+        actions.push({
+          action: { type: "choose-order-creature", sourceId: choice.sourceId, permanentId: permanent.instance_id },
+          label: `Choose ${permanent.card.name}`,
+          note: `${choice.sourceCard.name}: choose a creature controlled by the next player.`
         });
       }
       return actions;
@@ -9371,8 +9464,46 @@ function applyChooseDirection(state: GameState, seat: SeatId, action: Extract<Ga
   if (!choice || choice.type !== "choose-direction" || choice.seat !== seat) throw new Error("You do not have a direction choice pending.");
   if (choice.sourceId !== action.sourceId) throw new Error("That direction choice is no longer pending.");
   if (action.direction !== "left" && action.direction !== "right") throw new Error("Choose left or right.");
-  return logged({ ...state, pendingChoice: null, attackDirection: action.direction }, seat,
-    `${choice.sourceCard.name}: direction chosen is ${action.direction}.`);
+  const directed = { ...state, pendingChoice: null, attackDirection: action.direction };
+  if (choice.effect?.kind === "order-of-succession") {
+    const source: StackObject = {
+      id: choice.sourceId,
+      controller: choice.seat,
+      card: choice.sourceCard,
+      label: choice.sourceCard.name,
+      targets: [],
+      fromCommandZone: false,
+      flashback: false,
+      variableValue: 0,
+      countered: false
+    };
+    return logged(applyEffect(directed, source, choice.effect), seat,
+      `${choice.sourceCard.name}: direction chosen is ${action.direction}.`);
+  }
+  return logged(directed, seat, `${choice.sourceCard.name}: direction chosen is ${action.direction}.`);
+}
+
+function applyChooseOrderCreature(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-order-creature" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "choose-order-creature" || choice.seat !== seat) throw new Error("You do not have an Order of Succession creature choice pending.");
+  if (choice.sourceId !== action.sourceId) throw new Error("That Order of Succession choice is no longer pending.");
+  const options = orderSuccessionOptions(state, choice.order, choice.index);
+  const permanent = options.find((candidate) => candidate.instance_id === action.permanentId);
+  if (!permanent) throw new Error("Choose a creature controlled by the next player.");
+  const selections = [...choice.selections, { chooser: seat, instanceId: permanent.instance_id }];
+  const source: StackObject = {
+    id: choice.sourceId,
+    controller: choice.order[0]!,
+    card: choice.sourceCard,
+    label: choice.sourceCard.name,
+    targets: [],
+    fromCommandZone: false,
+    flashback: false,
+    variableValue: 0,
+    countered: false
+  };
+  return logged(beginOrderSuccessionChoice({ ...state, pendingChoice: null }, source, choice.order, choice.index + 1, selections), seat,
+    `${playerAt(state, seat).name} chooses ${permanent.card.name}.`);
 }
 
 function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger" }>): GameState {
@@ -10432,6 +10563,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
     case "choose-direction": next = applyChooseDirection(state, seat, action); break;
+    case "choose-order-creature": next = applyChooseOrderCreature(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;

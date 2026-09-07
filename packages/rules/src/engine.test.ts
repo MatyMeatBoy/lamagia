@@ -682,6 +682,7 @@ const C13_CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "So
 const C13_TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", type_line: "Sorcery", mana_cost: "{4}{B}", cmc: 5, oracle_text: "Tempting offer — Return a creature card from your graveyard to the battlefield. Each opponent may return a creature card from their graveyard to the battlefield. For each opponent who does, return a creature card from your graveyard to the battlefield.", oracle_id: "06e1c0fa-767c-4204-972f-d98f770d85f3" });
 const C13_EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "When this artifact enters, each player chooses a nonland permanent and puts a doom counter on it.\n{2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it.", oracle_id: "e808a11e-29bd-4e99-a24e-67fa8f6fe502" });
 const C13_MYSTIC_BARRIER = () => make({ name: "Mystic Barrier", type_line: "Enchantment", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "When this enchantment enters and at the beginning of your upkeep, choose left or right.\nEach player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent.", oracle_id: "0caf42f5-abff-48aa-9bbf-df6cba169ef3" });
+const C13_ORDER_OF_SUCCESSION = () => make({ name: "Order of Succession", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4, oracle_text: "Choose left or right. Starting with you and proceeding in the chosen direction, each player chooses a creature controlled by the next player in that direction. Each player gains control of the creature they chose.", oracle_id: "1b95970c-e7eb-41c4-a8d2-9889b64b3c63" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6354,6 +6355,28 @@ describe("casting", () => {
     multiplayer = passUntil(multiplayer, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
     const attacker = multiplayer.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
     expect(() => applyAction(multiplayer, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 2 }] })).toThrow(/Mystic Barrier/);
+  });
+
+  it("sequences Order of Succession creature choices and exchanges control", () => {
+    const profile = profileOf(C13_ORDER_OF_SUCCESSION());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "order-of-succession" }] });
+    let game = readyToCast([C13_ORDER_OF_SUCCESSION()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), BEAR()], [], [BEAR()]);
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const foeBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "choose-direction");
+    const direction = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "choose-direction" }>;
+    game = applyAction(game, 0, { type: "choose-direction", sourceId: direction.sourceId, direction: "right" });
+    expect(game.pendingChoice?.type).toBe("choose-order-creature");
+    const first = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "choose-order-creature" }>;
+    game = applyAction(game, 0, { type: "choose-order-creature", sourceId: first.sourceId, permanentId: foeBear.instance_id });
+    const second = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "choose-order-creature" }>;
+    expect(second.seat).toBe(1);
+    game = applyAction(game, 1, { type: "choose-order-creature", sourceId: second.sourceId, permanentId: ownBear.instance_id });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === foeBear.instance_id)?.controller).toBe(0);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === ownBear.instance_id)?.controller).toBe(1);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Order of Succession")).toBe(true);
   });
 
   it("resolves Cruel Ultimatum as a reusable compound primitive", () => {

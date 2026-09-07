@@ -556,6 +556,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-doomed-permanents" }
   /** Mystic Barrier updates the table-wide nearest-opponent direction. */
   | { readonly kind: "choose-attack-direction" }
+  /** Order of Succession exchanges one creature around the table after a direction choice. */
+  | { readonly kind: "order-of-succession" }
   | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
@@ -4197,6 +4199,12 @@ function recognizeText(text: string): RecognizedText {
         { event: "upkeep", subject: "you", effect: chooseDirection, optional: false, targetKind: "none", sourceText: joined }
       ],
       activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Choose left or right\.\s*Starting with you and proceeding in the chosen direction, each player chooses a creature controlled by the next player in that direction\.\s*Each player gains control of the creature they chose\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "order-of-succession" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {
