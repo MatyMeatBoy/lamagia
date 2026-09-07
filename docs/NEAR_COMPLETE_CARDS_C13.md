@@ -14,6 +14,12 @@ Before editing, claim the shared template, reuse the listed fields/handlers, add
 
 Fix the shared primitive, not the first card name. Preserve type, zone, target, quantity, cost, and optionality as structured operands. Do not report a card complete until the next engine export says `fullyImplemented: true`.
 
+## Current verified snapshot
+
+The latest local coverage scan reports **294/341 unique C13 cards implemented** and
+**47 pending**. This is a scan result, not a completion claim: workers must add a
+focused scenario and rerun the authoritative export for every change.
+
 ## Queue (first 0 cards; full machine-readable list is generated JSON)
 
 | Priority | Card | Oracle ID | Family | Reuse hint | Missing line |
