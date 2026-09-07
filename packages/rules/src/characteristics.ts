@@ -783,6 +783,8 @@ export type SpellEffect =
   | { readonly kind: "return-target-artifact-and-gain-mana-value" }
   /** Reincarnation remembers a chosen creature and watches it die this turn. */
   | { readonly kind: "remember-target-creature-for-death-reanimate" }
+  /** Resolves the one-turn Reincarnation death trigger. */
+  | { readonly kind: "return-delayed-death-card" }
   /** Return N random instant/sorcery cards from your graveyard to hand. */
   | { readonly kind: "return-random-instant-or-sorcery-from-graveyard"; readonly amount: number }
   | { readonly kind: "return-target-creature-card-from-graveyard-to-battlefield" }
@@ -4737,6 +4739,13 @@ function recognizeText(text: string): RecognizedText {
   // Sun Droplet's two self-contained abilities are printed on one Oracle line
   // in older imports. Keep both reusable trigger primitives together instead
   // of letting the generic one-line trigger parser discard the second clause.
+  if (/^Choose target creature\.\s*When that creature dies this turn, return a creature card from its owner'?s graveyard to the battlefield under the control of that creature'?s owner\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "remember-target-creature-for-death-reanimate" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature",
+      unimplementedText: [], covered: true
+    };
+  }
   const sunDroplet = /^Whenever you're dealt damage, put that many ([A-Za-z][A-Za-z'’-]*) counters? on ~\.\s*At the beginning of each upkeep, you may remove (?:a|one) ([A-Za-z][A-Za-z'’-]*) counter from ~\.\s*If you do, you gain (one|1) life\.?$/i.exec(joined);
   if (sunDroplet && sunDroplet[1]!.toLowerCase() === sunDroplet[2]!.toLowerCase()) {
     return {

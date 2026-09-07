@@ -5,16 +5,17 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **C13**
-- One-line cards: **0**
-- Cards with a reusable existing primitive hint: **0**
+- One-line cards: **1**
+- Cards with a reusable existing primitive hint: **1**
 - Cards needing new primitive review: **0**
-- Templates: **0**
+- Templates: **1**
 
 ## Worker rule
 
 Fix the shared primitive, not the first card name. Preserve type, zone, target, quantity, cost, and optionality as structured operands. Do not report a card complete until the next engine export says `fullyImplemented: true`.
 
-## Queue (first 0 cards; full machine-readable list is generated JSON)
+## Queue (first 1 cards; full machine-readable list is generated JSON)
 
 | Priority | Card | Oracle ID | Family | Reuse hint | Missing line |
 | --- | --- | --- | --- | --- | --- |
+| reuse-existing | Endrek Sahr, Master Breeder | `47a0079f-3544-45bc-a32a-bd93844c8c43` | sacrifice | sacrifice | When you control seven or more Thrulls, sacrifice ~. |

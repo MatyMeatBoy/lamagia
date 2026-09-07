@@ -310,6 +310,8 @@ export interface TriggerInstance {
   readonly eventPermanentManaSpent?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
   readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand"; readonly attachToCardInstanceId?: string };
+  /** Reincarnation delayed return data retained after the chosen creature dies. */
+  readonly delayedDeathReturn?: { readonly card: GameCard; readonly owner: SeatId };
   /** Card linked to a Fiend Hunter-style leaves-the-battlefield trigger (CR 607.1). */
   readonly linkedExiledCard?: GameCard;
   /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
@@ -352,6 +354,18 @@ export interface DelayedReturn {
   readonly sourceText: string;
   readonly destination?: "battlefield" | "hand";
   readonly attachToCardInstanceId?: string;
+}
+
+/** Reincarnation-style delayed death trigger, valid only through the current turn. */
+export interface DelayedDeathReturn {
+  readonly id: string;
+  readonly expiresTurn: number;
+  readonly targetPermanentId: string;
+  readonly card: GameCard;
+  readonly owner: SeatId;
+  readonly sourceCard: GameCard;
+  readonly controller: SeatId;
+  readonly sourceText: string;
 }
 
 export interface DelayedSacrifice {
@@ -432,6 +446,8 @@ export interface GameState {
   readonly delayedDraws: readonly DelayedDraw[];
   /** Permanents waiting for a delayed return at the next end step. */
   readonly delayedReturns: readonly DelayedReturn[];
+  /** Reincarnation delayed death triggers waiting for their target to die. */
+  readonly delayedDeathReturns: readonly DelayedDeathReturn[];
   readonly delayedSacrifices: readonly DelayedSacrifice[];
   /** Delayed mana triggers waiting for their owner's next main phase. */
   readonly delayedManaAdds: readonly DelayedManaAdd[];
@@ -1967,6 +1983,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     triggerQueue: [],
     delayedDraws: [],
     delayedReturns: [],
+    delayedDeathReturns: [],
     delayedSacrifices: [],
     delayedManaAdds: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
@@ -2100,6 +2117,30 @@ function movePermanentToZone(state: GameState, permanent: Permanent, zone: "grav
       creatureCardsDiedThisTurn: [...next.creatureCardsDiedThisTurn, permanent.card]
     };
     next = raiseEvent(next, { kind: "dies", permanentId: permanent.instance_id, controller: permanent.controller, card: permanent.card, power: powerOf(permanent, state) }, [permanent]);
+    const due = next.delayedDeathReturns.filter((delayed) => delayed.targetPermanentId === permanent.instance_id && delayed.expiresTurn >= next.turn);
+    if (due.length) {
+      const remaining = next.delayedDeathReturns.filter((delayed) => !due.includes(delayed));
+      const triggers: TriggerInstance[] = due.map((delayed) => ({
+        id: delayed.id,
+        controller: delayed.controller,
+        sourcePermanentId: `delayed:${delayed.id}`,
+        sourceCard: delayed.sourceCard,
+        definition: {
+          event: "dies",
+          subject: "self",
+          effect: { kind: "return-delayed-death-card" },
+          optional: false,
+          targetKind: "none",
+          sourceText: delayed.sourceText
+        },
+        cause: `${delayed.sourceCard.name}: the chosen creature died`,
+        delayedDeathReturn: { card: delayed.card, owner: delayed.owner },
+        eventController: delayed.controller,
+        eventPermanentId: permanent.instance_id,
+        eventCard: permanent.card
+      }));
+      next = { ...next, delayedDeathReturns: remaining, triggerQueue: [...next.triggerQueue, ...triggers] };
+    }
   }
   return next;
 }
@@ -4994,6 +5035,34 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "remember-target-creature-for-death-reanimate": {
+      const target = object.targets[0];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || !isCreature(cardProfile(permanent.card))) return state;
+      const delayed: DelayedDeathReturn = {
+        id: `reincarnation:${object.id}:${permanent.instance_id}`,
+        expiresTurn: state.turn,
+        targetPermanentId: permanent.instance_id,
+        card: permanent.card,
+        owner: permanent.card.owner,
+        sourceCard: object.card,
+        controller,
+        sourceText: `${sourceName}: return the chosen creature when it dies this turn`
+      };
+      return { ...state, delayedDeathReturns: [...state.delayedDeathReturns, delayed] };
+    }
+    case "return-delayed-death-card": {
+      const delayed = object.trigger?.delayedDeathReturn;
+      if (!delayed) return state;
+      const card = playerAt(state, delayed.owner).graveyard.find((candidate) => candidate.instance_id === delayed.card.instance_id);
+      if (!card) return state;
+      const removed = withPlayer(state, delayed.owner, (player) => ({
+        ...player,
+        graveyard: player.graveyard.filter((candidate) => candidate.instance_id !== card.instance_id)
+      }));
+      return putOntoBattlefield(removed, delayed.owner, card, false);
+    }
     case "gain-control-of-source-random-opponent": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -7515,6 +7584,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
   switch (step) {
     case "untap": {
       next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [], triggeredOncePerTurnKeys: [], revoltSeatsThisTurn: [], dealtDamageToPlayerThisTurn: [] };
+      next = { ...next, delayedDeathReturns: next.delayedDeathReturns.filter((delayed) => delayed.expiresTurn >= next.turn) };
       next = withPlayer(next, next.activeSeat, (player) => ({
         ...player,
         landsPlayedThisTurn: 0,

@@ -6733,3 +6733,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Mistmeadow Witch | 38e274e2-bd04-48de-a1df-44f0ee987ba8` and `Roon of the Hidden Realm | fd336830-4a11-42b8-9fc7-d7526f569124`: reuse `exile-target-permanent-delayed-return` for creature targets and the next-end-step return; “another” excludes the source permanent for Roon.
 - Verification: C13 authoritative coverage is `317/341` unique cards; the full rules suite is green.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 delayed death-return cluster (2026-09-07)
+
+- Base: `21a886a5`.
+- `Reincarnation | d6bf5e22-8d33-43a9-8824-435068e0a87a`: remembers the chosen creature for the current turn, watches its battlefield-to-graveyard death, and returns that recorded card under its owner's control using the existing delayed-trigger flow.
+- Verification: targeted Reincarnation scenario and full rules suite pass; authoritative C13 coverage advances to `318/341` unique cards and the near-complete queue leaves Endrek Sahr as the next reusable state-trigger candidate.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
