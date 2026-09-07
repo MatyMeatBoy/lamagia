@@ -773,6 +773,7 @@ const PRIMAL_VIGOR = () => make({ name: "Primal Vigor", type_line: "Enchantment"
 const C13_DEADWOOD_TREEFOLK = () => make({ name: "Deadwood Treefolk", type_line: "Creature — Treefolk", mana_cost: "{4}{G}", cmc: 5, power: "3", toughness: "6", oracle_text: "Vanishing 3 (This creature enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this creature enters or leaves the battlefield, return another target creature card from your graveyard to your hand.", oracle_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd", scryfall_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd" });
 const C13_THRAXIMUNDAR = () => make({ name: "Thraximundar", type_line: "Legendary Creature — Zombie Assassin", mana_cost: "{4}{U}{B}{R}", cmc: 7, power: "6", toughness: "6", keywords: ["Haste"], oracle_text: "Haste\nWhenever Thraximundar attacks, defending player sacrifices a creature of their choice.\nWhenever a player sacrifices a creature, you may put a +1/+1 counter on Thraximundar.", oracle_id: "9e0e4217-fefe-48dd-9153-032460192b19", scryfall_id: "9e0e4217-fefe-48dd-9153-032460192b19" });
 const C13_NIVIX_GUILDMAGE = () => make({ name: "Nivix Guildmage", type_line: "Creature — Human Wizard", mana_cost: "{U}{R}", cmc: 2, power: "2", toughness: "2", oracle_text: "{1}{U}{R}: Draw a card, then discard a card.\n{2}{U}{R}: Copy target instant or sorcery spell you control. You may choose new targets for the copy.", oracle_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936", scryfall_id: "d04356f1-0e1a-4689-8e54-f88c4c6dd936" });
+const C13_UYO = () => make({ name: "Uyo, Silent Prophet", type_line: "Legendary Creature — Moonfolk Wizard", mana_cost: "{4}{U}{U}", cmc: 6, power: "4", toughness: "4", keywords: ["Flying"], oracle_text: "Flying\n{2}, Return two lands you control to their owner's hand: Copy target instant or sorcery spell. You may choose new targets for the copy.", oracle_id: "93da1e63-54d6-4b05-af91-f13e7e111176", scryfall_id: "93da1e63-54d6-4b05-af91-f13e7e111176" });
 const C13_BALEFUL_FORCE = () => make({ name: "Baleful Force", type_line: "Creature — Elemental", mana_cost: "{5}{B}{B}{B}", cmc: 8, power: "8", toughness: "8", oracle_text: "At the beginning of each upkeep, you draw a card and you lose 1 life.", scryfall_id: "a5e79f7b-0212-476b-9dea-bf1ada419e72" });
 const C13_DRUIDIC_SATCHEL = () => make({ name: "Druidic Satchel", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "{2}, {T}: Reveal the top card of your library. If it's a creature card, create a 1/1 green Saproling creature token. If it's a land card, put that card onto the battlefield under your control. If it's a noncreature, nonland card, you gain 2 life.", scryfall_id: "f3aaefb4-4662-434a-9c31-3f2c754ce9cc" });
 const C13_RUPTURE_SPIRE = () => make({ name: "Rupture Spire", type_line: "Land", oracle_text: "Rupture Spire enters the battlefield tapped.\nWhen Rupture Spire enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.", produced_mana: ["W", "U", "B", "R", "G"], scryfall_id: "622087fc-4e34-43cd-a46f-fd2c339b3905" });
@@ -6782,6 +6783,31 @@ describe("casting", () => {
       && entry.action.abilityIndex === 1);
     expect(copyAction).toBeDefined();
     game = applyAction(game, 0, { ...copyAction!.action, targets: [{ kind: "spell", stackId: bolt.id }] } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.life).toBe(34);
+  });
+
+  it("lets Uyo return two lands as a cost before copying an instant or sorcery", () => {
+    // CR 602.2b/601.2f: choose the spell target, then pay both mana and the
+    // two-land return cost before the activated ability enters the stack.
+    const uyo = C13_UYO();
+    expect(profileOf(uyo)).toMatchObject({
+      activatedAbilities: [{ returnLands: 2, effect: { kind: "copy-target-spell" }, targetKind: "instant-or-sorcery-spell" }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([BOLT()], [uyo, MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "player", seat: 1 }] });
+    const bolt = game.stack.at(-1)!;
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Uyo, Silent Prophet")!;
+    const lands = game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain");
+    const copyAction = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === source.instance_id);
+    expect(copyAction).toBeDefined();
+    game = applyAction(game, 0, {
+      ...copyAction!.action,
+      targets: [{ kind: "spell", stackId: bolt.id }],
+      returnLandIds: lands.slice(0, 2).map((land) => land.instance_id)
+    } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    expect(game.players[0]!.hand.filter((card) => card.name === "Mountain")).toHaveLength(2);
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[1]!.life).toBe(34);
   });

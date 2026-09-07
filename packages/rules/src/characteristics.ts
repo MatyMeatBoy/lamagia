@@ -143,6 +143,8 @@ export interface ActivatedAbility {
   readonly exilesGraveyardCard?: boolean;
   /** Multiple creature cards chosen from one graveyard and exiled as a cost. */
   readonly exilesGraveyardCards?: { readonly amount: number; readonly scope: "single-graveyard" };
+  /** Lands returned to their owners' hands as an activation cost (Uyo). */
+  readonly returnLands?: number;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
   /** Remove every counter of this kind and expose the removed quantity to the resolving effect. */
@@ -2573,6 +2575,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const discardsSelf = /discard\s+(?:~|this\s+card)/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
   const exilesGraveyardCardsMatch = /exile\s+(two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/i.exec(costText);
+  const returnLandsMatch = /return\s+(two|three|four|five|\d+)\s+lands?\s+you\s+control\s+to\s+their\s+owner'?s\s+hand\b/i.exec(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi)) {
     const amount = toNumber(match[1]);
@@ -2601,6 +2604,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/discard\s+(?:~|this\s+card)/gi, "")
     .replace(/exile\s+(?:two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/gi, "")
     .replace(/exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/gi, "")
+    .replace(/return\s+(?:two|three|four|five|\d+)\s+lands?\s+you\s+control\s+to\s+their\s+owner'?s\s+hand\b/gi, "")
     .replace(/remove\s+(?:a|an|one|two|three|four|five|\d+)\s+(?:[+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*?)\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi, "")
     .replace(/remove\s+all\s+[A-Za-z][A-Za-z'’/-]*\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi, "")
     .replace(/[,\s]/g, "");
@@ -2621,6 +2625,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(commandZoneReturn ? { sourceZone: "command-zone" as const } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
+    ...(returnLandsMatch ? { returnLands: toNumber(returnLandsMatch[1])! } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(notDuringCombat ? { notDuringCombat: true } : {}),
     ...(oncePerTurnOnly ? { oncePerTurn: true } : {}),
@@ -3823,6 +3828,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Copy target instant or sorcery spell you control\. You may choose new targets for the copy\.?$/i.test(text)) {
     return { effect: { kind: "copy-target-spell" }, target: "instant-or-sorcery-spell-you-control" };
+  }
+  if (/^Copy target instant or sorcery spell\. You may choose new targets for the copy\.?$/i.test(text)) {
+    return { effect: { kind: "copy-target-spell" }, target: "instant-or-sorcery-spell" };
   }
   if (/^Exchange its power and the power of target creature it's blocking until end of combat$/i.test(text)) {
     return { effect: { kind: "exchange-source-power-with-blocking-creature" }, target: "blocked-creature" };
