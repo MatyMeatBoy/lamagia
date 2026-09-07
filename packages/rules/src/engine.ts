@@ -733,6 +733,17 @@ export type PendingChoice =
       readonly cards: readonly GameCard[];
     }
   | {
+      /** Lim-Dûl's Vault's private repeated top-five review (CR 401.5, 701.20). */
+      readonly type: "lim-dul-vault";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly cards: readonly GameCard[];
+      readonly phase: "decide" | "bottom" | "final";
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
+    }
+  | {
       /**
        * "Look at target player's hand" (Gitaxian Probe, CR 701.20): a
        * private, self-closing reveal to the caster alone. `projectGame`
@@ -885,6 +896,8 @@ export type GameAction =
   | { readonly type: "choose-direction"; readonly sourceId: string; readonly direction: "left" | "right" }
   | { readonly type: "choose-order-creature"; readonly sourceId: string; readonly permanentId: string }
   | { readonly type: "reorder-top"; readonly sourceId: string; readonly order: readonly string[] }
+  | { readonly type: "choose-lim-dul"; readonly sourceId: string; readonly continue: boolean }
+  | { readonly type: "reorder-lim-dul"; readonly sourceId: string; readonly order: readonly string[] }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
@@ -6249,6 +6262,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         pendingChoice: { type: "reorder-top", seat: controller, sourceId: object.sourcePermanentId ?? object.id, sourceCard: object.card, cards: visible }
       };
     }
+    case "lim-duls-vault": {
+      const visible = playerAt(state, controller).library.slice(0, 5);
+      if (!visible.length) return state;
+      return {
+        ...state,
+        pendingChoice: {
+          type: "lim-dul-vault", seat: controller, sourceId: object.sourcePermanentId ?? object.id,
+          sourceCard: object.card, cards: visible, phase: "decide",
+          returnSourceToGraveyard: !object.activated && !object.fromCopy,
+          exileSourceAfterResolution: Boolean(object.flashback)
+        }
+      };
+    }
     case "draw-then-source-to-library-top": {
       const sourceId = object.sourcePermanentId;
       const permanent = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -8222,6 +8248,29 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         label: "Keep the same order",
         note: `${choice.sourceCard.name}: look at the top ${choice.cards.length} card(s) and keep them in the same order (any explicit order may be submitted directly).`
       });
+      return actions;
+    }
+    if (choice.type === "lim-dul-vault") {
+      if (choice.phase === "decide") {
+        actions.push({
+          action: { type: "choose-lim-dul", sourceId: choice.sourceId, continue: false },
+          label: "Terminar y barajar",
+          note: `${choice.sourceCard.name}: termina la revisión y baraja el resto de tu biblioteca.`
+        });
+        if (player.life > 0) {
+          actions.push({
+            action: { type: "choose-lim-dul", sourceId: choice.sourceId, continue: true },
+            label: "Pagar 1 vida y revisar cinco cartas más",
+            note: `${choice.sourceCard.name}: paga 1 vida para poner este grupo al fondo y revisar otro.`
+          });
+        }
+      } else {
+        actions.push({
+          action: { type: "reorder-lim-dul", sourceId: choice.sourceId, order: choice.cards.map((card) => card.instance_id) },
+          label: choice.phase === "bottom" ? "Poner estas cartas al fondo" : "Poner estas cartas arriba",
+          note: `${choice.sourceCard.name}: ordena este grupo y continúa la resolución.`
+        });
+      }
       return actions;
     }
     if (choice.type === "optional-trigger") {
@@ -10605,6 +10654,57 @@ function applyReorderTop(state: GameState, seat: SeatId, action: Extract<GameAct
   return logged({ ...next, pendingChoice: null }, seat, `${choice.sourceCard.name}: reordena las cartas de arriba de su biblioteca.`);
 }
 
+function validPermutation(cards: readonly GameCard[], order: readonly string[]): boolean {
+  const ids = cards.map((card) => card.instance_id);
+  return order.length === ids.length && new Set(order).size === ids.length && order.every((id) => ids.includes(id));
+}
+
+function retireLimDulSource(state: GameState, choice: Extract<PendingChoice, { type: "lim-dul-vault" }>): GameState {
+  if (!choice.returnSourceToGraveyard) return state;
+  return withPlayer(state, choice.sourceCard.owner, (player) => choice.exileSourceAfterResolution
+    ? { ...player, exile: [...player.exile, choice.sourceCard] }
+    : { ...player, graveyard: [...player.graveyard, choice.sourceCard] });
+}
+
+function applyChooseLimDul(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-lim-dul" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "lim-dul-vault" || choice.phase !== "decide" || choice.seat !== seat) throw new Error("No tienes una elección pendiente de Lim-Dûl's Vault.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección de Lim-Dûl's Vault ya no está pendiente.");
+  const player = playerAt(state, seat);
+  if (action.continue) {
+    if (player.life <= 0) throw new Error("No puedes pagar vida por Lim-Dûl's Vault.");
+    return logged(withPlayer({ ...state, pendingChoice: { ...choice, phase: "bottom" } }, seat, (current) => ({ ...current, life: current.life - 1 })), seat,
+      `${player.name} paga 1 vida para revisar otro grupo de Lim-Dûl's Vault.`);
+  }
+  const rest = player.library.slice(choice.cards.length);
+  const shuffled = shuffleLibrary({ ...state, pendingChoice: null }, seat, rest);
+  return logged({ ...shuffled, pendingChoice: { ...choice, phase: "final" } }, seat,
+    `${player.name} termina la revisión de Lim-Dûl's Vault y baraja su biblioteca.`);
+}
+
+function applyReorderLimDul(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "reorder-lim-dul" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "lim-dul-vault" || choice.seat !== seat || (choice.phase !== "bottom" && choice.phase !== "final")) throw new Error("No tienes una reordenación pendiente de Lim-Dûl's Vault.");
+  if (choice.sourceId !== action.sourceId || !validPermutation(choice.cards, action.order)) throw new Error("Debes reordenar exactamente las cartas de Lim-Dûl's Vault.");
+  const ordered = action.order.map((id) => choice.cards.find((card) => card.instance_id === id)!);
+  const player = playerAt(state, seat);
+  if (choice.phase === "final") {
+    let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({ ...current, library: [ ...ordered, ...current.library ] }));
+    next = retireLimDulSource(next, choice);
+    return logged(next, seat, `${player.name} pone el último grupo de Lim-Dûl's Vault arriba de su biblioteca.`);
+  }
+  const rest = player.library.slice(choice.cards.length);
+  if (!rest.length) {
+    const shuffled = shuffleLibrary({ ...state, pendingChoice: null }, seat, []);
+    return logged({ ...shuffled, pendingChoice: { ...choice, cards: ordered, phase: "final" } }, seat,
+      `${player.name} termina de poner cartas al fondo de Lim-Dûl's Vault.`);
+  }
+  const nextLibrary = [...rest, ...ordered];
+  const nextCards = nextLibrary.slice(0, 5);
+  return logged(withPlayer({ ...state, pendingChoice: { ...choice, cards: nextCards, phase: "decide" } }, seat, (current) => ({ ...current, library: nextLibrary })), seat,
+    `${player.name} pone cartas al fondo y mira el siguiente grupo de Lim-Dûl's Vault.`);
+}
+
 function applyChooseGraveyardCard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-graveyard-card" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "graveyard-card-choice" || choice.seat !== seat) throw new Error("No tienes una elección de cementerio pendiente.");
@@ -12021,6 +12121,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-direction": next = applyChooseDirection(state, seat, action); break;
     case "choose-order-creature": next = applyChooseOrderCreature(state, seat, action); break;
     case "reorder-top": next = applyReorderTop(state, seat, action); break;
+    case "choose-lim-dul": next = applyChooseLimDul(state, seat, action); break;
+    case "reorder-lim-dul": next = applyReorderLimDul(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;
