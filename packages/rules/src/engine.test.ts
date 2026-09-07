@@ -159,6 +159,11 @@ const C13_STORMSCAPE_BATTLEMAGE = () => make({
   oracle_text: "Kicker {W} and/or {2}{B} (You may pay an additional {W} and/or {2}{B} as you cast this spell.)\nWhen this creature enters, if it was kicked with its {W} kicker, you gain 3 life.\nWhen this creature enters, if it was kicked with its {2}{B} kicker, destroy target nonblack creature. That creature can't be regenerated.",
   oracle_id: "38ee748d-adcd-41df-9b23-d2a34829784c", scryfall_id: "38ee748d-adcd-41df-9b23-d2a34829784c"
 });
+const C13_LIM_DULS_VAULT = () => make({
+  name: "Lim-Dûl's Vault", type_line: "Instant", mana_cost: "{U}{B}", cmc: 2,
+  oracle_text: "Look at the top five cards of your library. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library. Then shuffle and put the last cards you looked at this way on top in any order.",
+  oracle_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97", scryfall_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97"
+});
 const TREASURE_TOKEN = () => make({
   name: "Treasure", type_line: "Artifact — Treasure", token: true,
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
@@ -280,6 +285,46 @@ describe("Independent kicker primitive", () => {
     game = putOnBattlefield(game, 1, [PLAINS(), PLAINS(), SWAMP(), SWAMP(), SWAMP(), SWAMP(), SWAMP()]);
     const both = legalActions(game, 1).find((entry) => entry.action.type === "cast" && entry.action.kickerOptions?.join(",") === "0,1");
     expect(both).toBeDefined();
+  });
+});
+
+describe("Lim-Dûl's Vault primitive", () => {
+  it("repeats the private top-five review after paying life and restores the final group on top", () => {
+    const vault = C13_LIM_DULS_VAULT();
+    expect(cardProfile(vault).fullyImplemented).toBe(true);
+    let game = twoSeatGame([], []);
+    game = {
+      ...game,
+      step: "precombat-main",
+      activeSeat: 0,
+      prioritySeat: 0,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: player.seat === 0 ? toHand(0, [vault]) : [], commandZone: [] }))
+    };
+    const library = toHand(0, [BEAR(), FLIER(), WALL(), BEAST_WITHIN(), COUNTER(), SWAMP(), FOREST(), PLAINS(), ISLAND(), MOUNTAIN()], "vault-library");
+    game = stage(game, 0, (player) => ({ library, manaPool: { W: 0, U: 1, B: 1, R: 0, G: 0, C: 0 } }));
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice?.type).toBe("lim-duls-vault");
+    game = applyAction(game, 0, { type: "choose-lim-duls-vault", sourceId: game.pendingChoice!.sourceId, decision: "continue" });
+    expect(game.players[0]!.life).toBe(39);
+    while (game.pendingChoice?.type === "lim-duls-vault" && game.pendingChoice.stage === "order") {
+      game = applyAction(game, 0, { type: "choose-lim-duls-vault-order", sourceId: game.pendingChoice.sourceId, ordinal: 0 });
+    }
+    expect(game.pendingChoice?.type).toBe("lim-duls-vault");
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-lim-duls-vault", sourceId, decision: "finish" });
+    while (game.pendingChoice?.type === "lim-duls-vault") {
+      game = applyAction(game, 0, { type: "choose-lim-duls-vault-order", sourceId: game.pendingChoice.sourceId, ordinal: 0 });
+    }
+    expect(game.players[0]!.graveyard.some((card) => card.name === vault.name)).toBe(true);
+    expect(game.players[0]!.library).toHaveLength(10);
   });
 });
 

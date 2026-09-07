@@ -471,6 +471,8 @@ export type SpellEffect =
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number | "source-counter"; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly minPower?: number; readonly returnAtEndStep?: boolean }
+  /** Lim-Dûl's Vault's repeatable top-five review and life-payment loop. */
+  | { readonly kind: "lim-duls-vault" }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -4160,6 +4162,12 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  if (/^Look at the top five cards of your library\.\s*As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library\.\s*Then shuffle and put the last cards you looked at this way on top in any order\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "lim-duls-vault" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none",
+      unimplementedText: [], covered: true
+    };
+  }
   if (/^As ~ enters, choose a player\.\s*~ has protection from the chosen player\.?$/i.test(joined)) {
     return {
       effects: [], triggers: [{

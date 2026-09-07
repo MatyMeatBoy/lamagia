@@ -783,6 +783,19 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** Private Lim-Dûl's Vault review; the library remains hidden outside the controller. */
+      readonly type: "lim-duls-vault";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly remainingCards: readonly GameCard[];
+      readonly orderedCards: readonly GameCard[];
+      readonly stage: "decide" | "order";
+      readonly finishing: boolean;
+      readonly returnSourceToGraveyard: boolean;
+      readonly exileSourceAfterResolution: boolean;
+    }
+  | {
       readonly type: "draw-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -835,6 +848,8 @@ export type GameAction =
   | { readonly type: "choose-look-top"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "finish-look-top"; readonly sourceId: string }
   | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
+  | { readonly type: "choose-lim-duls-vault"; readonly sourceId: string; readonly decision: "continue" | "finish" }
+  | { readonly type: "choose-lim-duls-vault-order"; readonly sourceId: string; readonly ordinal: number }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
@@ -6102,6 +6117,10 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "look-top-select":
       // Top-card selection is completed through the private choice below.
       return state;
+    case "lim-duls-vault":
+      // The private review loop is completed by the controller's explicit
+      // choices; no library card is exposed to other seats.
+      return state;
     case "attach-equipment": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -6228,6 +6247,41 @@ function beginLookTopSelection(
       stage: "select",
       destination,
       returnAtEndStep,
+      returnSourceToGraveyard,
+      exileSourceAfterResolution
+    }
+  };
+}
+
+function beginLimDulsVault(
+  state: GameState,
+  seat: SeatId,
+  sourceId: string,
+  sourceCard: GameCard,
+  returnSourceToGraveyard: boolean,
+  exileSourceAfterResolution: boolean
+): GameState {
+  const visible = playerAt(state, seat).library.slice(0, 5);
+  if (!visible.length) {
+    const shuffled = shuffleLibrary(state, seat, playerAt(state, seat).library);
+    return returnSourceToGraveyard
+      ? withPlayer(shuffled, sourceCard.owner, (player) => exileSourceAfterResolution
+        ? { ...player, exile: [...player.exile, sourceCard] }
+        : { ...player, graveyard: [...player.graveyard, sourceCard] })
+      : shuffled;
+  }
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "lim-duls-vault",
+      seat,
+      sourceId,
+      sourceCard,
+      remainingCards: visible,
+      orderedCards: [],
+      stage: "decide",
+      finishing: false,
       returnSourceToGraveyard,
       exileSourceAfterResolution
     }
@@ -6513,6 +6567,10 @@ function resolveTop(state: GameState): GameState {
   const lookTop = activatedEffect?.kind === "look-top-select"
     ? activatedEffect
     : profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-top-select" }> => effect.kind === "look-top-select");
+  const limDulsVault = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "lim-duls-vault" }> => effect.kind === "lim-duls-vault");
+  if (limDulsVault) {
+    return beginLimDulsVault(next, object.controller, object.id, object.card, !object.activated, Boolean(object.flashback));
+  }
   if (lookTop) {
     const amount = lookTop.amount === "source-counter" ? object.variableValue : lookTop.amount;
     return beginLookTopSelection(next, object.controller, object.id, object.card, amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback), lookTop.minPower);
@@ -7997,6 +8055,28 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         label: `Poner ${card.name} en el fondo`,
         cardId: card.instance_id,
         note: `${choice.sourceCard.name}: ordena las cartas restantes.`
+      }));
+      return actions;
+    }
+    if (choice.type === "lim-duls-vault") {
+      if (choice.stage === "decide") {
+        if (player.life > 0) actions.push({
+          action: { type: "choose-lim-duls-vault", sourceId: choice.sourceId, decision: "continue" },
+          label: "Pay 1 life and review five more cards",
+          note: `${choice.sourceCard.name}: put the reviewed cards on the bottom in any order, then review five more.`
+        });
+        actions.push({
+          action: { type: "choose-lim-duls-vault", sourceId: choice.sourceId, decision: "finish" },
+          label: "Finish and keep these cards on top",
+          note: `${choice.sourceCard.name}: shuffle, then put the last reviewed cards on top in any order.`
+        });
+        return actions;
+      }
+      choice.remainingCards.forEach((card, ordinal) => actions.push({
+        action: { type: "choose-lim-duls-vault-order", sourceId: choice.sourceId, ordinal },
+        label: `Put ${card.name} next`,
+        cardId: card.instance_id,
+        note: `${choice.sourceCard.name}: choose the next card in the bottom/top order.`
       }));
       return actions;
     }
@@ -10357,6 +10437,69 @@ function applyChooseLookTopBottom(state: GameState, seat: SeatId, action: Extrac
   return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} coloca ${selected.name} en el fondo.`);
 }
 
+function finishLimDulsVault(state: GameState, seat: SeatId, choice: Extract<PendingChoice, { type: "lim-duls-vault" }>): GameState {
+  if (choice.remainingCards.length) throw new Error("Debes ordenar todas las cartas revisadas.");
+  const reviewedIds = new Set(choice.orderedCards.map((card) => card.instance_id));
+  let next: GameState = { ...state, pendingChoice: null };
+  if (choice.finishing) {
+    const rest = playerAt(next, seat).library.filter((card) => !reviewedIds.has(card.instance_id));
+    next = shuffleLibrary(next, seat, rest);
+    next = withPlayer(next, seat, (player) => ({ ...player, library: [...choice.orderedCards, ...player.library] }));
+    if (choice.returnSourceToGraveyard) {
+      next = withPlayer(next, choice.sourceCard.owner, (player) => choice.exileSourceAfterResolution
+        ? { ...player, exile: [...player.exile, choice.sourceCard] }
+        : { ...player, graveyard: [...player.graveyard, choice.sourceCard] });
+    }
+    return logged(next, seat, `${playerAt(next, seat).name} termina Lim-Dûl's Vault.`);
+  }
+  const rest = playerAt(next, seat).library.filter((card) => !reviewedIds.has(card.instance_id));
+  next = withPlayer(next, seat, (player) => ({ ...player, library: [...rest, ...choice.orderedCards] }));
+  const visible = playerAt(next, seat).library.slice(0, 5);
+  if (!visible.length) {
+    return finishLimDulsVault(next, seat, { ...choice, remainingCards: [], stage: "order", finishing: true });
+  }
+  return {
+    ...next,
+    pendingChoice: {
+      ...choice,
+      remainingCards: visible,
+      orderedCards: [],
+      stage: "decide",
+      finishing: false
+    }
+  };
+}
+
+function applyChooseLimDulsVault(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-lim-duls-vault" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "lim-duls-vault" || choice.seat !== seat || choice.stage !== "decide" || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes una decisión pendiente de Lim-Dûl's Vault.");
+  }
+  if (action.decision === "continue") {
+    if (playerAt(state, seat).life <= 0) throw new Error("No puedes pagar 1 vida.");
+    const next = withPlayer(state, seat, (player) => ({ ...player, life: player.life - 1, }));
+    return logged({ ...next, pendingChoice: { ...choice, stage: "order", orderedCards: [], finishing: false } }, seat,
+      `${playerAt(next, seat).name} paga 1 vida por Lim-Dûl's Vault.`);
+  }
+  return { ...state, pendingChoice: { ...choice, stage: "order", orderedCards: [], finishing: true } };
+}
+
+function applyChooseLimDulsVaultOrder(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-lim-duls-vault-order" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "lim-duls-vault" || choice.seat !== seat || choice.stage !== "order" || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes cartas pendientes de ordenar para Lim-Dûl's Vault.");
+  }
+  const selected = choice.remainingCards[action.ordinal];
+  if (!selected) throw new Error("Debes elegir una carta revisada válida.");
+  const nextChoice = {
+    ...choice,
+    remainingCards: choice.remainingCards.filter((card) => card.instance_id !== selected.instance_id),
+    orderedCards: [...choice.orderedCards, selected]
+  };
+  if (!nextChoice.remainingCards.length) return finishLimDulsVault({ ...state, pendingChoice: nextChoice }, seat, nextChoice);
+  return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} ordena una carta de Lim-Dûl's Vault.`);
+}
+
 function applyChooseDraw(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-draw" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "draw-cards" || choice.seat !== seat) throw new Error("No tienes una elección de robo pendiente.");
@@ -10949,6 +11092,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-look-top": next = applyChooseLookTop(state, seat, action); break;
     case "finish-look-top": next = applyFinishLookTop(state, seat, action); break;
     case "choose-look-top-bottom": next = applyChooseLookTopBottom(state, seat, action); break;
+    case "choose-lim-duls-vault": next = applyChooseLimDulsVault(state, seat, action); break;
+    case "choose-lim-duls-vault-order": next = applyChooseLimDulsVaultOrder(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;
