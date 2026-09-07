@@ -399,7 +399,7 @@ document.addEventListener("error", (event) => {
   else image.remove();
 }, true);
 
-async function startMatch(mode: "cedh" | "precon" | "tested", deckId?: string): Promise<void> {
+async function startMatch(mode: "cedh" | "precon" | "tested" | "c13", deckId?: string): Promise<void> {
   ui.notice = "Repartiendo mazos…";
   render();
   try {
@@ -1379,6 +1379,7 @@ function landingHtml(): string {
       <p>Controlas el asiento inferior. Los otros tres los juega el bot determinista del motor, eligiendo solo entre las mismas acciones legales que se te ofrecen a ti.</p>
       <div class="landing-actions">
         <button id="start-cedh" class="primary-button">Jugar pod cEDH</button>
+        <button id="start-c13" class="text-button">Jugar pod Commander 2013</button>
         <button id="start-tested" class="text-button">Jugar pod jugable</button>
         <button id="start-precon" class="text-button">Elegir mazo precon</button>
         <button id="open-catalog" class="text-button">Buscar cartas</button>
@@ -1420,6 +1421,7 @@ function render(): void {
       <a class="brand" href="#">LAMAGIA</a>
       <span class="topbar-right">
         <button id="main-menu" class="text-button">Inicio</button>
+        <button id="play-c13" class="text-button">Pod C13</button>
         <button id="play-tested" class="text-button">Pod jugable</button>
         <button id="new-cedh" class="text-button">Nueva cEDH</button>
         <button id="new-precon" class="text-button">Precons</button>
@@ -1548,6 +1550,7 @@ function hidePreview(): void {
 
 function wireLanding(): void {
   document.querySelector("#start-cedh")?.addEventListener("click", () => void startMatch("cedh"));
+  document.querySelector("#start-c13")?.addEventListener("click", () => void startMatch("c13"));
   document.querySelector("#start-tested")?.addEventListener("click", () => void startMatch("tested"));
   document.querySelector("#start-precon")?.addEventListener("click", () => openPrecons());
   document.querySelector("#open-catalog")?.addEventListener("click", () => dialog("catalog")?.showModal());
@@ -1558,6 +1561,7 @@ function wireBoard(): void {
   const on = (selector: string, handler: () => void) => document.querySelector(selector)?.addEventListener("click", handler);
   on("#pass", () => { const action = passAction(); if (action) void submit(action.action); });
   on("#main-menu", returnToMain);
+  on("#play-c13", () => void startMatch("c13"));
   on("#play-tested", () => void startMatch("tested"));
   on("#new-cedh", () => void startMatch("cedh"));
   on("#rematch", () => void startMatch("cedh"));

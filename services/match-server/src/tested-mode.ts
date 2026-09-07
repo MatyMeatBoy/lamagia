@@ -22,6 +22,36 @@ export interface TestedPod {
   readonly decks: ImportedDeck[];
 }
 
+const COMMANDER_2013_DECK_IDS = [
+  "EternalBargain_C13",
+  "EvasiveManeuvers_C13",
+  "MindSeize_C13",
+  "NatureOfTheBeast_C13",
+  "PowerHungry_C13"
+] as const;
+
+/** Builds a four-seat pod from the five complete Commander 2013 precons. */
+export function selectCommander2013Pod(precons: readonly ImportedDeck[], seed = 0): ImportedDeck[] {
+  const byId = new Map(precons.map((deck) => [deck.id, deck]));
+  const available = COMMANDER_2013_DECK_IDS.map((id) => byId.get(id));
+  if (available.some((deck) => !deck)) {
+    throw new Error(`Commander 2013 pod is unavailable: ${available.filter(Boolean).length}/5 complete precons are loaded.`);
+  }
+  const start = Math.abs(Math.trunc(seed)) % COMMANDER_2013_DECK_IDS.length;
+  const selected = COMMANDER_2013_DECK_IDS
+    .map((_, index) => available[(start + index) % available.length]!)
+    .slice(0, 4);
+  for (const deck of selected) {
+    if (deck.cards.length !== 100 || deck.commanders.length !== 1) {
+      throw new Error(`Commander 2013 pod is unavailable: ${deck.name} is not 99 cards plus one commander.`);
+    }
+    if (!deck.cards.some((card) => card.name === deck.commanders[0])) {
+      throw new Error(`Commander 2013 pod is unavailable: ${deck.name} has no declared commander in its list.`);
+    }
+  }
+  return selected;
+}
+
 export async function readCompletedOracleIds(path: string): Promise<ReadonlySet<string>> {
   if (!existsSync(path)) {
     throw new Error("Tested mode is unavailable: the engine profile index is missing. Run npm run rules:engine:export.");

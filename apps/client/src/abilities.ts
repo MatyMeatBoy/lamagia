@@ -246,6 +246,30 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     enforced: "Se dispara una vez por cada evento de pérdida de vida.",
     path: "M5 12h14"
   },
+  "state-change": {
+    label: "Al cambiar el estado",
+    rule: "Se dispara cuando se cumple la condición de estado indicada.",
+    enforced: "El motor comprueba la condición al actualizar el estado del juego.",
+    path: "M4 12h16M12 4v16M7 7l10 10M17 7 7 17"
+  },
+  "dealt-damage-to-player": {
+    label: "Al hacer daño a un jugador",
+    rule: "Se dispara cuando la fuente hace daño a un jugador.",
+    enforced: "Conserva la cantidad de daño del evento para el efecto disparado.",
+    path: "M3 12h8m0 0-3-3m3 3-3 3m7-7 5 5m0 0-5 5m5-5h4"
+  },
+  "source-counter-threshold": {
+    label: "Al alcanzar el umbral",
+    rule: "Se dispara cuando esta fuente alcanza el número de contadores indicado.",
+    enforced: "Se comprueba al añadir o retirar contadores de la fuente.",
+    path: "M5 19V9m7 10V5m7 14v-7M3 19h18"
+  },
+  "permanent-sacrificed": {
+    label: "Al sacrificar un permanente",
+    rule: "Se dispara cuando se sacrifica el permanente indicado.",
+    enforced: "El evento conserva la carta y su controlador antes de moverla de zona.",
+    path: "M12 3 20 7l-8 4-8-4 8-4zm-8 9 8 4 8-4M4 17l8 4 8-4"
+  },
   "class-level-up": {
     label: "Al subir de nivel de Clase",
     rule: "Se dispara cuando esta Clase alcanza el nivel indicado.",

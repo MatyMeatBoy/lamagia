@@ -64,7 +64,7 @@ describe("tested-mode server route", () => {
     expect(view.passedSeats).toEqual([]);
     expect(view.players.every((player, seat) => seat === view.viewerSeat || player.hand === undefined)).toBe(true);
     expect(JSON.stringify(view)).not.toContain("forest-oracle");
-  });
+  }, 30000);
 
   // Importing the Fastify/SQLite route can cold-start slower than Vitest's
   // default five-second test budget when this file runs beside matches.test.

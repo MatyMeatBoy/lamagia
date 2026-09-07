@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { GameAction } from "@prossh/rules";
 import { actInMatch, createMatch, gameplayDebugSnapshot, getMatch, listMatches, matchSummary, seatForToken, setAutoPass, setGameplayFailureSink, undoInMatch, viewMatch, type ImportedDeck } from "./matches.js";
-import { readCompletedOracleIds, selectTestedPod } from "./tested-mode.js";
+import { readCompletedOracleIds, selectCommander2013Pod, selectTestedPod } from "./tested-mode.js";
 
 const port = Number(process.env.PORT ?? 8787);
 const clientOrigin = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
@@ -484,7 +484,7 @@ app.get<{ Querystring: { q?: string; offset?: string; limit?: string; grouped?: 
 // Matches
 // ---------------------------------------------------------------------------
 
-interface CreateBody { readonly mode?: "cedh" | "precon" | "tested"; readonly deckId?: string; readonly seed?: number }
+interface CreateBody { readonly mode?: "cedh" | "precon" | "tested" | "c13"; readonly deckId?: string; readonly seed?: number }
 
 app.post<{ Body: CreateBody }>("/api/matches", async (request, reply) => {
   try {
@@ -492,7 +492,11 @@ app.post<{ Body: CreateBody }>("/api/matches", async (request, reply) => {
     const seed = Number.isFinite(request.body?.seed) ? Number(request.body?.seed) : undefined;
     let decks: ImportedDeck[];
     let source: string;
-    if (mode === "precon") {
+    if (mode === "c13") {
+      const precons = await readPrecons();
+      decks = selectCommander2013Pod(precons.decks, seed);
+      source = `${precons.source} · Commander 2013 pod`;
+    } else if (mode === "precon") {
       const precons = await readPrecons();
       const start = request.body?.deckId ? precons.decks.findIndex((deck) => deck.id === request.body!.deckId) : 0;
       if (start < 0) throw new Error("No se encontró ese mazo precon.");
