@@ -5400,6 +5400,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : candidate)
       }));
     }
+    case "eye-of-doom-mark": {
+      let next = state;
+      for (const player of state.players) {
+        const chosen = playerAt(next, player.seat).battlefield.find((permanent) => !isLand(cardProfile(permanent.card)));
+        if (!chosen) continue;
+        next = withPlayer(next, player.seat, (current) => ({
+          ...current,
+          battlefield: current.battlefield.map((permanent) => permanent.instance_id === chosen.instance_id
+            ? { ...permanent, counters: { ...permanent.counters, doom: (permanent.counters.doom ?? 0) + 1 } }
+            : permanent)
+        }));
+      }
+      return logged(next, controller, `${sourceName}: cada jugador marca un permanente no tierra con un contador de doom.`);
+    }
+    case "destroy-doomed-permanents": {
+      let next = state;
+      for (const doomed of allPermanents(state).filter((permanent) => (permanent.counters.doom ?? 0) > 0)) {
+        const current = findPermanent(next, doomed.instance_id);
+        if (current) next = destroyPermanent(next, current);
+      }
+      return logged(next, controller, `${sourceName}: destruye todos los permanentes con contadores de doom.`);
+    }
     case "vanishing": {
       const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;

@@ -550,6 +550,10 @@ export type SpellEffect =
   | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
   /** Cruel Ultimatum's fixed sequence of target and controller effects. */
   | { readonly kind: "cruel-ultimatum" }
+  /** Eye of Doom marks one nonland permanent per player with a doom counter. */
+  | { readonly kind: "eye-of-doom-mark" }
+  /** Eye of Doom destroys every permanent carrying a doom counter. */
+  | { readonly kind: "destroy-doomed-permanents" }
   | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
@@ -4168,6 +4172,18 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "cruel-ultimatum" }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "opponent", unimplementedText: [], covered: true
+    };
+  }
+  if (/^When (?:this artifact|~) enters, each player chooses a nonland permanent and puts a doom counter on it\.\s*\{2\}, \{T\}, Sacrifice (?:this artifact|~): Destroy each permanent with a doom counter on it\.?$/i.test(joined)) {
+    const sourceText = body.map((entry) => entry.text).join(" ");
+    return {
+      effects: [],
+      triggers: [{ event: "enters-battlefield", subject: "self", effect: { kind: "eye-of-doom-mark" }, optional: false, targetKind: "none", sourceText }],
+      activatedAbilities: [{
+        index: 0, requiresTap: true, sacrificesSelf: true, lifeCost: 0,
+        manaCost: parseManaCost("{2}")!, effect: { kind: "destroy-doomed-permanents" }, targetKind: "none", text: sourceText
+      }],
+      modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {
