@@ -461,6 +461,8 @@ export interface GameState {
   readonly creatureCardsDiedThisTurn: readonly GameCard[];
   /** War Cadence-style generic mana taxes, one entry per resolved activation, until cleanup. */
   readonly blockingTaxPerCreature?: readonly number[];
+  /** Last direction chosen by a Mystic Barrier-style effect. */
+  readonly attackDirection?: "left" | "right";
 }
 
 export type PendingChoice =
@@ -491,6 +493,13 @@ export type PendingChoice =
       /** Preserve X for color-choice spells until the choice resolves. */
       readonly variableValue: number;
       readonly exileSourceAfterResolution: boolean;
+    }
+  | {
+      /** Mystic Barrier's left/right choice changes the table's attack direction. */
+      readonly type: "choose-direction";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
     }
   | {
       readonly type: "reveal-card";
@@ -759,6 +768,7 @@ export type GameAction =
   | { readonly type: "choose-land-entry"; readonly sourceId: string; readonly payLife: boolean }
   | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor }
+  | { readonly type: "choose-direction"; readonly sourceId: string; readonly direction: "left" | "right" }
   | { readonly type: "choose-trigger-target"; readonly sourceId: string; readonly target: Target }
   | { readonly type: "finish-trigger-targets"; readonly sourceId: string }
   | { readonly type: "choose-trigger-mode"; readonly sourceId: string; readonly optionIndex: number }
@@ -4629,6 +4639,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return putOntoBattlefield(removed, delayed.owner, exiled, false);
     }
+    case "choose-attack-direction": {
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "choose-direction",
+          seat: controller,
+          sourceId: object.id,
+          sourceCard: object.card
+        }
+      };
+    }
     case "gain-control-of-source-random-opponent": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -6701,6 +6723,19 @@ export function legalAttackers(state: GameState, seat: SeatId): Permanent[] {
   return playerAt(state, seat).battlefield.filter((permanent) => canAttack(state, permanent));
 }
 
+/** Returns the nearest living opponent in the table direction (CR 508.1). */
+function nearestOpponentInDirection(state: GameState, seat: SeatId, direction: "left" | "right"): SeatId | undefined {
+  const seats = state.players.map((player) => player.seat);
+  const start = seats.indexOf(seat);
+  if (start < 0) return undefined;
+  const step = direction === "left" ? -1 : 1;
+  for (let offset = 1; offset < seats.length; offset += 1) {
+    const candidate = seats[(start + step * offset + seats.length * 2) % seats.length]!;
+    if (candidate !== seat && !playerAt(state, candidate).lost) return candidate;
+  }
+  return undefined;
+}
+
 export function legalBlockers(state: GameState, seat: SeatId): Permanent[] {
   const attackers = state.combat.attackers.filter((entry) => entry.defender === seat);
   if (!attackers.length) return [];
@@ -7413,6 +7448,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       }
       return actions;
     }
+    if (choice.type === "choose-direction") {
+      for (const direction of ["left", "right"] as const) {
+        actions.push({
+          action: { type: "choose-direction", sourceId: choice.sourceId, direction },
+          label: direction === "left" ? "Choose left" : "Choose right",
+          note: `${choice.sourceCard.name}: choose the attack direction.`
+        });
+      }
+      return actions;
+    }
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
       if (choice.tapCost) {
@@ -7695,7 +7740,10 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const attackers = legalAttackers(state, seat);
     actions.push({ action: { type: "declare-attackers", attackers: [] }, label: "No atacar" });
     for (const attacker of attackers) {
-      const defender = opponentsOf(state, seat)[0] ?? seat;
+      const defender = state.attackDirection
+        ? nearestOpponentInDirection(state, seat, state.attackDirection)
+        : opponentsOf(state, seat)[0];
+      if (defender === undefined) continue;
       // Propaganda-style attack tax (CR 508.1a): only offer this single-attacker
       // declaration when the defender's tax for one creature is affordable.
       const taxPerCreature = playerAt(state, defender).battlefield
@@ -9318,6 +9366,15 @@ function applyChooseColor(state: GameState, seat: SeatId, action: Extract<GameAc
   return logged(next, seat, `${choice.sourceCard.name}: ${action.color} chosen.`);
 }
 
+function applyChooseDirection(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-direction" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "choose-direction" || choice.seat !== seat) throw new Error("You do not have a direction choice pending.");
+  if (choice.sourceId !== action.sourceId) throw new Error("That direction choice is no longer pending.");
+  if (action.direction !== "left" && action.direction !== "right") throw new Error("Choose left or right.");
+  return logged({ ...state, pendingChoice: null, attackDirection: action.direction }, seat,
+    `${choice.sourceCard.name}: direction chosen is ${action.direction}.`);
+}
+
 function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "optional-trigger" || choice.seat !== seat) throw new Error("No tienes una elección de trigger pendiente.");
@@ -9825,6 +9882,9 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   for (const entry of attackers) {
     if (!available.has(entry.instanceId)) throw new Error("Esa criatura no puede atacar.");
     if (!defenders.has(entry.defender)) throw new Error("Ese jugador no puede ser atacado.");
+    if (state.attackDirection && nearestOpponentInDirection(state, seat, state.attackDirection) !== entry.defender) {
+      throw new Error("Mystic Barrier limita el ataque al oponente más cercano en la dirección elegida.");
+    }
   }
   const unique = new Set(attackers.map((entry) => entry.instanceId));
   if (unique.size !== attackers.length) throw new Error("Una criatura no puede atacar dos veces.");
@@ -10371,6 +10431,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-land-entry": next = applyChooseLandEntry(state, seat, action); break;
     case "choose-trigger": next = applyChooseTrigger(state, seat, action); break;
     case "choose-color": next = applyChooseColor(state, seat, action); break;
+    case "choose-direction": next = applyChooseDirection(state, seat, action); break;
     case "choose-trigger-target": next = applyChooseTriggerTarget(state, seat, action); break;
     case "choose-trigger-order": next = applyChooseTriggerOrder(state, seat, action); break;
     case "finish-trigger-targets": next = applyFinishTriggerTargets(state, seat, action); break;

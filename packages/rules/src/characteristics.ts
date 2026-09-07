@@ -554,6 +554,8 @@ export type SpellEffect =
   | { readonly kind: "eye-of-doom-mark" }
   /** Eye of Doom destroys every permanent carrying a doom counter. */
   | { readonly kind: "destroy-doomed-permanents" }
+  /** Mystic Barrier updates the table-wide nearest-opponent direction. */
+  | { readonly kind: "choose-attack-direction" }
   | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
@@ -4184,6 +4186,17 @@ function recognizeText(text: string): RecognizedText {
         manaCost: parseManaCost("{2}")!, effect: { kind: "destroy-doomed-permanents" }, targetKind: "none", text: sourceText
       }],
       modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^When (?:this enchantment|~) enters and at the beginning of your upkeep, choose left or right\.\s*Each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent\.?$/i.test(joined)) {
+    const chooseDirection = { kind: "choose-attack-direction" as const };
+    return {
+      effects: [],
+      triggers: [
+        { event: "enters-battlefield", subject: "self", effect: chooseDirection, optional: false, targetKind: "none", sourceText: joined },
+        { event: "upkeep", subject: "you", effect: chooseDirection, optional: false, targetKind: "none", sourceText: joined }
+      ],
+      activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {

@@ -681,6 +681,7 @@ const C13_TEMPT_WITH_DISCOVERY = () => make({ name: "Tempt with Discovery", type
 const C13_CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "Sorcery", mana_cost: "{U}{B}{B}{B}{R}{R}{R}", cmc: 7, oracle_text: "Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life.", oracle_id: "01294ac9-1a06-4ee8-b3b1-db1f07c9d94e" });
 const C13_TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", type_line: "Sorcery", mana_cost: "{4}{B}", cmc: 5, oracle_text: "Tempting offer — Return a creature card from your graveyard to the battlefield. Each opponent may return a creature card from their graveyard to the battlefield. For each opponent who does, return a creature card from your graveyard to the battlefield.", oracle_id: "06e1c0fa-767c-4204-972f-d98f770d85f3" });
 const C13_EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "When this artifact enters, each player chooses a nonland permanent and puts a doom counter on it.\n{2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it.", oracle_id: "e808a11e-29bd-4e99-a24e-67fa8f6fe502" });
+const C13_MYSTIC_BARRIER = () => make({ name: "Mystic Barrier", type_line: "Enchantment", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "When this enchantment enters and at the beginning of your upkeep, choose left or right.\nEach player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent.", oracle_id: "0caf42f5-abff-48aa-9bbf-df6cba169ef3" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6331,6 +6332,28 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.graveyard.some((card) => card.name === "Eye of Doom"));
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("opens Mystic Barrier's left/right direction choice", () => {
+    const profile = profileOf(C13_MYSTIC_BARRIER());
+    expect(profile).toMatchObject({ fullyImplemented: true, triggers: [{ effect: { kind: "choose-attack-direction" } }, { effect: { kind: "choose-attack-direction" } }] });
+    let game = readyToCast([C13_MYSTIC_BARRIER()], [PLAINS(), PLAINS(), ISLAND(), ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "choose-direction");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "choose-direction" }>;
+    game = applyAction(game, 0, { type: "choose-direction", sourceId: choice.sourceId, direction: "left" });
+    expect(game.attackDirection).toBe("left");
+    expect(game.pendingChoice).toBeNull();
+
+    let multiplayer = threeSeatGame();
+    multiplayer = multiplayer.players.reduce((current, player) => stage(current, player.seat, () => ({ autoPass: false, hand: [] })), multiplayer);
+    multiplayer = putOnBattlefield(multiplayer, 0, [BEAR()]);
+    multiplayer = putOnBattlefield(multiplayer, 1, [BEAR()]);
+    multiplayer = putOnBattlefield(multiplayer, 2, [BEAR()]);
+    multiplayer = { ...multiplayer, attackDirection: "right" };
+    multiplayer = passUntil(multiplayer, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const attacker = multiplayer.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    expect(() => applyAction(multiplayer, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 2 }] })).toThrow(/Mystic Barrier/);
   });
 
   it("resolves Cruel Ultimatum as a reusable compound primitive", () => {
