@@ -2249,6 +2249,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     ...(profile.echoCost ? { echoDueTurn: state.turn + 1 } : {}),
     counters: {
       ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, replacedCounterAmount(counter.kind, counter.amount)])),
+      ...(profile.vanishingAmount !== null ? { time: profile.vanishingAmount } : {}),
       ...(kicked ? Object.fromEntries(profile.kickedEntersWithCounters.map((counter) => [
         counter.kind,
         replacedCounterAmount(counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount)
@@ -5690,6 +5691,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           : permanent)
       }));
       return applyEffect(reduced, object, { kind: "gain-life", amount: effect.amount });
+    }
+    case "vanishing-upkeep": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourceId);
+      if (!source) return state;
+      const remaining = source.counters.time ?? 0;
+      if (remaining <= 0) return state;
+      if (remaining === 1) {
+        return movePermanentToZone(state, source, "graveyard", true);
+      }
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+          ? { ...permanent, counters: { ...permanent.counters, time: remaining - 1 } }
+          : permanent)
+      }));
     }
     case "add-counter-creatures-subtype": {
       const subtype = effect.subtype.toLowerCase();

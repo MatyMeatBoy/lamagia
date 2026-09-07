@@ -2094,14 +2094,28 @@ describe("casting", () => {
 
   it("reuses the creature-card graveyard target for Deadwood Treefolk enter/leave triggers", () => {
     const profile = cardProfile(C13_DEADWOOD_TREEFOLK());
+    expect(profile).toMatchObject({ fullyImplemented: true, vanishingAmount: 3 });
     expect(profile.triggers).toMatchObject([
       { event: "enters-battlefield", effect: { kind: "return-target-card-from-graveyard" }, targetKind: "creature-card-in-your-graveyard" },
-      { event: "leaves-battlefield", effect: { kind: "return-target-card-from-graveyard" }, targetKind: "creature-card-in-your-graveyard" }
+      { event: "leaves-battlefield", effect: { kind: "return-target-card-from-graveyard" }, targetKind: "creature-card-in-your-graveyard" },
+      { event: "upkeep", effect: { kind: "vanishing-upkeep" }, optional: false }
     ]);
     let game = readyToCast([C13_DEADWOOD_TREEFOLK()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
     game = stage(game, 0, (player) => ({ ...player, graveyard: toHand(0, [BEAR()], "deadwood-grave") }));
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Deadwood Treefolk")!.counters.time).toBe(3);
+    game = passUntil(game, (state) => state.players[0]!.turnsTaken >= 2 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Deadwood Treefolk")!.counters.time).toBe(2);
+    game = stage(game, 0, (player) => ({ ...player, graveyard: toHand(0, [BEAR()], "deadwood-leave") }));
+    game = passUntil(game, (state) => state.players[0]!.turnsTaken >= 3 && state.activeSeat === 0 && state.step === "precombat-main");
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Deadwood Treefolk")!.counters.time).toBe(1);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const leaveChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    expect(leaveChoice.trigger.sourceCard.name).toBe("Deadwood Treefolk");
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Deadwood Treefolk")).toBe(false);
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: leaveChoice.sourceId, target: leaveChoice.options[0]! });
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
   });
 

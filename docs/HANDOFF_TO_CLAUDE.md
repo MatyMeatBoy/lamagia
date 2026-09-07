@@ -6720,3 +6720,9 @@ integrator review; do not count the old `11440733` as integrated.
 - Base: `fd6232d0`.
 - `Derevi, Empyrial Tactician | afa49a09-146f-4439-850e-dd1938c93cef`: added the missing combined ETB/controlled-creature combat-damage trigger grammar and reused the existing optional tap-or-untap target primitive. The scenario resolves the ETB trigger through target, optional acceptance, and tap/untap mode choices.
 - Main should cherry-pick or fast-forward the focused commit after review.
+## C13 recheck — Deadwood Treefolk Vanishing (2026-09-07)
+
+- Base: `fb04b992`.
+- `Deadwood Treefolk | b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`: added the reusable Vanishing primitive (enters with time counters, removes one at its controller's upkeep, sacrifices when the last one is removed) and connected it to the existing ETB/LTB implementation.
+- Verification: authoritative C13 near-complete rescan now reports `0 cards; 0 reusable`; rules check passes and the full suite is green.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.

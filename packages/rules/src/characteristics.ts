@@ -699,6 +699,8 @@ export type SpellEffect =
   | { readonly kind: "add-counter-source-event-amount"; readonly counter: string }
   /** Sun Droplet: remove one charge counter, then gain one life if removal succeeded. */
   | { readonly kind: "remove-counter-source-then-gain-life"; readonly counter: string; readonly amount: number }
+  /** Vanishing: remove a time counter at upkeep and sacrifice when the last is removed (CR 702.63). */
+  | { readonly kind: "vanishing-upkeep" }
   | { readonly kind: "add-counter-creatures-subtype"; readonly counter: string; readonly amount: number; readonly subtype: string }
   | { readonly kind: "add-counter-creatures-you-control"; readonly counter: string; readonly amount: number }
   /** Ajani, the Greathearted: counters on creatures plus loyalty on other planeswalkers. */
@@ -1173,6 +1175,7 @@ export interface CardProfile {
   readonly echoCost: ManaCost | null;
   readonly suspendAmount: number | null;
   readonly suspendCost: ManaCost | null;
+  readonly vanishingAmount: number | null;
   readonly wardCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
@@ -6092,10 +6095,13 @@ export function cardProfile(card: CardData): CardProfile {
   const wardMatch = /^Ward\s+((?:\{[^}]+\})+)\s*$/im.exec(text);
   const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
   const suspend = parseSuspend(text);
+  const vanishingMatch = /(?:^|\n)Vanishing\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/im.exec(text);
+  const vanishingAmount = toNumber(vanishingMatch?.[1]) ?? null;
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
     .replace(/^Affinity for .+$/gim, "")
     .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, "")
+    .replace(/^Vanishing\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*(?:\([^\n]*\))?\s*$/gim, "")
     .replace(/^Suspend\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*[—-]\s*(?:\{[^}]+\})+\s*$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
@@ -6108,6 +6114,7 @@ export function cardProfile(card: CardData): CardProfile {
   const lowerKeywords = (card.keywords ?? []).map((keyword) => keyword.toLowerCase());
   if (lowerKeywords.includes("undying")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "+1/+1" }, optional: false, targetKind: "none", sourceText: "Undying" });
   if (lowerKeywords.includes("persist")) synthesizedTriggers.push({ event: "dies", subject: "self", effect: { kind: "undying-return", counter: "-1/-1" }, optional: false, targetKind: "none", sourceText: "Persist" });
+  if (vanishingAmount !== null) synthesizedTriggers.push({ event: "upkeep", subject: "you", effect: { kind: "vanishing-upkeep" }, optional: false, targetKind: "none", sourceText: `Vanishing ${vanishingAmount}` });
   // Exploit (CR 702.126): "When this creature enters, you may sacrifice a
   // creature." The trigger itself always fires; the sacrifice it offers is
   // the effect's own internal "may" choice (a dedicated PendingChoice),
@@ -6350,6 +6357,7 @@ export function cardProfile(card: CardData): CardProfile {
     echoCost: recognized.echoCost ?? null,
     suspendAmount: suspend?.amount ?? null,
     suspendCost: suspend?.cost ?? null,
+    vanishingAmount,
     wardCost,
     flashbackLifeCost,
     additionalLifeCost,
