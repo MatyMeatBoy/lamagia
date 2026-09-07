@@ -4141,6 +4141,13 @@ function recognizeText(text: string): RecognizedText {
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
+  if (/^Tempting offer\s*[—–-]\s*Choose target creature you control\.\s*Create a token that's a copy of that creature\.\s*Each opponent may create a token that's a copy of that creature\.\s*For each opponent who does, create a token that's a copy of that creature\.?$/i.test(joined)) {
+    const copy = { kind: "create-copy-token" as const, amount: 1 };
+    return {
+      effects: [{ kind: "tempting-offer", base: copy, opponent: copy, reward: copy }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature-you-control", unimplementedText: [], covered: true
+    };
+  }
   if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {
     return {
       effects: [{ kind: "spinal-embrace" }], triggers: [], activatedAbilities: [], modalChoices: [],

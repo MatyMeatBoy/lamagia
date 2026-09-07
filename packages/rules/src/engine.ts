@@ -2707,6 +2707,7 @@ function queueTemptingOfferChoice(
       sourceId: `${object.id}:tempt:${opponent}`,
       sourceCard: object.card,
       triggerEffect: opponentEffect,
+      targets: object.targets,
       sourceController: object.controller,
       temptingOffer: {
         controller: object.controller,
