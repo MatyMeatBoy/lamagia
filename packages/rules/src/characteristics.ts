@@ -4584,6 +4584,10 @@ function recognizeText(text: string): RecognizedText {
     return { effects: [{ kind: "tempting-offer", base: search, opponent: search, reward: search }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
   }
   if (/^Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life\. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life\.?$/i.test(text.replace(/\s+/g, " ").trim())) return { effects: [{ kind: "cruel-ultimatum" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "opponent", unimplementedText: [], covered: true };
+  if (/^Tempting offer\s*[—–-]\s*Return a creature card from your graveyard to the battlefield\. Each opponent may return a creature card from their graveyard to the battlefield\. For each opponent who does, return a creature card from your graveyard to the battlefield\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
+    const reanimate = { kind: "reanimate-own-best-creature-from-graveyard" as const };
+    return { effects: [{ kind: "tempting-offer", base: reanimate, opponent: reanimate, reward: reanimate }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
+  }
   const body = text.split("\n")
     // Scryfall uses `•`; a few imported historical rows contain U+FFFD in its
     // place. Both are presentation markers, never part of Oracle semantics.
