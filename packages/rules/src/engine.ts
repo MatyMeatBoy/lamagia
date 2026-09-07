@@ -2316,6 +2316,9 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
   const counterDoublers = allPermanents(state).filter((candidate) => cardProfile(candidate.card).doublesPlusOneCountersGlobally).length
     + playerAt(state, seat).battlefield.filter((candidate) => cardProfile(candidate.card).doublesPlusOneCounters).length;
   const replacedCounterAmount = (kind: string, amount: number) => kind === "+1/+1" && isCreature(profile) ? amount * (2 ** counterDoublers) : amount;
+  const manaSpentEntryCounters = profile.entersWithManaSpentCounters && castSpentMana.length > 0
+    ? [{ kind: profile.entersWithManaSpentCounters.kind, amount: castSpentMana.length }]
+    : [];
   const permanent: Permanent = {
     instance_id: enteringCard.instance_id,
     card: enteringCard,
@@ -2338,6 +2341,7 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
         replacedCounterAmount(counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount)
       ])) : {}),
       ...(isCommander && commanderEntryCounters > 0 ? { "+1/+1": replacedCounterAmount("+1/+1", commanderEntryCounters) } : {}),
+      ...Object.fromEntries(manaSpentEntryCounters.map((counter) => [counter.kind, replacedCounterAmount(counter.kind, counter.amount)])),
       ...Object.fromEntries(additionalCounters.map((counter) => [counter.kind, replacedCounterAmount(counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount)])),
       // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).
       ...(profile.types.includes("Planeswalker") && profile.loyalty !== null ? { loyalty: profile.loyalty } : {})
@@ -4858,7 +4862,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
               ...candidate,
               counters: {
                 ...candidate.counters,
-                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, candidate, effect.counter, effect.amount)
+                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, candidate, effect.counter, effectAmount(effect.amount, object))
               }
             }
           : candidate)
@@ -9774,6 +9778,9 @@ function activatableAbility(
   if (ability.removeCounters && !ability.removeCounters.every((cost) => (permanent.counters[cost.kind] ?? 0) >= cost.amount)) {
     return { legal: false };
   }
+  if (ability.removeVariableCounter && (variableValue < 1 || (permanent.counters[ability.removeVariableCounter] ?? 0) < variableValue)) {
+    return { legal: false };
+  }
   if (ability.removeAllCounters && (permanent.counters[ability.removeAllCounters] ?? 0) < 1) {
     return { legal: false };
   }
@@ -10078,6 +10085,14 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
       })
     }));
   }
+  if (ability.removeVariableCounter) {
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+        ? { ...permanent, counters: { ...permanent.counters, [ability.removeVariableCounter!]: (permanent.counters[ability.removeVariableCounter!] ?? 0) - abilityX } }
+        : permanent)
+    }));
+  }
   const removedAllCounters = ability.removeAllCounters
     ? (playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id)?.counters[ability.removeAllCounters] ?? 0)
     : 0;
@@ -10281,7 +10296,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     ? { spent: emptyPool(), lifePaid: profile.payLifeInsteadOfManaCost!.life, remaining: playerAt(next, seat).manaPool }
     : returnPermanentId
     ? { spent: emptyPool(), lifePaid: 0, remaining: playerAt(next, seat).manaPool }
-    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, availableLife: playerAt(next, seat).life }, allowedRestrictions);
+    : payPlayerCost(spellCost, playerAt(next, seat), { additionalGeneric, variableValue: action.variableValue ?? 0, availableLife: playerAt(next, seat).life }, allowedRestrictions);
   if (!payment) throw new Error(`No se pudo pagar el coste de ${card.name}.`);
   if (returnPermanentId) {
     const returned = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === returnPermanentId);

@@ -147,6 +147,8 @@ export interface ActivatedAbility {
   readonly returnLands?: number;
   /** Counters removed from the source as an activation cost. */
   readonly removeCounters?: readonly CounterCost[];
+  /** Variable-X counter cost removed from the source as an activation cost. */
+  readonly removeVariableCounter?: string;
   /** Remove every counter of this kind and expose the removed quantity to the resolving effect. */
   readonly removeAllCounters?: string;
   readonly lifeCost: number;
@@ -715,7 +717,7 @@ export type SpellEffect =
   | { readonly kind: "creature-count-stampede" }
   | { readonly kind: "grant-all-creatures-keyword"; readonly keyword: EnforcedKeyword }
   | { readonly kind: "modify-and-grant-target-creature"; readonly power: number; readonly toughness: number; readonly keyword: EnforcedKeyword }
-  | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number }
+  | { readonly kind: "add-counter-target-creature"; readonly counter: string; readonly amount: number | "X" }
   /** Cradle of Vitality: counters scale with the life-gain event amount. */
   | { readonly kind: "add-counter-target-creature-per-life-gained"; readonly counter: string }
   | { readonly kind: "add-counter-source"; readonly counter: string; readonly amount: number }
@@ -1382,6 +1384,8 @@ export interface CardProfile {
   readonly entersWithCounters: readonly CounterCost[];
   /** "~ enters with X <kind> counters on it" (Walking Ballista, Hangarback Walker): X is the value paid for the spell's own {X} in its cost. */
   readonly entersWithVariableCounters: { readonly kind: string } | null;
+  /** "~ enters with a number of counters equal to the amount of mana spent to cast it" (Marath). */
+  readonly entersWithManaSpentCounters: { readonly kind: string } | null;
   /** Graft number, when this permanent has the Graft keyword. */
   readonly graftAmount: number | null;
   /** Devour number, when this permanent has the Devour keyword. */
@@ -2737,7 +2741,7 @@ function parseEntersWithCounters(text: string): CounterCost[] {
   for (const match of text.matchAll(/(?:~|this [^.]+)\s+enters(?:\s+the\s+battlefield)?(?:\s+tapped)?\s+with\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+([+\-\w/ ]+?)\s+counters?\s+on\s+it/gi)) {
     const amount = toNumber(match[1]);
     const kind = match[2]?.trim().replace(/\s+/g, " ").toLowerCase();
-    if (amount && kind) counters.push({ kind, amount });
+    if (amount && kind && !/^number of\s+/i.test(kind)) counters.push({ kind, amount });
   }
   return counters;
 }
@@ -2745,6 +2749,12 @@ function parseEntersWithCounters(text: string): CounterCost[] {
 /** "~ enters ... with X <kind> counters on it" (Walking Ballista): X is the spell's own paid {X}, not a fixed number. */
 function parseEntersWithVariableCounters(text: string): { kind: string } | null {
   const match = /(?:~|this [^.]+)\s+enters(?:\s+the\s+battlefield)?\s+with\s+x\s+([+\-\w/ ]+?)\s+counters?\s+on\s+it/i.exec(text);
+  return match ? { kind: match[1]!.trim().replace(/\s+/g, " ").toLowerCase() } : null;
+}
+
+/** CR 107.3: entry counters based on the mana actually spent to cast the permanent. */
+function parseEntersWithManaSpentCounters(text: string): { kind: string } | null {
+  const match = /(?:~|this [^.]+)\s+enters\s+with\s+a\s+number\s+of\s+([+\-\w/ ]+?)\s+counters?\s+on\s+it\s+equal\s+to\s+the\s+amount\s+of\s+mana\s+spent\s+to\s+cast\s+(?:it|~)/i.exec(text);
   return match ? { kind: match[1]!.trim().replace(/\s+/g, " ").toLowerCase() } : null;
 }
 
@@ -4867,6 +4877,23 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  // Marath's entry replacement and variable-X activation are a reusable pair:
+  // the first uses the mana actually spent to cast the permanent, while each
+  // mode uses the chosen X and removes that many +1/+1 counters (CR 107.3,
+  // 601.2, 614.1).
+  if (/^(?:Marath|~) enters with a number of \+1\/\+1 counters on it equal to the amount of mana spent to cast (?:it|~)\.?$/i.test(body[0]!.text)
+    && body.some((entry) => /\{X\},\s*Remove X \+1\/\+1 counters from (?:Marath|~): Choose one/i.test(entry.text))) {
+    const manaCost = parseManaCost("{X}")!;
+    const shared = { index: 0, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost, removeVariableCounter: "+1/+1", text: "{X}, Remove X +1/+1 counters from Marath: Choose one" } as const;
+    return {
+      effects: [], triggers: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true,
+      activatedAbilities: [
+        { ...shared, index: 0, effect: { kind: "add-counter-target-creature", counter: "+1/+1", amount: "X" }, targetKind: "creature", text: `${shared.text} — Put X +1/+1 counters on target creature.` },
+        { ...shared, index: 1, effect: { kind: "damage-any-target", amount: "X" }, targetKind: "any", text: `${shared.text} — Marath deals X damage to any target.` },
+        { ...shared, index: 2, effect: { kind: "create-token", amount: "X", statsFromAmount: true, token: { name: "Elemental", typeLine: "Creature — Elemental", power: null, toughness: null, colors: ["G"], keywords: [], tapped: false } }, targetKind: "none", text: `${shared.text} — Create an X/X green Elemental creature token.` }
+      ]
+    };
+  }
   // Fireball's target count is part of the casting cost, not a resolution
   // choice. Keep it in the profile so the payment planner sees every target.
   const fireballCost = /(?:This spell|It|~) costs \{1\} more to cast for each target beyond the first\.?/i.test(joined);
@@ -6724,6 +6751,7 @@ export function cardProfile(card: CardData): CardProfile {
         })()
       : [],
     entersWithVariableCounters: isPermanent ? parseEntersWithVariableCounters(text) : null,
+    entersWithManaSpentCounters: isPermanent ? parseEntersWithManaSpentCounters(text) : null,
     isPermanent,
     // Lands are played, not cast; everything else needs a payable printed cost.
     castableFromHand: !types.includes("Land") && cost !== null && cost.symbols.length > 0,
