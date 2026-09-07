@@ -4840,8 +4840,9 @@ function recognizeText(text: string): RecognizedText {
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   // Fireball's target count is part of the casting cost, not a resolution
   // choice. Keep it in the profile so the payment planner sees every target.
-  const fireball = /^(?:Fireball|~) deals X damage to any target\.\s*It costs \{1\} more to cast for each target beyond the first\.?$/i.test(joined);
-  if (fireball) {
+  const fireballCost = /(?:This spell|It|~) costs \{1\} more to cast for each target beyond the first\.?/i.test(joined);
+  const fireballDamage = /(?:Fireball|~) deals X damage(?: to any target| divided evenly, rounded down, among any number of targets)\.?/i.test(joined);
+  if (fireballCost && fireballDamage) {
     return {
       effects: [{ kind: "damage-divided-targets", amount: "X", evenly: true }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "any",
