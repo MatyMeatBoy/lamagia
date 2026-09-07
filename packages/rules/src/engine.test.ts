@@ -684,6 +684,7 @@ const C13_EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact",
 const C13_MYSTIC_BARRIER = () => make({ name: "Mystic Barrier", type_line: "Enchantment", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "When this enchantment enters and at the beginning of your upkeep, choose left or right.\nEach player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent.", oracle_id: "0caf42f5-abff-48aa-9bbf-df6cba169ef3" });
 const C13_ORDER_OF_SUCCESSION = () => make({ name: "Order of Succession", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4, oracle_text: "Choose left or right. Starting with you and proceeding in the chosen direction, each player chooses a creature controlled by the next player in that direction. Each player gains control of the creature they chose.", oracle_id: "1b95970c-e7eb-41c4-a8d2-9889b64b3c63" });
 const C13_FROM_THE_ASHES = () => make({ name: "From the Ashes", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4, oracle_text: "Destroy all nonbasic lands. For each land destroyed this way, its controller may search their library for a basic land card and put it onto the battlefield. Then each player who searched their library this way shuffles.", oracle_id: "3e229329-65e4-4240-959a-b97b26908c0e" });
+const C13_FLICKERFORM = () => make({ name: "Flickerform", type_line: "Enchantment — Aura", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Enchant creature\n{2}{W}{W}: Exile enchanted creature and all Auras attached to it. At the beginning of the next end step, return that card to the battlefield under its owner's control. If you do, return the other cards exiled this way to the battlefield under their owners' control attached to that creature.", oracle_id: "e5345c28-7046-4ff3-a5d6-eeb7a0fb230b" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6403,6 +6404,24 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Plains")).toBe(true);
     expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Swamp")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "From the Ashes")).toBe(true);
+  });
+
+  it("reuses delayed returns for Flickerform and its attached Auras", () => {
+    const profile = profileOf(C13_FLICKERFORM());
+    expect(profile).toMatchObject({ fullyImplemented: true, auraActivatedAbility: { effect: { kind: "flickerform" } } });
+    let game = readyToCast([C13_FLICKERFORM()], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS(), PLAINS(), BEAR()]);
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.players[0]!.battlefield.some((permanent) => permanent.card.name === "Flickerform"));
+    const enchanted = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const ability = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === enchanted.instance_id);
+    expect(ability).toBeDefined();
+    game = applyAction(game, 0, ability!.action);
+    game = passUntil(game, (state) => state.stack.length === 0 && state.delayedReturns.length === 2);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Flickerform")).toBe(false);
+    expect(game.players[0]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Flickerform")).toBe(true);
   });
 
   it("resolves Cruel Ultimatum as a reusable compound primitive", () => {

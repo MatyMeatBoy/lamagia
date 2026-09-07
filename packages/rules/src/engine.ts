@@ -303,7 +303,7 @@ export interface TriggerInstance {
   /** Total mana spent to cast the triggering spell (CR 107.3h). */
   readonly eventManaSpent?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
-  readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand" };
+  readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand"; readonly attachToCardInstanceId?: string };
   /** Reincarnation delayed return data retained after the target dies. */
   readonly delayedDeathReturn?: { readonly card: GameCard; readonly owner: SeatId };
   /** Spinal Embrace's next-end-step sacrifice payload. */
@@ -346,6 +346,8 @@ export interface DelayedReturn {
   readonly owner: SeatId;
   readonly sourceText: string;
   readonly destination?: "battlefield" | "hand";
+  /** Aura returns attached to the creature returned by the same effect. */
+  readonly attachToCardInstanceId?: string;
 }
 
 /** Reincarnation-style delayed death trigger, valid only through this turn. */
@@ -4659,7 +4661,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ...player,
         exile: player.exile.filter((card) => card.instance_id !== delayed.card.instance_id)
       }));
-      return putOntoBattlefield(removed, delayed.owner, exiled, false);
+      let next = putOntoBattlefield(removed, delayed.owner, exiled, false);
+      if (delayed.attachToCardInstanceId) {
+        const aura = findPermanent(next, delayed.card.instance_id);
+        const creature = findPermanent(next, delayed.attachToCardInstanceId);
+        if (aura && creature && aura.controller === creature.controller && hasSubtype(cardProfile(aura.card), "Aura")) {
+          next = withPlayer(next, aura.controller, (player) => ({
+            ...player,
+            battlefield: player.battlefield.map((permanent) => permanent.instance_id === aura.instance_id
+              ? { ...permanent, attachedTo: creature.instance_id }
+              : permanent)
+          }));
+        }
+      }
+      return next;
     }
     case "choose-attack-direction": {
       return {
@@ -4805,6 +4820,34 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         sourceText: `${permanent.card.name} returns at the beginning of the next end step.`
       };
       return { ...moved, delayedReturns: [...moved.delayedReturns, delayed] };
+    }
+    case "flickerform": {
+      const creatureId = object.sourcePermanentId;
+      const creature = creatureId ? findPermanent(state, creatureId) : undefined;
+      if (!creature || !isCreature(cardProfile(creature.card))) return state;
+      const attached = attachedAuras(state, creature);
+      const cards = [creature, ...attached];
+      let next = state;
+      const triggerAtTurn = state.step === "end" ? state.turn + 1 : state.turn;
+      for (const permanent of cards) {
+        const current = findPermanent(next, permanent.instance_id);
+        if (!current) continue;
+        next = movePermanentToZone(next, current, "exile");
+        if (current.card.token) continue;
+        next = {
+          ...next,
+          delayedReturns: [...next.delayedReturns, {
+            id: `${object.id}:return:${current.instance_id}`,
+            triggerAtTurn,
+            sourceCard: object.card,
+            card: current.card,
+            owner: current.card.owner,
+            ...(current.instance_id === creature.instance_id ? {} : { attachToCardInstanceId: creature.instance_id }),
+            sourceText: `${current.card.name} returns at the beginning of the next end step.`
+          }]
+        };
+      }
+      return logged(next, controller, `${sourceName}: exiles ${cards.map((permanent) => permanent.card.name).join(", ")} until the next end step.`);
     }
     case "exile-target-nontoken-creature": {
       const target = object.targets[0];
@@ -7184,7 +7227,12 @@ function queueDelayedReturns(state: GameState): GameState {
       sourceText: delayed.sourceText
     },
     cause: `${delayed.sourceCard.name}: delayed end-step return`,
-    delayedReturn: { card: delayed.card, owner: delayed.owner, ...(delayed.destination ? { destination: delayed.destination } : {}) },
+    delayedReturn: {
+      card: delayed.card,
+      owner: delayed.owner,
+      ...(delayed.destination ? { destination: delayed.destination } : {}),
+      ...(delayed.attachToCardInstanceId ? { attachToCardInstanceId: delayed.attachToCardInstanceId } : {})
+    },
     eventController: delayed.owner
   }));
   return { ...state, delayedReturns: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };

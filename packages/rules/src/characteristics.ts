@@ -560,6 +560,8 @@ export type SpellEffect =
   | { readonly kind: "order-of-succession" }
   /** From the Ashes destroys nonbasic lands, then offers one basic-land search per land destroyed. */
   | { readonly kind: "from-the-ashes" }
+  /** Flickerform returns the enchanted creature and its attached Auras together. */
+  | { readonly kind: "flickerform" }
   | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
@@ -1961,7 +1963,13 @@ function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null
     if (!match) continue;
     const ability = parseActivatedAbility(match[1]!, 0);
     if (ability) return ability;
+    if (/^[^:]{1,120}:\s*Exile enchanted creature and all Auras attached to it\./i.test(line.trim())) {
+      const flicker = parseActivatedAbility(line.trim(), 0);
+      if (flicker) return flicker;
+    }
   }
+  const flickerLine = text.split("\n").find((line) => /^[^:]{1,120}:\s*Exile enchanted creature and all Auras attached to it\./i.test(line.trim()));
+  if (flickerLine) return parseActivatedAbility(flickerLine.trim(), 0);
   return null;
 }
 
@@ -2233,6 +2241,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/\.?\s*You can'?t activate this ability during combat\.?$/i, "")
     .trim();
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
+  const flickerform = /^Exile enchanted creature and all Auras attached to it\. At the beginning of the next end step, return that card to the battlefield under its owner'?s control\. If you do, return the other cards exiled this way to the battlefield under their owners'? control attached to that creature\.?$/i.test(parsedEffectText);
   const toggleSourceCounter = /^Put a plague counter on ~ or remove a plague counter from it\.?$/i.test(parsedEffectText);
   const returnLandsCopy = /^((?:\{[^}]+\})+),\s*Return (two|three|four|five|\d+) lands you control to their owner'?s hand:\s*(.+)$/i.exec(line.trim());
   if (returnLandsCopy) {
@@ -2297,6 +2306,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: { kind: "search-library", types: ["Land"] as const, subtypes: ["Basic"] as const, destination: "battlefield" as const, tapped: false, reveal: false, count: "players-with-land-lead" as const } as SpellEffect, target: "none" as TargetKind }
     : selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
+    : flickerform
+    ? { effect: { kind: "flickerform" } as SpellEffect, target: "none" as TargetKind }
     : toggleSourceCounter
     ? { effect: { kind: "toggle-source-counter", counter: "plague" } as SpellEffect, target: "none" as TargetKind }
     : /^Exchange control of two target nonlegendary creatures\.?$/i.test(parsedEffectText)
@@ -5731,7 +5742,7 @@ export function cardProfile(card: CardData): CardProfile {
     protectionFrom,
     activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand")
       ? [
-          ...recognized.activatedAbilities,
+          ...recognized.activatedAbilities.filter((ability) => ability.effect.kind !== "flickerform"),
           ...(levelUpCost ? [{
             index: recognized.activatedAbilities.length,
             requiresTap: false,
