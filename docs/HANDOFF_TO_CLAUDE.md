@@ -6754,3 +6754,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Jar of Eyeballs | 3075dadd-240f-4455-9286-9f1d48f53a3f`: added a reusable activated-cost primitive for removing all source counters, recording the removed quantity on the stack, and feeding it into the existing private top-library selection/bottoming flow. The profile now parses both the dies trigger and the `{3}, {T}` activation as fully implemented.
 - Verification: authoritative C13 coverage advances to `320/341` unique cards; Jar scenario, full rules suite (**826 tests**) and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 exact modal-choice cluster — Incendiary Command (2026-09-07)
+
+- Base: `454992b6` (includes the integrated Jar of Eyeballs and Marath updates).
+- `Incendiary Command | d45a4924-daa0-4ac3-afd7-b66f636ce870`: generalized modal parsing for exact `Choose N` headings (CR 700.2), then added the reusable “each player discards their hand, then draws that many cards” effect. The fourth mode now participates in the existing `Choose two` combination generation instead of being reported as unresolved.
+- Verification: authoritative C13 coverage is `323/341` unique cards; Incendiary profile is fully implemented, the hand-size scenario passes, full rules suite (**828 tests**) and rules typecheck pass.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.

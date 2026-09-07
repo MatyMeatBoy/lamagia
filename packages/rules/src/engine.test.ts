@@ -430,6 +430,7 @@ const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", ty
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
+const C13_INCENDIARY_COMMAND = () => make({ name: "Incendiary Command", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "Choose two —\n• Incendiary Command deals 4 damage to target player or planeswalker.\n• Incendiary Command deals 2 damage to each creature.\n• Destroy target nonbasic land.\n• Each player discards all the cards in their hand, then draws that many cards.", oracle_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870", scryfall_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870" });
 const C13_REINCARNATION = () => make({ name: "Reincarnation", type_line: "Instant", mana_cost: "{1}{G}{G}", cmc: 3, oracle_text: "Choose target creature. When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner.", oracle_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a", scryfall_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a" });
 const C13_ENDREK = () => make({ name: "Endrek Sahr, Master Breeder", type_line: "Legendary Creature — Human Wizard", mana_cost: "{4}{B}", cmc: 5, power: "2", toughness: "2", oracle_text: "Whenever you cast a creature spell, create X 1/1 black Thrull creature tokens, where X is that spell's mana value.\nWhen you control seven or more Thrulls, sacrifice ~.", oracle_id: "47a0079f-3544-45bc-a32a-bd93844c8c43", scryfall_id: "47a0079f-3544-45bc-a32a-bd93844c8c43" });
 const THRULL = () => make({ name: "Thrull", type_line: "Creature — Thrull", power: "1", toughness: "1" });
@@ -3488,6 +3489,25 @@ describe("casting", () => {
     expect(game.pendingChoice).toBeNull();
     expect(game.players[0]!.hand.some((card) => card.name === "Lightning Bolt")).toBe(true);
     expect(game.players[0]!.library.slice(-2).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears"]);
+  });
+
+  it("reuses hand-size discard and redraw for Incendiary Command's modal mode", () => {
+    const command = C13_INCENDIARY_COMMAND();
+    const profile = profileOf(command);
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.modalChoices.some((choice) => choice.effect.kind === "compound"
+      && choice.effect.effects.some((effect) => effect.kind === "each-player-discard-and-draw-same"))).toBe(true);
+
+    const refresh = make({
+      name: "Hand Refresh", type_line: "Sorcery", mana_cost: "{1}{R}", cmc: 2,
+      oracle_text: "Each player discards all the cards in their hand, then draws that many cards."
+    });
+    let game = readyToCast([refresh], [MOUNTAIN(), MOUNTAIN() ], [BEAR(), FOREST()]);
+    game = stage(game, 1, (player) => ({ library: toHand(1, [BOLT(), ISLAND()], "refresh-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.hand.map((card) => card.name)).toEqual(["Lightning Bolt", "Island"]);
+    expect(game.players[1]!.graveyard.map((card) => card.name)).toEqual(["Grizzly Bears", "Forest"]);
   });
 
   it("filters Harald, King of Skemfar's top-five review by creature subtype, not card type", () => {

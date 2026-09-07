@@ -494,6 +494,8 @@ export type SpellEffect =
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
   | { readonly kind: "each-player-discard-and-draw"; readonly amount: number }
+  /** Each player discards their hand, then draws the same number they discarded. */
+  | { readonly kind: "each-player-discard-and-draw-same" }
   /** Each player discards their hand, then all draw the greatest discarded hand size. */
   | { readonly kind: "each-player-discard-and-draw-greatest" }
   /** Geier Reach Sanitarium: draw happens for everyone at once; the discard is each player's own choice, queued one seat at a time (CR 701.8a, APNAP order). */
@@ -4336,6 +4338,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "each-player-discard-and-draw", amount }, target: "none" };
   }
+  if (/^Each player discards (?:all )?the cards in their hand, then draws that many cards$/i.test(text)) {
+    return { effect: { kind: "each-player-discard-and-draw-same" }, target: "none" };
+  }
   if (/^Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way$/i.test(text)) {
     return { effect: { kind: "each-player-discard-and-draw-greatest" }, target: "none" };
   }
@@ -5248,8 +5253,13 @@ function recognizeText(text: string): RecognizedText {
     }
     const chooseOneOrBoth = /^Choose one or both(?:\s+[—–-�])?\s*$/i.test(line);
     const chooseMoreMatch = /^Choose (one|two|three|four|five|six|seven|eight|nine|ten|\d+) or more(?:\s+[—–-�])?\s*$/i.exec(line);
-    if (chooseOneOrBoth || chooseMoreMatch || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
-      const minimumChoices = chooseMoreMatch ? (toNumber(chooseMoreMatch[1]!) ?? Number(chooseMoreMatch[1])) : 1;
+    const chooseExactMatch = /^Choose (two|three|four|five|six|seven|eight|nine|ten|\d+)(?:\s+[—–-�])?\s*$/i.exec(line);
+    if (chooseOneOrBoth || chooseMoreMatch || chooseExactMatch || /^Choose one(?:\s+[—–-�])?\s*$/i.test(line)) {
+      const minimumChoices = chooseMoreMatch
+        ? (toNumber(chooseMoreMatch[1]!) ?? Number(chooseMoreMatch[1]))
+        : chooseExactMatch
+          ? (toNumber(chooseExactMatch[1]!) ?? Number(chooseExactMatch[1]))
+          : 1;
       const start = lineIndex + 1;
       const choices: ModalChoice[] = [];
       const unimplementedChoices: string[] = [];
@@ -5268,7 +5278,7 @@ function recognizeText(text: string): RecognizedText {
         cursor += 1;
       }
       if (!invalid && choices.length > 0 && choices.length === cursor - start) {
-        if (!chooseMoreMatch) modalChoices.push(...choices);
+        if (!chooseMoreMatch && !chooseExactMatch) modalChoices.push(...choices);
         if (chooseOneOrBoth) {
           const targetKinds = choices.map((choice) => choice.targetKind)
             .filter((kind): kind is Exclude<TargetKind, "none"> => kind !== "none");
@@ -5284,17 +5294,18 @@ function recognizeText(text: string): RecognizedText {
             targetKind: targetKinds[0] ?? "none",
             ...(targetKinds.length ? { targetKinds } : {})
           });
-        } else if (chooseMoreMatch) {
-          // "Choose N or more" is a single modal choice whose legal modes are
-          // all non-empty subsets meeting the printed minimum. Generate those
-          // combinations once so every matching card reuses the same primitive
-          // and each selected branch retains its own target slot (CR 700.2).
+        } else if (chooseMoreMatch || chooseExactMatch) {
+          // "Choose N or more" offers every subset meeting the minimum;
+          // "Choose N" offers only subsets of exactly N. Generate the
+          // combinations once so every matching card reuses this modal
+          // primitive and each selected branch retains its own target slot
+          // (CR 700.2).
           const subsets: ModalChoice[][] = [];
           const visit = (start: number, selected: ModalChoice[]): void => {
             for (let index = start; index < choices.length; index += 1) {
               const next = [...selected, choices[index]!];
-              if (next.length >= minimumChoices) subsets.push(next);
-              if (index + 1 < choices.length) visit(index + 1, next);
+              if (next.length >= minimumChoices && (!chooseExactMatch || next.length === minimumChoices)) subsets.push(next);
+              if (index + 1 < choices.length && (!chooseExactMatch || next.length < minimumChoices)) visit(index + 1, next);
             }
           };
           visit(0, []);

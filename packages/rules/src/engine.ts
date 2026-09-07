@@ -4227,6 +4227,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "each-player-discard-and-draw-same": {
+      let next = state;
+      for (const player of state.players) {
+        const hand = playerAt(next, player.seat).hand;
+        const amount = hand.length;
+        next = discardCards(next, player.seat, hand);
+        next = drawCards(next, player.seat, amount);
+      }
+      return next;
+    }
     case "each-player-discard-and-draw-greatest": {
       // The shared draw count is locked before any player's hand moves (CR 701.8, 121.1).
       const amount = state.players.reduce((greatest, player) => Math.max(greatest, player.hand.length), 0);
