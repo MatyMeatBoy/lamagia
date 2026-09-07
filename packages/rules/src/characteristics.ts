@@ -4615,6 +4615,10 @@ function recognizeText(text: string): RecognizedText {
     const create = { kind: "create-token" as const, amount: "X" as const, token };
     return { effects: [{ kind: "tempting-offer", base: create, opponent: create, reward: create }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
   }
+  if (/^Tempting offer\s*[—–-]\s*Choose target creature you control\.\s*Create a token that's a copy of that creature\.\s*Each opponent may create a token that's a copy of that creature\.\s*For each opponent who does, create a token that's a copy of that creature\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
+    const copy = { kind: "create-copy-token" as const, amount: 1 };
+    return { effects: [{ kind: "tempting-offer", base: copy, opponent: copy, reward: copy }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature-you-control", unimplementedText: [], covered: true };
+  }
   if (/^Tempting offer\s*[—–-]\s*Put a \+1\/\+1 counter on each creature you control\. Each opponent may put a \+1\/\+1 counter on each creature they control\. For each opponent who does, put a \+1\/\+1 counter on each creature you control\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
     const addCounter = { kind: "add-counter-creatures-you-control" as const, counter: "+1/+1", amount: 1 };
     return { effects: [{ kind: "tempting-offer", base: addCounter, opponent: addCounter, reward: addCounter }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };

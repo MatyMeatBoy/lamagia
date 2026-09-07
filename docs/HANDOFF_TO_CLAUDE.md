@@ -6678,3 +6678,9 @@ opponent-owned exiled instant is offered and cast for free after Jeleva
 attacks. Validation: `npm run check --workspace=@prossh/rules` and the full
 rules suite pass (**923** tests, 6 skipped). The commit is ready for
 integrator review; do not count the old `11440733` as integrated.
+
+## C13 current-base rescue — Tempt with Reflections (2026-09-07)
+
+- Base: `e6ec83df`.
+- `Tempt with Reflections | 76c142ef-0f07-4215-8d11-d25f7114c70d`: reused the existing copy-token and tempting-offer primitives; the scenario verifies the controller's base/reward copies and the opponent's optional copy.
+- Main should cherry-pick the focused commit after review.
