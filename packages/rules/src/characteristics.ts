@@ -858,7 +858,7 @@ export type SpellEffect =
   | { readonly kind: "untap-target-permanent" }
   | { readonly kind: "untap-source" }
   | { readonly kind: "attach-equipment" }
-  | { readonly kind: "create-token"; readonly amount: number | "X" | "mana-spent" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
+  | { readonly kind: "create-token"; readonly amount: number | "X" | "mana-spent" | "spell-mana-value" | "lands-you-control" | "creatures-you-control" | "creatures-on-battlefield" | "equipment-attached-to-source" | "creatures-died-this-turn" | "opponents-with-4-plus-cards"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   | { readonly kind: "create-token-for-target-player"; readonly amount: number | "X"; readonly token: TokenDefinition; readonly statsFromAmount?: boolean }
   /** Reveals one library card, moves it to hand, then gains its mana value. */
   | { readonly kind: "reveal-top-card-to-hand-and-gain-mana-value" }

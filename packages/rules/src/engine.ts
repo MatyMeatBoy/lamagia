@@ -304,6 +304,8 @@ export interface TriggerInstance {
   readonly eventAmount?: number;
   /** Total mana spent to cast the triggering spell (CR 107.3h). */
   readonly eventManaSpent?: number;
+  /** Mana value of the spell that caused a spell-cast trigger. */
+  readonly eventSpellManaValue?: number;
   /** Total mana spent to cast a permanent that caused an ETB trigger. */
   readonly eventPermanentManaSpent?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
@@ -2687,6 +2689,7 @@ function raiseEvent(
           ...(event.kind === "leaves-battlefield" && watcher.exiledWith ? { linkedExiledCard: watcher.exiledWith } : {}),
           ...("amount" in event ? { eventAmount: event.amount } : {}),
           ...(event.kind === "spell-cast" && event.spentMana !== undefined ? { eventManaSpent: event.spentMana } : {}),
+          ...(event.kind === "spell-cast" ? { eventSpellManaValue: cardProfile(event.card).manaValue } : {}),
           ...(event.kind === "enters-battlefield" ? { eventPermanentManaSpent: findPermanent(state, event.permanentId)?.castSpentMana?.length ?? 0 } : {}),
           ...("power" in event && event.power !== undefined ? { eventPower: event.power } : {}),
           ...("victim" in event ? { eventPlayer: event.victim }
@@ -6056,6 +6059,8 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           ? allPermanents(state).filter((permanent) => isCreature(cardProfile(permanent.card))).length
         : effect.amount === "equipment-attached-to-source"
           ? (() => { const src = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id); return src ? attachedEquipment(state, src).length : 0; })()
+        : effect.amount === "spell-mana-value"
+          ? object.trigger?.eventSpellManaValue ?? (object.trigger?.eventSpell ? cardProfile(object.trigger.eventSpell.card).manaValue : 0)
         : effect.amount === "creatures-died-this-turn"
           ? state.creaturesDiedThisTurn
         : effect.amount === "opponents-with-4-plus-cards"
