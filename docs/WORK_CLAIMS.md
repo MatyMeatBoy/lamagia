@@ -572,3 +572,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-order-of-succession` | Reuses directional choice to sequence creature selections and control exchanges around the table for Order of Succession (CR 701.10, 903.2) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-from-the-ashes` | Reusable mass nonbasic-land destruction with one optional basic-land search continuation per destroyed land (CR 701.7, 701.19) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-flickerform` | Reusable Aura-granted Flickerform exile/return sequence, preserving attached Auras and reattaching them to the returned creature (CR 303.4, 603.7) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-suspend` | Reusable Suspend alternative-cost exile, upkeep time-counter countdown, and mandatory free cast trigger, starting with Phthisis (CR 702.62, 601.2b) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

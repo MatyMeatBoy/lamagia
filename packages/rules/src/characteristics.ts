@@ -1106,6 +1106,9 @@ export interface CardProfile {
   readonly cyclingSearches: readonly CyclingSearchAbility[];
   /** Echo cost paid at the controller's next upkeep (CR 702.30). */
   readonly echoCost: ManaCost | null;
+  /** Suspend's time-counter count and alternative cost (CR 702.62). */
+  readonly suspendAmount: number | null;
+  readonly suspendCost: ManaCost | null;
   /** Ward's mana payment, requested when an opposing spell or ability targets this permanent (CR 702.21). */
   readonly wardCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
@@ -1513,6 +1516,16 @@ function parseManaSourceCounterRider(effect: string): { production: string; coun
   const amount = toNumber(match[2]!);
   if (amount === null) return null;
   return { production: match[1]!.trim(), counter: { kind: match[3]!.trim().replace(/\s+/g, " ").toLowerCase(), amount } };
+}
+
+/** Suspend N—cost (CR 702.62): the card is exiled with N time counters and
+ * gets a cast trigger when the last counter is removed. */
+function parseSuspend(text: string): { amount: number; cost: ManaCost } | null {
+  const match = /(?:^|\n)Suspend\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*[—-]\s*((?:\{[^}]+\})+)\s*$/im.exec(text.trim());
+  if (!match) return null;
+  const amount = toNumber(match[1]);
+  const cost = parseManaCost(match[2]!);
+  return amount !== null && cost ? { amount, cost } : null;
 }
 
 function parseManaInstruction(effect: string): { produced: ReturnType<typeof parseAddClause>; gainLife?: number; requiresLands?: number; painDamage?: number; activationRestriction?: { enteredThisTurn: boolean; orControlsBasicLand?: boolean }; commanderEntryCounters?: boolean } | null {
@@ -4115,7 +4128,7 @@ function recognizeText(text: string): RecognizedText {
         bullet: /^[•\u2014\u2013\uFFFD]\s*/u.test(line),
       };
     })
-    .filter(Boolean);
+    .filter((entry) => entry.text.length > 0);
   if (!body.length) return { effects: [], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
 
   // Enlightened Tutor-style searches are one resolution instruction spread
@@ -4509,6 +4522,7 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    if (!line.trim()) continue;
     if (/^Cast ~ only during combat\.?$/i.test(line)) {
       combatOnly = true;
       continue;
@@ -5468,11 +5482,13 @@ export function cardProfile(card: CardData): CardProfile {
   const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
   const modularMatch = /^Modular\s+(\d+)$/im.exec(text);
   const modularAmount = modularMatch ? Number(modularMatch[1]) : null;
+  const suspend = parseSuspend(text);
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
     .replace(/^Affinity for .+$/gim, "")
     .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, "")
-    .replace(/^Modular\s+\d+$/gim, ""));
+    .replace(/^Modular\s+\d+$/gim, "")
+    .replace(/^Suspend\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*[—-]\s*(?:\{[^}]+\})+\s*$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
   // drains each opponent for 1 and heals the controller by that much.
   const hasExtort = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "extort");
@@ -5778,6 +5794,8 @@ export function cardProfile(card: CardData): CardProfile {
   overloadedEffects: recognized.overloadedEffects ?? [],
     extraTargetCost: recognized.extraTargetCost ?? null,
     kickerCost: recognized.kickerCost ?? null,
+    suspendAmount: suspend?.amount ?? null,
+    suspendCost: suspend?.cost ?? null,
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,
     evokeCost: recognized.evokeCost ?? null,

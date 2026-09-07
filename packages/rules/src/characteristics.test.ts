@@ -254,8 +254,8 @@ describe("mana abilities", () => {
     }));
     expect(profile.effects).toEqual([{ kind: "destroy-target-creature-then-life-loss" }]);
     expect(profile.targetKind).toBe("creature");
-    expect(profile.unimplementedText).toEqual(["Suspend 5—{1}{B}"]);
-    expect(profile.fullyImplemented).toBe(false);
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile).toMatchObject({ fullyImplemented: true, suspendAmount: 5, suspendCost: { raw: "{1}{B}" } });
   });
 });
 

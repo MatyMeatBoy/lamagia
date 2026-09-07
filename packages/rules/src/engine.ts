@@ -79,6 +79,12 @@ export interface GameCard extends CardData {
   readonly token?: boolean;
 }
 
+export interface SuspendedCard {
+  readonly card: GameCard;
+  readonly timeCounters: number;
+  readonly suspendedBy: SeatId;
+}
+
 export interface Permanent {
   readonly instance_id: string;
   readonly card: GameCard;
@@ -214,6 +220,8 @@ export interface PlayerState {
   readonly oncePerTurnActivations?: readonly string[];
   /** Rebound (CR 702.88): instance ids exiled this way, castable free at the next upkeep. */
   readonly reboundPending: readonly string[];
+  /** Cards exiled with Suspend and their remaining time counters (CR 702.62). */
+  readonly suspendedCards?: readonly SuspendedCard[];
   /** Extra land plays granted this turn ("you may play an additional land"), reset each turn (CR 305.2). */
   readonly extraLandDrops: number;
 }
@@ -468,6 +476,14 @@ export interface GameState {
 }
 
 export type PendingChoice =
+  | {
+      /** Suspend's mandatory cast trigger after the last time counter is removed (CR 702.62d). */
+      readonly type: "suspend-ready";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly targetKind: TargetKind;
+    }
   | {
       /** Hinder-style choice after countering a spell (CR 701.18, 608.2b). */
       readonly type: "countered-spell-library";
@@ -782,6 +798,8 @@ export type GameAction =
   | { readonly type: "pass" }
   | { readonly type: "play-land"; readonly cardId: string }
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly overloaded?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly returnPermanentIds?: readonly string[]; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string }
+  | { readonly type: "suspend"; readonly cardId: string }
+  | { readonly type: "cast-suspended"; readonly sourceId: string; readonly targets?: readonly Target[]; readonly variableValue?: number }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
   | { readonly type: "equip"; readonly sourceId: string; readonly targetId?: string }
   | { readonly type: "activate-mana"; readonly sourceId: string; readonly abilityIndex: number; readonly mana: ManaType; readonly manaBonus?: ManaType; readonly variableAmount?: number; readonly manaChoices?: readonly ManaType[]; readonly sacrificeId?: string; readonly sacrificeIds?: readonly string[] }
@@ -1696,6 +1714,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
       lost: false,
       drewFromEmptyLibrary: false,
       reboundPending: [],
+      suspendedCards: [],
       extraLandDrops: 0,
       autoPass: kind === "bot"
     } satisfies PlayerState;
@@ -7405,6 +7424,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
   // Turn-structure triggers are raised as the step begins, before priority
   // opens, so they are already queued when a player would first receive it.
   if (step === "upkeep") {
+    next = advanceSuspendCounters(next);
     next = queueDelayedDraws(next);
     next = queueEchoTriggers(next);
     next = raiseEvent(next, { kind: "upkeep", activeSeat: next.activeSeat });
@@ -7616,6 +7636,16 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   if (state.pendingChoice) {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
+    if (choice.type === "suspend-ready") {
+      actions.push({
+        action: { type: "cast-suspended", sourceId: choice.sourceId },
+        label: `Cast ${choice.sourceCard.name} without paying its mana cost`,
+        cardId: choice.sourceCard.instance_id,
+        ...(choice.targetKind !== "none" && legalTargets(state, seat, choice.targetKind, cardProfile(choice.sourceCard)).length ? { requiresTarget: choice.targetKind } : {}),
+        note: "Suspend: cast it when its last time counter is removed (CR 702.62d)."
+      });
+      return actions;
+    }
     if (choice.type === "countered-spell-library") {
       actions.push(
         {
@@ -8006,6 +8036,17 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
 
   if (!splitSecondActive(state)) for (const card of player.hand) {
     const profile = cardProfile(card);
+    if (profile.suspendCost && profile.suspendAmount !== null
+      && ((profile.types.includes("Instant") || profile.keywords.includes("flash")) || sorcerySpeed(state, seat))
+      && planManaPayment(profile.suspendCost, player, { state })) {
+      actions.push({
+        action: { type: "suspend", cardId: card.instance_id },
+        label: `Suspend ${card.name} (${profile.suspendCost.raw})`,
+        cardId: card.instance_id,
+        manaValue: profile.suspendCost.manaValue,
+        note: `Exile it with ${profile.suspendAmount} time counters.`
+      });
+    }
     // An additional creature cost is a choice made during casting (CR 601.2b),
     // not an implicit "first creature" selection. Keep one legal action per
     // candidate so the client and bots can choose the intended sacrifice.
@@ -8561,6 +8602,19 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     sourcePermanentId: source.instance_id
   };
   return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
+}
+
+/** Removes one time counter from this player's suspended cards at their upkeep
+ * and exposes the mandatory cast trigger one card at a time (CR 702.62c-d). */
+function advanceSuspendCounters(state: GameState): GameState {
+  const player = playerAt(state, state.activeSeat);
+  const suspended = player.suspendedCards ?? [];
+  if (!suspended.length) return state;
+  const updated = suspended.map((entry) => ({ ...entry, timeCounters: Math.max(0, entry.timeCounters - 1) }));
+  const ready = updated.find((entry) => entry.timeCounters === 0);
+  const next = withPlayer(state, state.activeSeat, (current) => ({ ...current, suspendedCards: updated }));
+  if (!ready) return next;
+  return { ...next, pendingChoice: { type: "suspend-ready", seat: state.activeSeat, sourceId: `suspend:${ready.card.instance_id}`, sourceCard: ready.card, targetKind: cardProfile(ready.card).targetKind } };
 }
 
 /** Queues the opponent's payment choice for the next opposing Ward target. */
@@ -9313,6 +9367,58 @@ function applyReboundCast(state: GameState, seat: SeatId, action: Extract<GameAc
   next = queueWardChoice(next, next.stack.at(-1)!);
   next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)! });
   return logged(next, seat, `${player.name} relanza ${card.name} desde el exilio (rebote).`);
+}
+
+function applySuspend(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "suspend" }>): GameState {
+  if (!state.priorityOpen || state.prioritySeat !== seat) throw new Error("Suspend can only be activated when you could cast the card.");
+  const player = playerAt(state, seat);
+  const card = player.hand.find((candidate) => candidate.instance_id === action.cardId);
+  const profile = card ? cardProfile(card) : null;
+  if (!card || !profile?.suspendCost || profile.suspendAmount === null) throw new Error("That card has no usable Suspend ability.");
+  if (!(profile.types.includes("Instant") || profile.keywords.includes("flash")) && !sorcerySpeed(state, seat)) {
+    throw new Error("Suspend can only be activated when you could cast the card.");
+  }
+  const plan = planManaPayment(profile.suspendCost, player, { state });
+  if (!plan) throw new Error(`You cannot pay ${profile.suspendCost.raw} to suspend ${card.name}.`);
+  let next = applyManaPlan(state, seat, plan);
+  const payment = payCost(profile.suspendCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+  if (!payment) throw new Error(`Could not pay ${profile.suspendCost.raw}.`);
+  next = withPlayer(next, seat, (current) => ({
+    ...consumeManaPayment(current, payment),
+    hand: current.hand.filter((candidate) => candidate.instance_id !== card.instance_id),
+    exile: [...current.exile, card],
+    suspendedCards: [...(current.suspendedCards ?? []), { card, timeCounters: profile.suspendAmount!, suspendedBy: seat }]
+  }));
+  return logged(next, seat, `${player.name} suspends ${card.name} with ${profile.suspendAmount} time counters.`);
+}
+
+function applyCastSuspended(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast-suspended" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "suspend-ready" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No Suspend cast trigger is pending.");
+  }
+  const player = playerAt(state, seat);
+  const entry = (player.suspendedCards ?? []).find((candidate) => candidate.card.instance_id === choice.sourceCard.instance_id);
+  if (!entry || entry.timeCounters !== 0 || !player.exile.some((card) => card.instance_id === entry.card.instance_id)) {
+    throw new Error("That suspended card is no longer available.");
+  }
+  const profile = cardProfile(entry.card);
+  const allowed = choice.targetKind === "none" ? [] : legalTargets(state, seat, choice.targetKind, profile);
+  let targets = action.targets ?? [];
+  if (choice.targetKind !== "none") {
+    targets = targets.length ? targets : allowed.slice(0, 1);
+    if (!targets.length) return logged({ ...state, pendingChoice: null }, seat, `${entry.card.name} cannot be cast because it has no legal target.`);
+    if (!targets.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) throw new Error("Illegal target for suspended spell.");
+  }
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    exile: current.exile.filter((card) => card.instance_id !== entry.card.instance_id),
+    suspendedCards: (current.suspendedCards ?? []).filter((candidate) => candidate.card.instance_id !== entry.card.instance_id)
+  }));
+  next = pushOnStack(next, seat, entry.card, targets, false, action.variableValue ?? 0);
+  next = queueWardChoice(next, next.stack.at(-1)!);
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card: entry.card, spell: next.stack.at(-1)! });
+  return logged(next, seat, `${player.name} casts ${entry.card.name} from exile without paying its mana cost.`);
 }
 
 function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "cast" }>): GameState {
@@ -10691,6 +10797,8 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "pass": next = applyPass(state, seat); break;
     case "play-land": next = applyPlayLand(state, seat, action.cardId); break;
     case "cast": next = applyCast(state, seat, action); break;
+    case "suspend": next = applySuspend(state, seat, action); break;
+    case "cast-suspended": next = applyCastSuspended(state, seat, action); break;
     case "cycle": next = applyCycle(state, seat, action); break;
     case "equip": next = applyEquip(state, seat, action); break;
     case "activate-mana": next = applyActivateMana(state, seat, action); break;

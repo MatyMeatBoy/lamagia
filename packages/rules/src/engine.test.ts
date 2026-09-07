@@ -146,6 +146,43 @@ const TREASURE_TOKEN = () => make({
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
 });
 
+describe("Suspend primitive", () => {
+  const PHTHISIS = () => make({
+    name: "Phthisis", type_line: "Sorcery", mana_cost: "{3}{B}{B}{B}{B}", cmc: 7,
+    oracle_text: "Destroy target creature.\nIts controller loses life equal to its power plus its toughness.\nSuspend 5—{1}{B}",
+    scryfall_id: "c13-phthisis-suspend"
+  });
+
+  it("exiles a card with time counters and opens its free cast when the last counter is removed", () => {
+    const phthisis = PHTHISIS();
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [phthisis], "suspend-hand") }));
+    game = putOnBattlefield(game, 0, [SWAMP(), SWAMP()]);
+    const suspend = legalActions(game, 0).find((entry) => entry.action.type === "suspend");
+    expect(suspend).toBeDefined();
+    game = applyAction(game, 0, suspend!.action);
+    expect(game.players[0]!.hand).toHaveLength(0);
+    expect(game.players[0]!.exile.map((card) => card.name)).toContain("Phthisis");
+    expect(game.players[0]!.suspendedCards).toMatchObject([{ timeCounters: 5, card: { name: "Phthisis" } }]);
+
+    const suspendedCard = game.players[0]!.exile.find((card) => card.name === "Phthisis")!;
+    game = {
+      ...game,
+      step: "cleanup",
+      activeSeat: 1,
+      prioritySeat: 1,
+      priorityOpen: false,
+      pendingChoice: null,
+      players: game.players.map((player) => player.seat === 0
+        ? { ...player, suspendedCards: [{ card: suspendedCard, timeCounters: 1, suspendedBy: 0 }] }
+        : player)
+    };
+    game = settle(game);
+    expect(game.pendingChoice).toMatchObject({ type: "suspend-ready", seat: 0, sourceCard: { name: "Phthisis" } });
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "cast-suspended")).toBe(true);
+  });
+});
+
 describe("Ward keyword", () => {
   function wardGame(): GameState {
     let game = twoSeatGame([], []);
