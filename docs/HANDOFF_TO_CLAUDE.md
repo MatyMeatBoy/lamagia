@@ -6775,3 +6775,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Djinn of Infinite Deceits | f9de4cea-27c4-4343-8a7a-09b8f346c3b5`: added the reusable two-target nonlegendary-creature control exchange effect, plus a generic activation restriction for “You can't activate this ability during combat.”
 - Verification: authoritative C13 coverage is `325/341` unique cards; the profile is fully implemented, target distinctness/nonlegendary filtering and the combat restriction are scenario-tested, full rules suite (**830 tests**) and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 opponent-sacrifice cluster — Shattergang Brothers (2026-09-07)
+
+- Base: `7b6fe640`.
+- `Shattergang Brothers | 7fb63d9a-8d90-4b43-8390-924de2d7e32c`: generalized the opponent-sacrifice primitive to creatures, artifacts, and enchantments, including all three typed sacrifice costs.
+- Verification: authoritative C13 coverage is `326/341` unique cards; the profile is fully implemented, all three activation modes are scenario-tested, rules typecheck passes, and the full rules suite passes (**831 tests** with the bot-game timeout raised to 20 seconds for the long deterministic scenario).
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
