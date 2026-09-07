@@ -605,6 +605,8 @@ export type SpellEffect =
   | { readonly kind: "damage-divided-targets"; readonly amount: number | "X"; readonly evenly?: boolean }
   /** Damage from the ability source equal to that source's current power. */
   | { readonly kind: "damage-source-power" }
+  /** True-Name Nemesis: choose a player and grant this source protection from them. */
+  | { readonly kind: "set-source-protection-from-player" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
   | { readonly kind: "tap-creatures-pump-source-damage-attacker"; readonly subtype: string }
   /** Terra Ravager: +X/+0 where X is the defending player's land count. */
@@ -4081,6 +4083,14 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  if (/^As ~ enters, choose a player\.\s*~ has protection from the chosen player\.?$/i.test(joined)) {
+    return {
+      effects: [], triggers: [{
+        event: "enters-battlefield", subject: "self", effect: { kind: "set-source-protection-from-player" },
+        optional: false, targetKind: "player", sourceText: joined
+      }], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
   const decreeJoined = decreeBody.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   const magusOfArena = /^\{3\},\s*\{T\}:\s*Tap target creature you control and target creature of an opponent['’]s choice they control\.\s*Those creatures fight each other\.?$/i.test(joined);

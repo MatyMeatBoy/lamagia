@@ -110,6 +110,8 @@ export interface Permanent {
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
   readonly cantBlockThisTurn?: boolean;
+  /** Players named by dynamic protection choices such as True-Name Nemesis. */
+  readonly protectionFromPlayers?: readonly SeatId[];
   /** Temporary evasion restriction; only blockers with this keyword may block. */
   readonly temporaryCannotBeBlockedExcept?: EnforcedKeyword;
   /** Layer 7c modifications that expire in the cleanup step. */
@@ -2576,7 +2578,7 @@ function dealDamageToPermanent(
   const permanent = findPermanent(state, instanceId);
   if (!permanent || amount <= 0) return state;
   const targetProfile = cardProfile(permanent.card);
-  if (sourceProfile && hasProtectionFrom(sourceProfile, targetProfile)) return state;
+  if (sourceProfile && hasProtectionFrom(sourceProfile, targetProfile, source?.controller, permanent)) return state;
   const preventionCounter = targetProfile.preventsDamageByRemovingCounter;
   if (preventionCounter && !permanentLosesAbilities(state, permanent) && (permanent.counters[preventionCounter] ?? 0) > 0) {
     const next = withPlayer(state, permanent.controller, (player) => ({
@@ -3854,6 +3856,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (target.kind === "player") return dealDamageFromObject(state, target.seat, amount, sourceName, object);
       if (target.kind === "permanent") return dealDamageToPermanent(state, target.instanceId, amount, false, sourceName, cardProfile(source.card));
       return state;
+    }
+    case "set-source-protection-from-player": {
+      const target = object.targets[targetIndex];
+      const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
+      if (!sourceId || target?.kind !== "player") return state;
+      const source = findPermanent(state, sourceId);
+      if (!source) return state;
+      return withPlayer(state, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((permanent) => permanent.instance_id === sourceId
+          ? { ...permanent, protectionFromPlayers: [target.seat] }
+          : permanent)
+      }));
     }
     case "tap-creatures-pump-source-damage-attacker": {
       const sourceId = object.sourcePermanentId ?? object.trigger?.sourcePermanentId;
@@ -6286,7 +6301,8 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
     const most = Math.max(...state.players.map((player) => player.battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length));
     if (defenderCount === most) return false;
   }
-  if (attackerProfile.protectionFrom.some((quality) => blockerProfile.colors.includes(quality))) return false;
+  if (attackerProfile.protectionFrom.some((quality) => blockerProfile.colors.includes(quality))
+    || attacker.protectionFromPlayers?.includes(blocker.controller)) return false;
   // Horsemanship is not flying: only a creature with horsemanship can block
   // one with it (CR 702.31b), and reach does not bypass this restriction.
   if (keywordOf(state, attacker, "horsemanship") && !keywordOf(state, blocker, "horsemanship")) return false;
@@ -6305,9 +6321,10 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
 }
 
 /** CR 702.16: protection prevents targeting and damage from the named quality. */
-function hasProtectionFrom(source: CardProfile, target: CardProfile): boolean {
+function hasProtectionFrom(source: CardProfile, target: CardProfile, sourceController?: SeatId, targetPermanent?: Permanent): boolean {
   return target.protectionFrom.some((quality) => source.colors.includes(quality)
-    || (quality === "Artifact" && isArtifact(source)));
+    || (quality === "Artifact" && isArtifact(source)))
+    || (sourceController !== undefined && targetPermanent?.protectionFromPlayers?.includes(sourceController) === true);
 }
 
 export function legalAttackers(state: GameState, seat: SeatId): Permanent[] {
@@ -6442,7 +6459,7 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
       const assigned = Math.min(remaining, lethal);
       const blockerProfile = cardProfile(blocker.card);
       if (!blockerProfile.combatRules.preventsAllCombatDamageToSelf
-        && !hasProtectionFrom(cardProfile(attacker.card), blockerProfile)) {
+        && !hasProtectionFrom(cardProfile(attacker.card), blockerProfile, attacker.controller, blocker)) {
         toPermanents.push({ instanceId: blocker.instance_id, amount: assigned, deathtouch, sourceName: attacker.card.name, sourceId: attacker.instance_id });
         if (keywordOf(state, attacker, "lifelink")) lifelink.push({ seat: attacker.controller, amount: assigned });
       }
@@ -6473,7 +6490,7 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
     if (power <= 0) continue;
     const attackerProfile = cardProfile(attacker.card);
     if (!attackerProfile.combatRules.preventsAllCombatDamageToSelf
-      && !hasProtectionFrom(cardProfile(blocker.card), attackerProfile)) {
+      && !hasProtectionFrom(cardProfile(blocker.card), attackerProfile, blocker.controller, attacker)) {
       toPermanents.push({ instanceId: attacker.instance_id, amount: power, deathtouch: keywordOf(state, blocker, "deathtouch"), sourceName: blocker.card.name, sourceId: blocker.instance_id });
       if (keywordOf(state, blocker, "lifelink")) lifelink.push({ seat: blocker.controller, amount: power });
     }
@@ -7719,7 +7736,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     return allPermanents(state)
       .filter((permanent) => inCombat.has(permanent.instance_id) && isCreature(cardProfile(permanent.card)))
       .filter((permanent) => (!keywordOf(state, permanent, "hexproof") || permanent.controller === seat) && !keywordOf(state, permanent, "shroud"))
-      .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)))
+      .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card), seat, permanent))
       .map((permanent) => ({ kind: "permanent", instanceId: permanent.instance_id }) as Target);
   }
   if (kind === "spell" || kind.startsWith("spell-mana-value-")) return state.stack
@@ -7743,7 +7760,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
   const permanents = allPermanents(state)
     .filter((permanent) => !keywordOf(state, permanent, "hexproof") || permanent.controller === seat)
     .filter((permanent) => !keywordOf(state, permanent, "shroud"))
-    .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card)));
+    .filter((permanent) => !sourceProfile || !hasProtectionFrom(sourceProfile, cardProfile(permanent.card), seat, permanent));
   const controlledPlains = state.players.find((player) => player.seat === seat)?.battlefield.filter((permanent) =>
     isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), "Plains")).length ?? 0;
   const filtered = permanents.filter((permanent) => {

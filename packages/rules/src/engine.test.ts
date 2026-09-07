@@ -670,6 +670,7 @@ const VALLEY_RANNET = () => make({
 const UNSUMMON = () => make({ name: "Unsummon", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Return target creature to its owner's hand." });
 const FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Fireball deals X damage to any target. It costs {1} more to cast for each target beyond the first." });
 const C13_FIREBALL = () => make({ name: "Fireball", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "This spell costs {1} more to cast for each target beyond the first.\nFireball deals X damage divided evenly, rounded down, among any number of targets.", oracle_id: "aa7714b0-2bfb-458a-8ebf-37ec2c53383e" });
+const C13_TRUE_NAME = () => make({ name: "True-Name Nemesis", type_line: "Creature — Merfolk Rogue", mana_cost: "{1}{U}{U}", cmc: 3, power: "3", toughness: "1", oracle_text: "As this creature enters, choose a player.\nThis creature has protection from the chosen player.", oracle_id: "112322ad-8f66-4cd4-98a1-f425d61a69ce" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6141,6 +6142,25 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Three-Toughness Bear")).toMatchObject({ damage: 2 });
     expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Three-Toughness Ape")).toMatchObject({ damage: 2 });
+  });
+
+  it("stores True-Name Nemesis's chosen player and applies protection to targeting", () => {
+    const profile = profileOf(C13_TRUE_NAME());
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ event: "enters-battlefield", effect: { kind: "set-source-protection-from-player" }, targetKind: "player" }]
+    });
+    let game = readyToCast([C13_TRUE_NAME()], [ISLAND(), ISLAND(), ISLAND()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: 1 } });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    const nemesis = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "True-Name Nemesis")!;
+    expect(nemesis.protectionFromPlayers).toEqual([1]);
+    const removal = make({ name: "Test Removal", type_line: "Instant", mana_cost: "{B}", oracle_text: "Destroy target creature." });
+    expect(legalTargets(game, 1, "creature", profileOf(removal))).not.toContainEqual({ kind: "permanent", instanceId: nemesis.instance_id });
+    expect(legalTargets(game, 0, "creature", profileOf(removal))).toContainEqual({ kind: "permanent", instanceId: nemesis.instance_id });
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {
