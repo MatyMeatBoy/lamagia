@@ -384,6 +384,7 @@ const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcer
 const C13_SUDDEN_SPOILING = () => make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.", oracle_id: "dce202c7-fe8e-462a-858e-7a5a69bd5b6b", scryfall_id: "14d8bf94-ba55-437f-ac69-ece24049944d" });
 const C13_PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Creature — Insect", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter on this creature.", oracle_id: "0951b529-646c-4dfd-88ad-84ee117ce722", scryfall_id: "0951b529-646c-4dfd-88ad-84ee117ce722" });
 const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3, oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, Furnace Celebration deals 2 damage to any target.", oracle_id: "af6d6844-c612-4731-86da-59a8fa02956b", scryfall_id: "af6d6844-c612-4731-86da-59a8fa02956b" });
+const C13_DEADWOOD_TREEFOLK = () => make({ name: "Deadwood Treefolk", type_line: "Creature — Treefolk", mana_cost: "{4}{G}", cmc: 5, power: "3", toughness: "6", oracle_text: "Vanishing 3 (This creature enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this creature enters or leaves the battlefield, return another target creature card from your graveyard to your hand.", oracle_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd", scryfall_id: "b7efcb42-aa52-4d13-8c7c-b2db2dd51afd" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
@@ -3479,6 +3480,19 @@ describe("casting", () => {
     }
     game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("profiles Deadwood Treefolk vanishing and enters/leaves return", () => {
+    expect(profileOf(C13_DEADWOOD_TREEFOLK())).toMatchObject({
+      fullyImplemented: true,
+      vanishingAmount: 3,
+      entersWithCounters: [{ kind: "time", amount: 3 }],
+      triggers: [
+        { event: "enters-battlefield", effect: { kind: "return-target-card-from-graveyard" } },
+        { event: "leaves-battlefield", effect: { kind: "return-target-card-from-graveyard" } },
+        { event: "upkeep", effect: { kind: "vanishing" } }
+      ]
+    });
   });
 
   it("resolves Oloro's optional life-gain draw and opponent life loss", () => {

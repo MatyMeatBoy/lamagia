@@ -664,6 +664,8 @@ export type SpellEffect =
   | { readonly kind: "animate-source"; readonly power: number; readonly toughness: number; readonly colors: readonly string[]; readonly subtypes: readonly string[]; readonly keywords: readonly EnforcedKeyword[]; readonly types?: readonly CardType[] }
   /** Sydri: animate a target noncreature artifact using its mana value (CR 613.6). */
   | { readonly kind: "animate-target-artifact-mana-value" }
+  /** Vanishing: remove a time counter at upkeep and sacrifice after the last is removed (CR 702.63). */
+  | { readonly kind: "vanishing" }
   | { readonly kind: "modify-target-creature-per-subtype"; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "add-counter-target-per-subtype"; readonly counter: string; readonly subtype: string; readonly anywhere?: boolean }
   | { readonly kind: "modify-triggered-creature"; readonly power: number; readonly toughness: number }
@@ -1307,6 +1309,8 @@ export interface CardProfile {
   readonly preventsDamageByRemovingCounter: string | null;
   /** Counters with which this permanent enters the battlefield. */
   readonly entersWithCounters: readonly CounterCost[];
+  /** Vanishing N supplies N time counters and an upkeep sacrifice trigger (CR 702.63). */
+  readonly vanishingAmount: number | null;
   /** "~ enters with X <kind> counters on it" (Walking Ballista, Hangarback Walker): X is the value paid for the spell's own {X} in its cost. */
   readonly entersWithVariableCounters: { readonly kind: string } | null;
   /** Graft number, when this permanent has the Graft keyword. */
@@ -4975,6 +4979,7 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    if (/^Vanishing\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/i.test(line)) continue;
     // Entwine is an additional cost to choose every mode of a modal spell
     // (CR 702.42a). Reminder text is not executable.
     const entwine = /^Entwine\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
@@ -5625,6 +5630,16 @@ function recognizeText(text: string): RecognizedText {
       });
       continue;
     }
+    const entersOrLeaves = /^(?:when|whenever)\s+(?:~|this creature)\s+enters(?:\s+the\s+battlefield)?\s+or\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
+    if (entersOrLeaves) {
+      const recognized = recognizeSentence(entersOrLeaves[1]!);
+      if (recognized) {
+        for (const event of ["enters-battlefield", "leaves-battlefield"] as const) {
+          triggers.push({ event, subject: "self", effect: recognized.effect, optional: false, targetKind: recognized.target, sourceText: line });
+        }
+        continue;
+      }
+    }
     const linkedLeavesReturn = /~\s+leaves\s+the\s+battlefield,?\s+return\s+the\s+exiled\s+card\s+to\s+the\s+battlefield\s+under\s+its\s+owner[\x27\u2019]?s\s+control/i.test(line);
     const leavesLine = linkedLeavesReturn ? line : line.replace(/~\s+leaves\s+the\s+battlefield/i, "~ is put into a graveyard from the battlefield");
     // Modern Oracle splits Bane of Progress's dependent instruction into a
@@ -5993,6 +6008,11 @@ export function cardProfile(card: CardData): CardProfile {
     effect: { kind: "move-counter-from-source-to-triggered-creature", counter: "+1/+1" },
     optional: true, targetKind: "none", sourceText: `Graft ${graftAmount}`
   });
+  const vanishingMatch = /(?:^|\n)vanishing\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/i.exec(text);
+  const vanishingAmount = vanishingMatch ? toNumber(vanishingMatch[1]!) : null;
+  if (vanishingAmount !== null) synthesizedTriggers.push({
+    event: "upkeep", subject: "you", effect: { kind: "vanishing" }, optional: false, targetKind: "none", sourceText: `Vanishing ${vanishingAmount}`
+  });
   const devourAmount = recognized.devourAmount ?? null;
   if (devourAmount !== null) synthesizedTriggers.push({
     event: "enters-battlefield", subject: "self",
@@ -6316,6 +6336,7 @@ export function cardProfile(card: CardData): CardProfile {
     entersWithCounters: isPermanent
       ? (() => {
           const counters = parseEntersWithCounters(text);
+          if (vanishingAmount !== null) counters.push({ kind: "time", amount: vanishingAmount });
           if (graftAmount === null) return counters;
           const existing = counters.find((counter) => counter.kind === "+1/+1");
           return existing
@@ -6323,6 +6344,7 @@ export function cardProfile(card: CardData): CardProfile {
             : [...counters, { kind: "+1/+1", amount: graftAmount }];
         })()
       : [],
+    vanishingAmount,
     entersWithVariableCounters: isPermanent ? parseEntersWithVariableCounters(text) : null,
     isPermanent,
     // Lands are played, not cast; everything else needs a payable printed cost.
