@@ -704,6 +704,7 @@ const C13_NIGHT_SOIL = () => make({ name: "Night Soil", type_line: "Enchantment"
 const C13_DISCIPLE_OF_GRISELBRAND = () => make({ name: "Disciple of Griselbrand", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}{B}", cmc: 3, power: "2", toughness: "2", oracle_text: "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.", scryfall_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad", oracle_id: "2d92a035-dd7a-4426-a8c0-f04e0b836dad" });
 const C13_SPELLBREAKER_BEHEMOTH = () => make({ name: "Spellbreaker Behemoth", type_line: "Creature — Beast", mana_cost: "{2}{R}{G}", cmc: 4, power: "5", toughness: "5", oracle_text: "Creature spells you control with power 5 or greater can't be countered.", scryfall_id: "cba07472-7212-4411-a9f9-38a48870ad69", oracle_id: "cba07472-7212-4411-a9f9-38a48870ad69" });
 const C13_FLICKERWISP = () => make({ name: "Flickerwisp", type_line: "Creature — Elemental", mana_cost: "{1}{W}{W}", cmc: 3, power: "3", toughness: "1", keywords: ["Flying"], oracle_text: "Flying\nWhen this creature enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step.", scryfall_id: "f6cccf30-2025-49bb-9b1e-240bbef03f27", oracle_id: "b23a3d30-6b8e-4aad-890f-db0c3af43ace" });
+const C13_MISTMEADOW_WITCH = () => make({ name: "Mistmeadow Witch", type_line: "Creature — Kithkin Wizard", mana_cost: "{1}{W}{U}", cmc: 3, power: "1", toughness: "3", oracle_text: "{2}{W}{U}: Exile target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "38e274e2-bd04-48de-a1df-44f0ee987ba8", scryfall_id: "38e274e2-bd04-48de-a1df-44f0ee987ba8" });
 const C13_FIEND_HUNTER = () => make({ name: "Fiend Hunter", type_line: "Creature — Human Cleric", mana_cost: "{1}{W}{W}", cmc: 3, power: "1", toughness: "3", oracle_text: "When ~ enters, you may exile another target creature.\nWhen ~ leaves the battlefield, return the exiled card to the battlefield under its owner's control.", scryfall_id: "cb9d557a-fc06-428c-8be6-7d28add33028", oracle_id: "cb9d557a-fc06-428c-8be6-7d28add33028" });
 const C13_VILE_REQUIEM = () => make({ name: "Vile Requiem", type_line: "Enchantment", mana_cost: "{2}{B}{B}", cmc: 4, oracle_text: "At the beginning of your upkeep, you may put a verse counter on this enchantment.\n{1}{B}, Sacrifice this enchantment: Destroy up to X target nonblack creatures, where X is the number of verse counters on this enchantment. They can't be regenerated.", scryfall_id: "923972d3-d838-43f8-800a-904489c5791a" });
 const C13_WELL_OF_LOST_DREAMS = () => make({ name: "Well of Lost Dreams", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Whenever you gain life, you may pay {X}, where X is less than or equal to the amount of life you gained. If you do, draw X cards.", scryfall_id: "b0394cf2-12a0-4d4f-87e0-fe8937e6faff" });
@@ -3492,6 +3493,27 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears"));
     expect(game.delayedReturns).toHaveLength(0);
     expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(false);
+  });
+
+  it("lets Mistmeadow Witch exile a creature and return it next end step", () => {
+    // CR 602.2b, 610.3, 603.7: the activated ability exiles its target on
+    // resolution and creates a delayed return under that card's owner's control.
+    const witch = C13_MISTMEADOW_WITCH();
+    expect(profileOf(witch)).toMatchObject({
+      activatedAbilities: [{ effect: { kind: "exile-target-permanent-delayed-return" }, targetKind: "creature" }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([], [witch, PLAINS(), PLAINS(), ISLAND(), ISLAND()], [], [BEAR()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Mistmeadow Witch")!;
+    const action = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === source.instance_id);
+    expect(action).toBeDefined();
+    game = applyAction(game, 0, { ...action!.action, targets: [{ kind: "permanent", instanceId: bear.instance_id }] } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.delayedReturns.length === 1);
+    expect(game.players[1]!.exile.some((card) => card.instance_id === bear.card.instance_id)).toBe(true);
+    game = passUntil(game, (state) => state.players[1]!.battlefield.some((permanent) => permanent.card.instance_id === bear.card.instance_id));
+    expect(game.delayedReturns).toHaveLength(0);
   });
 
   it("returns Fiend Hunter's linked creature when the Hunter leaves", () => {

@@ -3345,6 +3345,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Exile another target permanent\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
     return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
   }
+  if (/^Exile target creature\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
+    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "creature" };
+  }
 
   if (/^Untap ~$/i.test(text)) return { effect: { kind: "untap-source" }, target: "none" };
 
