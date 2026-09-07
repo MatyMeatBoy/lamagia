@@ -6526,10 +6526,17 @@ describe("casting", () => {
     expect(game.players[1]!.life).toBe(38);
   });
 
-  it("does not overclaim Fireball while its extra-target cost is unsupported", () => {
+  it("implements Fireball's extra-target cost and rounded-down split", () => {
     const profile = cardProfile(FIREBALL());
-    expect(profile.fullyImplemented).toBe(false);
-    expect(profile.unimplementedText.some((text) => /costs.*more.*target/i.test(text))).toBe(true);
+    expect(profile).toMatchObject({ fullyImplemented: true, additionalGenericPerTargetBeyondFirst: 1, variableTargetKind: "any" });
+    let game = readyToCast([FIREBALL()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [TRAMPLER()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 4, targets: [
+      { kind: "player", seat: 1 }, { kind: "permanent", instanceId: bear.instance_id }
+    ] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.life).toBe(38);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.damage).toBe(2);
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {

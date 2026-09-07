@@ -4433,7 +4433,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const targets = object.targets;
       if (!targets.length) return state;
       let next = state;
-      let remaining = effect.amount;
+      const amount = effect.amount === "X" ? object.variableValue : effect.amount;
+      if (effect.evenly) {
+        const share = Math.floor(Math.max(0, amount) / targets.length);
+        for (const target of targets) {
+          if (target.kind === "player") next = dealDamageFromObject(next, target.seat, share, sourceName, object);
+          else if (target.kind === "permanent") next = dealDamageToPermanent(next, target.instanceId, share, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+        }
+        return next;
+      }
+      let remaining = amount;
       for (let index = 0; index < targets.length && remaining > 0; index += 1) {
         const target = targets[index]!;
         const share = index === 0 ? remaining - (targets.length - 1) + 0 : 1;
@@ -7947,7 +7956,7 @@ function controlsLandType(state: GameState, seat: SeatId, subtype: string): bool
   return playerAt(state, seat).battlefield.some((permanent) => hasLandSubtype(cardProfile(permanent.card), subtype));
 }
 
-function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false, overloaded = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
+function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false, overloaded = false, targetCount = 1): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
   if (profile.combatOnly && !["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step)) return { legal: false };
@@ -8002,7 +8011,8 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
-    - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
+    - (flashback ? 0 : boardCostReduction(state, seat, card, profile))
+    + profile.additionalGenericPerTargetBeyondFirst * Math.max(0, targetCount - 1);
   const allowedRestrictions = allowedManaRestrictions(profile);
   const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowedRestrictions });
   if (!plan) return { legal: false };
@@ -10098,7 +10108,8 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   const returnPermanentId = action.returnPermanentId;
   const payReducedCost = Boolean(action.payReducedCost);
   const giftPromised = Boolean(action.giftPromised);
-  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost, giftPromised, overloaded);
+  const requested = action.targets ?? [];
+  const check = castableCard(state, seat, card, Boolean(fromCommand), action.variableValue ?? 0, action.mode, kicked, evoked, fromGraveyard, entwined, freeCast, payLifeCost, returnPermanentId, payReducedCost, giftPromised, overloaded, Math.max(1, requested.length));
   if (!check.legal) throw new Error(check.note ?? `No puedes lanzar ${card.name} ahora.`);
 
   const profile = cardProfile(card);
@@ -10112,12 +10123,12 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? (action.variableValue ?? 0) : 0);
   if (!spellCost) throw new Error(`No hay un coste válido para lanzar ${card.name}.`);
   const additionalGeneric = (fromCommand ? commanderTax(player, card.instance_id) : 0)
-    - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile));
+    - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile))
+    + profile.additionalGenericPerTargetBeyondFirst * Math.max(0, requested.length - 1);
   const allowedRestrictions = allowedManaRestrictions(profile);
   const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowedRestrictions });
   if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
-  const requested = action.targets ?? [];
   if (check.targetKinds?.length) {
     const chosen = requested.length
       ? requested
@@ -10136,6 +10147,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     if (!chosen.length) throw new Error(`${card.name} necesita un objetivo legal.`);
     const valid = chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)));
     if (!valid) throw new Error(`Objetivo ilegal para ${card.name}.`);
+    if (profile.variableTargetKind && new Set(chosen.map((target) => JSON.stringify(target))).size !== chosen.length) throw new Error(`${card.name} no puede elegir el mismo objetivo dos veces.`);
     action = { ...action, targets: chosen };
   }
 

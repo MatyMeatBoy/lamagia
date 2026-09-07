@@ -646,7 +646,8 @@ export type SpellEffect =
   /** Curse of the Forsaken: the attacking creature's controller gains life. */
   | { readonly kind: "gain-life-event-controller"; readonly amount: number }
   /** Divide fixed damage among one to three targets chosen by an attack/ETB trigger. */
-  | { readonly kind: "damage-divided-targets"; readonly amount: number }
+  /** Damage divided among selected targets; `evenly` models Fireball's rounded-down split (CR 601.2f). */
+  | { readonly kind: "damage-divided-targets"; readonly amount: number | "X"; readonly evenly?: boolean }
   /** Damage from the ability source equal to that source's current power. */
   | { readonly kind: "damage-source-power" }
   /** Tap a typed group as an optional trigger cost, then pump the source and damage its attacker. */
@@ -1264,6 +1265,10 @@ export interface CardProfile {
   readonly targetKind: TargetKind;
   /** Ordered target requirements for non-modal spells with multiple targets. */
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** Extra generic mana required for each target beyond the first (e.g. Fireball). */
+  readonly additionalGenericPerTargetBeyondFirst: number;
+  /** Target family that may be selected one or more times during casting. */
+  readonly variableTargetKind: Exclude<TargetKind, "none"> | null;
   readonly kickerCost: ManaCost | null;
   /** Overload alternative cost and its text-changing replacement (CR 702.96). */
   readonly overloadCost: ManaCost | null;
@@ -2685,6 +2690,8 @@ interface RecognizedText {
   readonly modalChoices: ModalChoice[];
   readonly targetKind: TargetKind;
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  readonly additionalGenericPerTargetBeyondFirst?: number;
+  readonly variableTargetKind?: Exclude<TargetKind, "none"> | null;
   combatOnly?: boolean;
   kickerCost?: ManaCost | null;
   overloadCost?: ManaCost | null;
@@ -4823,6 +4830,17 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  // Fireball's target count is part of the casting cost, not a resolution
+  // choice. Keep it in the profile so the payment planner sees every target.
+  const fireball = /^(?:Fireball|~) deals X damage to any target\.\s*It costs \{1\} more to cast for each target beyond the first\.?$/i.test(joined);
+  if (fireball) {
+    return {
+      effects: [{ kind: "damage-divided-targets", amount: "X", evenly: true }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "any",
+      additionalGenericPerTargetBeyondFirst: 1, variableTargetKind: "any",
+      unimplementedText: [], covered: true
+    };
+  }
   // Sun Droplet's two self-contained abilities are printed on one Oracle line
   // in older imports. Keep both reusable trigger primitives together instead
   // of letting the generic one-line trigger parser discard the second clause.
@@ -6592,6 +6610,8 @@ export function cardProfile(card: CardData): CardProfile {
     triggers: [...gatedTriggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
+    additionalGenericPerTargetBeyondFirst: recognized.additionalGenericPerTargetBeyondFirst ?? 0,
+    variableTargetKind: recognized.variableTargetKind ?? null,
     kickerCost: recognized.kickerCost ?? null,
     overloadCost: recognized.overloadCost ?? null,
     overloadEffects: recognized.overloadEffects ?? [],
