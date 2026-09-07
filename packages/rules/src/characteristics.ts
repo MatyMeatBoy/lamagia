@@ -716,6 +716,8 @@ export type SpellEffect =
   | { readonly kind: "destroy-doomed-permanents" }
   /** Mystic Barrier updates the table-wide nearest-opponent direction. */
   | { readonly kind: "choose-attack-direction" }
+  /** Order of Succession exchanges one creature around the table after a direction choice. */
+  | { readonly kind: "order-of-succession" }
   /** Cruel Ultimatum's fixed sequence of target and controller effects. */
   | { readonly kind: "cruel-ultimatum" }
   /** Return each non-token permanent to its owner's control without changing zones. */
@@ -4598,6 +4600,9 @@ function recognizeText(text: string): RecognizedText {
       { event: "enters-battlefield", subject: "self", effect, optional: false, targetKind: "none", sourceText: text },
       { event: "upkeep", subject: "you", effect, optional: false, targetKind: "none", sourceText: text }
     ], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
+  }
+  if (/^Choose left or right\. Starting with you and proceeding in the chosen direction, each player chooses a creature controlled by the next player in that direction\. Each player gains control of the creature they chose\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
+    return { effects: [{ kind: "order-of-succession" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
   }
   if (/^When (?:this artifact|~) enters, each player chooses a nonland permanent and puts a doom counter on it\. \{2\}, \{T\}, Sacrifice (?:this artifact|~): Destroy each permanent with a doom counter on it\.?$/i.test(text.replace(/\s+/g, " ").trim())) {
     const sourceText = text.replace(/\s+/g, " ").trim();
