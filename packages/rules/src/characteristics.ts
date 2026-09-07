@@ -4148,6 +4148,13 @@ function recognizeText(text: string): RecognizedText {
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature-you-control", unimplementedText: [], covered: true
     };
   }
+  if (/^Tempting offer\s*[—–-]\s*Search your library for a land card and put it onto the battlefield\.\s*Each opponent may search their library for a land card and put it onto the battlefield\.\s*For each opponent who searches a library this way, search your library for a land card and put it onto the battlefield\.\s*Then each player who searched a library this way shuffles\.?$/i.test(joined)) {
+    const search = { kind: "search-library" as const, types: ["Land"] as CardType[], destination: "battlefield" as const, reveal: false };
+    return {
+      effects: [{ kind: "tempting-offer", base: search, opponent: search, reward: search }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
   if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {
     return {
       effects: [{ kind: "spinal-embrace" }], triggers: [], activatedAbilities: [], modalChoices: [],

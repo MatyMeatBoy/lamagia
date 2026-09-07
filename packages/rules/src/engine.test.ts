@@ -677,6 +677,7 @@ const C13_SPINAL_EMBRACE = () => make({ name: "Spinal Embrace", type_line: "Inst
 const C13_TEMPT_WITH_VENGEANCE = () => make({ name: "Tempt with Vengeance", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Tempting offer — Create X 1/1 red Elemental creature tokens with haste. Each opponent may create X 1/1 red Elemental creature tokens with haste. For each opponent who does, create X 1/1 red Elemental creature tokens with haste.", oracle_id: "8e356df5-ca92-4be2-871e-8965c2510fbe" });
 const C13_TEMPT_WITH_GLORY = () => make({ name: "Tempt with Glory", type_line: "Sorcery", mana_cost: "{3}{W}", cmc: 4, oracle_text: "Tempting offer — Put a +1/+1 counter on each creature you control. Each opponent may put a +1/+1 counter on each creature they control. For each opponent who does, put a +1/+1 counter on each creature you control.", oracle_id: "5a8dd1b7-b63e-4997-9fe8-5e8816bc051b" });
 const C13_TEMPT_WITH_REFLECTIONS = () => make({ name: "Tempt with Reflections", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Tempting offer — Choose target creature you control. Create a token that's a copy of that creature. Each opponent may create a token that's a copy of that creature. For each opponent who does, create a token that's a copy of that creature.", oracle_id: "76c142ef-0f07-4215-8d11-d25f7114c70d" });
+const C13_TEMPT_WITH_DISCOVERY = () => make({ name: "Tempt with Discovery", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Tempting offer — Search your library for a land card and put it onto the battlefield. Each opponent may search their library for a land card and put it onto the battlefield. For each opponent who searches a library this way, search your library for a land card and put it onto the battlefield. Then each player who searched a library this way shuffles.", oracle_id: "4baa6145-216e-476b-b178-aaaa1e633701" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6269,6 +6270,31 @@ describe("casting", () => {
     game = applyAction(game, 1, { type: "choose-trigger", sourceId: offer.sourceId, accept: true });
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(3);
     expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Grizzly Bears")).toHaveLength(2);
+  });
+
+  it("chains Tempt with Discovery searches and rewards each accepting opponent", () => {
+    const profile = profileOf(C13_TEMPT_WITH_DISCOVERY());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "tempting-offer" }], targetKind: "none" });
+    let game = readyToCast([C13_TEMPT_WITH_DISCOVERY()], [FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({ library: [...toHand(0, [MOUNTAIN()], "discovery-caster"), ...player.library] }));
+    game = stage(game, 1, (player) => ({ library: [...toHand(1, [ISLAND()], "discovery-opponent"), ...player.library] }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library" && state.pendingChoice.seat === 0);
+    const base = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: base.sourceId, query: "Mountain" });
+    const offer = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(offer.seat).toBe(1);
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: offer.sourceId, accept: true });
+    const opponentSearch = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    expect(opponentSearch.seat).toBe(1);
+    game = applyAction(game, 1, { type: "choose-library-card", sourceId: opponentSearch.sourceId, query: "Island" });
+    const rewardSearch = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    expect(rewardSearch.seat).toBe(0);
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: rewardSearch.sourceId, query: "Forest" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Mountain" || permanent.card.name === "Forest").length).toBeGreaterThanOrEqual(2);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Island")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Tempt with Discovery")).toBe(true);
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {

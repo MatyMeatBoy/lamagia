@@ -525,6 +525,13 @@ export type PendingChoice =
         readonly remainingOpponents: readonly SeatId[];
         readonly variableValue: number;
       };
+      /** Search continuation for Tempt with Discovery. */
+      readonly temptingSearch?: {
+        readonly controller: SeatId;
+        readonly sourceId: string;
+        readonly search: Extract<SpellEffect, { kind: "search-library" }>;
+        readonly remainingOpponents: readonly SeatId[];
+      };
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
@@ -597,6 +604,15 @@ export type PendingChoice =
       readonly optionIds: readonly string[];
       readonly sourceCard: GameCard;
       readonly search: Extract<SpellEffect, { kind: "search-library" }>;
+      /** Tempt with Discovery continuation; omitted for ordinary searches. */
+      readonly temptingSearch?: {
+        readonly controller: SeatId;
+        readonly sourceId: string;
+        readonly stage: "base" | "opponent" | "reward";
+        readonly searchSeat: SeatId;
+        readonly search: Extract<SpellEffect, { kind: "search-library" }>;
+        readonly remainingOpponents: readonly SeatId[];
+      };
       /** Spells move to the graveyard after resolving; activated sources already paid their costs. */
       readonly returnSourceToGraveyard: boolean;
       /** Flashback replaces that destination with exile when the search choice finishes. */
@@ -5943,6 +5959,79 @@ function beginLookTopSelection(
   };
 }
 
+interface TemptingSearchMeta {
+  readonly controller: SeatId;
+  readonly searchSeat: SeatId;
+  readonly sourceId: string;
+  readonly stage: "base" | "opponent" | "reward";
+  readonly search: Extract<SpellEffect, { kind: "search-library" }>;
+  readonly remainingOpponents: readonly SeatId[];
+}
+
+function temptingLandOptions(state: GameState, seat: SeatId, search: Extract<SpellEffect, { kind: "search-library" }>): string[] {
+  return playerAt(state, seat).library.filter((card) => {
+    const profile = cardProfile(card);
+    return search.types.some((type) => profile.types.includes(type))
+      && (!search.subtypes?.length || search.subtypes.some((subtype) => hasSubtype(profile, subtype)));
+  }).map((card) => card.instance_id);
+}
+
+function retireTemptingSearch(state: GameState, sourceCard: GameCard): GameState {
+  if (sourceCard.token || playerAt(state, sourceCard.owner).graveyard.some((card) => card.instance_id === sourceCard.instance_id)) return state;
+  return withPlayer(state, sourceCard.owner, (player) => ({ ...player, graveyard: [...player.graveyard, sourceCard] }));
+}
+
+function queueTemptingSearchOffer(state: GameState, sourceCard: GameCard, meta: TemptingSearchMeta): GameState {
+  const opponent = meta.remainingOpponents[0];
+  if (opponent === undefined) return retireTemptingSearch(state, sourceCard);
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "optional-trigger",
+      seat: opponent,
+      sourceId: `${meta.sourceId}:offer:${opponent}`,
+      sourceCard,
+      triggerEffect: { kind: "compound", effects: [] },
+      sourceController: meta.controller,
+      temptingSearch: {
+        controller: meta.controller,
+        sourceId: meta.sourceId,
+        search: meta.search,
+        remainingOpponents: meta.remainingOpponents.slice(1)
+      }
+    }
+  };
+}
+
+function beginTemptingSearchChoice(state: GameState, sourceCard: GameCard, meta: TemptingSearchMeta): GameState {
+  const optionIds = temptingLandOptions(state, meta.searchSeat, meta.search);
+  if (!optionIds.length) return advanceTemptingSearch(state, sourceCard, meta);
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "search-library",
+      seat: meta.searchSeat,
+      sourceId: `${meta.sourceId}:search:${meta.stage}:${meta.searchSeat}`,
+      optionIds,
+      sourceCard,
+      search: meta.search,
+      temptingSearch: meta,
+      returnSourceToGraveyard: false,
+      exileSourceAfterResolution: false
+    }
+  };
+}
+
+function advanceTemptingSearch(state: GameState, sourceCard: GameCard, meta: TemptingSearchMeta): GameState {
+  if (meta.stage === "base") return queueTemptingSearchOffer(state, sourceCard, meta);
+  if (meta.stage === "opponent") {
+    return beginTemptingSearchChoice(state, sourceCard, { ...meta, stage: "reward", searchSeat: meta.controller });
+  }
+  return queueTemptingSearchOffer(state, sourceCard, meta);
+}
+
 function resolveTop(state: GameState): GameState {
   const object = state.stack.at(-1);
   if (!object) return state;
@@ -6097,6 +6186,20 @@ function resolveTop(state: GameState): GameState {
   if (lookTop) {
     const amount = lookTop.amount === "source-counter" ? object.variableValue : lookTop.amount;
     return beginLookTopSelection(next, object.controller, object.id, object.card, amount, lookTop.types, lookTop.destination, lookTop.returnAtEndStep, !object.activated, Boolean(object.flashback), lookTop.minPower);
+  }
+
+  const temptingSearch = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "tempting-offer" }> =>
+    effect.kind === "tempting-offer" && effect.base.kind === "search-library");
+  const temptingLandSearch = temptingSearch?.base.kind === "search-library" ? temptingSearch.base : null;
+  if (temptingLandSearch) {
+    return beginTemptingSearchChoice(next, object.card, {
+      controller: object.controller,
+      sourceId: object.id,
+      stage: "base",
+      searchSeat: object.controller,
+      search: temptingLandSearch,
+      remainingOpponents: opponentsOf(next, object.controller)
+    });
   }
   const viewHand = profile.effects.find((effect): effect is Extract<SpellEffect, { kind: "look-at-target-players-hand" }> => effect.kind === "look-at-target-players-hand");
   if (viewHand) {
@@ -9159,6 +9262,27 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
   if (!choice || choice.type !== "optional-trigger" || choice.seat !== seat) throw new Error("No tienes una elección de trigger pendiente.");
   if (choice.sourceId !== action.sourceId) throw new Error("Esa elección de trigger ya no está pendiente.");
   let next: GameState = { ...state, pendingChoice: null };
+  if (choice.temptingSearch) {
+    const offer = choice.temptingSearch;
+    if (!action.accept) {
+      return logged(queueTemptingSearchOffer(next, choice.sourceCard, {
+        controller: offer.controller,
+        searchSeat: offer.controller,
+        sourceId: offer.sourceId,
+        stage: "reward",
+        search: offer.search,
+        remainingOpponents: offer.remainingOpponents
+      }), seat, `${playerAt(state, seat).name} rechaza la oferta tentadora de ${choice.sourceCard.name}.`);
+    }
+    return logged(beginTemptingSearchChoice(next, choice.sourceCard, {
+      controller: offer.controller,
+      searchSeat: seat,
+      sourceId: offer.sourceId,
+      stage: "opponent",
+      search: offer.search,
+      remainingOpponents: offer.remainingOpponents
+    }), seat, `${playerAt(state, seat).name} acepta la oferta tentadora de ${choice.sourceCard.name}.`);
+  }
   let tapCount = 0;
   if (choice.paymentBy === "opponent") {
     if (!action.accept) {
@@ -9322,6 +9446,9 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
   }));
   if (choice.search.destination === "battlefield") {
     next = putOntoBattlefield(next, seat, selected, false, choice.search.tapped === true);
+  }
+  if (choice.temptingSearch) {
+    next = advanceTemptingSearch(next, choice.sourceCard, choice.temptingSearch);
   }
   const destination = choice.search.destination === "top" ? "la parte superior de su biblioteca"
     : choice.search.destination === "hand" ? "su mano"

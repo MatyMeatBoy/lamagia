@@ -564,3 +564,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-temporary-control-mutiny` | Reusable temporary control change, untap, and haste until cleanup for Mass Mutiny (CR 611.3,  control-change duration) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-spinal-embrace` | Reusable combat-only cast gate and next-end-step sacrifice/life-gain delayed trigger for Spinal Embrace (CR 508.1, 603.7) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-tempting-offer` | Reusable Tempting Offer continuation: each opponent accepts or declines privately, and each acceptance repeats the caster's reward (CR 118.12) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-tempting-offer-search` | Reusable chained private land-library search for Tempt with Discovery, including per-opponent acceptance and caster reward searches (CR 118.12, 701.19) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
