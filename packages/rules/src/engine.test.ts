@@ -383,6 +383,7 @@ const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcer
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
 const C13_SUDDEN_SPOILING = () => make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.", oracle_id: "dce202c7-fe8e-462a-858e-7a5a69bd5b6b", scryfall_id: "14d8bf94-ba55-437f-ac69-ece24049944d" });
 const C13_PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Creature — Insect", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter on this creature.", oracle_id: "0951b529-646c-4dfd-88ad-84ee117ce722", scryfall_id: "0951b529-646c-4dfd-88ad-84ee117ce722" });
+const C13_FURNACE_CELEBRATION = () => make({ name: "Furnace Celebration", type_line: "Enchantment", mana_cost: "{1}{R}{R}", cmc: 3, oracle_text: "Whenever you sacrifice another permanent, you may pay {2}. If you do, Furnace Celebration deals 2 damage to any target.", oracle_id: "af6d6844-c612-4731-86da-59a8fa02956b", scryfall_id: "af6d6844-c612-4731-86da-59a8fa02956b" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
 const C13_DECEIVER_EXARCH = () => make({ name: "Deceiver Exarch", type_line: "Creature — Cleric", mana_cost: "{2}{U}", cmc: 3, power: "1", toughness: "4", oracle_text: "Flash\nWhen this creature enters, choose one —\n• Untap target permanent you control.\n• Tap target permanent an opponent controls.", oracle_id: "3c939ea6-68b7-4965-b1d3-af1d3dc79778", scryfall_id: "b9c5761b-52f8-4f43-abfb-8d2366500f8f" });
 const THOUSAND_YEAR_ELIXIR = () => make({ name: "Thousand-Year Elixir", type_line: "Artifact", mana_cost: "{3}", cmc: 3, oracle_text: "You may activate abilities of creatures you control as though those creatures had haste.\n{1}, {T}: Untap target creature.", oracle_id: "4dc5726e-2f7e-4c2b-9616-c3301d212f78" });
@@ -3453,6 +3454,31 @@ describe("casting", () => {
     const damagedPhantom = damageGame.players[0]!.battlefield.find((permanent) => permanent.instance_id === damageTarget.instance_id)!;
     expect(damagedPhantom.counters["+1/+1"]).toBe(1);
     expect(damagedPhantom.damage).toBe(0);
+  });
+
+  it("reuses the sacrificed-permanent event for Furnace Celebration", () => {
+    expect(profileOf(C13_FURNACE_CELEBRATION())).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ event: "permanent-sacrificed", optional: true, payCost: { raw: "{2}" }, targetKind: "any", effect: { kind: "damage-any-target", amount: 2 } }]
+    });
+    let game = readyToCast([BOLT()], [C13_FURNACE_CELEBRATION(), CARNAGE_ALTAR(), BEAR(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    const altar = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Carnage Memory")!;
+    const bear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === altar.instance_id)!;
+    if (activation.action.type !== "activate") throw new Error("Carnage Altar sacrifice activation was not offered.");
+    game = applyAction(game, 0, { ...activation.action, sacrificeId: bear.instance_id });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger" || state.pendingChoice?.type === "trigger-target");
+    if (game.pendingChoice?.type === "trigger-target") {
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "player", seat: 1 } });
+      game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    }
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    if (game.pendingChoice?.type === "trigger-target") {
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "player", seat: 1 } });
+    }
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null);
+    expect(game.players[1]!.life).toBe(38);
   });
 
   it("resolves Oloro's optional life-gain draw and opponent life loss", () => {

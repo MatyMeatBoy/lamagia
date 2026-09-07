@@ -6661,7 +6661,6 @@ opponent (not the Champion's own controller, who cast the destroy
 spell that killed it), restoring them to 40. Validation: full **918**
 rules tests green (1 new), `npm run check` across all four
 workspaces, 200/200 simulated games.
-
 ## C13 rescue audit: Jeleva on the current integration base (2026-09-07)
 
 The historical Jeleva commit `11440733` was rejected by the integrator
@@ -6678,3 +6677,11 @@ opponent-owned exiled instant is offered and cast for free after Jeleva
 attacks. Validation: `npm run check --workspace=@prossh/rules` and the full
 rules suite pass (**923** tests, 6 skipped). The commit is ready for
 integrator review; do not count the old `11440733` as integrated.
+
+## Current-base rescue audit — 2026-09-07
+
+- Base verified: `origin/feat/activated-abilities-and-triggers` at `f8b86d7a`.
+- Historical card claims were not treated as integrated evidence. Current focused rescue: `Furnace Celebration | af6d6844-c612-4731-86da-59a8fa029ef3`.
+- Added reusable `permanent-sacrificed` event plumbing and explicit sacrifice markers across engine cost/effect paths; profile and scenario now verify the optional `{2}` payment and 2-damage target.
+- Commit is published from `codex/c13-cluster-rescan`; main should cherry-pick only this focused commit.
+- Second focused rescue: `Deadwood Treefolk | b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`; Vanishing and the paired enters/leaves graveyard-return trigger are profile-tested on the worker branch.
