@@ -544,6 +544,7 @@ export type PendingChoice =
       /** Typed permanents chosen and tapped when the optional trigger resolves. */
       readonly tapCost?: TriggerDefinition["tapCost"];
       readonly temptingOffer?: { readonly controller: SeatId; readonly reward: SpellEffect; readonly remainingOpponents: readonly SeatId[]; readonly variableValue: number };
+      readonly fromTheAshes?: { readonly sourceId: string; readonly remainingSeats: readonly SeatId[] };
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       /** Remaining Ward permanents that still need a payment decision for the same spell. */
@@ -621,6 +622,7 @@ export type PendingChoice =
       readonly returnSourceToGraveyard: boolean;
       /** Flashback replaces that destination with exile when the search choice finishes. */
       readonly exileSourceAfterResolution: boolean;
+      readonly fromTheAshes?: { readonly sourceId: string; readonly remainingSeats: readonly SeatId[] };
     }
   | {
       readonly type: "search-library-multi";
@@ -2926,6 +2928,16 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return { ...state, priorityOpen: false, pendingChoice: {
         type: "choose-direction", seat: controller, sourceId: object.id, sourceCard: object.card, effect
       } };
+    }
+    case "from-the-ashes": {
+      const lands = allPermanents(state).filter((permanent) => {
+        const profile = cardProfile(permanent.card);
+        return isLand(profile) && !profile.supertypes.some((value) => value.toLowerCase() === "basic");
+      });
+      let next = state;
+      const seats: SeatId[] = [];
+      for (const land of lands) { next = destroyPermanent(next, land); seats.push(land.controller); }
+      return beginFromTheAshesSearch(next, object.card, object.id, seats);
     }
     case "compound": {
       let next = state;
@@ -10067,6 +10079,19 @@ function beginOrderSuccessionChoice(state: GameState, source: StackObject, order
   return { ...state, priorityOpen: false, pendingChoice: { type: "choose-order-creature", seat: order[index]!, sourceId: source.id, sourceCard: source.card, order, index, selections } };
 }
 
+const FROM_THE_ASHES_SEARCH: Extract<SpellEffect, { kind: "search-library" }> = { kind: "search-library", types: ["Land"], subtypes: ["Basic"], destination: "battlefield", reveal: false };
+function beginFromTheAshesSearch(state: GameState, sourceCard: GameCard, sourceId: string, seats: readonly SeatId[]): GameState {
+  const seat = seats[0];
+  if (seat === undefined) return state;
+  const remainingSeats = seats.slice(1);
+  const optionIds = playerAt(state, seat).library.filter((card) => {
+    const profile = cardProfile(card);
+    return profile.types.includes("Land") && profile.supertypes.some((value) => value.toLowerCase() === "basic");
+  }).map((card) => card.instance_id);
+  if (!optionIds.length) return beginFromTheAshesSearch(state, sourceCard, sourceId, remainingSeats);
+  return { ...state, priorityOpen: false, pendingChoice: { type: "optional-trigger", seat, sourceId: `${sourceId}:ashes:${seat}:${seats.length}`, sourceCard, triggerEffect: FROM_THE_ASHES_SEARCH, sourceController: sourceCard.owner, fromTheAshes: { sourceId, remainingSeats } } };
+}
+
 function applyChooseDirection(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-direction" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "choose-direction" || choice.seat !== seat) throw new Error("No direction choice pending.");
@@ -10241,6 +10266,10 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
  };
   next = applyEffect(next, source, choice.triggerEffect);
+  if (choice.fromTheAshes) {
+    if (!action.accept) return logged(beginFromTheAshesSearch(next, choice.sourceCard, choice.fromTheAshes.sourceId, choice.fromTheAshes.remainingSeats), seat, `${playerAt(state, seat).name} declines the search from ${choice.sourceCard.name}.`);
+    return logged({ ...next, pendingChoice: { type: "search-library", seat, sourceId: `${choice.fromTheAshes.sourceId}:search:${seat}`, optionIds: playerAt(next, seat).library.filter((card) => { const profile = cardProfile(card); return profile.types.includes("Land") && profile.supertypes.some((value) => value.toLowerCase() === "basic"); }).map((card) => card.instance_id), sourceCard: choice.sourceCard, search: FROM_THE_ASHES_SEARCH, returnSourceToGraveyard: false, exileSourceAfterResolution: false, fromTheAshes: choice.fromTheAshes } }, seat, `${playerAt(state, seat).name} accepts the search from ${choice.sourceCard.name}.`);
+  }
   if (choice.temptingOffer) {
     if (action.accept) next = applyEffect(next, { ...source, controller: choice.temptingOffer.controller }, choice.temptingOffer.reward);
     const remaining = choice.temptingOffer.remainingOpponents[0];
@@ -10284,7 +10313,9 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
   const destination = choice.search.destination === "top" ? "la parte superior de su biblioteca"
     : choice.search.destination === "hand" ? "su mano"
     : choice.search.destination === "graveyard" ? "su cementerio" : "el campo de batalla";
-  return logged(next, seat, `${player.name} ${choice.search.reveal ? `revela ${selected.name} y la pone en ${destination}` : `pone ${selected.name} en ${destination}`}.`);
+  const result = logged(next, seat, `${player.name} ${choice.search.reveal ? `revela ${selected.name} y la pone en ${destination}` : `pone ${selected.name} en ${destination}`}.`);
+  if (choice.fromTheAshes) return beginFromTheAshesSearch(result, choice.sourceCard, choice.fromTheAshes.sourceId, choice.fromTheAshes.remainingSeats);
+  return result;
 }
 
 function applyResolveLibraryPick(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "resolve-library-pick" }>): GameState {
