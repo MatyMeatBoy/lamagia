@@ -246,6 +246,17 @@ describe("mana abilities", () => {
     });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("keeps Phthisis's separated life-loss rider attached to destruction", () => {
+    const profile = cardProfile(card({
+      name: "Phthisis", type_line: "Sorcery", mana_cost: "{3}{B}{B}{B}{B}",
+      oracle_text: "Destroy target creature.\nIts controller loses life equal to its power plus its toughness.\nSuspend 5—{1}{B}"
+    }));
+    expect(profile.effects).toEqual([{ kind: "destroy-target-creature-then-life-loss" }]);
+    expect(profile.targetKind).toBe("creature");
+    expect(profile.unimplementedText).toEqual(["Suspend 5—{1}{B}"]);
+    expect(profile.fullyImplemented).toBe(false);
+  });
 });
 
 describe("enters tapped", () => {

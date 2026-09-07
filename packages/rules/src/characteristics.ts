@@ -4172,6 +4172,19 @@ function recognizeText(text: string): RecognizedText {
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature-card-in-your-graveyard", unimplementedText: [], covered: true
     };
   }
+  // Modern Oracle commonly separates Phthisis's dependent life-loss rider
+  // into its own sentence. Keep the two lines coupled so the engine retains
+  // the target's last-known power/toughness after destruction (CR 608.2h).
+  const modernDestroyCreatureLifeLoss = body.length >= 2
+    && /^Destroy target creature\.?$/i.test(body[0]!.text)
+    && /^Its controller loses life equal to its power plus its toughness\.?$/i.test(body[1]!.text);
+  if (modernDestroyCreatureLifeLoss) {
+    return {
+      effects: [{ kind: "destroy-target-creature-then-life-loss" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature",
+      unimplementedText: body.slice(2).map((entry) => entry.text), covered: body.length === 2
+    };
+  }
   if (/^Destroy target creature\. Its controller loses life equal to its power plus its toughness\.$/i.test(joined)) {
     return {
       effects: [{ kind: "destroy-target-creature-then-life-loss" }],
