@@ -866,6 +866,10 @@ export type SpellEffect =
   | { readonly kind: "tap-target-creature-and-lock" }
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
   | { readonly kind: "tap-or-untap-target-permanent" }
+  /** Control lasts only while the activated source remains tapped and controlled. */
+  | { readonly kind: "gain-control-target-while-source-tapped" }
+  /** Moves the source commander from the command zone to the battlefield. */
+  | { readonly kind: "put-source-from-command-zone" }
   | { readonly kind: "target-cant-block" }
   /** "Your opponents can't cast spells this turn." (Silence, CR 116.3). */
   | { readonly kind: "opponents-cant-cast-spells-this-turn" }
@@ -1368,6 +1372,8 @@ export interface CardProfile {
   readonly entersTapped: EntersTappedRule;
   /** Static replacement rule that keeps this permanent tapped during untap. */
   readonly doesNotUntapDuringUntap: boolean;
+  /** The controller may decline to untap this permanent during untap (CR 502.2). */
+  readonly mayChooseNotToUntap: boolean;
   /** Printed attack/block restrictions and landwalk evasion. */
   readonly combatRules: CombatRules;
   /** Prevents damage to this permanent by removing one matching counter (CR 614.1). */
@@ -4667,6 +4673,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Tap enchanted creature$/i.test(text)) return { effect: { kind: "tap-enchanted-creature" }, target: "none" };
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent(?: of their choice)?$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
+  if (/^Gain control of target creature for as long as you control ~ and ~ remains tapped\.?$/i.test(text)) {
+    return { effect: { kind: "gain-control-target-while-source-tapped" }, target: "creature" };
+  }
+  if (/^Put ~ onto the battlefield from the command zone\.?$/i.test(text)) {
+    return { effect: { kind: "put-source-from-command-zone" }, target: "none" };
+  }
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if (/^Your opponents can'?t cast spells this turn$/i.test(text)) return { effect: { kind: "opponents-cant-cast-spells-this-turn" }, target: "none" };
   if (/^This turn, creatures can'?t block unless their controller pays \{X\} for each blocking creature they control$/i.test(text)) {
@@ -5580,6 +5592,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^Whenever an? (?:Plains|Island|Swamp|Mountain|Forest) is tapped for mana, its controller adds an additional \{[WUBRG]\}\.?$/i.test(line)) continue;
     if (/^Whenever enchanted land is tapped for mana, its controller adds an additional \{[WUBRGC]\}\.?$/i.test(line)) continue;
     if (/^~ doesn[’']t untap during your untap step\.?$/i.test(line)) continue;
+    if (/^You may choose not to untap ~ during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     if (/^Skip your draw step\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
@@ -6510,6 +6523,7 @@ export function cardProfile(card: CardData): CardProfile {
   const giftPromisedRecognized = giftPromisedMatch ? recognizeSentence(giftPromisedMatch[1]!) : null;
   const giftPromisedTargetKind = giftPromisedRecognized && giftPromisedRecognized.target !== "none" ? giftPromisedRecognized.target : null;
   const doesNotUntapDuringUntap = text.split("\n").some((line) => /^~ doesn[’']t untap during your untap step\.?$/i.test(line.trim()));
+  const mayChooseNotToUntap = text.split("\n").some((line) => /^You may choose not to untap ~ during your untap step\.?$/i.test(line.trim()));
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
     const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
@@ -6698,6 +6712,7 @@ export function cardProfile(card: CardData): CardProfile {
     preventsDamageByRemovingCounter: damageCounterMatch?.[1]?.trim().replace(/\s+/g, " ").toLowerCase() ?? null,
     entersTapped: types.includes("Land") ? parseEntersTapped(text, face.type_line) : { kind: "untapped" },
     doesNotUntapDuringUntap,
+    mayChooseNotToUntap,
     entersWithCounters: isPermanent
       ? (() => {
           const counters = parseEntersWithCounters(text);
