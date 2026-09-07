@@ -5895,9 +5895,22 @@ function resolveTop(state: GameState): GameState {
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
       return logged(next, object.controller, `${object.card.name} se resuelve: no hay una carta válida en la biblioteca.`);
     }
-    // "up to N": fetch deterministically and skip the interactive choice.
-    if (search.count && search.count > 1 && search.destination === "battlefield") {
-      const picked = options.slice(0, search.count);
+    const requestedCount = search.count === "players-with-land-lead"
+      ? next.players.filter((candidate) => {
+        const candidateLands = candidate.battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
+        const controllerLands = playerAt(next, object.controller).battlefield
+          .filter((permanent) => isLand(cardProfile(permanent.card))).length;
+        return candidateLands >= controllerLands + 2;
+      }).length
+      : search.count;
+    if (requestedCount === 0 && search.count === "players-with-land-lead") {
+      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library);
+      if (!object.activated) next = sendSpellToOwnerZone(next, object);
+      return logged(next, object.controller, `${object.card.name}: no hay jugadores con dos tierras más.`);
+    }
+    // "up to N": fetch deterministically for the reusable multi-card path.
+    if (requestedCount !== undefined && requestedCount > 1 && search.destination === "battlefield") {
+      const picked = options.slice(0, requestedCount);
       const pickedSet = new Set(picked);
       const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
       next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
@@ -8470,6 +8483,12 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
     if (!paid) throw new Error(`${source.card.name} ya no está en el campo para sacrificarse.`);
     next = movePermanentToZone(next, paid, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${source.card.name}.`);
+  }
+  if (ability.exilesSelf) {
+    const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
+    if (!paid) throw new Error(`${source.card.name} ya no está en el campo para exiliarse.`);
+    next = movePermanentToZone(next, paid, "exile");
+    next = logged(next, seat, `${player.name} exilia ${source.card.name}.`);
   }
   if (ability.discardsSelf) {
     const paid = playerAt(next, seat).hand.find((card) => card.instance_id === source.instance_id);

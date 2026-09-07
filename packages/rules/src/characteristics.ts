@@ -107,6 +107,8 @@ export interface ActivatedAbility {
   readonly index: number;
   readonly requiresTap: boolean;
   readonly sacrificesSelf: boolean;
+  /** The source permanent is exiled as an activation cost (CR 602.2b). */
+  readonly exilesSelf?: boolean;
   /** Untapped creature chosen as an activation cost, optionally by subtype. */
   readonly tapsCreature?: { readonly subtype?: string; readonly mode: "any" | "another" };
   /** Creature chosen as an activation cost, optionally excluding the source. */
@@ -803,7 +805,7 @@ export type SpellEffect =
       /** Ramp templates put the found land onto the battlefield tapped. */
       readonly tapped?: boolean;
       readonly reveal: boolean;
-      readonly count?: number;
+      readonly count?: number | "players-with-land-lead";
     }
   | {
       readonly kind: "search-library-multi";
@@ -2207,6 +2209,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   }
   // Mayael: the normal top-library review gains a reusable power predicate.
   const powerLookTop = /^Look at the top five cards of your library\. You may put a creature card with power (\d+) or greater from among them onto the battlefield\. Put the rest on the bottom of your library in any order\.?$/i.exec(parsedEffectText);
+  const surveyorScopeSearch = /^Search your library for up to X basic land cards, where X is the number of players who control at least two more lands than you\. Put those cards onto the battlefield, then shuffle\.?$/i.test(parsedEffectText);
   // Jar of Eyeballs: the number reviewed is the counter total removed as a
   // cost, so activation snapshots it before the source is emptied (CR 602.2b,
   // 121.1).  Reuse the normal private top-library selection flow.
@@ -2253,6 +2256,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
   const recognized = powerLookTop
     ? { effect: { kind: "look-top-select", amount: 5, types: ["Creature"] as const, destination: "battlefield" as const, minPower: Number(powerLookTop[1]) } as SpellEffect, target: "none" as TargetKind }
+    : surveyorScopeSearch
+    ? { effect: { kind: "search-library", types: ["Land"] as const, subtypes: ["Basic"] as const, destination: "battlefield" as const, tapped: false, reveal: false, count: "players-with-land-lead" as const } as SpellEffect, target: "none" as TargetKind }
     : selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : toggleSourceCounter
@@ -2286,6 +2291,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b|this\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
   const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText) || namedSelfSacrifice;
+  const exilesSelf = /exile\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText);
   const tapCreatureMatch = /tap\s+(an|another)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
   const tapsCreature = tapCreatureMatch ? {
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
@@ -2324,6 +2330,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
+    .replace(/exile\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:two|three|four|five|\d+)\s+cards?\b/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
@@ -2337,6 +2344,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     index,
     requiresTap,
     sacrificesSelf,
+    ...(exilesSelf ? { exilesSelf: true } : {}),
     ...(tapsCreature ? { tapsCreature } : {}),
     ...(sacrificeCreatures ? { sacrificesCreatures: { amount: toNumber(sacrificeCreatures[1])!, ...(sacrificeCreatures[2] ? { subtype: sacrificeCreatures[2].trim() } : {}) } } : {}),
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),

@@ -1068,4 +1068,16 @@ describe("faces and oracle normalisation", () => {
     });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("parses Surveyor's Scope as a reusable dynamic basic-land search", () => {
+    const profile = cardProfile(card({
+      name: "Surveyor's Scope", type_line: "Artifact", mana_cost: "{2}",
+      oracle_text: "{T}, Exile this artifact: Search your library for up to X basic land cards, where X is the number of players who control at least two more lands than you. Put those cards onto the battlefield, then shuffle."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      requiresTap: true, exilesSelf: true,
+      effect: { kind: "search-library", types: ["Land"], subtypes: ["Basic"], destination: "battlefield", count: "players-with-land-lead" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });

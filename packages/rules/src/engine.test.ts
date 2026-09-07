@@ -577,6 +577,7 @@ const C13_STRATEGIC_PLANNING = () => make({ name: "Strategic Planning", type_lin
 const C13_SKYWARD_EYE_PROPHETS = () => make({ name: "Skyward Eye Prophets", type_line: "Creature — Human Wizard", mana_cost: "{3}{G}{W}{U}", cmc: 6, power: "3", toughness: "3", oracle_text: "Vigilance\n{T}: Reveal the top card of your library. If it's a land card, put it onto the battlefield. Otherwise, put it into your hand.", scryfall_id: "056f9887-3ab0-486a-b859-5999d39f9ec2", oracle_id: "45bef776-121b-4489-9c46-f7b4fd4c3c0d" });
 const C13_AZORIUS_HERALD = () => make({ name: "Azorius Herald", type_line: "Creature — Spirit", mana_cost: "{1}{W}{U}", cmc: 3, power: "2", toughness: "2", oracle_text: "This creature can't be blocked.\nWhen this creature enters, you gain 4 life.\nWhen this creature enters, sacrifice it unless {U} was spent to cast it.", scryfall_id: "a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6", oracle_id: "a0476da9-51b1-4cd3-90c4-ad01d0e4c3d6" });
 const C13_ARMILLARY_SPHERE = () => make({ name: "Armillary Sphere", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{2}, {T}, Sacrifice this artifact: Search your library for up to two basic land cards, reveal them, put them into your hand, then shuffle.", scryfall_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d", oracle_id: "3963140c-da67-43e6-9514-fe9dc0a43c4d" });
+const C13_SURVEYORS_SCOPE = () => make({ name: "Surveyor's Scope", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}, Exile this artifact: Search your library for up to X basic land cards, where X is the number of players who control at least two more lands than you. Put those cards onto the battlefield, then shuffle.", oracle_id: "9633730d-c41f-4597-b806-55ce2dd848e9" });
 const C13_SPOILS_OF_VICTORY = () => make({ name: "Spoils of Victory", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Search your library for a Plains, Island, Swamp, Mountain, or Forest card and put that card onto the battlefield. Then shuffle.", scryfall_id: "8a7ee186-b25f-4185-830d-e8e7cf23d4e5", oracle_id: "852bd598-6e48-43c8-9211-740ae9e0c42e" });
 const C13_BURNISHED_HART = () => make({ name: "Burnished Hart", type_line: "Artifact Creature — Elk", mana_cost: "{3}", cmc: 3, power: "2", toughness: "2", oracle_text: "{3}, Sacrifice Burnished Hart: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.", scryfall_id: "893fed41-c144-433f-af88-bc7d419b7fb3" });
 const C13_AJANI_PRIDEMATE = () => make({ name: "Ajani's Pridemate", type_line: "Creature — Cat Soldier", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.", scryfall_id: "95e94dea-5ac0-4d6f-adec-ca147aee861f" });
@@ -8802,6 +8803,24 @@ describe("activated abilities", () => {
     expect(game.players[0]!.hand.filter((card) => card.name === "Swamp")).toHaveLength(1);
     expect(game.players[0]!.library.some((card) => card.name === "Island" || card.name === "Swamp")).toBe(false);
     expect(game.players[0]!.library.some((card) => card.name === "Mountain")).toBe(true);
+  });
+
+  it("exiles Surveyor's Scope and scales its basic-land search from the land lead", () => {
+    let game = readyOnBoard([C13_SURVEYORS_SCOPE()], { library: [ISLAND()] });
+    game = putOnBattlefield(game, 1, [FOREST(), FOREST()]);
+    const scope = permanentNamed(game, 0, "Surveyor's Scope")!;
+    const offered = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === scope.instance_id);
+    expect(offered).toBeDefined();
+
+    game = applyAction(game, 0, offered!.action);
+    expect(permanentNamed(game, 0, "Surveyor's Scope")).toBeUndefined();
+    expect(game.players[0]!.exile.some((card) => card.name === "Surveyor's Scope")).toBe(true);
+    expect(game.pendingChoice).toMatchObject({ type: "search-library", seat: 0 });
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    expect(choice.optionIds.length).toBeGreaterThan(0);
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: choice.sourceId, query: "Island" });
+    expect(permanentNamed(game, 0, "Island")).toBeDefined();
+    expect(game.players[0]!.exile.filter((card) => card.name === "Surveyor's Scope")).toHaveLength(1);
   });
 
   it("reuses typed basic-land subtypes for Spoils of Victory", () => {
