@@ -4998,6 +4998,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
     if (/^(?:(?:(?:white|blue|black|red|green)\s+spells)(?:\s+and\s+(?:white|blue|black|red|green)\s+spells)+|(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells) you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
+    if (/^If one or more \+1\/\+1 counters would be put on a creature you control, twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line)) continue;
+    if (/^If one or more tokens would be created under your control, twice that many of those tokens are created instead\.?$/i.test(line)) continue;
     if (/^[A-Za-z][A-Za-z'’/-]* spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     // "At the beginning of your first main phase, choose one or more —"
     // (Black Market Connections): unlike a spell's modal choice, this is a
