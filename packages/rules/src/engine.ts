@@ -8159,7 +8159,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         choice.remainingCards.forEach((card, ordinal) => {
           const profile = cardProfile(card);
           if (choice.types.length && !choice.types.some((type) => profile.types.includes(type))) return;
-          if (choice.subtypes?.length && !choice.subtypes.some((subtype) => hasSubtype(profile, subtype))) return;
+          if (choice.subtypes?.length && !choice.subtypes.some((subtype) =>
+            choice.types.includes("Land") ? profile.types.includes("Land") && profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype.toLowerCase()) : hasSubtype(profile, subtype))) return;
           if (choice.minPower !== undefined && (profile.power === null || profile.power < choice.minPower)) return;
           actions.push({
             action: { type: "choose-look-top", sourceId: choice.sourceId, ordinal },
@@ -11018,7 +11019,8 @@ function applyChooseLookTop(state: GameState, seat: SeatId, action: Extract<Game
   if (!selected) throw new Error("Debes elegir una carta visible de la selección superior.");
   const selectedProfile = cardProfile(selected);
   if (choice.types.length && !choice.types.some((type) => selectedProfile.types.includes(type))) throw new Error("Esa carta no cumple el tipo requerido.");
-  if (choice.subtypes?.length && !choice.subtypes.some((subtype) => hasSubtype(selectedProfile, subtype))) throw new Error("Esa carta no cumple el tipo requerido.");
+  if (choice.subtypes?.length && !choice.subtypes.some((subtype) =>
+    choice.types.includes("Land") ? selectedProfile.types.includes("Land") && selectedProfile.subtypes.some((candidate) => candidate.toLowerCase() === subtype.toLowerCase()) : hasSubtype(selectedProfile, subtype))) throw new Error("Esa carta no cumple el tipo requerido.");
   if (choice.minPower !== undefined && (selectedProfile.power === null || selectedProfile.power < choice.minPower)) {
     throw new Error("Esa criatura no cumple el poder mínimo requerido.");
   }
