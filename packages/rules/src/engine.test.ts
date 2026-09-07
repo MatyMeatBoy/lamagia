@@ -4565,6 +4565,19 @@ describe("casting", () => {
     expect(game.players[1]!.life).toBe(38);
   });
 
+  it("profiles Deadwood Treefolk vanishing and its linked return trigger", () => {
+    expect(profileOf(C13_DEADWOOD_TREEFOLK())).toMatchObject({
+      fullyImplemented: true,
+      vanishingAmount: 3,
+      entersWithCounters: [{ kind: "time", amount: 3 }],
+      triggers: [
+        { event: "enters-battlefield", effect: { kind: "return-target-card-from-graveyard" } },
+        { event: "leaves-battlefield", effect: { kind: "return-target-card-from-graveyard" } },
+        { event: "upkeep", effect: { kind: "vanishing" } }
+      ]
+    });
+  });
+
   it("reuses the upkeep compound trigger for C13 Baleful Force", () => {
     let game = twoSeatGame(Array.from({ length: 12 }, () => BEAR()), []);
     game = putOnBattlefield(game, 0, [C13_BALEFUL_FORCE()]);
