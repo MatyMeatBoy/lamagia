@@ -712,6 +712,8 @@ export type SpellEffect =
   | { readonly kind: "spinal-embrace" }
   | { readonly kind: "sacrifice-delayed-creature-gain-toughness" }
   | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
+  /** Cruel Ultimatum's fixed sequence of target and controller effects. */
+  | { readonly kind: "cruel-ultimatum" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Destroy one random permanent from an already-selected target group. */
@@ -4581,6 +4583,7 @@ function recognizeText(text: string): RecognizedText {
     const search = { kind: "search-library" as const, types: ["Land"] as CardType[], destination: "battlefield" as const, reveal: false };
     return { effects: [{ kind: "tempting-offer", base: search, opponent: search, reward: search }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true };
   }
+  if (/^Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life\. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life\.?$/i.test(text.replace(/\s+/g, " ").trim())) return { effects: [{ kind: "cruel-ultimatum" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "opponent", unimplementedText: [], covered: true };
   const body = text.split("\n")
     // Scryfall uses `•`; a few imported historical rows contain U+FFFD in its
     // place. Both are presentation markers, never part of Oracle semantics.

@@ -647,6 +647,7 @@ export type PendingChoice =
       readonly thenDrawSame?: boolean;
       /** Geier Reach Sanitarium: seats still owed their own discard choice, in APNAP order. */
       readonly nextSeats?: readonly SeatId[];
+      readonly cruelUltimatum?: { readonly controller: SeatId; readonly targetSeat: SeatId };
     }
   | {
       /** Scry (CR 701.17) and Surveil (CR 701.42) share this shape: inspect the
@@ -4577,6 +4578,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (opponent === undefined) return next;
       return { ...next, pendingChoice: { type: "optional-trigger", seat: opponent, sourceId: `${object.id}:tempt:${opponent}`, sourceCard: object.card, triggerEffect: effect.opponent, targets: object.targets, sourceController: controller, temptingOffer: { controller, reward: effect.reward, remainingOpponents: opponents.slice(1), variableValue: object.variableValue } } };
     }
+    case "cruel-ultimatum": {
+      const target = object.targets[0];
+      if (target?.kind !== "player") return state;
+      const victim = playerAt(state, target.seat).battlefield.filter((p) => isCreature(cardProfile(p.card))).sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0];
+      let next = victim ? movePermanentToZone(state, victim, "graveyard") : state;
+      const amount = Math.min(3, playerAt(next, target.seat).hand.length);
+      if (!amount) return finishCruelUltimatum(next, object, target.seat);
+      return { ...next, priorityOpen: false, pendingChoice: { type: "discard-cards", seat: target.seat, sourceId: object.id, sourceCard: object.card, amount, remaining: amount, cruelUltimatum: { controller, targetSeat: target.seat } } };
+    }
     case "sacrifice-delayed-creature-gain-toughness": {
       const delayed = object.trigger?.delayedSacrifice;
       if (!delayed) return state;
@@ -7155,6 +7165,15 @@ function queueDelayedReturns(state: GameState): GameState {
     eventController: delayed.owner
   }));
   return { ...state, delayedReturns: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
+}
+
+function finishCruelUltimatum(state: GameState, object: StackObject, targetSeat: SeatId): GameState {
+  let next = applyEffect(state, object, { kind: "lose-life-target-player", amount: 5 });
+  const returned = playerAt(next, object.controller).graveyard.find((card) => isCreature(cardProfile(card)));
+  if (returned) next = withPlayer(next, object.controller, (player) => ({ ...player, graveyard: player.graveyard.filter((card) => card.instance_id !== returned.instance_id), hand: [...player.hand, returned] }));
+  next = applyEffect(next, object, { kind: "draw", amount: 3 });
+  next = applyEffect(next, object, { kind: "gain-life", amount: 5 });
+  return logged(next, object.controller, `${object.card.name}: el oponente pierde 5; recuperas una criatura, robas tres y ganas 5.`);
 }
 
 function queueDelayedSacrifices(state: GameState): GameState {

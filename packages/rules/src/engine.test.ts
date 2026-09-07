@@ -320,6 +320,7 @@ const TAPLAND = () => make({ name: "Slow Gate", type_line: "Land", oracle_text: 
 const STARTING_TOWN = () => make({ name: "Starting Town", type_line: "Land — Town", oracle_text: "This land enters tapped unless it's your first, second, or third turn of the game.\n{T}: Add {C}.", produced_mana: ["C"] });
 const SPINAL_EMBRACE = () => make({ name: "Spinal Embrace", type_line: "Instant", mana_cost: "{3}{U}{U}{B}", cmc: 6, oracle_text: "Cast this spell only during combat. Untap target creature you don't control and gain control of it. It gains haste until end of turn. At the beginning of the next end step, sacrifice it. If you do, you gain life equal to its toughness." });
 const TEMPT_WITH_DISCOVERY = () => make({ name: "Tempt with Discovery", type_line: "Sorcery", mana_cost: "{3}{G}", cmc: 4, oracle_text: "Tempting offer — Search your library for a land card and put it onto the battlefield. Each opponent may search their library for a land card and put it onto the battlefield. For each opponent who searches a library this way, search your library for a land card and put it onto the battlefield. Then each player who searched a library this way shuffles." });
+const CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "Sorcery", mana_cost: "{U}{U}{B}{B}{B}{R}{R}", cmc: 7, oracle_text: "Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life." });
 const BEAR = () => make({ name: "Grizzly Bears", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2" });
 const ETB_DRAWER = () => make({ name: "Archivist Bear", type_line: "Creature — Bear", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When Archivist Bear enters the battlefield, draw a card." });
 const TRIGGER_DOUBLER_SUBTYPE = () => make({ name: "Test Harmonic Prodigy", type_line: "Creature — Fox Shaman", mana_cost: "{1}{U}", cmc: 2, power: "2", toughness: "2", oracle_text: "If a triggered ability of a Shaman or another Wizard you control triggers, that ability triggers an additional time." });
@@ -1830,6 +1831,10 @@ describe("casting", () => {
 
   it("recognizes Tempt with Discovery as a reusable land-search offer", () => {
     expect(cardProfile(TEMPT_WITH_DISCOVERY())).toMatchObject({ fullyImplemented: true, effects: [{ kind: "tempting-offer" }] });
+  });
+
+  it("recognizes Cruel Ultimatum as its ordered multi-effect primitive", () => {
+    expect(cardProfile(CRUEL_ULTIMATUM())).toMatchObject({ fullyImplemented: true, effects: [{ kind: "cruel-ultimatum" }], targetKind: "opponent" });
   });
 
   it("taps the right mana and resolves a creature onto the battlefield", () => {
