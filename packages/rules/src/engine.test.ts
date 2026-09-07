@@ -309,6 +309,30 @@ describe("smart counter response and safe mana undo", () => {
   });
 });
 
+describe("C13 final current-Oracle profiles", () => {
+  it("recognizes Plague Boiler's toggle and threshold", () => {
+    const profile = cardProfile(C13_PLAGUE_BOILER_CURRENT());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities).toEqual(expect.arrayContaining([
+      expect.objectContaining({ effect: { kind: "toggle-source-counter", counter: "plague" } })
+    ]));
+    expect(profile.triggers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ event: "source-counter-threshold", effect: { kind: "sacrifice-source-then-destroy-all-nonland" } })
+    ]));
+  });
+
+  it("recognizes Sword's state-gated team bonuses and Wild Ricochet's copy", () => {
+    const sword = cardProfile(C13_SWORD_OF_THE_PARUNS_CURRENT());
+    expect(sword.fullyImplemented).toBe(true);
+    expect(sword.equipmentModification?.conditionalTeamBonuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ equippedCreatureState: "tapped", targetState: "tapped", power: 1, toughness: 1 }),
+      expect.objectContaining({ equippedCreatureState: "untapped", targetState: "untapped", power: 1, toughness: 1 })
+    ]));
+    const ricochet = cardProfile(C13_WILD_RICOCHET());
+    expect(ricochet).toMatchObject({ fullyImplemented: true, targetKind: "instant-or-sorcery-spell", effects: [{ kind: "copy-target-spell" }] });
+  });
+});
+
 describe("Street Spasm Overload", () => {
   it("keeps the base target restricted to an opponent's nonflying creature", () => {
     const card = C13_STREET_SPASM();
@@ -518,6 +542,9 @@ const C13_LIM_DULS_VAULT = () => make({ name: "Lim-Dûl's Vault", type_line: "In
 const C13_MOSSWORT_BRIDGE = () => make({ name: "Mosswort Bridge", type_line: "Land", oracle_text: "Hideaway 4 (When this land enters, look at the top four cards of your library, exile one face down, then put the rest on the bottom in a random order.)\nThis land enters tapped.\n{T}: Add {G}.\n{G}, {T}: You may play the exiled card without paying its mana cost if creatures you control have total power 10 or greater.", produced_mana: ["G"], oracle_id: "7cb9e29f-835f-4155-a2a5-4b778866c773", scryfall_id: "7cb9e29f-835f-4155-a2a5-4b778866c773" });
 const C13_ILLUSIONISTS_GAMBIT = () => make({ name: "Illusionist's Gambit", type_line: "Instant", mana_cost: "{2}{U}{U}", oracle_text: "Cast this spell only during the declare blockers step on an opponent's turn.\nRemove all attacking creatures from combat and untap them. After this phase, there is an additional combat phase. Each of those creatures attacks that combat if able. They can't attack you or planeswalkers you control that combat.", oracle_id: "333745d9-e930-439b-94d6-3aeea2877f69", scryfall_id: "333745d9-e930-439b-94d6-3aeea2877f69" });
 const C13_JELEVA = () => make({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.", oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d" });
+const C13_PLAGUE_BOILER_CURRENT = () => make({ name: "Plague Boiler", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "At the beginning of your upkeep, put a plague counter on this artifact.\n{1}{B}{G}: Put a plague counter on this artifact or remove a plague counter from it.\nWhen this artifact has three or more plague counters on it, sacrifice it. If you do, destroy all nonland permanents.", oracle_id: "plague-boiler-current", scryfall_id: "plague-boiler-current" });
+const C13_SWORD_OF_THE_PARUNS_CURRENT = () => make({ name: "Sword of the Paruns", type_line: "Artifact — Equipment", mana_cost: "{4}", cmc: 4, oracle_text: "Equipped creature gets +2/+0.\nAs long as equipped creature is tapped, tapped creatures you control get +1/+1.\nAs long as equipped creature is untapped, untapped creatures you control get +1/+1.\n{3}: You may tap or untap equipped creature.\nEquip {3}", oracle_id: "cc33444e-da8c-4af5-b3ed-552e91b0e656", scryfall_id: "cc33444e-da8c-4af5-b3ed-552e91b0e656" });
+const C13_WILD_RICOCHET = () => make({ name: "Wild Ricochet", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4, oracle_text: "You may choose new targets for target instant or sorcery spell. Then copy that spell. You may choose new targets for the copy.", oracle_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9", scryfall_id: "8c35fd11-be45-4984-bd83-6e4f3fbc47a9" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
