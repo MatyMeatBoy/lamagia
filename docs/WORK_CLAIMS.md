@@ -429,6 +429,10 @@ current reproducible local engine export is 294/341. Until the catalog database
 and the exact export inputs are available, treat the 294/341 engine scan as the
 authoritative integration metric; do not copy the 100% claim into coverage UI.
 
+The follow-up audit confirms `f84cb14d` remains rescue material only: its Gambit
+and Hideaway changes require current-base adaptation and dedicated zone/combat
+scenarios. Preserve its card mappings, but do not merge its legacy engine files.
+
 Integration note (2026-09-06): worker-05 currently contains useful rules
 commits based on an incompatible rewritten tree. Do not merge that branch as a
 whole. Resubmit from the published integration SHA with a focused diff; the
