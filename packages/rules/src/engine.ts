@@ -308,6 +308,7 @@ export interface TriggerInstance {
   readonly eventPlayer?: SeatId;
   /** Card involved in a card-based event (discarded, drawn, ...), for effects referring to "that card" (Necropotence). */
   readonly eventCard?: GameCard;
+  readonly delayedSacrifice?: { readonly targetPermanentId: string; readonly controller: SeatId };
 }
 
 /** A delayed trigger created by a resolving spell (CR 603.7). */
@@ -340,6 +341,15 @@ export interface DelayedReturn {
   readonly owner: SeatId;
   readonly sourceText: string;
   readonly destination?: "battlefield" | "hand";
+}
+
+export interface DelayedSacrifice {
+  readonly id: string;
+  readonly triggerAtTurn: number;
+  readonly targetPermanentId: string;
+  readonly sourceCard: GameCard;
+  readonly controller: SeatId;
+  readonly sourceText: string;
 }
 
 /**
@@ -409,6 +419,7 @@ export interface GameState {
   readonly delayedDraws: readonly DelayedDraw[];
   /** Permanents waiting for a delayed return at the next end step. */
   readonly delayedReturns: readonly DelayedReturn[];
+  readonly delayedSacrifices: readonly DelayedSacrifice[];
   /** Delayed mana triggers waiting for their owner's next main phase. */
   readonly delayedManaAdds: readonly DelayedManaAdd[];
   readonly combat: CombatState;
@@ -514,6 +525,7 @@ export type PendingChoice =
       readonly triggeredPermanentId?: string;
       /** Typed permanents chosen and tapped when the optional trigger resolves. */
       readonly tapCost?: TriggerDefinition["tapCost"];
+      readonly temptingOffer?: { readonly controller: SeatId; readonly reward: SpellEffect; readonly remainingOpponents: readonly SeatId[]; readonly variableValue: number };
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       /** Remaining Ward permanents that still need a payment decision for the same spell. */
@@ -1888,6 +1900,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     triggerQueue: [],
     delayedDraws: [],
     delayedReturns: [],
+    delayedSacrifices: [],
     delayedManaAdds: [],
     combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, firstStrikeResolved: false, damageResolved: false },
     log: [],
@@ -4545,6 +4558,35 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         }))
       };
     }
+    case "spinal-embrace": {
+      const target = object.targets[targetIndex];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || permanent.controller === controller || !isCreature(cardProfile(permanent.card))) return state;
+      let next = changePermanentController(state, permanent, controller);
+      const moved = findPermanent(next, permanent.instance_id);
+      if (!moved) return next;
+      next = withPlayer(next, controller, (player) => ({ ...player, battlefield: player.battlefield.map((candidate) => candidate.instance_id === moved.instance_id ? { ...candidate, tapped: false, temporaryControllerFrom: permanent.controller, temporaryKeywords: [...new Set([...(candidate.temporaryKeywords ?? []), "haste" as EnforcedKeyword])] } : candidate) }));
+      const delayed: DelayedSacrifice = { id: `${object.id}:sacrifice`, triggerAtTurn: next.step === "end" ? next.turn + 1 : next.turn, targetPermanentId: moved.instance_id, sourceCard: object.card, controller, sourceText: `${object.card.name}: sacrifice the creature at the beginning of the next end step` };
+      return logged({ ...next, delayedSacrifices: [...next.delayedSacrifices, delayed] }, controller, `${object.card.name}: ${moved.card.name} queda bajo tu control hasta el próximo paso final.`);
+    }
+    case "tempting-offer": {
+      let next = applyEffect(state, object, effect.base);
+      const opponents = opponentsOf(next, controller);
+      const opponent = opponents[0];
+      if (opponent === undefined) return next;
+      return { ...next, pendingChoice: { type: "optional-trigger", seat: opponent, sourceId: `${object.id}:tempt:${opponent}`, sourceCard: object.card, triggerEffect: effect.opponent, targets: object.targets, sourceController: controller, temptingOffer: { controller, reward: effect.reward, remainingOpponents: opponents.slice(1), variableValue: object.variableValue } } };
+    }
+    case "sacrifice-delayed-creature-gain-toughness": {
+      const delayed = object.trigger?.delayedSacrifice;
+      if (!delayed) return state;
+      const permanent = findPermanent(state, delayed.targetPermanentId);
+      if (!permanent) return state;
+      const toughness = toughnessOf(permanent, state);
+      let next = movePermanentToZone(state, permanent, "graveyard");
+      if (toughness > 0 && !playersCantGainLife(next)) next = withPlayer(next, delayed.controller, (player) => ({ ...player, life: player.life + toughness }));
+      return next;
+    }
     case "destroy-target-creature-then-life-loss": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -7115,6 +7157,18 @@ function queueDelayedReturns(state: GameState): GameState {
   return { ...state, delayedReturns: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
 }
 
+function queueDelayedSacrifices(state: GameState): GameState {
+  const due = state.delayedSacrifices.filter((delayed) => delayed.triggerAtTurn === state.turn);
+  if (!due.length) return state;
+  const remaining = state.delayedSacrifices.filter((delayed) => delayed.triggerAtTurn !== state.turn);
+  const triggers: TriggerInstance[] = due.map((delayed) => ({
+    id: delayed.id, controller: delayed.controller, sourcePermanentId: `delayed:${delayed.id}`, sourceCard: delayed.sourceCard,
+    definition: { event: "end-step", subject: "you", effect: { kind: "sacrifice-delayed-creature-gain-toughness" }, optional: false, targetKind: "none", sourceText: delayed.sourceText },
+    cause: `${delayed.sourceCard.name}: delayed end-step sacrifice`, delayedSacrifice: { targetPermanentId: delayed.targetPermanentId, controller: delayed.controller }, eventController: delayed.controller
+  }));
+  return { ...state, delayedSacrifices: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
+}
+
 /** Queues Echo once, at the controller's next upkeep (CR 702.30a-b). */
 function queueEchoTriggers(state: GameState): GameState {
   const due = allPermanents(state).filter((permanent) =>
@@ -7267,6 +7321,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
   }
   if (step === "end") {
     next = queueDelayedReturns(next);
+    next = queueDelayedSacrifices(next);
     next = raiseEvent(next, { kind: "end-step", activeSeat: next.activeSeat });
   }
 
@@ -7408,6 +7463,7 @@ function controlsLandType(state: GameState, seat: SeatId, subtype: string): bool
 function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
   const player = playerAt(state, seat);
   const profile = cardProfile(card);
+  if (profile.combatOnly && !["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step)) return { legal: false };
   if (splitSecondActive(state)) return { legal: false };
   // Silence (CR 116.3): this function only ever validates casting a spell
   // (playing a land is a separate path), so no type carve-out is needed.
@@ -10042,6 +10098,11 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
  };
   next = applyEffect(next, source, choice.triggerEffect);
+  if (choice.temptingOffer) {
+    if (action.accept) next = applyEffect(next, { ...source, controller: choice.temptingOffer.controller }, choice.temptingOffer.reward);
+    const remaining = choice.temptingOffer.remainingOpponents[0];
+    if (remaining !== undefined) next = { ...next, pendingChoice: { ...choice, seat: remaining, sourceId: `${choice.sourceId}:next`, temptingOffer: { ...choice.temptingOffer, remainingOpponents: choice.temptingOffer.remainingOpponents.slice(1) } } };
+  }
   return logged(next, seat, `Se resuelve la habilidad opcional de ${choice.sourceCard.name}.`);
 }
 
