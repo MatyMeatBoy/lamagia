@@ -64,6 +64,12 @@ The current integration base is the published tip of
 `origin/feat/activated-abilities-and-triggers`; refresh it immediately before
 claiming. Rows marked `merged` or `Ready for integrator review` are occupied,
 not available work. Only rows absent from the claims table may be claimed.
+Before pushing, rebase or recreate the worker branch from that published tip;
+never submit a branch whose diff deletes existing fields or primitives. Keep
+generated roadmap/coverage files out of focused rule commits; the integrator
+regenerates them after acceptance. If the patch does not apply cleanly, stop
+and send the compact report instead of force-merging or resolving by deleting
+either side.
 
 ## Generate the next task
 
