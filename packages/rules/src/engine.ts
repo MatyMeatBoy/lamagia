@@ -2224,6 +2224,9 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
   // An effect that says "onto the battlefield tapped" overrides the card's own
   // printed entry rule; it never makes a tapped-by-default land enter untapped.
   const enters = forceTapped ? { tapped: true, lifeCost: 0 } : printed;
+  const counterAmount = (kind: string, amount: number): number => kind === "+1/+1" && isCreature(profile)
+    ? amount * (2 ** playerAt(state, seat).battlefield.filter((candidate) => cardProfile(candidate.card).doublesPlusOneCounters).length)
+    : amount;
   const permanent: Permanent = {
     instance_id: enteringCard.instance_id,
     card: enteringCard,
@@ -2239,13 +2242,13 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
     ...(castSpentMana.length ? { castSpentMana } : {}),
     ...(profile.echoCost ? { echoDueTurn: state.turn + 1 } : {}),
     counters: {
-      ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counter.amount])),
+      ...Object.fromEntries(profile.entersWithCounters.map((counter) => [counter.kind, counterAmount(counter.kind, counter.amount)])),
       ...(kicked ? Object.fromEntries(profile.kickedEntersWithCounters.map((counter) => [
         counter.kind,
-        (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount
+        counterAmount(counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount)
       ])) : {}),
-      ...(isCommander && commanderEntryCounters > 0 ? { "+1/+1": commanderEntryCounters } : {}),
-      ...Object.fromEntries(additionalCounters.map((counter) => [counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount])),
+      ...(isCommander && commanderEntryCounters > 0 ? { "+1/+1": counterAmount("+1/+1", commanderEntryCounters) } : {}),
+      ...Object.fromEntries(additionalCounters.map((counter) => [counter.kind, counterAmount(counter.kind, (profile.entersWithCounters.find((existing) => existing.kind === counter.kind)?.amount ?? 0) + counter.amount)])),
       // A planeswalker enters with loyalty counters equal to its printed value (CR 306.5b).
       ...(profile.types.includes("Planeswalker") && profile.loyalty !== null ? { loyalty: profile.loyalty } : {})
     },
@@ -2300,6 +2303,22 @@ function uniqueTokenCard(state: GameState, card: GameCard): GameCard {
   let instanceId = `${card.instance_id}:${suffix}`;
   while (occupied.has(instanceId)) instanceId = `${card.instance_id}:${++suffix}`;
   return { ...card, instance_id: instanceId };
+}
+
+/** CR 614.1: apply Primal Vigor-style replacement effects before counters are placed. */
+function counterAmountWithReplacements(state: GameState, permanent: Permanent, counter: string, amount: number): number {
+  if (amount <= 0 || counter !== "+1/+1" || !isCreature(cardProfile(permanent.card))) return amount;
+  const doublers = playerAt(state, permanent.controller).battlefield
+    .filter((candidate) => cardProfile(candidate.card).doublesPlusOneCounters).length;
+  return amount * (2 ** doublers);
+}
+
+/** CR 614.1: apply token-creation replacements for the recipient. */
+function tokenAmountWithReplacements(state: GameState, seat: SeatId, amount: number): number {
+  if (amount <= 0) return amount;
+  const doublers = playerAt(state, seat).battlefield
+    .filter((candidate) => cardProfile(candidate.card).doublesTokens).length;
+  return amount * (2 ** doublers);
 }
 
 /** The object an event is about, when it is about an object at all. */
@@ -4182,7 +4201,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         const next = withPlayer(state, controller, (player) => ({
           ...player,
           battlefield: player.battlefield.map((permanent) => permanent.instance_id === existingArmy.instance_id
-            ? { ...permanent, counters: { ...permanent.counters, "+1/+1": (permanent.counters["+1/+1"] ?? 0) + effect.amount } }
+            ? { ...permanent, counters: { ...permanent.counters, "+1/+1": (permanent.counters["+1/+1"] ?? 0) + counterAmountWithReplacements(state, permanent, "+1/+1", effect.amount) } }
             : permanent)
         }));
         return logged(next, controller, `${playerAt(next, controller).name} amasa ${effect.amount} en ${existingArmy.card.name}.`);
@@ -4589,7 +4608,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return withPlayer(state, permanent.controller, (player) => ({
         ...player,
         battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
-          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + count } }
+          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, candidate, effect.counter, count) } }
           : candidate)
       }));
     }
@@ -4605,7 +4624,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
               ...candidate,
               counters: {
                 ...candidate.counters,
-                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + effect.amount
+                [effect.counter]: (candidate.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, candidate, effect.counter, effect.amount)
               }
             }
           : candidate)
@@ -4620,7 +4639,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return withPlayer(state, permanent.controller, (player) => ({
         ...player,
         battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
-          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + amount } }
+          ? { ...candidate, counters: { ...candidate.counters, [effect.counter]: (candidate.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, candidate, effect.counter, amount) } }
           : candidate)
       }));
     }
@@ -5591,7 +5610,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return withPlayer(state, target.controller, (player) => ({
         ...player,
         battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
-          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, permanent, effect.counter, effect.amount) } }
           : permanent)
       }));
     }
@@ -5602,7 +5621,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return withPlayer(state, source.controller, (player) => ({
         ...player,
         battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id
-          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, permanent, effect.counter, effect.amount) } }
           : permanent)
       }));
     }
@@ -5613,7 +5632,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         battlefield: player.battlefield.map((permanent) => {
           const profile = cardProfile(permanent.card);
           if (!isCreature(profile) || !hasSubtype(profile, subtype)) return permanent;
-          return { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } };
+          return { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, permanent, effect.counter, effect.amount) } };
         })
       }));
     }
@@ -5621,7 +5640,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       return withPlayer(state, controller, (player) => ({
         ...player,
         battlefield: player.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
-          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + effect.amount } }
+          ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, permanent, effect.counter, effect.amount) } }
           : permanent)
       }));
     }
@@ -5634,7 +5653,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           const isOtherPlaneswalker = profile.types.includes("Planeswalker") && permanent.instance_id !== sourceId;
           if (!isCreature(profile) && !isOtherPlaneswalker) return permanent;
           const counters = { ...permanent.counters };
-          if (isCreature(profile)) counters[effect.counter] = (counters[effect.counter] ?? 0) + effect.amount;
+          if (isCreature(profile)) counters[effect.counter] = (counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, permanent, effect.counter, effect.amount);
           if (isOtherPlaneswalker) counters.loyalty = (counters.loyalty ?? 0) + effect.planeswalkerAmount;
           return { ...permanent, counters };
         })
@@ -5648,7 +5667,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = withPlayer(next, player.seat, (current) => ({
           ...current,
           battlefield: current.battlefield.map((permanent) => isCreature(cardProfile(permanent.card))
-            ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + amount } }
+            ? { ...permanent, counters: { ...permanent.counters, [effect.counter]: (permanent.counters[effect.counter] ?? 0) + counterAmountWithReplacements(state, permanent, effect.counter, amount) } }
             : permanent)
         }));
       }
@@ -5946,7 +5965,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         `${player.name} revela ${revealed.map((card) => card.name).join(", ")} y las pone en su mano.`);
     }
     case "create-token": {
-      const amount = effect.amount === "lands-you-control"
+      const rawAmount = effect.amount === "lands-you-control"
         ? playerAt(state, controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length
         : effect.amount === "creatures-you-control"
           ? playerAt(state, controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length
@@ -5959,6 +5978,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         : effect.amount === "opponents-with-4-plus-cards"
           ? state.players.filter((player) => player.seat !== controller && !player.lost && player.hand.length >= 4).length
         : effectAmount(effect.amount, object);
+      const amount = tokenAmountWithReplacements(state, controller, rawAmount);
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
@@ -5986,7 +6006,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
       const recipient = target.seat;
-      const amount = effectAmount(effect.amount, object);
+      const amount = tokenAmountWithReplacements(state, recipient, effectAmount(effect.amount, object));
       const stat = effect.statsFromAmount ? amount : null;
       let next = state;
       for (let index = 0; index < (effect.statsFromAmount && amount > 0 ? 1 : amount); index += 1) {
@@ -10669,7 +10689,7 @@ function finishDevour(
   next = withPlayer(next, seat, (current) => ({
     ...current,
     battlefield: current.battlefield.map((permanent) => permanent.instance_id === choice.sourcePermanentId
-      ? { ...permanent, devouredCount, counters: { ...permanent.counters, "+1/+1": (permanent.counters["+1/+1"] ?? 0) + addedCounters } }
+      ? { ...permanent, devouredCount, counters: { ...permanent.counters, "+1/+1": (permanent.counters["+1/+1"] ?? 0) + counterAmountWithReplacements(next, permanent, "+1/+1", addedCounters) } }
       : permanent)
   }));
   return logged(next, seat, devouredCount

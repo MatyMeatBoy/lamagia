@@ -6678,3 +6678,9 @@ opponent-owned exiled instant is offered and cast for free after Jeleva
 attacks. Validation: `npm run check --workspace=@prossh/rules` and the full
 rules suite pass (**923** tests, 6 skipped). The commit is ready for
 integrator review; do not count the old `11440733` as integrated.
+## C13 current-base rescue — Primal Vigor (2026-09-07)
+
+- Base: `f8f93bc7`.
+- `Primal Vigor | c665544f-557b-4631-a1dc-39571470ca2e`: added reusable CR 614.1 replacement helpers for +1/+1 counter placement and token creation; profile parsing now covers both printed replacement lines.
+- Scenario covers doubling a creature counter effect and a one-token creation effect. Main should cherry-pick only the focused worker commit.
+- `npm run check --workspace=@prossh/rules` passes. The full suite has one pre-existing base failure in the integrated Deadwood fixture; this worker did not modify Deadwood.

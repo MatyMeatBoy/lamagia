@@ -808,6 +808,7 @@ const TAPPED_ZOMBIES = () => make({ name: "Army of the Dead", type_line: "Sorcer
 const LAND_SCALED_TOKENS = () => make({ name: "Land Bloom", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Create a 0/1 green Plant creature token for each land you control." });
 const CREATURE_SCALED_TOKENS = () => make({ name: "Brood Bloom", type_line: "Sorcery", mana_cost: "{2}{G}", cmc: 3, oracle_text: "Create a 1/1 green Saproling creature token for each creature you control." });
 const FEAR_TOKEN_SPELL = () => make({ name: "Fear Brood", type_line: "Sorcery", mana_cost: "{3}{B}", cmc: 4, oracle_text: "Create a 1/1 black Horror creature token with fear." });
+const PRIMAL_VIGOR = () => make({ name: "Primal Vigor", type_line: "Enchantment", mana_cost: "{4}{G}", cmc: 5, oracle_text: "If one or more +1/+1 counters would be put on a creature you control, twice that many +1/+1 counters are put on that creature instead.\nIf one or more tokens would be created under your control, twice that many of those tokens are created instead.", oracle_id: "c665544f-557b-4631-a1dc-39571470ca2e", scryfall_id: "c665544f-557b-4631-a1dc-39571470ca2e" });
 const PLANT_COUNTERS = () => make({ name: "Verdant Rally", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put a +1/+1 counter on each Plant creature you control." });
 const CREATURE_COUNTERS = () => make({ name: "Creature Rally", type_line: "Sorcery", mana_cost: "{G}", cmc: 1, oracle_text: "Put a +1/+1 counter on each creature you control." });
 const PLANT = () => make({ name: "Plant", type_line: "Creature — Plant", mana_cost: "", cmc: 0, power: "0", toughness: "1" });
@@ -4834,6 +4835,17 @@ describe("casting", () => {
 
   it("preserves fear on generated tokens", () => {
     expect(profileOf(FEAR_TOKEN_SPELL()).effects[0]).toMatchObject({ kind: "create-token", token: { keywords: ["fear"] } });
+  });
+
+  it("applies Primal Vigor's counter and token replacement effects", () => {
+    const profile = profileOf(PRIMAL_VIGOR());
+    expect(profile).toMatchObject({ fullyImplemented: true, doublesPlusOneCounters: true, doublesTokens: true });
+    let counterGame = readyToCast([CREATURE_COUNTERS()], [PRIMAL_VIGOR(), PLANT(), FOREST()]);
+    counterGame = applyAction(counterGame, 0, { type: "cast", cardId: "hand-0" });
+    expect(counterGame.players[0]!.battlefield.find((permanent) => permanent.card.name === "Plant")!.counters["+1/+1"]).toBe(2);
+    let tokenGame = readyToCast([FEAR_TOKEN_SPELL()], [PRIMAL_VIGOR(), FOREST(), FOREST(), FOREST(), SWAMP()]);
+    tokenGame = applyAction(tokenGame, 0, { type: "cast", cardId: "hand-0" });
+    expect(tokenGame.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Horror")).toHaveLength(2);
   });
 
   it("adds counters only to creatures of the requested subtype", () => {

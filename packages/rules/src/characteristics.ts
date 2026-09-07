@@ -1136,6 +1136,10 @@ export interface CardProfile {
   readonly keywords: readonly EnforcedKeyword[];
   /** Static effect that lets creatures' activated abilities ignore summoning sickness (CR 302.6). */
   readonly grantsCreatureActivationHaste: boolean;
+  /** Primal Vigor replacement: double +1/+1 counters placed on creatures you control (CR 614.1). */
+  readonly doublesPlusOneCounters: boolean;
+  /** Primal Vigor replacement: double tokens created under your control (CR 614.1). */
+  readonly doublesTokens: boolean;
   /** Changeling means this creature has every creature type (CR 702.73). */
   readonly changeling: boolean;
   readonly power: number | null;
@@ -4994,6 +4998,8 @@ function recognizeText(text: string): RecognizedText {
     if (flashback) { flashbackCost = parseManaCost(flashback[1]!); continue; }
     // Board-scaled self cost reduction is consumed by cardProfile, not resolved here.
     if (/^~ costs \{\d+\} less to cast for each creature on the battlefield\.?$/i.test(line)) continue;
+    if (/^If one or more \+1\/\+1 counters would be put on a creature you control, twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line)) continue;
+    if (/^If one or more tokens would be created under your control, twice that many of those tokens are created instead\.?$/i.test(line)) continue;
     if (/^(?:(?:(?:white|blue|black|red|green)\s+spells)(?:\s+and\s+(?:white|blue|black|red|green)\s+spells)+|(?:(?:white|blue|black|red|green) )?(?:artifact|creature|enchantment|instant|sorcery|planeswalker)? ?spells) you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^instant and sorcery spells cost \{\d+\} less to cast\.?$/i.test(line)) continue;
     if (/^[A-Za-z][A-Za-z'’/-]* spells you cast cost \{\d+\} less to cast\.?$/i.test(line)) continue;
@@ -6143,6 +6149,8 @@ export function cardProfile(card: CardData): CardProfile {
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
   const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
+  const doublesPlusOneCounters = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on a creature you control, twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line.trim()));
+  const doublesTokens = text.split("\n").some((line) => /^If one or more tokens would be created under your control, twice that many of those tokens are created instead\.?$/i.test(line.trim()));
   const staticSkipsDrawStep = text.split("\n").some((line) => /^Skip your draw step\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -6192,6 +6200,8 @@ export function cardProfile(card: CardData): CardProfile {
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,
     grantsCreatureActivationHaste,
+    doublesPlusOneCounters,
+    doublesTokens,
     changeling,
     power: numeric(face.power),
     toughness: numeric(face.toughness),
