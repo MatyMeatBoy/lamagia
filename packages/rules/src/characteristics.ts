@@ -1178,6 +1178,8 @@ export interface CardProfile {
   readonly grantsCreatureActivationHaste: boolean;
   readonly doublesPlusOneCounters: boolean;
   readonly doublesTokens: boolean;
+  readonly doublesPlusOneCountersGlobally: boolean;
+  readonly doublesTokensGlobally: boolean;
   /** Changeling means this creature has every creature type (CR 702.73). */
   readonly changeling: boolean;
   readonly power: number | null;
@@ -6427,8 +6429,10 @@ export function cardProfile(card: CardData): CardProfile {
  const staticPowerToughnessGrants = parseStaticPowerToughnessGrants(text);
   const copiesImprintedCreatureStats = /^as long as a card exiled with ~ is a creature card, ~ has the power, toughness, and creature types of the last creature card exiled with ~\. it's still a shapeshifter\.?$/im.test(text);
     const doublesLandMana = text.split("\n").some((line) => /^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line.trim()));
-    const doublesPlusOneCounters = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on (?:a creature you control|a creature), twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line.trim()));
+    const doublesPlusOneCounters = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on a creature you control, twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line.trim()));
+    const doublesPlusOneCountersGlobally = text.split("\n").some((line) => /^If one or more \+1\/\+1 counters would be put on a creature, twice that many \+1\/\+1 counters are put on that creature instead\.?$/i.test(line.trim()));
   const doublesTokens = text.split("\n").some((line) => /^If one or more tokens would be created (?:under your control|), twice that many (?:of those tokens|tokens) are created instead\.?$/i.test(line.trim()));
+  const doublesTokensGlobally = text.split("\n").some((line) => /^If one or more tokens would be created, twice that many tokens are created instead\.?$/i.test(line.trim()));
   const staticSkipsDrawStep = text.split("\n").some((line) => /^Skip your draw step\.?$/i.test(line.trim()));
   const levelUpCost = parseLevelUpCost(text);
   const levelDefinitions = parseLevelDefinitions(text);
@@ -6482,6 +6486,8 @@ export function cardProfile(card: CardData): CardProfile {
     grantsCreatureActivationHaste,
     doublesPlusOneCounters,
     doublesTokens,
+    doublesPlusOneCountersGlobally,
+    doublesTokensGlobally,
     changeling,
     power: numeric(face.power),
     toughness: numeric(face.toughness),

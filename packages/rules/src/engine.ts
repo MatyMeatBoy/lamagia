@@ -2287,7 +2287,8 @@ function putOntoBattlefield(state: GameState, seat: SeatId, card: GameCard, isCo
   // An effect that says "onto the battlefield tapped" overrides the card's own
   // printed entry rule; it never makes a tapped-by-default land enter untapped.
   const enters = forceTapped ? { tapped: true, lifeCost: 0 } : printed;
-  const counterDoublers = playerAt(state, seat).battlefield.filter((candidate) => cardProfile(candidate.card).doublesPlusOneCounters).length;
+  const counterDoublers = allPermanents(state).filter((candidate) => cardProfile(candidate.card).doublesPlusOneCountersGlobally).length
+    + playerAt(state, seat).battlefield.filter((candidate) => cardProfile(candidate.card).doublesPlusOneCounters).length;
   const replacedCounterAmount = (kind: string, amount: number) => kind === "+1/+1" && isCreature(profile) ? amount * (2 ** counterDoublers) : amount;
   const permanent: Permanent = {
     instance_id: enteringCard.instance_id,
@@ -2370,15 +2371,15 @@ function uniqueTokenCard(state: GameState, card: GameCard): GameCard {
 
 function counterAmountWithReplacements(state: GameState, permanent: Permanent, counter: string, amount: number): number {
   if (amount <= 0 || counter !== "+1/+1" || !isCreature(cardProfile(permanent.card))) return amount;
-  const doublers = playerAt(state, permanent.controller).battlefield
-    .filter((candidate) => cardProfile(candidate.card).doublesPlusOneCounters).length;
+  const doublers = allPermanents(state).filter((candidate) => cardProfile(candidate.card).doublesPlusOneCountersGlobally).length
+    + playerAt(state, permanent.controller).battlefield.filter((candidate) => cardProfile(candidate.card).doublesPlusOneCounters).length;
   return amount * (2 ** doublers);
 }
 
 function tokenAmountWithReplacements(state: GameState, seat: SeatId, amount: number): number {
   if (amount <= 0) return amount;
-  const doublers = playerAt(state, seat).battlefield
-    .filter((candidate) => cardProfile(candidate.card).doublesTokens).length;
+  const doublers = allPermanents(state).filter((candidate) => cardProfile(candidate.card).doublesTokensGlobally).length
+    + playerAt(state, seat).battlefield.filter((candidate) => cardProfile(candidate.card).doublesTokens).length;
   return amount * (2 ** doublers);
 }
 
