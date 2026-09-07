@@ -5716,6 +5716,12 @@ function recognizeText(text: string): RecognizedText {
       });
       continue;
     }
+    const fieryJustice = /^~ deals (\d+) damage divided as you choose among any number of targets\. target opponent gains (\d+) life\.?$/i.exec(line);
+    if (fieryJustice) {
+      effects.push({ kind: "damage-divided-targets", amount: Number(fieryJustice[1]) });
+      effects.push({ kind: "gain-life-target-player", amount: Number(fieryJustice[2]) });
+      continue;
+    }
     // Myr Battlesphere: tapping any number of untapped Myr is an optional
     // resolution choice, not a mana cost. Keep the selected group explicit so
     // the authoritative engine can validate and tap the exact permanents.
