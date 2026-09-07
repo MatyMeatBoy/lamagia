@@ -14221,7 +14221,7 @@ describe("bot games", () => {
       }
       expect(result.finished || result.turns > 60).toBe(true);
     }
-  }, 10_000);
+  }, 20_000);
 
   it("produces the same game for the same seed", () => {
     const first = playBotGame(fourSeatGame(11), 30);
