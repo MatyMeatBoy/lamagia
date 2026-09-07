@@ -354,6 +354,13 @@ export interface EquipmentModification {
   readonly power: number;
   readonly toughness: number;
   readonly keywords: readonly EnforcedKeyword[];
+  /** Team-wide bonus gated by the attached creature and each target's tap state (CR 611.3). */
+  readonly conditionalTeamBonuses?: readonly {
+    readonly equippedCreatureState: "tapped" | "untapped";
+    readonly targetState: "tapped" | "untapped";
+    readonly power: number;
+    readonly toughness: number;
+  }[];
   /** Pacifism / Arrest: the enchanted creature can't attack and/or can't block. */
   readonly cannotAttack?: boolean;
   readonly cannotBlock?: boolean;
@@ -844,6 +851,7 @@ export type SpellEffect =
   /** Replaces a resolving spell's normal graveyard destination (CR 701.19). */
   | { readonly kind: "shuffle-source-into-library" }
   | { readonly kind: "untap-equipped-creature" }
+  | { readonly kind: "tap-or-untap-equipped-creature" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean; readonly xThreshold?: number; readonly excludeSource?: boolean }
   /** False Prophet: exile, not destroy, so indestructible and regeneration shields don't apply. */
@@ -2027,22 +2035,36 @@ function parseLevelDefinitions(text: string): LevelDefinition[] {
 }
 
 function parseEquipmentModification(text: string): EquipmentModification | null {
+  const conditionalTeamBonuses: Array<NonNullable<EquipmentModification["conditionalTeamBonuses"]>[number]> = [];
+  let standard: EquipmentModification | null = null;
   for (const line of text.split("\n")) {
     const clean = line.trim().replace(/\.$/, "");
+    const conditional = /^as long as equipped creature is (tapped|untapped), (tapped|untapped) creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+    if (conditional) {
+      conditionalTeamBonuses.push({
+        equippedCreatureState: conditional[1]!.toLowerCase() as "tapped" | "untapped",
+        targetState: conditional[2]!.toLowerCase() as "tapped" | "untapped",
+        power: Number(conditional[3]), toughness: Number(conditional[4])
+      });
+      continue;
+    }
     let match = /^equipped creature gets ([+-]\d+)\/([+-]\d+)(?:\s+and\s+has\s+(.+))?$/i.exec(clean);
     if (match) {
       const keywords = (match[3] ?? "").split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
-      return { power: Number(match[1]), toughness: Number(match[2]), keywords, text: line.trim() };
+      standard = { power: Number(match[1]), toughness: Number(match[2]), keywords, text: line.trim() };
+      continue;
     }
     match = /^equipped creature has\s+(.+)$/i.exec(clean);
     if (match) {
       const keywords = match[1]!.split(/\s+and\s+|,\s*/i).map((word) => word.trim().toLowerCase())
         .filter((word): word is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(word));
-      if (keywords.length) return { power: 0, toughness: 0, keywords, text: line.trim() };
+      if (keywords.length) { standard = { power: 0, toughness: 0, keywords, text: line.trim() }; continue; }
     }
   }
-  return null;
+  if (!standard && !conditionalTeamBonuses.length) return null;
+  return { ...(standard ?? { power: 0, toughness: 0, keywords: [], text: text.trim() }),
+    ...(conditionalTeamBonuses.length ? { conditionalTeamBonuses } : {}) };
 }
 
 /** Static bonuses granted by an Aura to the permanent it's attached to (CR 303.4.5). */
@@ -4711,6 +4733,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Shuffle target card from your graveyard into your library$/i.test(text)) return { effect: { kind: "shuffle-target-card-into-library" }, target: "card-in-your-graveyard" };
   if (/^Shuffle ~ into its owner's library$/i.test(text)) return { effect: { kind: "shuffle-source-into-library" }, target: "none" };
   if (/^Untap equipped creature$/i.test(text)) return { effect: { kind: "untap-equipped-creature" }, target: "none" };
+  if (/^You may tap or untap equipped creature$/i.test(text)) return { effect: { kind: "tap-or-untap-equipped-creature" }, target: "none" };
   if (/^Untap all other creatures you control$/i.test(text)) return { effect: { kind: "untap-all-other-creatures-you-control" }, target: "none" };
   if (/^Tap all creatures target player controls$/i.test(text)) return { effect: { kind: "tap-all-creatures-target-player" }, target: "player" };
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
@@ -5217,6 +5240,18 @@ function recognizeText(text: string): RecognizedText {
         triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "noncreature-spell", unimplementedText: [], covered: true
       };
     }
+  }
+
+  // Wild Ricochet: the target-change clauses are part of the same copy
+  // resolution instruction. The reusable copy primitive preserves the
+  // original targets when no replacement target is selected; the client can
+  // progressively add a target-selection surface without changing parsing.
+  if (/^You may choose new targets for target instant or sorcery spell\.\s*Then copy that spell\.\s*You may choose new targets for the copy\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "copy-target-spell" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "instant-or-sorcery-spell",
+      unimplementedText: [], covered: true
+    };
   }
 
   const effects: SpellEffect[] = [];

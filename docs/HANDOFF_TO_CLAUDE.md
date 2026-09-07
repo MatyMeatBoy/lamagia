@@ -6727,6 +6727,12 @@ integrator review; do not count the old `11440733` as integrated.
 - Verification: authoritative C13 near-complete rescan now reports `0 cards; 0 reusable`; rules check passes and the full suite is green.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
 
+## C13 completion audit (2026-09-07)
+
+- Authoritative coverage: **341/341 unique cards (100%)** across the five C13 Commander decks.
+- Final reconciliations: Jeleva current-Oracle recognition, Plague Boiler counter threshold, Sword of the Paruns state-gated team bonuses, and Wild Ricochet's copy-spell wording.
+- The C13 export is complete; future changes must preserve this report and add scenario coverage before modifying shared primitives.
+
 ## C13 reusable delayed-return cluster (2026-09-07)
 
 - Base: `dfc95af3`.
