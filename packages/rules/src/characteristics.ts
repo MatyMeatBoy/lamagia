@@ -701,6 +701,8 @@ export type SpellEffect =
   | { readonly kind: "return-owned-creatures-to-control" }
   /** Gives the source to a deterministic random opponent at the start of its controller's end step. */
   | { readonly kind: "gain-control-of-source-random-opponent" }
+  /** Mass Mutiny: temporarily control the selected opposing creature, untap it, and grant haste. */
+  | { readonly kind: "gain-control-target-until-end-of-turn" }
   /** Return each non-token permanent to its owner's control without changing zones. */
   | { readonly kind: "return-owned-nontoken-permanents-to-control" }
   /** Destroy one random permanent from an already-selected target group. */
@@ -4105,6 +4107,12 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "damage-divided-targets", amount: 5, lastTargetGainLife: 5 }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "any", unimplementedText: [], covered: true
+    };
+  }
+  if (/^For each opponent, gain control of up to one target creature that player controls until end of turn\.\s*Untap those creatures\.\s*They gain haste until end of turn\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "gain-control-target-until-end-of-turn" }], triggers: [], activatedAbilities: [], modalChoices: [],
+      targetKind: "creature-opponent", unimplementedText: [], covered: true
     };
   }
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));

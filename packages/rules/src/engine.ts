@@ -112,6 +112,8 @@ export interface Permanent {
   readonly cantBlockThisTurn?: boolean;
   /** Players named by dynamic protection choices such as True-Name Nemesis. */
   readonly protectionFromPlayers?: readonly SeatId[];
+  /** Original controller for a temporary control effect ending at cleanup. */
+  readonly temporaryControllerFrom?: SeatId;
   /** Temporary evasion restriction; only blockers with this keyword may block. */
   readonly temporaryCannotBeBlockedExcept?: EnforcedKeyword;
   /** Layer 7c modifications that expire in the cleanup step. */
@@ -4534,6 +4536,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const source = sourceId ? findPermanent(next, sourceId) : undefined;
       return source ? changePermanentController(next, source, targetController) : next;
     }
+    case "gain-control-target-until-end-of-turn": {
+      const target = object.targets[targetIndex];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || permanent.controller === controller) return state;
+      const previousController = permanent.temporaryControllerFrom ?? permanent.controller;
+      let next = changePermanentController(state, permanent, controller);
+      const moved = findPermanent(next, permanent.instance_id);
+      if (!moved) return next;
+      next = withPlayer(next, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === moved.instance_id
+          ? {
+              ...candidate,
+              tapped: false,
+              temporaryControllerFrom: previousController,
+              temporaryKeywords: [...new Set([...(candidate.temporaryKeywords ?? []), "haste" as EnforcedKeyword])]
+            }
+          : candidate)
+      }));
+      return logged(next, controller, `${sourceName}: ${moved.card.name} queda bajo tu control hasta el final del turno.`);
+    }
     case "exile-target-permanent-delayed-return": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -6824,13 +6848,18 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         next = discardCards(next, next.activeSeat, discarded);
         next = logged(next, next.activeSeat, `${player.name} descarta ${excess} carta(s) al límite de mano.`);
       }
+      for (const permanent of allPermanents(next)) {
+        if (permanent.temporaryControllerFrom !== undefined && permanent.controller !== permanent.temporaryControllerFrom) {
+          next = changePermanentController(next, permanent, permanent.temporaryControllerFrom);
+        }
+      }
       next = {
         ...next,
         blockingTaxPerCreature: undefined,
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, temporaryCannotBeBlockedExcept: undefined }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, temporaryCannotBeBlockedExcept: undefined, temporaryControllerFrom: undefined }))
         }))
       };
       break;
