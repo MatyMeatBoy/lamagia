@@ -457,6 +457,7 @@ const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "L
 const C13_DEREVI = () => make({ name: "Derevi, Empyrial Tactician", type_line: "Legendary Creature — Bird Wizard", mana_cost: "{1}{G}{W}{U}", cmc: 4, power: "2", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.", oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef" });
 const C13_DJINN = () => make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6, power: "2", toughness: "7", keywords: ["Flying"], oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat.", oracle_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5", scryfall_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5" });
 const C13_ROON = () => make({ name: "Roon of the Hidden Realm", type_line: "Legendary Creature — Rhino Soldier", mana_cost: "{2}{G}{W}{U}", cmc: 5, power: "4", toughness: "4", keywords: ["Vigilance", "Trample"], oracle_text: "Vigilance, trample\n{2}, {T}: Exile another target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "fd336830-4a11-42b8-9fc7-d7526f569124", scryfall_id: "fd336830-4a11-42b8-9fc7-d7526f569124" });
+const C13_LIM_DULS_VAULT = () => make({ name: "Lim-Dûl's Vault", type_line: "Instant", mana_cost: "{U}{B}", cmc: 2, oracle_text: "Look at the top five cards of your library. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library. Then shuffle and put the last cards you looked at this way on top in any order.", oracle_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97", scryfall_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97" });
 const C13_JELEVA = () => make({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.", oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
@@ -2068,6 +2069,40 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.name === "Grizzly Bears"));
     expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("resolves Lim-Dûl's Vault as a private repeatable library review", () => {
+    const vault = C13_LIM_DULS_VAULT();
+    expect(cardProfile(vault)).toMatchObject({ fullyImplemented: true, effects: [{ kind: "lim-duls-vault" }] });
+    const library = [BEAR(), FLIER(), ISLAND(), SWAMP(), FOREST(), MOUNTAIN(), BEAR(), FLIER(), ISLAND(), FOREST()];
+    let game = readyToCast([vault], [ISLAND(), SWAMP()]);
+    game = stage(game, 0, () => ({ library: toHand(0, library, "vault-library"), autoPass: false }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "lim-dul-vault");
+    const first = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "lim-dul-vault" }>;
+    expect(first.phase).toBe("decide");
+    expect(first.cards).toHaveLength(5);
+    expect(projectGame(game, 0).limDulVault?.cards).toHaveLength(5);
+    expect(projectGame(game, 1).limDulVault).toBeNull();
+
+    game = applyAction(game, 0, { type: "choose-lim-dul", sourceId: first.sourceId, continue: true });
+    expect(game.players[0]!.life).toBe(39);
+    const bottom = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "lim-dul-vault" }>;
+    expect(bottom.phase).toBe("bottom");
+    game = applyAction(game, 0, { type: "reorder-lim-dul", sourceId: bottom.sourceId, order: bottom.cards.map((card) => card.instance_id) });
+    const second = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "lim-dul-vault" }>;
+    expect(second.phase).toBe("decide");
+    expect(second.cards).toHaveLength(5);
+
+    game = applyAction(game, 0, { type: "choose-lim-dul", sourceId: second.sourceId, continue: false });
+    const final = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "lim-dul-vault" }>;
+    expect(final.phase).toBe("final");
+    const finalOrder = [...final.cards].reverse().map((card) => card.instance_id);
+    game = applyAction(game, 0, { type: "reorder-lim-dul", sourceId: final.sourceId, order: finalOrder });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.life).toBe(39);
+    expect(game.players[0]!.library.slice(0, finalOrder.length).map((card) => card.instance_id)).toEqual(finalOrder);
+    expect(game.players[0]!.graveyard.some((card) => card.oracle_id === vault.oracle_id)).toBe(true);
   });
 
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {

@@ -495,6 +495,8 @@ export type SpellEffect =
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly subtypes?: readonly string[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number; readonly tapped?: boolean }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
   | { readonly kind: "look-top-reorder"; readonly amount: number }
+  /** Lim-Dûl's Vault: privately inspect, optionally bottom/pay repeatedly, then reorder the final group. */
+  | { readonly kind: "lim-duls-vault" }
   /** Jeleva exiles each player's top cards using the mana spent on entry (CR 603.6). */
   | { readonly kind: "jeleva-exile-top-spent-mana" }
   /** Jeleva offers one instant or sorcery exiled with the source for free (CR 601.2). */
@@ -4605,6 +4607,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if ((match = /^Look at the top (\w+) cards? of your library, then put (?:it|them) back in any order$/i.exec(text))) {
     const amount = toNumber(match[1]!);
     if (amount !== null) return { effect: { kind: "look-top-reorder", amount }, target: "none" };
+  }
+  if (/^Look at the top five cards of your library\. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library\. Then shuffle and put the last cards you looked at this way on top in any order\.?$/i.test(text)) {
+    return { effect: { kind: "lim-duls-vault" }, target: "none" };
   }
   if (/^Draw a card, then put ~ on top of its owner'?s library$/i.test(text)) {
     return { effect: { kind: "draw-then-source-to-library-top" }, target: "none" };
