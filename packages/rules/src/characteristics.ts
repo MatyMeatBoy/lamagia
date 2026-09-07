@@ -158,7 +158,7 @@ export interface ActivatedAbility {
   /** Printed restriction that forbids activation during the combat phase (CR 602.5). */
   readonly notDuringCombat?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
-  readonly sourceZone?: "hand" | "graveyard";
+  readonly sourceZone?: "hand" | "graveyard" | "command-zone";
   /** Printed upkeep restriction (Forecast, CR 702.57). */
   readonly upkeepOnly?: boolean;
   /** The same source ability can be activated only once during its controller's turn. */
@@ -809,6 +809,8 @@ export type SpellEffect =
   | { readonly kind: "tap-target-creature-and-lock" }
   /** Tidal Force-style choice to tap or untap the selected permanent (CR 701.21). */
   | { readonly kind: "tap-or-untap-target-permanent" }
+  /** Moves the source commander from the command zone to the battlefield. */
+  | { readonly kind: "put-source-from-command-zone" }
   | { readonly kind: "target-cant-block" }
   /** "Your opponents can't cast spells this turn." (Silence, CR 116.3). */
   | { readonly kind: "opponents-cant-cast-spells-this-turn" }
@@ -2256,6 +2258,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
   const flickerform = /^Exile enchanted creature and all Auras attached to it\. At the beginning of the next end step, return that card to the battlefield under its owner'?s control\. If you do, return the other cards exiled this way to the battlefield under their owners'? control attached to that creature\.?$/i.test(parsedEffectText);
   const toggleSourceCounter = /^Put a plague counter on ~ or remove a plague counter from it\.?$/i.test(parsedEffectText);
+  const putSourceFromCommandZone = /^Put ~ onto the battlefield from the command zone\.?$/i.test(parsedEffectText);
   const returnLandsCopy = /^((?:\{[^}]+\})+),\s*Return (two|three|four|five|\d+) lands you control to their owner'?s hand:\s*(.+)$/i.exec(line.trim());
   if (returnLandsCopy) {
     const manaCost = parseManaCost(returnLandsCopy[1]!);
@@ -2323,6 +2326,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: { kind: "flickerform" } as SpellEffect, target: "none" as TargetKind }
     : toggleSourceCounter
     ? { effect: { kind: "toggle-source-counter", counter: "plague" } as SpellEffect, target: "none" as TargetKind }
+    : putSourceFromCommandZone
+    ? { effect: { kind: "put-source-from-command-zone" } as SpellEffect, target: "none" as TargetKind }
     : /^Exchange control of two target nonlegendary creatures\.?$/i.test(parsedEffectText)
     ? { effect: { kind: "exchange-control-two-creatures" } as SpellEffect, target: "nonlegendary-creature" as TargetKind, targetKinds: ["nonlegendary-creature", "nonlegendary-creature"] as const }
     : selfPump
@@ -2414,6 +2419,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(discardsCard ? { discardsCard: true } : {}),
     ...(discardsCardsMatch ? { discardsCards: { amount: toNumber(discardsCardsMatch[1])! } } : {}),
     ...(discardsSelf ? { discardsSelf: true, sourceZone: "hand" as const } : {}),
+    ...(putSourceFromCommandZone ? { sourceZone: "command-zone" as const } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
@@ -4030,6 +4036,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Tap target creature$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "creature" };
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent(?: of their choice)?$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
+  if (/^Put ~ onto the battlefield from the command zone\.?$/i.test(text)) {
+    return { effect: { kind: "put-source-from-command-zone" }, target: "none" };
+  }
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if (/^Your opponents can'?t cast spells this turn$/i.test(text)) return { effect: { kind: "opponents-cant-cast-spells-this-turn" }, target: "none" };
   if (/^This turn, creatures can'?t block unless their controller pays \{X\} for each blocking creature they control$/i.test(text)) {
@@ -5244,6 +5253,21 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // Derevi's combined trigger is two independent trigger events sharing the
+    // same optional tap-or-untap effect (CR 603.2). Keep both event paths
+    // explicit so the common effect primitive is reusable by other cards.
+    const dereviTrigger = /^when\s+~\s+enters\s+and\s+whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i.exec(line);
+    if (dereviTrigger) {
+      const rawEffect = dereviTrigger[1]!.trim();
+      const optional = /^you\s+may\b/i.test(rawEffect);
+      const rec = recognizeSentence(rawEffect.replace(/^you\s+may\s+/i, ""));
+      if (rec) {
+        for (const [event, subject] of [["enters-battlefield", "self"], ["deals-combat-damage-to-player", "creature-you-control"]] as const) {
+          triggers.push({ event, subject, effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
+        }
+        continue;
+      }
+    }
     const spellManaValueTokenLine = /^whenever\s+you\s+cast\s+a\s+creature\s+spell,\s*create\s+x\s+(.+?)\s+tokens?,\s*where\s+x\s+is\s+that\s+spell'?s\s+mana\s+value\.?$/i.exec(line);
     if (spellManaValueTokenLine) {
       const token = parseCreateToken(`Create a ${spellManaValueTokenLine[1]!} token`);
@@ -5756,7 +5780,7 @@ export function cardProfile(card: CardData): CardProfile {
     levelDefinitions,
     classLevels,
     protectionFrom,
-    activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand")
+    activatedAbilities: isPermanent || recognized.activatedAbilities.some((ability) => ability.sourceZone === "hand" || ability.sourceZone === "graveyard" || ability.sourceZone === "command-zone")
       ? [
           ...recognized.activatedAbilities.filter((ability) => ability.effect.kind !== "flickerform"),
           ...(levelUpCost ? [{

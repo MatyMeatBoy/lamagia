@@ -3035,6 +3035,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "shuffle-self-into-library":
       // The card's own move is handled by resolveTop after other effects run.
       return state;
+    case "put-source-from-command-zone": {
+      // Derevi's ability is activated while the commander is in its public
+      // command zone; move that exact object before raising its ETB event.
+      const owner = object.card.owner;
+      const sourceId = object.sourcePermanentId ?? object.card.instance_id;
+      if (!playerAt(state, owner).commandZone.some((card) => card.instance_id === sourceId)) return state;
+      const removed = withPlayer(state, owner, (player) => ({
+        ...player,
+        commandZone: player.commandZone.filter((card) => card.instance_id !== sourceId)
+      }));
+      const entered = putOntoBattlefield(removed, object.controller, object.card,
+        playerAt(removed, owner).commanderIds.includes(sourceId));
+      return logged(entered, object.controller, `${object.card.name} entra al campo de batalla desde la zona de mando.`);
+    }
     case "sacrifice-source": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
       const permanent = findPermanent(state, sourceId);
@@ -8272,6 +8286,31 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
   }
 
+  // Commander-zone activated abilities (Derevi and future reusable
+  // primitives) are public zone actions, but still use the same authoritative
+  // payment/target validator as battlefield abilities (CR 903.8).
+  if (!splitSecondActive(state)) for (const card of player.commandZone) {
+    const source = handActivationSource(card, seat);
+    for (const ability of cardProfile(card).activatedAbilities.filter((candidate) => candidate.sourceZone === "command-zone")) {
+      const variableValues = ability.manaCost?.hasVariable
+        ? [...Array(Math.max(1, potentialMana(player, state) + 1)).keys()]
+        : [0];
+      for (const variableValue of variableValues) {
+        const check = activatableAbility(state, seat, source, ability, variableValue);
+        if (!check.legal) continue;
+        actions.push({
+          action: { type: "activate", sourceId: card.instance_id, abilityIndex: ability.index,
+            ...(ability.manaCost?.hasVariable ? { variableValue } : {}) },
+          label: `${card.name}: ${ability.text.split(":").slice(1).join(":").trim() || ability.text}${ability.manaCost?.hasVariable ? ` (X=${variableValue})` : ""}`,
+          cardId: card.instance_id,
+          ...(check.targetKind ? { requiresTarget: check.targetKind } : {}),
+          ...(check.targetKinds ? { requiresTargets: check.targetKinds } : {}),
+          note: ability.text
+        });
+      }
+    }
+  }
+
   // Abilities of permanents this seat controls. Mana abilities resolve
   // immediately and never use the stack (rule 605.3a); everything else is
   // announced like a spell and waits for priority to pass.
@@ -9053,15 +9092,20 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   const battlefieldSource = player.battlefield.find((permanent) => permanent.instance_id === action.sourceId);
   const handSource = player.hand.find((card) => card.instance_id === action.sourceId);
   const graveyardSource = player.graveyard.find((card) => card.instance_id === action.sourceId);
+  const commandZoneSource = player.commandZone.find((card) => card.instance_id === action.sourceId);
   const source = battlefieldSource
     ?? (handSource ? handActivationSource(handSource, seat) : undefined)
-    ?? (graveyardSource ? graveyardActivationSource(graveyardSource, seat) : undefined);
+    ?? (graveyardSource ? graveyardActivationSource(graveyardSource, seat) : undefined)
+    ?? (commandZoneSource ? handActivationSource(commandZoneSource, seat) : undefined);
   if (!source) throw new Error("Ese permanente o carta ya no está bajo tu control.");
   const ability = battlefieldSource
     ? activatedAbilitiesFor(state, battlefieldSource).find((candidate) => candidate.index === action.abilityIndex)
     : cardProfile(source.card).activatedAbilities.find((candidate) => candidate.index === action.abilityIndex);
   if (!ability) throw new Error("Esa habilidad activada no existe.");
-  if (ability.sourceZone === "hand" ? !handSource : ability.sourceZone === "graveyard" ? !graveyardSource : !battlefieldSource) {
+  if (ability.sourceZone === "hand" ? !handSource
+    : ability.sourceZone === "graveyard" ? !graveyardSource
+      : ability.sourceZone === "command-zone" ? !commandZoneSource
+        : !battlefieldSource) {
     throw new Error("La zona de esa habilidad ya no es válida.");
   }
   const check = activatableAbility(state, seat, source, ability, action.variableValue ?? 0);

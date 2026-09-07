@@ -141,6 +141,12 @@ const WARD_SENTINEL = () => make({ name: "Ward Sentinel", type_line: "Creature �
 const WARD_TARGET_SPELL = () => make({ name: "Ward Test Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Destroy target creature." });
 const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
+const C13_DEREVI = () => make({
+  name: "Derevi, Empyrial Tactician", type_line: "Legendary Creature — Bird Wizard", mana_cost: "{1}{G}{W}{U}", cmc: 4,
+  power: "2", toughness: "3", keywords: ["Flying"],
+  oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.",
+  oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef"
+});
 const TREASURE_TOKEN = () => make({
   name: "Treasure", type_line: "Artifact — Treasure", token: true,
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
@@ -180,6 +186,38 @@ describe("Suspend primitive", () => {
     game = settle(game);
     expect(game.pendingChoice).toMatchObject({ type: "suspend-ready", seat: 0, sourceCard: { name: "Phthisis" } });
     expect(legalActions(game, 0).some((entry) => entry.action.type === "cast-suspended")).toBe(true);
+  });
+});
+
+describe("Derevi command-zone primitive", () => {
+  it("returns Derevi from the command zone and queues its optional ETB target", () => {
+    const derevi = C13_DEREVI();
+    let game = createGame(
+      [deck("A", derevi, []), deck("B", COMMANDER("Beta Captain"), [])],
+      { seed: 11, allowPartialDecks: true }
+    );
+    game = {
+      ...game,
+      step: "precombat-main",
+      activeSeat: 0,
+      prioritySeat: 0,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: [] }))
+    };
+    game = putOnBattlefield(game, 0, [FOREST(), PLAINS(), ISLAND(), FOREST()]);
+    const commandAction = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === game.players[0]!.commandZone[0]!.instance_id);
+    expect(commandAction).toBeDefined();
+    game = applyAction(game, 0, commandAction!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    game = settle(game);
+    expect(game.players[0]!.commandZone).toHaveLength(0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === derevi.name)).toBe(true);
+    expect(game.pendingChoice?.type).toBe("trigger-target");
   });
 });
 
