@@ -1129,6 +1129,8 @@ export interface TriggerDefinition {
   readonly discardedCardType?: "creature" | "land" | "noncreature-nonland";
   /** "if it was kicked" gate on an enters trigger (CR 702.33e, 603.4). */
   readonly requiresKicked?: boolean;
+  /** Specific kicker component required by a conditional trigger (CR 702.33e). */
+  readonly requiresKickerIndex?: number;
   /** "sacrifice it unless {U} was spent to cast it" gate (CR 603.4). */
   readonly requiresManaTypeNotSpent?: ManaType;
   /** "if its evoke cost was paid" gate on the sacrifice trigger (CR 702.34c). */
@@ -1286,6 +1288,8 @@ export interface CardProfile {
   /** Target family that may be selected one or more times during casting. */
   readonly variableTargetKind: Exclude<TargetKind, "none"> | null;
   readonly kickerCost: ManaCost | null;
+  /** Kicker components in printed order; a cast may pay any subset. */
+  readonly kickerCosts: readonly ManaCost[];
   /** Overload alternative cost and its text-changing replacement (CR 702.96). */
   readonly overloadCost: ManaCost | null;
   readonly overloadEffects: readonly SpellEffect[];
@@ -2717,6 +2721,7 @@ interface RecognizedText {
   readonly variableTargetKind?: Exclude<TargetKind, "none"> | null;
   combatOnly?: boolean;
   kickerCost?: ManaCost | null;
+  kickerCosts?: ManaCost[];
   overloadCost?: ManaCost | null;
   overloadEffects?: SpellEffect[];
   entwineCost?: ManaCost | null;
@@ -4882,6 +4887,20 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  // Stormscape Battlemage has two independent kicker components. Keep the
+  // component index on each ETB trigger so paying one does not fire the other.
+  if (/^Kicker \{W\} and\/or \{2\}\{B\}\s+When ~ enters, if it was kicked with its \{W\} kicker, you gain 3 life\.\s+When ~ enters, if it was kicked with its \{2\}\{B\} kicker, destroy target nonblack creature\. That creature can't be regenerated\.?$/i.test(joined)) {
+    return {
+      effects: [],
+      triggers: [
+        { event: "enters-battlefield", subject: "self", effect: { kind: "gain-life", amount: 3 }, optional: false, targetKind: "none", requiresKickerIndex: 0, sourceText: body[1]?.text ?? joined },
+        { event: "enters-battlefield", subject: "self", effect: { kind: "destroy-target-permanent" }, optional: false, targetKind: "nonblack-creature", requiresKickerIndex: 1, sourceText: body[2]?.text ?? joined }
+      ],
+      activatedAbilities: [], modalChoices: [], targetKind: "none",
+      kickerCost: parseManaCost("{W}"), kickerCosts: [parseManaCost("{W}")!, parseManaCost("{2}{B}")!],
+      unimplementedText: [], covered: true
+    };
+  }
   // Marath's entry replacement and variable-X activation are a reusable pair:
   // the first uses the mana actually spent to cast the permanent, while each
   // mode uses the chosen X and removes that many +1/+1 counters (CR 107.3,
@@ -5176,6 +5195,7 @@ function recognizeText(text: string): RecognizedText {
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  const kickerCosts: ManaCost[] = [];
   let overloadCost: ManaCost | null = null;
   let entwineCost: ManaCost | null = null;
   let graftAmount: number | null = null;
@@ -5232,9 +5252,17 @@ function recognizeText(text: string): RecognizedText {
     // window right after being drawn as the first card that turn. Reminder text is dropped.
     const miracle = /^Miracle\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (miracle) { miracleCost = parseManaCost(miracle[1]!); continue; }
-    // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
-    const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
-    if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Kicker / Multikicker additional costs (CR 702.33). `and/or` creates
+    // independent components, e.g. Stormscape Battlemage.
+    const kicker = /^(?:Multikicker|Kicker)\s+(.+?)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (kicker) {
+      const costs = [...kicker[1]!.matchAll(/((?:\{[^}]+\})+)/g)]
+        .map((match) => parseManaCost(match[1]!))
+        .filter((cost): cost is ManaCost => Boolean(cost));
+      kickerCosts.push(...costs);
+      kickerCost = costs[0] ?? null;
+      continue;
+    }
     // Overload is an alternative cost whose text-changing effect replaces
     // every "target" with "each" (CR 702.96). The concrete replacement is
     // derived after the base sentence has been recognized below.
@@ -6106,9 +6134,15 @@ function recognizeText(text: string): RecognizedText {
         .replace(/^you\s+may\s+have\s+target\s+creature\s+gain\b/i, "Target creature gains")
         .replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // "if it was kicked" gate (CR 702.33e).
-      const kickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
+      const specificKickedGate = /^if (?:it|this creature|this permanent|~) was kicked with its ((?:\{[^}]+\})+) kicker,\s*(.+)$/i.exec(effectText);
+      const genericKickedGate = /^if (?:it|this creature|this permanent|~) was kicked,\s*(.+)$/i.exec(effectText);
+      const kickedGate = specificKickedGate ?? genericKickedGate;
       const requiresKicked = Boolean(kickedGate);
-      if (kickedGate) effectText = kickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      const requiresKickerIndex = specificKickedGate
+        ? kickerCosts.findIndex((cost) => cost.raw.replace(/\s+/g, "") === specificKickedGate[1]!.replace(/\s+/g, ""))
+        : -1;
+      if (specificKickedGate) effectText = specificKickedGate[2]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
+      else if (genericKickedGate) effectText = genericKickedGate[1]!.replace(/^it\s+(deals|gets|gains|enters|fights)\b/i, "~ $1");
       // Well of Lost Dreams: X is chosen on resolution and capped by the life
       // gain event (CR 107.3, 118.3). Keep this as a reusable variable-cost
       // trigger shape instead of hard-coding the card in the engine.
@@ -6180,6 +6214,7 @@ function recognizeText(text: string): RecognizedText {
           ...(triggered.nontoken ? { nontoken: true } : {}),
           ...(triggered.discardedCardType ? { discardedCardType: triggered.discardedCardType } : {}),
           ...(requiresKicked ? { requiresKicked: true as const } : {}),
+          ...(requiresKickerIndex >= 0 ? { requiresKickerIndex } : {}),
           ...(payCost && payCost.symbols.length && !sacrificeUnlessPayment && !variableLifePay ? { payCost, manaCost: payCost } : {}),
           ...(variableLifePay ? { payCost: parseManaCost("{X}")!, variablePayCost: "event-amount" as const } : {}),
            ...(sacrificeUnlessPayment && payCost?.symbols.length ? { unlessPayCost: payCost } : {}),
@@ -6335,7 +6370,7 @@ function recognizeText(text: string): RecognizedText {
   const overloadEffects: SpellEffect[] = overloadCost && targetKind === "creature-opponent-without-flying" && effects.length === 1 && effects[0]!.kind === "damage-any-target"
     ? [{ kind: "damage-all-creatures", amount: effects[0]!.amount, excludeSource: false, filter: "without-flying" }]
     : [];
-  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, overloadCost, overloadEffects, kickedEffects, kickedKeywords, kickedEntersWithCounters, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, kickerCosts, overloadCost, overloadEffects, kickedEffects, kickedKeywords, kickedEntersWithCounters, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -6700,6 +6735,7 @@ export function cardProfile(card: CardData): CardProfile {
     additionalGenericPerTargetBeyondFirst: recognized.additionalGenericPerTargetBeyondFirst ?? 0,
     variableTargetKind: recognized.variableTargetKind ?? null,
     kickerCost: recognized.kickerCost ?? null,
+    kickerCosts: recognized.kickerCosts ?? (recognized.kickerCost ? [recognized.kickerCost] : []),
     overloadCost: recognized.overloadCost ?? null,
     overloadEffects: recognized.overloadEffects ?? [],
     entwineCost: recognized.entwineCost ?? null,

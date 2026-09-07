@@ -511,6 +511,7 @@ const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creatu
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
 const C13_DEREVI = () => make({ name: "Derevi, Empyrial Tactician", type_line: "Legendary Creature — Bird Wizard", mana_cost: "{1}{G}{W}{U}", cmc: 4, power: "2", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.", oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef" });
 const C13_MARATH = () => make({ name: "Marath, Will of the Wild", type_line: "Legendary Creature — Elemental Beast", mana_cost: "{X}{R}{G}", cmc: 2, power: "0", toughness: "0", oracle_text: "Marath enters with a number of +1/+1 counters on it equal to the amount of mana spent to cast Marath.\n{X}, Remove X +1/+1 counters from Marath: Choose one —\n— Put X +1/+1 counters on target creature. X can't be 0.\n— Marath deals X damage to any target. X can't be 0.\n— Create an X/X green Elemental creature token. X can't be 0.", oracle_id: "fae87115-8749-4d25-a594-7139dd01a034", scryfall_id: "fae87115-8749-4d25-a594-7139dd01a034" });
+const C13_STORMSCAPE_BATTLEMAGE = () => make({ name: "Stormscape Battlemage", type_line: "Creature — Kavu", mana_cost: "{2}{W}", cmc: 3, power: "2", toughness: "2", oracle_text: "Kicker {W} and/or {2}{B} (You may pay an additional {W} and/or {2}{B} as you cast this spell.)\nWhen this creature enters, if it was kicked with its {W} kicker, you gain 3 life.\nWhen this creature enters, if it was kicked with its {2}{B} kicker, destroy target nonblack creature. That creature can't be regenerated.", oracle_id: "38ee748d-adcd-41df-9b23-d2a34829784c", scryfall_id: "38ee748d-adcd-41df-9b23-d2a34829784c" });
 const C13_DJINN = () => make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6, power: "2", toughness: "7", keywords: ["Flying"], oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat.", oracle_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5", scryfall_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5" });
 const C13_ROON = () => make({ name: "Roon of the Hidden Realm", type_line: "Legendary Creature — Rhino Soldier", mana_cost: "{2}{G}{W}{U}", cmc: 5, power: "4", toughness: "4", keywords: ["Vigilance", "Trample"], oracle_text: "Vigilance, trample\n{2}, {T}: Exile another target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "fd336830-4a11-42b8-9fc7-d7526f569124", scryfall_id: "fd336830-4a11-42b8-9fc7-d7526f569124" });
 const C13_LIM_DULS_VAULT = () => make({ name: "Lim-Dûl's Vault", type_line: "Instant", mana_cost: "{U}{B}", cmc: 2, oracle_text: "Look at the top five cards of your library. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library. Then shuffle and put the last cards you looked at this way on top in any order.", oracle_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97", scryfall_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97" });
@@ -2389,6 +2390,37 @@ describe("casting", () => {
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === marath.instance_id)!.counters["+1/+1"]).toBe(2);
     expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!.damage).toBe(2);
+  });
+
+  it("keeps Stormscape Battlemage's independent kicker triggers separate", () => {
+    const card = C13_STORMSCAPE_BATTLEMAGE();
+    expect(profileOf(card)).toMatchObject({
+      fullyImplemented: true,
+      kickerCosts: [{ raw: "{W}" }, { raw: "{2}{B}" }],
+      triggers: [
+        { requiresKickerIndex: 0, effect: { kind: "gain-life", amount: 3 } },
+        { requiresKickerIndex: 1, effect: { kind: "destroy-target-permanent" } }
+      ]
+    });
+
+    let game = readyToCast([card], [PLAINS(), PLAINS(), FOREST(), FOREST()]);
+    const whiteKicker = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.kickerIndices?.join(",") === "0");
+    expect(whiteKicker).toBeDefined();
+    game = applyAction(game, 0, whiteKicker!.action);
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(43);
+
+    game = readyToCast([card], [PLAINS(), SWAMP(), SWAMP(), FOREST(), FOREST(), MOUNTAIN()], [], [BEAR()]);
+    const blackKicker = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.kickerIndices?.join(",") === "1");
+    expect(blackKicker).toBeDefined();
+    game = applyAction(game, 0, blackKicker!.action);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const bearTarget = targetChoice.options.find((target) => target.kind === "permanent" && target.instanceId === game.players[1]!.battlefield[0]!.instance_id)!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: bearTarget });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.life).toBe(40);
+    expect(game.players[1]!.graveyard.some((candidate) => candidate.name === "Grizzly Bears")).toBe(true);
   });
 
   it("chooses a color and returns matching permanents to their owners' hands", () => {
