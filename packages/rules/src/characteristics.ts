@@ -5789,6 +5789,19 @@ function recognizeText(text: string): RecognizedText {
       });
       continue;
     }
+    const spellManaValueTokens = /^whenever\s+you\s+cast\s+a\s+creature\s+spell,?\s*create\s+(x|a|an|one|two|three|four|five|\d+)\s+1\/1\s+black\s+([A-Za-z][A-Za-z'’-]*)\s+creature\s+tokens?,?\s*where\s+x\s+is\s+that\s+spell['’]?s\s+mana\s+value\.?$/i.exec(triggerLine);
+    if (spellManaValueTokens) {
+      const amount = toNumber(spellManaValueTokens[1]!);
+      const token = parseCreateToken(`Create a 1/1 black ${spellManaValueTokens[2]} creature token`);
+      if (token?.kind === "create-token") {
+        triggers.push({
+          event: "spell-cast", subject: "you", spellType: "creature",
+          effect: { ...token, amount: amount === null ? "spell-mana-value" : amount },
+          optional: false, targetKind: "none", sourceText: line
+        });
+        continue;
+      }
+    }
     const triggeredRaw = matchTriggerLine(triggerLine);
     if (triggeredRaw) {
       // "This ability triggers only once each turn." (Bident of Thassa and
