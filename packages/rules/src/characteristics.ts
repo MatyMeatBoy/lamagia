@@ -616,6 +616,7 @@ export type SpellEffect =
   | { readonly kind: "damage-controller"; readonly amount: number | "X" }
   | { readonly kind: "extort" }
   | { readonly kind: "damage-any-target"; readonly amount: number | "X"; readonly kickedAmount?: number | "X" }
+  | { readonly kind: "marath-counter-ability"; readonly mode: "counter" | "damage" | "token" }
   /** "~ deals N damage to target creature and M damage to that creature's controller" (Chandra's Outrage). */
   | { readonly kind: "damage-target-creature-and-controller"; readonly amount: number; readonly controllerAmount: number }
   /** Incinerate-style damage rider that disables regeneration for the damaged creature (CR 615.1, 701.19). */
@@ -2382,6 +2383,7 @@ function effectUsesVariable(effect: SpellEffect): boolean {
   if (anyEffect.amount === "X" || anyEffect.count === "X" || anyEffect.power === "X" || anyEffect.toughness === "X") return true;
   if (effect.kind === "drain-target-toughness-pump-source-power") return true;
   if (effect.kind === "destroy-target-artifact-or-creature-mana-value") return true;
+  if (effect.kind === "marath-counter-ability") return true;
   if (effect.kind === "compound") return effect.effects.some(effectUsesVariable);
   return false;
 }
@@ -2428,6 +2430,19 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
     .trim();
+  const marathAbility = /^Choose one\s*[—–-]\s*Put X \+1\/\+1 counters on target creature\. X can't be 0\.\s*—\s*Marath deals X damage to any target\. X can't be 0\.\s*—\s*Create an X\/X green Elemental creature token\. X can't be 0\.?$/i.test(parsedEffectText);
+  if (marathAbility) {
+    const symbols = costText.match(/\{[^}]+\}/g) ?? [];
+    const manaSymbols = symbols.filter((symbol) => !/^\{[TQE]\}$/i.test(symbol));
+    const manaCost = manaSymbols.length ? parseManaCost(manaSymbols.join("")) : null;
+    if (!manaCost?.hasVariable) return null;
+    return {
+      index, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost,
+      removeCounters: [{ kind: "+1/+1", amount: 1 }],
+      effect: { kind: "marath-counter-ability", mode: "damage" },
+      targetKind: "any", text: line.trim()
+    };
+  }
   const mayaelEffect = parseMayaelLookTop(parsedEffectText);
   if (mayaelEffect) {
     const symbols = costText.match(/\{[^}]+\}/g) ?? [];
@@ -3329,6 +3344,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   // Trailing whitespace before the full stop appears when reminder text such as
   // "(an energy counter)" is stripped mid-sentence; drop it with the period.
   const text = sentence.trim().replace(/\s+/g, " ").replace(/\s*\.\s*$/, "").trim();
+  const marathMode = /^Put X \+1\/\+1 counters on target creature\. X can't be 0$/i.test(text)
+    ? "counter"
+    : /^Marath deals X damage to any target\. X can't be 0$/i.test(text)
+      ? "damage"
+      : /^Create an X\/X green Elemental creature token\. X can't be 0$/i.test(text)
+        ? "token" : null;
+  if (marathMode) return { effect: { kind: "marath-counter-ability", mode: marathMode }, target: marathMode === "counter" ? "creature" : "any" };
   let match: RegExpExecArray | null;
 
   const simple = simpleEffectIR(text);
