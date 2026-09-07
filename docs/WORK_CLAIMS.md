@@ -95,6 +95,7 @@ Gameplay assignment: `gameplay-autopass-safe-undo` owns reusable counter-respons
 
 | Claim key | Scope | Branch / PR | Status | Since (UTC) |
 | --- | --- | --- | --- | --- |
+| `c13-jeleva-current-base-rescue` | Adapt Jeleva, Nephalia's Scourge's spent-mana exile and linked free-cast attack trigger to the current stack, exile ownership, and private-choice APIs (CR 603.6, 701.13, 601.2) | `codex/c13-jeleva-current-base` | ready for integrator review | 2026-09-07 |
 | `global-exalted` | Exalted sole-attacker trigger and temporary pump (CR 702.83) | `feat/activated-abilities-and-triggers` | merged (`a9c3c45`) | 2026-09-04 |
 | `global-shadow` | Shadow evasion and blocking symmetry (CR 702.28) | `feat/activated-abilities-and-triggers` | merged (`c5eeb6e`) | 2026-09-04 |
 | `global-changeling` | Changeling keyword coverage using the existing all-creature-types model (CR 702.73) | `feat/activated-abilities-and-triggers` | merged (`8d2d186`) | 2026-09-04 |
@@ -410,7 +411,10 @@ rules citations and the integrator review remain mandatory.
 - `11440733` (Jeleva) is not integrable as-is: it assumes a legacy
   `castSpentMana`/stack contract and uses inconsistent trigger/source IDs for
   the linked exile choice. Adapt it to the current APIs before claiming the
-  card; do not cherry-pick the historical branch wholesale.
+  card; do not cherry-pick the historical branch wholesale. The focused
+  current-base adaptation is now recorded under
+  `c13-jeleva-current-base-rescue`; review its dedicated scenarios before
+  merging.
 
 Historical C13 commits that are already represented in the current base
 (`Tempting Offer`, `Flickerform`, `From the Ashes`, `Mystic Barrier`, and

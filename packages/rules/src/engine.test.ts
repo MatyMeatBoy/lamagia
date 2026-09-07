@@ -451,6 +451,7 @@ const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creatu
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
 const C13_DEREVI = () => make({ name: "Derevi, Empyrial Tactician", type_line: "Legendary Creature — Bird Wizard", mana_cost: "{1}{G}{W}{U}", cmc: 4, power: "2", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.", oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef" });
+const C13_JELEVA = () => make({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.", oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
 const CONDEMN_LIKE = () => make({ name: "Battlefield Condemnation", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness." });
@@ -1135,6 +1136,64 @@ function passUntil(state: GameState, predicate: (state: GameState) => boolean, l
   }
   throw new Error("passUntil exhausted its budget.");
 }
+
+describe("Jeleva current-base rescue", () => {
+  it("exiles the same spent-mana count from every library and preserves source linkage", () => {
+    const jeleva = C13_JELEVA();
+    let game = twoSeatGame([], []);
+    game = {
+      ...game,
+      step: "precombat-main",
+      activeSeat: 0,
+      prioritySeat: 0,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      players: game.players.map((player) => ({
+        ...player,
+        autoPass: false,
+        hand: player.seat === 0 ? toHand(0, [jeleva], "jeleva") : [],
+        commandZone: [],
+        library: toHand(player.seat, [BEAR(), FLIER(), BOLT(), FOREST(), ISLAND(), SWAMP()], `library-${player.seat}`),
+        manaPool: player.seat === 0 ? { W: 0, U: 1, B: 1, R: 1, G: 0, C: 1 } : player.manaPool
+      }))
+    };
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "jeleva-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    game = passUntil(game, (current) => current.players.every((player) => player.exile.length >= 4));
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === jeleva.name);
+    expect(source).toBeDefined();
+    expect(game.players[0]!.exile.filter((card) => card.exiledWithSourceId === source!.instance_id)).toHaveLength(4);
+    expect(game.players[1]!.exile.filter((card) => card.exiledWithSourceId === source!.instance_id)).toHaveLength(4);
+  });
+
+  it("offers and casts an opponent-owned exiled instant without paying its cost", () => {
+    const jeleva = C13_JELEVA();
+    let game = twoSeatGame([], []);
+    game = { ...game, step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: [], commandZone: [] })) };
+    game = putOnBattlefield(game, 0, [jeleva], { sick: false });
+    const source = game.players[0]!.battlefield.at(-1)!;
+    const exiled = { ...BOLT(), instance_id: "jeleva-exiled-bolt", owner: 1, exiledWithSourceId: source.instance_id };
+    game = stage(game, 1, (player) => ({ exile: [exiled] }));
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: source.instance_id, defender: 1 }] });
+    for (let index = 0; index < 20 && game.pendingChoice?.type !== "jeleva-cast-exiled"; index += 1) {
+      const seat = game.prioritySeat;
+      game = applyAction(game, seat, { type: "pass" });
+    }
+    expect(game.pendingChoice?.type).toBe("jeleva-cast-exiled");
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "choose-jeleva-cast" && entry.cardId === exiled.instance_id);
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast!.action);
+    expect(game.stack.at(-1)?.card.name).toBe("Lightning Bolt");
+    expect(game.stack.at(-1)?.controller).toBe(0);
+    expect(game.players[1]!.exile.some((card) => card.instance_id === exiled.instance_id)).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Setup and turn structure

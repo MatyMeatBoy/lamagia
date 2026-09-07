@@ -470,6 +470,10 @@ export type SpellEffect =
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly subtypes?: readonly string[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number; readonly tapped?: boolean }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
   | { readonly kind: "look-top-reorder"; readonly amount: number }
+  /** Jeleva exiles each player's top cards using the mana spent on entry (CR 603.6). */
+  | { readonly kind: "jeleva-exile-top-spent-mana" }
+  /** Jeleva offers one instant or sorcery exiled with the source for free (CR 601.2). */
+  | { readonly kind: "jeleva-cast-exiled" }
   /** "Draw a card, then put ~ on top of its owner's library" (Sensei's Divining Top's tap ability). */
   | { readonly kind: "draw-then-source-to-library-top" }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
@@ -4653,6 +4657,19 @@ function recognizeText(text: string): RecognizedText {
   // over two sentences. Recognise the complete sequence before the generic
   // sentence splitter can mark the second half as unknown.
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
+  // Jeleva's two linked abilities share one Oracle block. Keep them as two
+  // reusable trigger effects so the ETB and attack paths retain their own
+  // source identity and private choice timing.
+  if (/^When ~ enters(?: the battlefield)?, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~\.\s*Whenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost\.?$/i.test(joined)) {
+    return {
+      effects: [],
+      triggers: [
+        { event: "enters-battlefield", subject: "self", effect: { kind: "jeleva-exile-top-spent-mana" }, optional: false, targetKind: "none", sourceText: body[0]!.text },
+        { event: "attacks", subject: "self", effect: { kind: "jeleva-cast-exiled" }, optional: true, targetKind: "none", sourceText: body[1]!.text }
+      ],
+      activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
   // "At the beginning of your upkeep, sacrifice a creature. Whenever you
   // sacrifice a creature, draw a card." (Smothering Abomination): modeled as
   // ONE synthesized upkeep trigger reusing the existing deterministic
