@@ -434,6 +434,7 @@ const C13_INCENDIARY_COMMAND = () => make({ name: "Incendiary Command", type_lin
 const C13_MAGUS_OF_THE_ARENA = () => make({ name: "Magus of the Arena", type_line: "Creature — Human Wizard", mana_cost: "{3}{R}{R}", cmc: 5, power: "5", toughness: "5", oracle_text: "{3}, {T}: Tap target creature you control and target creature of an opponent's choice they control. Those creatures fight each other. (Each deals damage equal to its power to the other.)", oracle_id: "44865261-16f8-42d2-a388-a57173142eb0", scryfall_id: "44865261-16f8-42d2-a388-a57173142eb0" });
 const C13_DJINN_OF_INFINITE_DECEITS = () => make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6, power: "2", toughness: "7", oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat.", oracle_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5", scryfall_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5" });
 const C13_SHATTERGANG_BROTHERS = () => make({ name: "Shattergang Brothers", type_line: "Legendary Creature — Goblin Shaman", mana_cost: "{1}{B}{R}{G}", cmc: 4, power: "3", toughness: "3", oracle_text: "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.", oracle_id: "7fb63d9a-8d90-4b43-8390-924de2d7e32c", scryfall_id: "7fb63d9a-8d90-4b43-8390-924de2d7e32c" });
+const C13_MASS_MUTINY = () => make({ name: "Mass Mutiny", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "For each opponent, gain control of up to one target creature that player controls until end of turn. Untap those creatures. They gain haste until end of turn.", oracle_id: "d96763a0-6a6e-4520-899a-468b4bb307c8", scryfall_id: "d96763a0-6a6e-4520-899a-468b4bb307c8" });
 const C13_REINCARNATION = () => make({ name: "Reincarnation", type_line: "Instant", mana_cost: "{1}{G}{G}", cmc: 3, oracle_text: "Choose target creature. When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner.", oracle_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a", scryfall_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a" });
 const C13_ENDREK = () => make({ name: "Endrek Sahr, Master Breeder", type_line: "Legendary Creature — Human Wizard", mana_cost: "{4}{B}", cmc: 5, power: "2", toughness: "2", oracle_text: "Whenever you cast a creature spell, create X 1/1 black Thrull creature tokens, where X is that spell's mana value.\nWhen you control seven or more Thrulls, sacrifice ~.", oracle_id: "47a0079f-3544-45bc-a32a-bd93844c8c43", scryfall_id: "47a0079f-3544-45bc-a32a-bd93844c8c43" });
 const THRULL = () => make({ name: "Thrull", type_line: "Creature — Thrull", power: "1", toughness: "1" });
@@ -6561,6 +6562,21 @@ describe("casting", () => {
     expect(options.map((entry) => entry.action.type === "cast" ? entry.action.variableValue : undefined)).toContain(2);
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2, targets: [{ kind: "player", seat: 1 }] });
     expect(game.players[1]!.life).toBe(38);
+  });
+
+  it("takes temporary control of Mass Mutiny's target and restores it at cleanup", () => {
+    const profile = profileOf(C13_MASS_MUTINY());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "gain-control-target-until-end-of-turn" }], targetKind: "creature-opponent" });
+    let game = readyToCast([C13_MASS_MUTINY()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [BEAR()]);
+    const bear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: bear.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    const stolen = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)!;
+    expect(stolen).toMatchObject({ controller: 0, tapped: false, temporaryControllerFrom: 1 });
+    expect(stolen.temporaryKeywords).toContain("haste");
+    game = { ...game, step: "end", activeSeat: 0, priorityOpen: false, prioritySeat: 0, passedSeats: [] };
+    game = settle(game);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)).toMatchObject({ controller: 1, temporaryControllerFrom: undefined });
   });
 
   it("does not overclaim Fireball while its extra-target cost is unsupported", () => {

@@ -745,6 +745,8 @@ export type SpellEffect =
   | { readonly kind: "gain-control-of-source-random-opponent" }
   /** Spinal Embrace: combat-only temporary control followed by delayed sacrifice. */
   | { readonly kind: "spinal-embrace" }
+  /** Mass Mutiny: temporary control, untap, and haste until cleanup (CR 611.2). */
+  | { readonly kind: "gain-control-target-until-end-of-turn" }
   | { readonly kind: "sacrifice-delayed-creature-gain-toughness" }
   | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
   | { readonly kind: "eye-of-doom-mark" }
@@ -4841,6 +4843,13 @@ function recognizeText(text: string): RecognizedText {
         { event: "upkeep", subject: "you", effect: { kind: "remove-counter-source-then-gain-life", counter: sunDroplet[2]!.toLowerCase(), amount: 1 }, optional: true, targetKind: "none", sourceText: body[0]!.text }
       ],
       activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^For each opponent, gain control of up to one target creature that player controls until end of turn\.\s*Untap those creatures\.\s*They gain haste until end of turn\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "gain-control-target-until-end-of-turn" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature-opponent",
+      unimplementedText: [], covered: true
     };
   }
   // Jeleva's two linked abilities share one Oracle block. Keep them as two

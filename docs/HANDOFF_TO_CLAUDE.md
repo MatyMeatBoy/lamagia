@@ -6782,3 +6782,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Shattergang Brothers | 7fb63d9a-8d90-4b43-8390-924de2d7e32c`: generalized the opponent-sacrifice primitive to creatures, artifacts, and enchantments, including all three typed sacrifice costs.
 - Verification: authoritative C13 coverage is `326/341` unique cards; the profile is fully implemented, all three activation modes are scenario-tested, rules typecheck passes, and the full rules suite passes (**831 tests** with the bot-game timeout raised to 20 seconds for the long deterministic scenario).
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 current-Oracle reconciliation — Mass Mutiny (2026-09-07)
+
+- Base: `eb86269e`.
+- `Mass Mutiny | d96763a0-6a6e-4520-899a-468b4bb307c8`: repaired the current-Oracle recognition path. The earlier implementation only covered a sentence-level fixture and was not reached by the card-level parser, so the catalog still reported all three lines as unresolved. The reusable temporary-control effect now handles target control, untap, haste, and cleanup restoration.
+- Verification: authoritative C13 coverage advances from `326/341` to `327/341`; the fresh export reports `Mass Mutiny fullyImplemented: true`; targeted scenario and rules typecheck pass.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
