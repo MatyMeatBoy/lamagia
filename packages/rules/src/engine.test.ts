@@ -674,6 +674,8 @@ const C13_TRUE_NAME = () => make({ name: "True-Name Nemesis", type_line: "Creatu
 const C13_REINCARNATION = () => make({ name: "Reincarnation", type_line: "Instant", mana_cost: "{1}{G}{G}", cmc: 3, oracle_text: "Choose target creature. When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner.", oracle_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a" });
 const C13_MASS_MUTINY = () => make({ name: "Mass Mutiny", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "For each opponent, gain control of up to one target creature that player controls until end of turn. Untap those creatures. They gain haste until end of turn.", oracle_id: "d96763a0-6a6e-4520-899a-468b4bb307c8" });
 const C13_SPINAL_EMBRACE = () => make({ name: "Spinal Embrace", type_line: "Instant", mana_cost: "{3}{U}{U}{B}", cmc: 6, oracle_text: "Cast this spell only during combat.\nUntap target creature you don't control and gain control of it. It gains haste until end of turn. At the beginning of the next end step, sacrifice it. If you do, you gain life equal to its toughness.", oracle_id: "4cf3fb65-9107-428a-8853-029ec97112b5" });
+const C13_TEMPT_WITH_VENGEANCE = () => make({ name: "Tempt with Vengeance", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Tempting offer — Create X 1/1 red Elemental creature tokens with haste. Each opponent may create X 1/1 red Elemental creature tokens with haste. For each opponent who does, create X 1/1 red Elemental creature tokens with haste.", oracle_id: "8e356df5-ca92-4be2-871e-8965c2510fbe" });
+const C13_TEMPT_WITH_GLORY = () => make({ name: "Tempt with Glory", type_line: "Sorcery", mana_cost: "{3}{W}", cmc: 4, oracle_text: "Tempting offer — Put a +1/+1 counter on each creature you control. Each opponent may put a +1/+1 counter on each creature they control. For each opponent who does, put a +1/+1 counter on each creature you control.", oracle_id: "5a8dd1b7-b63e-4997-9fe8-5e8816bc051b" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6220,6 +6222,38 @@ describe("casting", () => {
     game = passUntil(game, (state) => !state.players.some((player) => player.battlefield.some((permanent) => permanent.instance_id === bear.instance_id)) && state.players[0]!.life === 42);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(false);
     expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("reuses the Tempting Offer primitive for token rewards", () => {
+    const profile = profileOf(C13_TEMPT_WITH_VENGEANCE());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "tempting-offer" }], targetKind: "none" });
+    let game = readyToCast([C13_TEMPT_WITH_VENGEANCE()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Elemental")).toHaveLength(2);
+    const offer = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(offer.seat).toBe(1);
+    expect(legalActions(game, 1).map((entry) => entry.action.type === "choose-trigger" ? entry.action.accept : undefined)).toEqual(expect.arrayContaining([true, false]));
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: offer.sourceId, accept: true });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Elemental")).toHaveLength(4);
+    expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Elemental")).toHaveLength(2);
+    expect(game.players[1]!.battlefield.every((permanent) => profileOf(permanent.card).keywords.includes("haste"))).toBe(true);
+  });
+
+  it("reuses the Tempting Offer primitive for creature counters", () => {
+    const profile = profileOf(C13_TEMPT_WITH_GLORY());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "tempting-offer" }], targetKind: "none" });
+    let game = readyToCast([C13_TEMPT_WITH_GLORY()], [PLAINS(), PLAINS(), PLAINS(), PLAINS(), BEAR()], [], [BEAR()]);
+    const ownBear = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const foeBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ownBear.instance_id)?.counters["+1/+1"]).toBe(1);
+    const offer = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: offer.sourceId, accept: true });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === ownBear.instance_id)?.counters["+1/+1"]).toBe(2);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === foeBear.instance_id)?.counters["+1/+1"]).toBe(1);
   });
 
   it("lets Enlightened Tutor choose a legal artifact from the library", () => {

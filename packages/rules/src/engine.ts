@@ -518,6 +518,13 @@ export type PendingChoice =
       readonly triggeredPermanentId?: string;
       /** Typed permanents chosen and tapped when the optional trigger resolves. */
       readonly tapCost?: TriggerDefinition["tapCost"];
+      /** Continuation state for a Tempting Offer, kept private until the opponent decides. */
+      readonly temptingOffer?: {
+        readonly controller: SeatId;
+        readonly reward: SpellEffect;
+        readonly remainingOpponents: readonly SeatId[];
+        readonly variableValue: number;
+      };
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
@@ -2681,6 +2688,36 @@ function modifyCreatures(
   };
 }
 
+function queueTemptingOfferChoice(
+  state: GameState,
+  object: StackObject,
+  opponents: readonly SeatId[],
+  opponentEffect: SpellEffect,
+  reward: SpellEffect,
+  variableValue: number
+): GameState {
+  const opponent = opponents[0];
+  if (opponent === undefined) return state;
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "optional-trigger",
+      seat: opponent,
+      sourceId: `${object.id}:tempt:${opponent}`,
+      sourceCard: object.card,
+      triggerEffect: opponentEffect,
+      sourceController: object.controller,
+      temptingOffer: {
+        controller: object.controller,
+        reward,
+        remainingOpponents: opponents.slice(1),
+        variableValue
+      }
+    }
+  };
+}
+
 function applyEffect(state: GameState, object: StackObject, effect: SpellEffect, targetIndex = 0): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
@@ -3379,6 +3416,14 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = movePermanentToZone(next, victim, "graveyard", true);
         next = logged(next, player.seat, `${player.name} sacrifica ${victim.card.name}.`);
       }
+      return next;
+    }
+    case "tempting-offer": {
+      // CR 118.12: the caster gets the offer's base effect first; each
+      // opponent then decides independently, and every acceptance repeats
+      // only the reward effect for the caster.
+      let next = applyEffect(state, object, effect.base);
+      next = queueTemptingOfferChoice(next, object, opponentsOf(next, controller), effect.opponent, effect.reward, object.variableValue);
       return next;
     }
     case "each-other-player-sacrifice": {
@@ -9222,13 +9267,26 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     targets: choice.targets ?? [],
    fromCommandZone: false,
    flashback: false,
-   variableValue: choice.variablePayCostMax === undefined ? tapCount : variableValue,
+    variableValue: choice.temptingOffer?.variableValue ?? (choice.variablePayCostMax === undefined ? tapCount : variableValue),
     countered: false,
    trigger: choice.trigger,
    sourcePermanentId: choice.sourcePermanentId,
    ...(choice.triggeredPermanentId ? { triggeredPermanentId: choice.triggeredPermanentId } : {})
  };
-  next = applyEffect(next, source, choice.triggerEffect);
+ next = applyEffect(next, source, choice.triggerEffect);
+  if (choice.temptingOffer) {
+    if (action.accept) {
+      next = applyEffect(next, { ...source, controller: choice.temptingOffer.controller }, choice.temptingOffer.reward);
+    }
+    next = queueTemptingOfferChoice(
+      next,
+      { ...source, controller: choice.temptingOffer.controller },
+      choice.temptingOffer.remainingOpponents,
+      choice.triggerEffect,
+      choice.temptingOffer.reward,
+      choice.temptingOffer.variableValue
+    );
+  }
   return logged(next, seat, `Se resuelve la habilidad opcional de ${choice.sourceCard.name}.`);
 }
 

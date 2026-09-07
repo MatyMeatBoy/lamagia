@@ -563,3 +563,4 @@ rules citations and the integrator review remain mandatory.
 | `c13-oracle-reincarnation-death-replacement` | Reusable delayed death trigger that returns a creature card from its owner's graveyard to the battlefield for Reincarnation (CR 603.7, 603.6) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-temporary-control-mutiny` | Reusable temporary control change, untap, and haste until cleanup for Mass Mutiny (CR 611.3,  control-change duration) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
 | `c13-oracle-spinal-embrace` | Reusable combat-only cast gate and next-end-step sacrifice/life-gain delayed trigger for Spinal Embrace (CR 508.1, 603.7) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |
+| `c13-oracle-tempting-offer` | Reusable Tempting Offer continuation: each opponent accepts or declines privately, and each acceptance repeats the caster's reward (CR 118.12) | `codex/c13-darksteel-mutation` | active | 2026-09-06 |

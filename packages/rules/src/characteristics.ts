@@ -546,6 +546,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-nonblue-skip-untap" }
   | { readonly kind: "destroy-all-then-reanimate-one" }
   | { readonly kind: "you-and-opponent-each"; readonly effect: SpellEffect }
+  /** Tempting offer: resolve the base effect, then let each opponent accept the opponent effect; each acceptance repeats the reward for you. */
+  | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
   | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
@@ -4121,6 +4123,22 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "gain-control-target-until-end-of-turn" }], triggers: [], activatedAbilities: [], modalChoices: [],
       targetKind: "creature-opponent", unimplementedText: [], covered: true
+    };
+  }
+  const temptingVengeance = /^Tempting offer\s*[—–-]\s*Create X 1\/1 red Elemental creature tokens with haste\.\s*Each opponent may create X 1\/1 red Elemental creature tokens with haste\.\s*For each opponent who does, create X 1\/1 red Elemental creature tokens with haste\.?$/i.test(joined);
+  if (temptingVengeance) {
+    const token = { name: "Elemental", typeLine: "Creature — Elemental", power: 1, toughness: 1, colors: ["R"] as MagicColor[], keywords: ["haste"] as EnforcedKeyword[], tapped: false };
+    const create = { kind: "create-token" as const, amount: "X" as const, token };
+    return {
+      effects: [{ kind: "tempting-offer", base: create, opponent: create, reward: create }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Tempting offer\s*[—–-]\s*Put a \+1\/\+1 counter on each creature you control\.\s*Each opponent may put a \+1\/\+1 counter on each creature they control\.\s*For each opponent who does, put a \+1\/\+1 counter on each creature you control\.?$/i.test(joined)) {
+    const addCounter = { kind: "add-counter-creatures-you-control" as const, counter: "+1/+1", amount: 1 as const };
+    return {
+      effects: [{ kind: "tempting-offer", base: addCounter, opponent: addCounter, reward: addCounter }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   if (/^Cast ~ only during combat\.\s*Untap target creature you don't control and gain control of it\.\s*It gains haste until end of turn\.\s*At the beginning of the next end step, sacrifice it\.\s*If you do, you gain life equal to its toughness\.?$/i.test(joined)) {
