@@ -4845,6 +4845,20 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           permanent.instance_id === attachedId ? { ...permanent, tapped: !permanent.tapped } : permanent)
       }));
     }
+    case "exchange-control-two-creatures": {
+      const targets = object.targets.filter((target): target is Extract<Target, { kind: "permanent" }> => target.kind === "permanent");
+      if (targets.length !== 2 || targets[0]!.instanceId === targets[1]!.instanceId) return state;
+      const first = findPermanent(state, targets[0]!.instanceId);
+      const second = findPermanent(state, targets[1]!.instanceId);
+      if (!first || !second || first.controller === second.controller) return state;
+      const firstController = first.controller;
+      const secondController = second.controller;
+      let next = changePermanentController(state, first, secondController);
+      const movedSecond = findPermanent(next, second.instance_id);
+      if (!movedSecond) return next;
+      next = changePermanentController(next, movedSecond, firstController);
+      return logged(next, controller, `${sourceName} intercambia el control de dos criaturas.`);
+    }
     case "untap-all-other-creatures-you-control": {
       const equipment = findPermanent(state, object.sourcePermanentId ?? object.card.instance_id);
       const attachedId = equipment?.attachedTo;
@@ -7700,7 +7714,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "permanent-you-control") return profile.isPermanent && permanent.controller === seat;
     if (kind === "permanent-opponent") return profile.isPermanent && permanent.controller !== seat;
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "artifact-creature" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind === "creature-power-toughness-total-at-most-5") {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "artifact-creature" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "nonlegendary-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind === "creature-power-toughness-total-at-most-5") {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "creature-opponent" && permanent.controller === seat) return false;
@@ -7709,6 +7723,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;
       if (kind === "non-demon-creature" && profile.subtypes.some((subtype) => subtype.toLowerCase() === "demon")) return false;
+      if (kind === "nonlegendary-creature" && profile.supertypes.some((supertype) => supertype.toLowerCase() === "legendary")) return false;
       if (kind === "creature-with-flying" && !keywordOf(state, permanent, "flying")) return false;
       if (kind === "creature-with-defender" && !keywordOf(state, permanent, "defender")) return false;
       if (kind === "creature-with-deathtouch" && !keywordOf(state, permanent, "deathtouch")) return false;
@@ -8126,6 +8141,7 @@ function activatableAbility(
   if (ability.energyCost !== undefined && (player.counters.energy ?? 0) < ability.energyCost) return { legal: false };
   if (ability.requiresClassLevel !== undefined && (permanent.classLevel ?? 1) !== ability.requiresClassLevel) return { legal: false };
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
+  if (ability.notDuringCombat && ["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step)) return { legal: false };
   if (ability.requiresUntap) {
     if (!permanent.tapped) return { legal: false };
     const hasHaste = cardProfile(permanent.card).keywords.includes("haste") ||

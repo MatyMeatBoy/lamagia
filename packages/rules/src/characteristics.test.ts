@@ -234,6 +234,18 @@ describe("mana abilities", () => {
     expect(swordOfTheParuns.fullyImplemented).toBe(true);
     expect(cases.every((profile) => profile.fullyImplemented)).toBe(true);
   });
+
+  it("recognises Djinn's distinct nonlegendary exchange targets and timing restriction", () => {
+    const profile = cardProfile(card({
+      name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn",
+      oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat."
+    }));
+    expect(profile.activatedAbilities[0]).toMatchObject({
+      requiresTap: true, notDuringCombat: true, targetKind: "nonlegendary-creature",
+      targetKinds: ["nonlegendary-creature", "nonlegendary-creature"], effect: { kind: "exchange-control-two-creatures" }
+    });
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
 
 describe("enters tapped", () => {

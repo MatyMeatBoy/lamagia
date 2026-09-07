@@ -153,6 +153,8 @@ export interface ActivatedAbility {
   readonly requiresUntap?: boolean;
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
+  /** Printed restriction that forbids activation during the combat phase (CR 602.5). */
+  readonly notDuringCombat?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
   readonly sourceZone?: "hand" | "graveyard";
   /** Printed upkeep restriction (Forecast, CR 702.57). */
@@ -741,6 +743,7 @@ export type SpellEffect =
   | { readonly kind: "shuffle-source-into-library" }
   | { readonly kind: "untap-equipped-creature" }
   | { readonly kind: "tap-or-untap-equipped-creature" }
+  | { readonly kind: "exchange-control-two-creatures" }
   | { readonly kind: "untap-all-other-creatures-you-control" }
   | { readonly kind: "destroy-all-creatures"; readonly tappedOnly?: boolean; readonly flyingOnly?: boolean; readonly xThreshold?: number; readonly excludeSource?: boolean }
   /** Kirtar's Wrath: threshold chooses the token-producing replacement mode (CR 702.34, 608.2h). */
@@ -1016,7 +1019,7 @@ export type TargetKind =
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
   | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
-  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
+  | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "nonlegendary-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
   | "creature-power-at-least-5"
   | "creature-toughness-at-least-4"
@@ -2179,6 +2182,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   // Mana abilities have their own immediate-resolution path (CR 605.1a).
   if (/^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
+  const notDuringCombat = /you can'?t activate this ability during combat/i.test(effectText);
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
     // Self-references in activated text use the printed object type rather
@@ -2187,6 +2191,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     // Oracle often uses “it” after naming the source in the cost/effect line.
     // Normalize it to the same source marker used by the shared effect parser.
     .replace(/^it\s+(deals|gets|gains)\b/i, "~ $1")
+    .replace(/\.?\s*You can'?t activate this ability during combat\.?$/i, "")
     .trim();
   const selfUntap = /^Untap ~\.?$/i.test(parsedEffectText);
   const toggleSourceCounter = /^Put a plague counter on ~ or remove a plague counter from it\.?$/i.test(parsedEffectText);
@@ -2252,6 +2257,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
     : toggleSourceCounter
     ? { effect: { kind: "toggle-source-counter", counter: "plague" } as SpellEffect, target: "none" as TargetKind }
+    : /^Exchange control of two target nonlegendary creatures\.?$/i.test(parsedEffectText)
+    ? { effect: { kind: "exchange-control-two-creatures" } as SpellEffect, target: "nonlegendary-creature" as TargetKind, targetKinds: ["nonlegendary-creature", "nonlegendary-creature"] as const }
     : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
     : revealTopConditional
@@ -2341,6 +2348,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
+    ...(notDuringCombat ? { notDuringCombat: true } : {}),
     ...(removedCounters.length ? { removeCounters: removedCounters } : {}),
     ...(energyCost ? { energyCost } : {}),
     ...(requiresUntap ? { requiresUntap: true } : {}),

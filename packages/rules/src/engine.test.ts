@@ -9236,6 +9236,23 @@ describe("activated abilities", () => {
     expect(permanentNamed(game, 0, "Grizzly Bears")?.tapped).toBe(false);
   });
 
+  it("exchanges Djinn's two distinct nonlegendary creature targets", () => {
+    const djinn = make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6,
+      power: "2", toughness: "7", oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat." });
+    let game = readyOnBoard([djinn, BEAR(), FLIER()], { hold: true });
+    game = putOnBattlefield(game, 1, [make({ name: "Opponent Bear", type_line: "Creature — Bear", power: "2", toughness: "2" })]);
+    const source = permanentNamed(game, 0, "Djinn of Infinite Deceits")!;
+    const own = permanentNamed(game, 0, "Grizzly Bears")!;
+    const opponent = permanentNamed(game, 1, "Opponent Bear")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0,
+      targets: [{ kind: "permanent", instanceId: own.instance_id }, { kind: "permanent", instanceId: opponent.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(permanentNamed(game, 0, "Opponent Bear")?.controller).toBe(0);
+    expect(permanentNamed(game, 1, "Grizzly Bears")?.controller).toBe(1);
+    game = { ...game, step: "begin-combat", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.cardId === source.instance_id)).toBe(false);
+  });
+
   it("uses one reusable Level up activation for counters, level stats, and keywords", () => {
     let game = readyOnBoard([LEVELER(), ISLAND(), ISLAND(), ISLAND(), ISLAND()], { hold: true });
     const leveler = permanentNamed(game, 0, "Test Leveler")!;
