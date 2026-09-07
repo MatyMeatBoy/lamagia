@@ -6768,3 +6768,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Magus of the Arena | 44865261-16f8-42d2-a388-a57173142eb0`: added the reusable two-target activation shape that taps both selected creatures and then applies the existing fight primitive. It also fixed `tap-target-permanent` to honor compound target offsets, preserving the old single-target behavior while making multi-target compounds correct.
 - Verification: authoritative C13 coverage advances to `324/341` unique cards; Magus profile is fully implemented, the two-target tap/fight scenario passes, full rules suite (**829 tests**) and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 control-exchange cluster — Djinn of Infinite Deceits (2026-09-07)
+
+- Base: `0a6e5447`.
+- `Djinn of Infinite Deceits | f9de4cea-27c4-4343-8a7a-09b8f346c3b5`: added the reusable two-target nonlegendary-creature control exchange effect, plus a generic activation restriction for “You can't activate this ability during combat.”
+- Verification: authoritative C13 coverage is `325/341` unique cards; the profile is fully implemented, target distinctness/nonlegendary filtering and the combat restriction are scenario-tested, full rules suite (**830 tests**) and rules typecheck pass.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
