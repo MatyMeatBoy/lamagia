@@ -120,6 +120,8 @@ export interface Permanent {
   readonly protectionFromPlayers?: readonly SeatId[];
   /** Original controller for a temporary control effect ending at cleanup. */
   readonly temporaryControllerFrom?: SeatId;
+  /** Rubinia-style control duration, ending when the source is no longer tapped and controlled. */
+  readonly temporaryControlWhileSourceTappedId?: string;
   /** Temporary evasion restriction; only blockers with this keyword may block. */
   readonly temporaryCannotBeBlockedExcept?: EnforcedKeyword;
   /** Layer 7c modifications that expire in the cleanup step. */
@@ -1995,6 +1997,28 @@ function syncAuraControlEffects(state: GameState): GameState {
         const { auraControlSourceId: _source, controllerBeforeAuraControl: _previous, ...cleared } = permanent;
         return cleared;
       })
+    }));
+  }
+  return next;
+}
+
+/** Ends control effects whose printed duration is tied to a tapped source. */
+function syncTappedSourceControlEffects(state: GameState): GameState {
+  let next = state;
+  for (const target of allPermanents(next)) {
+    const sourceId = target.temporaryControlWhileSourceTappedId;
+    if (!sourceId) continue;
+    const source = findPermanent(next, sourceId);
+    if (source && source.tapped && source.controller === target.controller) continue;
+    const restore = target.temporaryControllerFrom;
+    if (restore !== undefined && target.controller !== restore) next = changePermanentController(next, target, restore);
+    const current = findPermanent(next, target.instance_id);
+    if (!current) continue;
+    next = withPlayer(next, current.controller, (player) => ({
+      ...player,
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === current.instance_id
+        ? { ...permanent, temporaryControllerFrom: undefined, temporaryControlWhileSourceTappedId: undefined }
+        : permanent)
     }));
   }
   return next;
@@ -4797,6 +4821,26 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }));
       return logged(next, controller, `${sourceName}: ${moved.card.name} queda bajo tu control hasta el final del turno.`);
     }
+    case "gain-control-target-while-source-tapped": {
+      const target = object.targets[targetIndex];
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      if (target?.kind !== "permanent" || !sourceId) return state;
+      const source = findPermanent(state, sourceId);
+      const permanent = findPermanent(state, target.instanceId);
+      if (!source || !source.tapped || source.controller !== controller || !permanent || !isCreature(cardProfile(permanent.card))) return state;
+      if (permanent.controller === controller) return state;
+      const previousController = permanent.temporaryControllerFrom ?? permanent.controller;
+      let next = changePermanentController(state, permanent, controller);
+      const moved = findPermanent(next, permanent.instance_id);
+      if (!moved) return next;
+      next = withPlayer(next, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === moved.instance_id
+          ? { ...candidate, temporaryControllerFrom: previousController, temporaryControlWhileSourceTappedId: sourceId }
+          : candidate)
+      }));
+      return logged(next, controller, `${sourceName}: ${moved.card.name} queda bajo tu control mientras ${source.card.name} permanezca girada.`);
+    }
     case "spinal-embrace": {
       const target = object.targets[targetIndex];
       if (target?.kind !== "permanent") return state;
@@ -6658,7 +6702,7 @@ function resolveTop(state: GameState): GameState {
 // ---------------------------------------------------------------------------
 
 function applyStateBasedActions(state: GameState): GameState {
-  let next = syncAuraControlEffects(state);
+  let next = syncTappedSourceControlEffects(syncAuraControlEffects(state));
   let changed = true;
   let guard = 0;
   while (changed && guard < 32) {
@@ -7427,7 +7471,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, temporaryCannotBeBlockedExcept: undefined, temporaryControllerFrom: undefined }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, temporaryCannotBeBlockedExcept: undefined, temporaryControllerFrom: undefined, temporaryControlWhileSourceTappedId: undefined }))
         }))
       };
       break;

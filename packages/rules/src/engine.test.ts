@@ -147,6 +147,12 @@ const C13_DEREVI = () => make({
   oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.",
   oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef"
 });
+const C13_RUBINIA = () => make({
+  name: "Rubinia Soulsinger", type_line: "Legendary Creature — Faerie", mana_cost: "{2}{G}{U}{W}", cmc: 5,
+  power: "2", toughness: "3", keywords: ["Flying"],
+  oracle_text: "You may choose not to untap ~ during your untap step.\n{T}: Gain control of target creature for as long as you control ~ and ~ remains tapped.",
+  oracle_id: "bd3eeaba-964b-49ea-bb11-5875a78b8a4c", scryfall_id: "bd3eeaba-964b-49ea-bb11-5875a78b8a4c"
+});
 const TREASURE_TOKEN = () => make({
   name: "Treasure", type_line: "Artifact — Treasure", token: true,
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
@@ -218,6 +224,39 @@ describe("Derevi command-zone primitive", () => {
     expect(game.players[0]!.commandZone).toHaveLength(0);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === derevi.name)).toBe(true);
     expect(game.pendingChoice?.type).toBe("trigger-target");
+  });
+});
+
+describe("Rubinia tapped-source control primitive", () => {
+  it("returns the creature when Rubinia untaps", () => {
+    const rubinia = C13_RUBINIA();
+    let game = twoSeatGame([], []);
+    game = {
+      ...game,
+      step: "precombat-main",
+      activeSeat: 0,
+      prioritySeat: 0,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: [], commandZone: [] }))
+    };
+    game = putOnBattlefield(game, 0, [rubinia]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const source = game.players[0]!.battlefield.at(-1)!;
+    const target = game.players[1]!.battlefield.at(-1)!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, { ...activation!.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    const controlled = game.players[0]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!;
+    expect(controlled.card.name).toBe("Grizzly Bears");
+    expect(controlled.temporaryControlWhileSourceTappedId).toBe(source.instance_id);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, tapped: false } : permanent) }));
+    game = settle(game);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(true);
   });
 });
 
