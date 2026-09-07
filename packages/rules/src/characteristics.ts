@@ -2558,6 +2558,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const discardsSelf = /discard\s+(?:~|this\s+card)/i.test(costText);
   const exilesGraveyardCard = /exile\s+(?:a|one)\s+card\s+from\s+your\s+graveyard\b/i.test(costText);
   const exilesGraveyardCardsMatch = /exile\s+(two|three|four|five|\d+)\s+creature\s+cards\s+from\s+a\s+single\s+graveyard\b/i.exec(costText);
+  const returnLandsMatch = /return\s+(two|three|four|five|\d+)\s+lands?\s+you\s+control\s+to\s+their\s+owner'?s\s+hand\b/i.exec(costText);
   const removedCounters: CounterCost[] = [];
   for (const match of costText.matchAll(/remove\s+(a|an|one|two|three|four|five|\d+)\s+([+\-]\d+\/[+\-]\d+|[\w/-]+(?:\s+[\w/-]+)*)\s+counters?\s+from\s+(?:~|this\s+(?:creature|permanent|artifact))/gi)) {
     const amount = toNumber(match[1]);
@@ -2604,6 +2605,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(commandZoneReturn ? { sourceZone: "command-zone" as const } : {}),
     ...(exilesGraveyardCard ? { exilesGraveyardCard: true } : {}),
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
+    ...(returnLandsMatch ? { returnLands: toNumber(returnLandsMatch[1])! } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
     ...(oncePerTurnOnly ? { oncePerTurn: true } : {}),
     ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
