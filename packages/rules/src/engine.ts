@@ -2954,6 +2954,24 @@ function modifyCreatures(
   };
 }
 
+/** Build a copy of a spell object for CR 707.10, retaining its announced targets. */
+function copySpellObject(state: GameState, original: StackObject, copyId: string): StackObject {
+  return {
+    ...original,
+    id: `copy:${copyId}`,
+    card: { ...original.card, instance_id: `copy:${copyId}` },
+    label: `${original.card.name} (copy)`,
+    fromCopy: true,
+    trigger: undefined,
+    activated: undefined,
+    sourcePermanentId: undefined,
+    triggeredPermanentId: undefined,
+    // Preserve the public last-known target labels when the copied spell is
+    // put on the stack after its original has left a zone.
+    targetLabels: original.targetLabels ?? original.targets.map((target) => targetLabel(state, target))
+  };
+}
+
 function applyEffect(state: GameState, object: StackObject, effect: SpellEffect, targetIndex = 0): GameState {
   const controller = object.controller;
   const sourceName = object.card.name;
@@ -3118,20 +3136,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "copy-triggered-spell": {
       const original = object.trigger?.eventSpell;
       if (!original) return state;
-      const copy: StackObject = {
-        ...original,
-        id: `copy:${object.id}`,
-        card: { ...original.card, instance_id: `copy:${object.id}` },
-        label: `${original.card.name} (copy)`,
-        fromCopy: true,
-        trigger: undefined,
-        activated: undefined,
-        sourcePermanentId: undefined,
-        triggeredPermanentId: undefined,
-        // Preserve the public last-known target labels when the copied spell
-        // is put on the stack after its original has left a zone.
-        targetLabels: original.targetLabels ?? original.targets.map((target) => targetLabel(state, target))
-      };
+      const copy = copySpellObject(state, original, object.id);
+      return { ...state, stack: [...state.stack, copy] };
+    }
+    case "copy-target-spell": {
+      const target = object.targets[targetIndex];
+      const original = target?.kind === "spell" ? state.stack.find((entry) => entry.id === target.stackId) : undefined;
+      if (!original || original.activated || original.trigger || original.controller !== object.controller
+        || !cardProfile(original.card).types.some((type) => type === "Instant" || type === "Sorcery")) return state;
+      const copy = copySpellObject(state, original, object.id);
       return { ...state, stack: [...state.stack, copy] };
     }
     case "exchange-source-power-with-blocking-creature": {
@@ -6301,9 +6314,13 @@ function resolveTop(state: GameState): GameState {
   const resolvingTargetKind = object.activated?.targetKind ?? object.trigger?.definition.targetKind ?? profile.targetKind;
   const restrictedDamageTargets = resolvingTargetKind === "nonflying-creature-not-you-control"
     ? legalTargets(next, object.controller, resolvingTargetKind, profile) : null;
+  const restrictedSpellTargets = resolvingTargetKind === "instant-or-sorcery-spell-you-control"
+    ? legalTargets(next, object.controller, resolvingTargetKind, profile) : null;
   const targetIsIllegal = (target: Target): boolean =>
     (restrictedDamageTargets !== null && !restrictedDamageTargets.some((candidate) =>
       candidate.kind === "permanent" && target.kind === "permanent" && candidate.instanceId === target.instanceId)) ||
+    (restrictedSpellTargets !== null && !restrictedSpellTargets.some((candidate) =>
+      candidate.kind === "spell" && target.kind === "spell" && candidate.stackId === target.stackId)) ||
     (target.kind === "permanent" && !findPermanent(next, target.instanceId)) ||
     (target.kind === "graveyard-card" && !playerAt(next, target.seat).graveyard.some((card) => card.instance_id === target.instanceId)) ||
     (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId)) ||
@@ -8880,9 +8897,10 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
         : !isCreature(cardProfile(entry.card)))
       .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   }
-  if (kind === "instant-or-sorcery-spell") {
+  if (kind === "instant-or-sorcery-spell" || kind === "instant-or-sorcery-spell-you-control") {
     return state.stack
       .filter((entry) => !entry.activated && !entry.trigger)
+      .filter((entry) => kind !== "instant-or-sorcery-spell-you-control" || entry.controller === seat)
       .filter((entry) => cardProfile(entry.card).types.some((type) => type === "Instant" || type === "Sorcery"))
       .map((entry) => ({ kind: "spell", stackId: entry.id }) as Target);
   }
