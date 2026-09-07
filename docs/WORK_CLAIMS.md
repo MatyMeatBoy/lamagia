@@ -418,6 +418,12 @@ related rescues) must be treated as references only. Forks should claim a
 different unclaimed cluster before editing; do not reimplement an example just
 because its old branch still appears ahead of the current base.
 
+`f84cb14d` is rescue material, not a direct merge: its Illusionist's Gambit
+combat reset and Hideaway zone flow depend on legacy state fields and need
+current-base scenarios for extra-combat cleanup, target validation, and the
+face-down linked card. Do not cherry-pick it wholesale or claim those cards
+again until that adaptation is complete.
+
 Integration note (2026-09-06): worker-05 currently contains useful rules
 commits based on an incompatible rewritten tree. Do not merge that branch as a
 whole. Resubmit from the published integration SHA with a focused diff; the
