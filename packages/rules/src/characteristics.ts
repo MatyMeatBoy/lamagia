@@ -164,6 +164,8 @@ export interface ActivatedAbility {
   readonly effect: SpellEffect;
   readonly targetKind: TargetKind;
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
+  /** The word "another" excludes the source permanent from target selection. */
+  readonly excludesSourceFromTargets?: boolean;
   /** Level up is an activated ability with a sorcery-speed restriction. */
   readonly sorcerySpeed?: boolean;
   /** Planeswalker loyalty ability: signed loyalty change paid as the cost (CR 606). */
@@ -2522,6 +2524,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b|this\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
   const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText) || namedSelfSacrifice;
   const exilesSelf = /\bexile\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))(?:\b|$)/i.test(costText);
+  const excludesSourceFromTargets = /^exile another target creature\b/i.test(parsedEffectText);
   const tapCreatureMatch = /tap\s+(an|another)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
   const tapsCreature = tapCreatureMatch ? {
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
@@ -2603,6 +2606,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     effect: recognized.effect,
     targetKind: recognized.target,
     ...("targetKinds" in recognized && recognized.targetKinds ? { targetKinds: recognized.targetKinds } : {}),
+    ...(excludesSourceFromTargets ? { excludesSourceFromTargets: true } : {}),
     text: line.trim()
   };
 }
@@ -3355,6 +3359,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "permanent" };
   }
   if (/^Exile target creature\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
+    return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "creature" };
+  }
+  if (/^Exile another target creature\. Return that card to the battlefield under its owner'?s control at the beginning of the next end step$/i.test(text)) {
     return { effect: { kind: "exile-target-permanent-delayed-return" }, target: "creature" };
   }
 
