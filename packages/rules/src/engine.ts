@@ -552,6 +552,11 @@ export type PendingChoice =
         readonly search: Extract<SpellEffect, { kind: "search-library" }>;
         readonly remainingOpponents: readonly SeatId[];
       };
+      /** From the Ashes: one optional basic-land search remains per destroyed land. */
+      readonly fromTheAshes?: {
+        readonly sourceId: string;
+        readonly remainingSeats: readonly SeatId[];
+      };
       readonly sourceController?: SeatId;
       readonly paymentBy?: "opponent";
       readonly unlessPayCost?: ManaCost;
@@ -632,6 +637,11 @@ export type PendingChoice =
         readonly searchSeat: SeatId;
         readonly search: Extract<SpellEffect, { kind: "search-library" }>;
         readonly remainingOpponents: readonly SeatId[];
+      };
+      /** From the Ashes continuation after one accepted search. */
+      readonly fromTheAshes?: {
+        readonly sourceId: string;
+        readonly remainingSeats: readonly SeatId[];
       };
       /** Spells move to the graveyard after resolving; activated sources already paid their costs. */
       readonly returnSourceToGraveyard: boolean;
@@ -4681,6 +4691,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const order = seatsInDirection(state, controller, direction);
       return beginOrderSuccessionChoice({ ...state, priorityOpen: false }, object, order);
     }
+    case "from-the-ashes": {
+      const nonbasicLands = allPermanents(state).filter((permanent) => {
+        const profile = cardProfile(permanent.card);
+        return isLand(profile) && !profile.supertypes.some((value) => value.toLowerCase() === "basic");
+      });
+      let next = state;
+      const searchSeats: SeatId[] = [];
+      for (const land of nonbasicLands) {
+        next = destroyPermanent(next, land);
+        if (!findPermanent(next, land.instance_id)) searchSeats.push(land.controller);
+      }
+      return beginFromTheAshesSearch(next, object.card, object.id, searchSeats);
+    }
     case "gain-control-of-source-random-opponent": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
       const source = sourceId ? findPermanent(state, sourceId) : undefined;
@@ -6133,6 +6156,61 @@ function beginTemptingSearchChoice(state: GameState, sourceCard: GameCard, meta:
       temptingSearch: meta,
       returnSourceToGraveyard: false,
       exileSourceAfterResolution: false
+    }
+  };
+}
+
+const FROM_THE_ASHES_SEARCH: Extract<SpellEffect, { kind: "search-library" }> = {
+  kind: "search-library", types: ["Land"], subtypes: ["Basic"], destination: "battlefield", reveal: false
+};
+
+function openFromTheAshesSearch(state: GameState, sourceCard: GameCard, sourceId: string, seat: SeatId, remainingSeats: readonly SeatId[]): GameState {
+  const optionIds = playerAt(state, seat).library
+    .filter((card) => {
+      const profile = cardProfile(card);
+      return profile.types.includes("Land") && profile.supertypes.some((value) => value.toLowerCase() === "basic");
+    })
+    .map((card) => card.instance_id);
+  if (!optionIds.length) return beginFromTheAshesSearch(state, sourceCard, sourceId, remainingSeats);
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "search-library",
+      seat,
+      sourceId: `${sourceId}:search:${seat}:${remainingSeats.length}`,
+      optionIds,
+      sourceCard,
+      search: FROM_THE_ASHES_SEARCH,
+      fromTheAshes: { sourceId, remainingSeats },
+      returnSourceToGraveyard: false,
+      exileSourceAfterResolution: false
+    }
+  };
+}
+
+function beginFromTheAshesSearch(state: GameState, sourceCard: GameCard, sourceId: string, seats: readonly SeatId[]): GameState {
+  const seat = seats[0];
+  if (seat === undefined) return state;
+  const remainingSeats = seats.slice(1);
+  const optionIds = playerAt(state, seat).library
+    .filter((card) => {
+      const profile = cardProfile(card);
+      return profile.types.includes("Land") && profile.supertypes.some((value) => value.toLowerCase() === "basic");
+    })
+    .map((card) => card.instance_id);
+  if (!optionIds.length) return beginFromTheAshesSearch(state, sourceCard, sourceId, remainingSeats);
+  return {
+    ...state,
+    priorityOpen: false,
+    pendingChoice: {
+      type: "optional-trigger",
+      seat,
+      sourceId: `${sourceId}:offer:${seat}:${seats.length}`,
+      sourceCard,
+      triggerEffect: FROM_THE_ASHES_SEARCH,
+      sourceController: sourceCard.owner,
+      fromTheAshes: { sourceId, remainingSeats }
     }
   };
 }
@@ -9532,6 +9610,15 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       remainingOpponents: offer.remainingOpponents
     }), seat, `${playerAt(state, seat).name} acepta la oferta tentadora de ${choice.sourceCard.name}.`);
   }
+  if (choice.fromTheAshes) {
+    const meta = choice.fromTheAshes;
+    if (!action.accept) {
+      return logged(beginFromTheAshesSearch(next, choice.sourceCard, meta.sourceId, meta.remainingSeats), seat,
+        `${playerAt(state, seat).name} declines the basic-land search from ${choice.sourceCard.name}.`);
+    }
+    return logged(openFromTheAshesSearch(next, choice.sourceCard, meta.sourceId, seat, meta.remainingSeats), seat,
+      `${playerAt(state, seat).name} accepts the basic-land search from ${choice.sourceCard.name}.`);
+  }
   let tapCount = 0;
   if (choice.paymentBy === "opponent") {
     if (!action.accept) {
@@ -9698,6 +9785,9 @@ function applyChooseLibraryCard(state: GameState, seat: SeatId, action: Extract<
   }
   if (choice.temptingSearch) {
     next = advanceTemptingSearch(next, choice.sourceCard, choice.temptingSearch);
+  }
+  if (choice.fromTheAshes) {
+    next = beginFromTheAshesSearch(next, choice.sourceCard, choice.fromTheAshes.sourceId, choice.fromTheAshes.remainingSeats);
   }
   const destination = choice.search.destination === "top" ? "la parte superior de su biblioteca"
     : choice.search.destination === "hand" ? "su mano"

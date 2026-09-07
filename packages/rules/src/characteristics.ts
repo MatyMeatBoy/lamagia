@@ -558,6 +558,8 @@ export type SpellEffect =
   | { readonly kind: "choose-attack-direction" }
   /** Order of Succession exchanges one creature around the table after a direction choice. */
   | { readonly kind: "order-of-succession" }
+  /** From the Ashes destroys nonbasic lands, then offers one basic-land search per land destroyed. */
+  | { readonly kind: "from-the-ashes" }
   | { readonly kind: "untap-all-nonland-both" }
   | { readonly kind: "play-additional-land"; readonly amount: number }
   | { readonly kind: "tendrils-of-corruption"; readonly subtype: string }
@@ -4204,6 +4206,12 @@ function recognizeText(text: string): RecognizedText {
   if (/^Choose left or right\.\s*Starting with you and proceeding in the chosen direction, each player chooses a creature controlled by the next player in that direction\.\s*Each player gains control of the creature they chose\.?$/i.test(joined)) {
     return {
       effects: [{ kind: "order-of-succession" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Destroy all nonbasic lands\.\s*For each land destroyed this way, its controller may search their library for a basic land card and put it onto the battlefield\.\s*Then each player who searched their library this way shuffles\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "from-the-ashes" }],
       triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }

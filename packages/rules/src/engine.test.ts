@@ -683,6 +683,7 @@ const C13_TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", 
 const C13_EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "When this artifact enters, each player chooses a nonland permanent and puts a doom counter on it.\n{2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it.", oracle_id: "e808a11e-29bd-4e99-a24e-67fa8f6fe502" });
 const C13_MYSTIC_BARRIER = () => make({ name: "Mystic Barrier", type_line: "Enchantment", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "When this enchantment enters and at the beginning of your upkeep, choose left or right.\nEach player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent.", oracle_id: "0caf42f5-abff-48aa-9bbf-df6cba169ef3" });
 const C13_ORDER_OF_SUCCESSION = () => make({ name: "Order of Succession", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4, oracle_text: "Choose left or right. Starting with you and proceeding in the chosen direction, each player chooses a creature controlled by the next player in that direction. Each player gains control of the creature they chose.", oracle_id: "1b95970c-e7eb-41c4-a8d2-9889b64b3c63" });
+const C13_FROM_THE_ASHES = () => make({ name: "From the Ashes", type_line: "Sorcery", mana_cost: "{3}{R}", cmc: 4, oracle_text: "Destroy all nonbasic lands. For each land destroyed this way, its controller may search their library for a basic land card and put it onto the battlefield. Then each player who searched their library this way shuffles.", oracle_id: "3e229329-65e4-4240-959a-b97b26908c0e" });
 const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const COUNTER = () => make({ name: "Cancel Spell", type_line: "Instant", mana_cost: "{U}{U}", cmc: 2, oracle_text: "Counter target spell." });
 const HINDER = () => make({ name: "Hinder", type_line: "Instant", mana_cost: "{1}{U}{U}", cmc: 3, oracle_text: "Counter target spell. If that spell is countered this way, put that card on your choice of the top or bottom of its owner's library instead of into that player's graveyard.", oracle_id: "c9db6b94-a7b1-4b93-b454-4dead8f85e34", scryfall_id: "6e76260a-e26a-45ea-8874-3c9b261aef22" });
@@ -6377,6 +6378,31 @@ describe("casting", () => {
     expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === foeBear.instance_id)?.controller).toBe(0);
     expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === ownBear.instance_id)?.controller).toBe(1);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Order of Succession")).toBe(true);
+  });
+
+  it("offers one basic-land search for each From the Ashes land destroyed", () => {
+    const profile = profileOf(C13_FROM_THE_ASHES());
+    expect(profile).toMatchObject({ fullyImplemented: true, effects: [{ kind: "from-the-ashes" }] });
+    const nonbasic = () => make({ name: "Ruined Dual", type_line: "Land — Island Swamp" });
+    let game = readyToCast([C13_FROM_THE_ASHES()], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), nonbasic()], [], [nonbasic()]);
+    game = stage(game, 0, (player) => ({ library: toHand(0, [PLAINS()], "ashes-caster") }));
+    game = stage(game, 1, (player) => ({ library: toHand(1, [SWAMP()], "ashes-opponent") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const firstOffer = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(firstOffer.seat).toBe(0);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: firstOffer.sourceId, accept: true });
+    const firstSearch = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: firstSearch.sourceId, query: "Plains" });
+    const secondOffer = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    expect(secondOffer.seat).toBe(1);
+    game = applyAction(game, 1, { type: "choose-trigger", sourceId: secondOffer.sourceId, accept: true });
+    const secondSearch = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library" }>;
+    game = applyAction(game, 1, { type: "choose-library-card", sourceId: secondSearch.sourceId, query: "Swamp" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Plains")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Swamp")).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "From the Ashes")).toBe(true);
   });
 
   it("resolves Cruel Ultimatum as a reusable compound primitive", () => {
