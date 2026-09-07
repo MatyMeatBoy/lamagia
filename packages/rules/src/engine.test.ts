@@ -2310,6 +2310,36 @@ describe("casting", () => {
     expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] })).toThrow();
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 2 }] });
     expect(game.combat.attackers).toEqual([{ instanceId: attacker.instance_id, defender: 2 }]);
+  it("resolves Mosswort Bridge hideaway privately and gates its free play by power", () => {
+    const bridge = C13_MOSSWORT_BRIDGE();
+    expect(cardProfile(bridge)).toMatchObject({
+      fullyImplemented: true,
+      hideawayAmount: 4,
+      triggers: [{ effect: { kind: "hideaway", amount: 4 } }],
+      activatedAbilities: [{ effect: { kind: "play-hideaway-card" }, requiresControlledPowerAtLeast: 10 }]
+    });
+    let game = readyToCast([bridge], [FOREST()]);
+    const library = [BEAR(), FLIER(), ISLAND(), SWAMP(), FOREST(), MOUNTAIN()];
+    game = stage(game, 0, () => ({ library: toHand(0, library, "bridge-library"), autoPass: false }));
+    game = applyAction(game, 0, { type: "play-land", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "hideaway-review" && state.pendingChoice.mode === "review");
+    const review = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "hideaway-review" }>;
+    const chosen = review.optionIds[0]!;
+    game = applyAction(game, 0, { type: "choose-hideaway-card", sourceId: review.sourceId, cardId: chosen });
+    const hidden = game.players[0]!.exile.find((card) => card.exiledWithSourceId === "hand-0")!;
+    expect(hidden.faceDown).toBe(true);
+    expect(projectGame(game, 1).players[0]!.exile).toEqual([expect.objectContaining({ name: "Carta exiliada boca abajo", faceDown: true })]);
+    expect(projectGame(game, 0).players[0]!.exile[0]!.name).toBe("Grizzly Bears");
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === "hand-0")).toBe(false);
+    game = putOnBattlefield(game, 0, [make({ name: "Power Ten", type_line: "Creature — Beast", power: "10", toughness: "10", oracle_text: "" })]);
+    game = stage(game, 0, (player) => ({ battlefield: player.battlefield.map((permanent) => permanent.card.name === bridge.name ? { ...permanent, tapped: false } : permanent) }));
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === "hand-0")!;
+    game = applyAction(game, 0, activation.action);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "hideaway-review" && state.pendingChoice.mode === "cast");
+    const castChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "hideaway-review" }>;
+    game = applyAction(game, 0, { type: "choose-hideaway-cast", sourceId: castChoice.sourceId, cardId: hidden.instance_id });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0 && state.players[0]!.battlefield.some((permanent) => permanent.card.name === hidden.name));
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === hidden.name)).toBe(true);
   });
 
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {

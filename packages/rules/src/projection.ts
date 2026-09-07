@@ -32,6 +32,7 @@ export interface CardView {
   readonly colors: readonly string[];
   readonly isPermanent: boolean;
   readonly fullyImplemented: boolean;
+  readonly faceDown?: boolean;
 }
 
 /** One printed ability of a permanent, as the table needs to show it. */
@@ -242,6 +243,26 @@ function cardView(card: GameCard): CardView {
   };
 }
 
+function faceDownCardView(card: GameCard): CardView {
+  return {
+    instance_id: card.instance_id,
+    scryfall_id: "",
+    name: "Carta exiliada boca abajo",
+    mana_cost: "",
+    manaValue: 0,
+    type_line: "",
+    oracle_text: "",
+    faceDown: true,
+    isToken: false,
+    power: null,
+    toughness: null,
+    keywords: [],
+    colors: [],
+    isPermanent: false,
+    fullyImplemented: false
+  };
+}
+
 /**
  * The printed abilities of one permanent.
  *
@@ -351,7 +372,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     ...(revealsTopOfLibrary(state, player.seat) && player.library[0] ? { revealedTopLibraryCard: cardView(player.library[0]) } : {}),
     battlefield: player.battlefield.map((permanent) => permanentView(state, permanent, player.seat === viewerSeat ? viewerActions : [])),
     graveyard: player.graveyard.map(cardView),
-    exile: player.exile.map(cardView),
+    exile: player.exile.map((card) => card.faceDown && player.seat !== viewerSeat ? faceDownCardView(card) : cardView(card)),
     commandZone: player.commandZone.map(cardView),
     commanderDamage: player.commanderDamage,
     counters: player.counters,
