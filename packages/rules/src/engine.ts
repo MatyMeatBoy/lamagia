@@ -1025,6 +1025,10 @@ function hasPermanentSubtype(state: GameState, permanent: Permanent, subtype: st
   return !new Set(["equipment", "aura", "vehicle", "fortification", "blood", "clue", "food", "treasure", "powerstone", "map", "incubator", "attraction", "contraption", "plains", "island", "swamp", "mountain", "forest", "wastes", "desert", "gate", "locus", "sphere", "cave", "lair"])
     .has(subtype.toLowerCase());
 }
+/** Land subtypes are not creature subtypes; changeling/Mirror Entity never satisfy them (CR 205.3i, 702.73a). */
+function hasLandSubtype(profile: CardProfile, subtype: string): boolean {
+  return isLand(profile) && profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype.toLowerCase());
+}
 function attachedEquipment(state: GameState, creature: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === creature.instance_id
     && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === "equipment"));
@@ -6346,7 +6350,7 @@ function resolveTop(state: GameState): GameState {
           const typeMatches = !triggerSearch.types.length || triggerSearch.types.some((type) => candidateProfile.types.includes(type));
           const subtypeMatches = !triggerSearch.subtypes?.length || triggerSearch.subtypes.some((subtype) =>
             subtype.toLowerCase() === "basic" ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
-              : hasSubtype(candidateProfile, subtype));
+              : (triggerSearch.types.includes("Land") ? hasLandSubtype(candidateProfile, subtype) : hasSubtype(candidateProfile, subtype)));
           const colorMatches = !triggerSearch.colors?.length || triggerSearch.colors.some((color) => candidateProfile.colors.some((candidate) => candidate.toUpperCase() === color));
           const manaValueMatches = triggerSearch.maxManaValue === undefined
             ? true
@@ -6621,7 +6625,7 @@ function resolveTop(state: GameState): GameState {
         const typeMatches = !search.types.length || search.types.some((type) => profile.types.includes(type));
         const subtypeMatches = !search.subtypes?.length || search.subtypes.some((subtype) =>
           subtype.toLowerCase() === "basic" ? profile.supertypes.some((value) => value.toLowerCase() === "basic")
-            : hasSubtype(profile, subtype));
+            : (search.types.includes("Land") ? hasLandSubtype(profile, subtype) : hasSubtype(profile, subtype)));
         const colorMatches = !search.colors?.length || search.colors.some((color) => profile.colors.some((candidate) => candidate.toUpperCase() === color));
         const manaValueMatches = search.maxManaValue === "X" ? profile.manaValue <= object.variableValue
           : search.maxManaValue === "lands-you-control"
@@ -6732,7 +6736,7 @@ function resolveTop(state: GameState): GameState {
         const typeMatches = multiSearch.types.some((type) => candidate.types.includes(type));
         const subtypeMatches = multiSearch.subtypes?.every((subtype) => subtype.toLowerCase() === "basic"
           ? candidate.supertypes.some((value) => value.toLowerCase() === "basic")
-          : candidate.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase())) ?? true;
+          : (multiSearch.types.includes("Land") ? hasLandSubtype(candidate, subtype) : candidate.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase()))) ?? true;
         return typeMatches && subtypeMatches;
       })
       .map((card) => card.instance_id);
@@ -9287,7 +9291,7 @@ function applyCycle(state: GameState, seat: SeatId, action: Extract<GameAction, 
     return candidateProfile.types.includes("Land") && search.subtypes?.some((subtype) =>
       subtype.toLowerCase() === "basic"
         ? candidateProfile.supertypes.some((supertype) => supertype.toLowerCase() === "basic")
-        : hasSubtype(candidateProfile, subtype));
+        : hasLandSubtype(candidateProfile, subtype));
   }).map((candidate) => candidate.instance_id);
   if (!optionIds.length) {
     const shuffledState = shuffleLibrary(next, seat, playerAt(next, seat).library);
