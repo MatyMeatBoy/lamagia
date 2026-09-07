@@ -574,6 +574,8 @@ export type SpellEffect =
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
+  /** Thraximundar: the defending player sacrifices a creature when the source attacks. */
+  | { readonly kind: "event-player-sacrifice-creature" }
   | { readonly kind: "syphon-mind" }
   | { readonly kind: "xathrid-upkeep"; readonly fallbackLife: number }
   | { readonly kind: "disciple-of-bolas" }
@@ -3222,6 +3224,9 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(that\s+creature[’']s\s+controller\s+may\s+.+)$/i },
   { event: "dies", subject: "any-creature", pattern: /^whenever\s+a\s+creature\s+dies,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self-or-another-creature-you-control", pattern: /^whenever\s+~\s+or\s+another\s+creature\s+you\s+control\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
+  // "Whenever a player sacrifices a creature" watches every creature
+  // sacrifice, regardless of controller (CR 603.2, 701.17).
+  { event: "permanent-sacrificed", subject: "any-creature", pattern: /^whenever\s+a\s+player\s+sacrifices\s+a\s+creature,?\s*(.+)$/i },
   { event: "permanent-sacrificed", subject: "another-permanent-you-control", pattern: /^whenever\s+you\s+sacrifice\s+another\s+permanent,?\s*(.+)$/i },
   { event: "leaves-battlefield", subject: "self", pattern: /^(?:when|whenever)\s+~\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i },
   { event: "attacks", subject: "creature-you-control", pattern: /^whenever\s+a\s+creature\s+you\s+control\s+attacks,?\s*(.+)$/i },
@@ -4020,6 +4025,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
+  }
+  // Thraximundar's attack trigger uses the defending player from the attack
+  // event rather than a chosen target (CR 508.1d, 603.3d).
+  if (/^Defending player sacrifices a creature of their choice$/i.test(text)) {
+    return { effect: { kind: "event-player-sacrifice-creature" }, target: "none" };
   }
   if (/^Target player sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-creature" }, target: "player" };

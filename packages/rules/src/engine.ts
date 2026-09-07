@@ -3239,7 +3239,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
       const permanent = findPermanent(state, sourceId);
       if (!permanent) return state;
-      return logged(movePermanentToZone(state, permanent, "graveyard"), permanent.controller, `${permanent.card.name} es sacrificado.`);
+      return logged(movePermanentToZone(state, permanent, "graveyard", true), permanent.controller, `${permanent.card.name} es sacrificado.`);
     }
     case "exile-source-permanent": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
@@ -3648,7 +3648,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       // Deterministic: sacrifice the highest-power creature to maximise the payoff.
       const victim = [...fodder].sort((a, b) => powerOf(b, state) - powerOf(a, state))[0]!;
       const x = Math.max(0, powerOf(victim, state));
-      let next = movePermanentToZone(state, victim, "graveyard");
+      let next = movePermanentToZone(state, victim, "graveyard", true);
       if (x > 0) {
         if (!playersCantGainLife(next)) {
           next = withPlayer(next, controller, (player) => ({ ...player, life: player.life + x }));
@@ -3665,7 +3665,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (fodder.length) {
         const victim = [...fodder].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
         const power = Math.max(0, powerOf(victim, state));
-        let next = movePermanentToZone(state, victim, "graveyard");
+        let next = movePermanentToZone(state, victim, "graveyard", true);
         for (const player of next.players) {
           if (player.seat === controller || player.lost) continue;
           next = loseLife(next, player.seat, power);
@@ -3748,10 +3748,22 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         // Deterministic choice: give up the least valuable creature.
         const victim = [...creatures].sort((left, right) =>
           (powerOf(left, next) + toughnessOf(left, next)) - (powerOf(right, next) + toughnessOf(right, next)))[0]!;
-        next = movePermanentToZone(next, victim, "graveyard");
+        next = movePermanentToZone(next, victim, "graveyard", true);
         next = logged(next, player.seat, `${player.name} sacrifica ${victim.card.name}.`);
       }
       return next;
+    }
+    case "event-player-sacrifice-creature": {
+      const victimSeat = object.trigger?.eventPlayer;
+      if (victimSeat === undefined || playerAt(state, victimSeat).lost) return state;
+      const creatures = playerAt(state, victimSeat).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card)));
+      if (!creatures.length) return state;
+      // "of their choice" is represented deterministically for the rules
+      // server; a player-facing choice can be layered on this same effect.
+      const victim = [...creatures].sort((left, right) =>
+        (powerOf(left, state) + toughnessOf(left, state)) - (powerOf(right, state) + toughnessOf(right, state)))[0]!;
+      const next = movePermanentToZone(state, victim, "graveyard", true);
+      return logged(next, victimSeat, `${playerAt(next, victimSeat).name} sacrifica ${victim.card.name}.`);
     }
     case "bottom-attacker-controller-gains-toughness": {
       const target = object.targets[0];
@@ -3832,7 +3844,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!creatures.length) return state;
       // Deterministic: give up the least valuable creature.
       const victim = [...creatures].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
-      let next = movePermanentToZone(state, victim, "graveyard");
+      let next = movePermanentToZone(state, victim, "graveyard", true);
       next = drawCards(next, controller, effect.amount);
       return logged(next, controller, `${playerAt(next, controller).name} sacrifica ${victim.card.name} y roba ${effect.amount}.`);
     }
@@ -3886,7 +3898,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!candidates.length) return state;
       // Deterministic "of their choice": give up the least valuable attacker.
       const victim = [...candidates].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
-      const next = movePermanentToZone(state, victim, "graveyard");
+      const next = movePermanentToZone(state, victim, "graveyard", true);
       return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
     }
     case "target-player-sacrifice-creature": {
@@ -3897,7 +3909,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       // The card says "of their choice"; bots use the least valuable legal creature
       // while the authoritative rules path remains deterministic for replays.
       const victim = [...candidates].sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0]!;
-      const next = movePermanentToZone(state, victim, "graveyard");
+      const next = movePermanentToZone(state, victim, "graveyard", true);
       return logged(next, target.seat, `${playerAt(next, target.seat).name} sacrifica a ${victim.card.name}.`);
     }
     case "each-player-gains-life": {
@@ -4744,7 +4756,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const target = object.targets[0];
       if (target?.kind !== "player") return state;
       const victim = playerAt(state, target.seat).battlefield.filter((p) => isCreature(cardProfile(p.card))).sort((a, b) => (powerOf(a, state) + toughnessOf(a, state)) - (powerOf(b, state) + toughnessOf(b, state)))[0];
-      let next = victim ? movePermanentToZone(state, victim, "graveyard") : state;
+      let next = victim ? movePermanentToZone(state, victim, "graveyard", true) : state;
       const amount = Math.min(3, playerAt(next, target.seat).hand.length);
       if (!amount) return finishCruelUltimatum(next, object, target.seat);
       return { ...next, priorityOpen: false, pendingChoice: { type: "discard-cards", seat: target.seat, sourceId: object.id, sourceCard: object.card, amount, remaining: amount, cruelUltimatum: { controller, targetSeat: target.seat } } };
@@ -4755,7 +4767,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const permanent = findPermanent(state, delayed.targetPermanentId);
       if (!permanent) return state;
       const toughness = toughnessOf(permanent, state);
-      let next = movePermanentToZone(state, permanent, "graveyard");
+      let next = movePermanentToZone(state, permanent, "graveyard", true);
       if (toughness > 0 && !playersCantGainLife(next)) next = withPlayer(next, delayed.controller, (player) => ({ ...player, life: player.life + toughness }));
       return next;
     }
@@ -5198,7 +5210,7 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         permanent.instance_id !== sourceId && !permanent.tapped
         && hasPermanentSubtype(state, permanent, effect.subtype));
       if (!land) {
-        return logged(movePermanentToZone(state, source, "graveyard"), source.controller, `${source.card.name} es sacrificado.`);
+        return logged(movePermanentToZone(state, source, "graveyard", true), source.controller, `${source.card.name} es sacrificado.`);
       }
       const next = withPlayer(state, land.controller, (player) => ({
         ...player,
@@ -9923,14 +9935,14 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   if (profile.additionalCostSacrificeLand) {
     const lands = playerAt(next, seat).battlefield.filter((p) => isLand(cardProfile(p.card)));
     if (!lands.length) throw new Error(`No tienes una tierra para sacrificar por ${card.name}.`);
-    next = movePermanentToZone(next, lands[0]!, "graveyard");
+    next = movePermanentToZone(next, lands[0]!, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${lands[0]!.card.name} por ${card.name}.`);
   }
   if (profile.additionalCostSacrificeArtifact) {
     const artifacts = playerAt(next, seat).battlefield.filter((p) => cardProfile(p.card).types.includes("Artifact"));
     const chosen = action.sacrificeId ? artifacts.find((p) => p.instance_id === action.sacrificeId) : artifacts[0];
     if (!chosen) throw new Error(`No tienes un artefacto para sacrificar por ${card.name}.`);
-    next = movePermanentToZone(next, chosen, "graveyard");
+    next = movePermanentToZone(next, chosen, "graveyard", true);
     next = logged(next, seat, `${player.name} sacrifica ${chosen.card.name} por ${card.name}.`);
   }
   if (profile.additionalCostDiscardCard) {
