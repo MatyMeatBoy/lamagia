@@ -5515,6 +5515,22 @@ function recognizeText(text: string): RecognizedText {
         continue;
       }
     }
+    // Derevi: the same optional tap/untap effect is independently triggered
+    // by its ETB and by combat damage from any creature we control (CR 603.2).
+    const entersAndControlledCombat = /^when\s+~\s+enters\s+and\s+whenever\s+a\s+creature\s+you\s+control\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i.exec(line);
+    if (entersAndControlledCombat) {
+      const rawEffect = entersAndControlledCombat[1]!.replace(/^you\s+may\s+/i, "");
+      const rec = recognizeSentence(rawEffect);
+      if (rec) {
+        for (const [event, subject] of [
+          ["enters-battlefield", "self"],
+          ["deals-combat-damage-to-player", "creature-you-control"]
+        ] as const) {
+          triggers.push({ event, subject, effect: rec.effect, optional: true, targetKind: rec.target, sourceText: line });
+        }
+        continue;
+      }
+    }
     // "When this Class becomes level N, X" (CR 702.134): self-gated by the
     // reached level, so it needs no positional block-splitting like the other
     // Class ability lines do.

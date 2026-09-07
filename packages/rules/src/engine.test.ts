@@ -1950,6 +1950,32 @@ describe("casting", () => {
     return passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
   }
 
+  it("reuses the optional tap-or-untap primitive for Derevi's ETB and combat triggers", () => {
+    const derevi = C13_DEREVI();
+    const profile = profileOf(derevi);
+    expect(profile).toMatchObject({
+      fullyImplemented: true,
+      triggers: [
+        { event: "enters-battlefield", subject: "self", optional: true, effect: { kind: "tap-or-untap-target-permanent" }, targetKind: "permanent" },
+        { event: "deals-combat-damage-to-player", subject: "creature-you-control", optional: true, effect: { kind: "tap-or-untap-target-permanent" }, targetKind: "permanent" }
+      ]
+    });
+    let game = readyToCast([derevi], [FOREST(), PLAINS(), ISLAND(), MOUNTAIN()]);
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast!.action);
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const targetChoice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    const land = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Forest")!;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: targetChoice.sourceId, target: { kind: "permanent", instanceId: land.instance_id } });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    const optional = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "optional-trigger" }>;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: optional.sourceId, accept: true });
+    expect(game.pendingChoice?.type).toBe("tap-or-untap");
+    game = applyAction(game, 0, { type: "choose-tap-or-untap", sourceId: game.pendingChoice!.sourceId, mode: "tap" });
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === land.instance_id)!.tapped).toBe(true);
+  });
+
   it("keeps Spinal Embrace unavailable outside combat", () => {
     const game = readyToCast([SPINAL_EMBRACE()], [ISLAND(), ISLAND(), ISLAND(), ISLAND(), ISLAND(), SWAMP()], [], [BEAR()]);
     expect(cardProfile(SPINAL_EMBRACE())).toMatchObject({ fullyImplemented: true, combatOnly: true });
