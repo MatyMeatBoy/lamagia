@@ -14625,7 +14625,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,25
 - [ ] Corpse Connoisseur — `f39e2611-c837-4ad7-b3a8-1ee48b74777c`
 - [ ] Covenant of Minds — `3edac7df-2a88-4718-865e-703dff9c972e`
 - [ ] Crucible of Fire — `0c572396-4e53-4c86-9b04-f41341dcea05`
-- [ ] Cruel Ultimatum — `01294ac9-1a06-4ee8-b3b1-db1f07c9d94e`
+- [x] Cruel Ultimatum — `01294ac9-1a06-4ee8-b3b1-db1f07c9d94e`
 - [ ] Cunning Lethemancer — `d696aba9-ef3e-4f81-821a-c1df51431b8a`
 - [ ] Death Baron — `99024aa8-5687-4d38-8a4b-feef42d6c1ff`
 - [ ] Demon's Herald — `9f4e4d6e-bb1d-41d6-9184-3cac45197285`
@@ -19154,8 +19154,8 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,25
 - [ ] Eye of Doom — `e808a11e-29bd-4e99-a24e-67fa8f6fe502`
 - [ ] Fiery Justice — `333809cb-e196-45f2-8a67-31374438e56e`
 - [ ] Fireball — `aa7714b0-2bfb-458a-8ebf-37ec2c53383e`
-- [ ] Flickerform — `e5345c28-7046-4ff3-a5d6-eeb7a0fb230b`
-- [ ] From the Ashes — `3e229329-65e4-4240-959a-b97b26908c0e`
+- [x] Flickerform — `e5345c28-7046-4ff3-a5d6-eeb7a0fb230b`
+- [x] From the Ashes — `3e229329-65e4-4240-959a-b97b26908c0e`
 - [ ] Furnace Celebration — `af6d6844-c612-4731-86da-59a8fa02956b`
 - [ ] Illusionist's Gambit — `333745d9-e930-439b-94d6-3aeea2877f69`
 - [ ] Incendiary Command — `d45a4924-daa0-4ac3-afd7-b66f636ce870`
@@ -19167,9 +19167,9 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,25
 - [ ] Mass Mutiny — `d96763a0-6a6e-4520-899a-468b4bb307c8`
 - [ ] Mistmeadow Witch — `38e274e2-bd04-48de-a1df-44f0ee987ba8`
 - [ ] Mosswort Bridge — `7cb9e29f-835f-4155-a2a5-4b778866c773`
-- [ ] Mystic Barrier — `0caf42f5-abff-48aa-9bbf-df6cba169ef3`
+- [x] Mystic Barrier — `0caf42f5-abff-48aa-9bbf-df6cba169ef3`
 - [ ] Nivix Guildmage — `d04356f1-0e1a-4689-8e54-f88c4c6dd936`
-- [ ] Order of Succession — `1b95970c-e7eb-41c4-a8d2-9889b64b3c63`
+- [x] Order of Succession — `1b95970c-e7eb-41c4-a8d2-9889b64b3c63`
 - [ ] Phthisis — `530f088d-bfa1-4410-b1aa-ade8abdb2b7a`
 - [ ] Plague Boiler — `fef502af-6e79-4c55-a86a-b45adb3fc64a`
 - [ ] Primal Vigor — `c665544f-557b-4631-a1dc-39571470ca2e`
@@ -19177,7 +19177,7 @@ Ediciones: **685** · pertenencias únicas: **84,994** · implementadas: **28,25
 - [ ] Roon of the Hidden Realm — `fd336830-4a11-42b8-9fc7-d7526f569124`
 - [ ] Rubinia Soulsinger — `bd3eeaba-964b-49ea-bb11-5875a78b8a4c`
 - [ ] Shattergang Brothers — `7fb63d9a-8d90-4b43-8390-924de2d7e32c`
-- [ ] Spinal Embrace — `4cf3fb65-9107-428a-8853-029ec97112b5`
+- [x] Spinal Embrace — `4cf3fb65-9107-428a-8853-029ec97112b5`
 - [ ] Stormscape Battlemage — `38ee748d-adcd-41df-9b23-d2a34829784c`
 - [ ] Street Spasm — `95385d84-550c-4d6c-a889-62bdbc1d518d`
 - [ ] Sun Droplet — `1820af5c-9cc2-4b77-b4ca-86084442f087`
