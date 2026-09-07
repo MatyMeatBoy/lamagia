@@ -6702,3 +6702,9 @@ integrator review; do not count the old `11440733` as integrated.
 - Base: `052b7d19`.
 - `Surveyor's Scope | 9633730d-c41f-4597-b806-55ce2dd848e9`: added the dynamic multiplayer land-lead count, reusable up-to-X basic-land search, and exile-as-activation-cost handling. The scenario verifies a player two lands behind can fetch one basic land and the Scope is exiled.
 - Main should cherry-pick or fast-forward the focused commit after review.
+
+## C13 pending-cluster rescue — Deadwood Treefolk (2026-09-07)
+
+- Base: `7d5f1b70`.
+- `Deadwood Treefolk | b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`: added the missing combined enters-or-leaves trigger grammar and reused the existing creature-card graveyard-to-hand primitive. The scenario validates the ETB path and target resolution.
+- Main should cherry-pick or fast-forward the focused commit after review.

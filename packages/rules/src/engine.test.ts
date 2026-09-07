@@ -2020,6 +2020,19 @@ describe("casting", () => {
     expect(game.players[0]!.exile.some((card) => card.name === "Surveyor's Scope")).toBe(true);
   });
 
+  it("reuses the creature-card graveyard target for Deadwood Treefolk enter/leave triggers", () => {
+    const profile = cardProfile(C13_DEADWOOD_TREEFOLK());
+    expect(profile.triggers).toMatchObject([
+      { event: "enters-battlefield", effect: { kind: "return-target-card-from-graveyard" }, targetKind: "creature-card-in-your-graveyard" },
+      { event: "leaves-battlefield", effect: { kind: "return-target-card-from-graveyard" }, targetKind: "creature-card-in-your-graveyard" }
+    ]);
+    let game = readyToCast([C13_DEADWOOD_TREEFOLK()], [FOREST(), FOREST(), FOREST(), FOREST(), FOREST()]);
+    game = stage(game, 0, (player) => ({ ...player, graveyard: toHand(0, [BEAR()], "deadwood-grave") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    game = passUntil(game, (state) => state.players[0]!.hand.some((card) => card.name === "Grizzly Bears"));
+    expect(game.players[0]!.hand.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {
     expect(cardProfile(EYE_OF_DOOM())).toMatchObject({ fullyImplemented: true, activatedAbilities: [{ effect: { kind: "destroy-doomed-permanents" } }] });
   });

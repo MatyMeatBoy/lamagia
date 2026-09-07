@@ -5424,6 +5424,17 @@ function recognizeText(text: string): RecognizedText {
     // "When ~ enters or is put into a graveyard from the battlefield, X" is two
     // triggers on one line (Ichor Wellspring). "leaves the battlefield" is
     // approximated as the dies event.
+    const entersOrLeaves = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+leaves(?:\s+the\s+battlefield)?,?\s*(.+)$/i.exec(line);
+    if (entersOrLeaves) {
+      const rec = recognizeSentence(entersOrLeaves[1]!.replace(/^you\s+may\s+/i, ""));
+      const optional = /^you\s+may\b/i.test(entersOrLeaves[1]!);
+      if (rec) {
+        for (const event of ["enters-battlefield", "leaves-battlefield"] as const) {
+          triggers.push({ event, subject: "self", effect: rec.effect, optional, targetKind: rec.target, sourceText: line });
+        }
+        continue;
+      }
+    }
     const entersOrDies = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?\s+or\s+is\s+put\s+into\s+a\s+graveyard\s+from\s+the\s+battlefield,?\s*(.+)$/i.exec(line);
     if (entersOrDies) {
       const rec = recognizeSentence(entersOrDies[1]!.replace(/^you\s+may\s+/i, "").replace(/^it\s+(deals|gets|gains)/i, "~ $1"));
