@@ -499,6 +499,10 @@ export type SpellEffect =
   | { readonly kind: "exile-self" }
   | { readonly kind: "shuffle-self-into-library" }
   | { readonly kind: "return-source-to-hand" }
+  /** Reincarnation: register a one-turn death trigger for the chosen creature. */
+  | { readonly kind: "reincarnation-setup" }
+  /** Resolves a Reincarnation delayed death trigger. */
+  | { readonly kind: "return-delayed-death-card" }
   | { readonly kind: "sacrifice-source" }
   /** Each opponent of the spell caster draws, scoped to the triggering event player (Standstill). */
   | { readonly kind: "each-opponent-of-event-player-draws"; readonly amount: number }
@@ -4089,6 +4093,12 @@ function recognizeText(text: string): RecognizedText {
         event: "enters-battlefield", subject: "self", effect: { kind: "set-source-protection-from-player" },
         optional: false, targetKind: "player", sourceText: joined
       }], activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Choose target creature\.\s*When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "reincarnation-setup" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "creature",
+      unimplementedText: [], covered: true
     };
   }
   const decreeBody = body.filter((entry) => !/^cycling\s+\{[^}]+\}/i.test(entry.text) && !/^when you cycle (?:this card|~),/i.test(entry.text));
