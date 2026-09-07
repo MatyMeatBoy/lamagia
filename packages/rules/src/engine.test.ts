@@ -515,6 +515,9 @@ const C13_STORMSCAPE_BATTLEMAGE = () => make({ name: "Stormscape Battlemage", ty
 const C13_DJINN = () => make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6, power: "2", toughness: "7", keywords: ["Flying"], oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat.", oracle_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5", scryfall_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5" });
 const C13_ROON = () => make({ name: "Roon of the Hidden Realm", type_line: "Legendary Creature — Rhino Soldier", mana_cost: "{2}{G}{W}{U}", cmc: 5, power: "4", toughness: "4", keywords: ["Vigilance", "Trample"], oracle_text: "Vigilance, trample\n{2}, {T}: Exile another target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.", oracle_id: "fd336830-4a11-42b8-9fc7-d7526f569124", scryfall_id: "fd336830-4a11-42b8-9fc7-d7526f569124" });
 const C13_LIM_DULS_VAULT = () => make({ name: "Lim-Dûl's Vault", type_line: "Instant", mana_cost: "{U}{B}", cmc: 2, oracle_text: "Look at the top five cards of your library. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library. Then shuffle and put the last cards you looked at this way on top in any order.", oracle_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97", scryfall_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97" });
+const C13_MOSSWORT_BRIDGE = () => make({ name: "Mosswort Bridge", type_line: "Land", oracle_text: "Hideaway 4 (When this land enters, look at the top four cards of your library, exile one face down, then put the rest on the bottom in a random order.)\nThis land enters tapped.\n{T}: Add {G}.\n{G}, {T}: You may play the exiled card without paying its mana cost if creatures you control have total power 10 or greater.", produced_mana: ["G"], oracle_id: "7cb9e29f-835f-4155-a2a5-4b778866c773", scryfall_id: "7cb9e29f-835f-4155-a2a5-4b778866c773" });
+const C13_ILLUSIONISTS_GAMBIT = () => make({ name: "Illusionist's Gambit", type_line: "Instant", mana_cost: "{2}{U}{U}", oracle_text: "Cast this spell only during the declare blockers step on an opponent's turn.\nRemove all attacking creatures from combat and untap them. After this phase, there is an additional combat phase. Each of those creatures attacks that combat if able. They can't attack you or planeswalkers you control that combat.", oracle_id: "333745d9-e930-439b-94d6-3aeea2877f69", scryfall_id: "333745d9-e930-439b-94d6-3aeea2877f69" });
+const C13_ILLUSIONISTS_GAMBIT = () => make({ name: "Illusionist's Gambit", type_line: "Instant", mana_cost: "{2}{U}{U}", oracle_text: "Cast this spell only during the declare blockers step on an opponent's turn.\nRemove all attacking creatures from combat and untap them. After this phase, there is an additional combat phase. Each of those creatures attacks that combat if able. They can't attack you or planeswalkers you control that combat.", oracle_id: "333745d9-e930-439b-94d6-3aeea2877f69", scryfall_id: "333745d9-e930-439b-94d6-3aeea2877f69" });
 const C13_JELEVA = () => make({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.", oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
@@ -2259,6 +2262,55 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(39);
     expect(game.players[0]!.library.slice(0, finalOrder.length).map((card) => card.instance_id)).toEqual(finalOrder);
     expect(game.players[0]!.graveyard.some((card) => card.oracle_id === vault.oracle_id)).toBe(true);
+  });
+
+  it("tracks each independent Stormscape Battlemage kicker", () => {
+    const battlemage = C13_STORMSCAPE_BATTLEMAGE();
+    expect(cardProfile(battlemage)).toMatchObject({
+      fullyImplemented: true,
+      kickerCosts: [{ raw: "{W}" }, { raw: "{2}{B}" }],
+      triggers: [
+        { requiresKickerIndex: 0, effect: { kind: "gain-life" } },
+        { requiresKickerIndex: 1, effect: { kind: "destroy-target-permanent" } }
+      ]
+    });
+    let game = readyToCast([battlemage], [ISLAND(), PLAINS(), SWAMP(), SWAMP(), SWAMP(), PLAINS(), ISLAND()], [], [BEAR()]);
+    const castVariants = legalActions(game, 0).filter((entry) => entry.action.type === "cast" && entry.cardId === "hand-0");
+    expect(castVariants.map((entry) => entry.action.type === "cast" ? entry.action.kickerIndices ?? [] : [])).toEqual([[], [0], [1], [0, 1]]);
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", kicked: true, kickerIndices: [0, 1], targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "trigger-target");
+    const triggerTarget = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "trigger-target" }>;
+    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: triggerTarget.sourceId, target: { kind: "permanent", instanceId: target.instance_id } });
+    game = passUntil(game, (state) => state.stack.length === 0 && state.pendingChoice === null && state.players[0]!.battlefield.some((permanent) => permanent.card.name === battlemage.name));
+    expect(game.players[0]!.life).toBe(43);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+  });
+
+  it("resets combat and creates a restricted additional combat for Illusionist's Gambit", () => {
+    const gambit = C13_ILLUSIONISTS_GAMBIT();
+    expect(cardProfile(gambit)).toMatchObject({ fullyImplemented: true, declareBlockersOnly: true, effects: [{ kind: "illusionist-gambit" }] });
+    let game = threeSeatGame();
+    const attackerCard = BEAR();
+    game = putOnBattlefield(game, 0, [attackerCard]);
+    const attacker = game.players[0]!.battlefield[0]!;
+    game = stage(game, 1, () => ({
+      hand: toHand(1, [gambit], "gambit"),
+      autoPass: false,
+      manaPool: { W: 0, U: 2, B: 0, R: 0, G: 0, C: 2 }
+    }));
+    game = { ...game, step: "declare-blockers", activeSeat: 0, prioritySeat: 1, priorityOpen: true, passedSeats: [],
+      combat: { attackers: [{ instanceId: attacker.instance_id, defender: 1 }], blockers: [], attackersDeclared: true, blockersDeclared: true, firstStrikeResolved: false, damageResolved: false } };
+    expect(legalActions(game, 1).some((entry) => entry.action.type === "cast" && entry.cardId === "gambit-0")).toBe(true);
+    game = applyAction(game, 1, { type: "cast", cardId: "gambit-0" });
+    game = passUntil(game, (state) => state.extraCombat !== undefined);
+    expect(game.combat.attackers).toHaveLength(0);
+    expect(game.players[0]!.battlefield[0]!.tapped).toBe(false);
+    expect(game.extraCombat?.attackerIds).toEqual([attacker.instance_id]);
+    game = passUntil(game, (state) => state.step === "declare-attackers" && !state.combat.attackersDeclared);
+    expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] })).toThrow();
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 2 }] });
+    expect(game.combat.attackers).toEqual([{ instanceId: attacker.instance_id, defender: 2 }]);
   });
 
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {

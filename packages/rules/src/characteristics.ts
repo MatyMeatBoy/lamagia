@@ -758,6 +758,8 @@ export type SpellEffect =
   | { readonly kind: "spinal-embrace" }
   /** Mass Mutiny: temporary control, untap, and haste until cleanup (CR 611.2). */
   | { readonly kind: "gain-control-target-until-end-of-turn" }
+  /** Illusionist's Gambit removes the current attackers and creates one extra combat. */
+  | { readonly kind: "illusionist-gambit" }
   | { readonly kind: "sacrifice-delayed-creature-gain-toughness" }
   | { readonly kind: "tempting-offer"; readonly base: SpellEffect; readonly opponent: SpellEffect; readonly reward: SpellEffect }
   | { readonly kind: "eye-of-doom-mark" }
@@ -1400,6 +1402,8 @@ export interface CardProfile {
   readonly castableFromHand: boolean;
   /** Printed cast restriction: this spell may only be cast during combat. */
   readonly combatOnly: boolean;
+  /** Printed cast restriction: only during an opponent's declare-blockers step. */
+  readonly declareBlockersOnly: boolean;
   /** True when every printed instruction is covered by the engine. */
   readonly fullyImplemented: boolean;
   /** Normalized clauses preventing the card from being marked implemented. */
@@ -2720,6 +2724,7 @@ interface RecognizedText {
   readonly additionalGenericPerTargetBeyondFirst?: number;
   readonly variableTargetKind?: Exclude<TargetKind, "none"> | null;
   combatOnly?: boolean;
+  declareBlockersOnly?: boolean;
   kickerCost?: ManaCost | null;
   kickerCosts?: ManaCost[];
   overloadCost?: ManaCost | null;
@@ -4830,6 +4835,11 @@ function recognizeText(text: string): RecognizedText {
     effects: [{ kind: "spinal-embrace" }], triggers: [], activatedAbilities: [], modalChoices: [],
     targetKind: "creature-opponent", combatOnly: true, unimplementedText: [], covered: true
   };
+  const illusionistGambit = /^Cast (?:~|this spell) only during the declare blockers step on an opponent's turn\.\s*Remove all attacking creatures from combat and untap them\.\s*After this phase, there is an additional combat phase\.\s*Each of those creatures attacks that combat if able\.\s*They can't attack you or planeswalkers you control that combat\.?$/i.test(text.replace(/\s+/g, " ").trim());
+  if (illusionistGambit) return {
+    effects: [{ kind: "illusionist-gambit" }], triggers: [], activatedAbilities: [], modalChoices: [],
+    targetKind: "none", declareBlockersOnly: true, unimplementedText: [], covered: true
+  };
   const temptingVengeance = /^Tempting offer\s*[—–-]\s*Create X 1\/1 red Elemental creature tokens with haste\. Each opponent may create X 1\/1 red Elemental creature tokens with haste\. For each opponent who does, create X 1\/1 red Elemental creature tokens with haste\.?$/i.test(text.replace(/\s+/g, " ").trim());
   if (temptingVengeance) {
     const token = { name: "Elemental", typeLine: "Creature — Elemental", power: 1, toughness: 1, colors: ["R"] as MagicColor[], keywords: ["haste"] as EnforcedKeyword[], tapped: false };
@@ -6797,6 +6807,7 @@ export function cardProfile(card: CardData): CardProfile {
     // Lands are played, not cast; everything else needs a payable printed cost.
     castableFromHand: !types.includes("Land") && cost !== null && cost.symbols.length > 0,
     combatOnly: recognized.combatOnly ?? false,
+    declareBlockersOnly: recognized.declareBlockersOnly ?? false,
     // A permanent whose extra text is unmatched still plays as a real body with real
     // combat keywords; a spell whose text is unmatched would resolve doing nothing.
     fullyImplemented: recognized.covered || (doublesPlusOneCounters && doublesTokens),
