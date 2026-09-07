@@ -3254,21 +3254,26 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "copy-target-spell": {
       const target = object.targets[targetIndex];
       const original = target?.kind === "spell" ? state.stack.find((entry) => entry.id === target.stackId) : undefined;
-      if (!original || original.activated || original.trigger || original.controller !== object.controller
+      if (!original || original.activated || original.trigger
         || !cardProfile(original.card).types.some((type) => type === "Instant" || type === "Sorcery")) return state;
-      const copy: StackObject = {
-        ...original,
-        id: `copy:${object.id}`,
-        card: { ...original.card, instance_id: `copy:${object.id}` },
-        label: `${original.card.name} (copy)`,
-        fromCopy: true,
-        trigger: undefined,
-        activated: undefined,
-        sourcePermanentId: undefined,
-        triggeredPermanentId: undefined,
-        targetLabels: original.targetLabels ?? original.targets.map((entry) => targetLabel(state, entry))
-      };
-      return { ...state, stack: [...state.stack, copy] };
+      const copies = Math.max(1, effect.copies ?? 1);
+      const generated: StackObject[] = [];
+      for (let copyIndex = 0; copyIndex < copies; copyIndex += 1) {
+        const copyId = `copy:${object.id}:${copyIndex + 1}`;
+        generated.push({
+          ...original,
+          id: copyId,
+          card: { ...original.card, instance_id: copyId },
+          label: `${original.card.name} (copy${copies > 1 ? ` ${copyIndex + 1}` : ""})`,
+          fromCopy: true,
+          trigger: undefined,
+          activated: undefined,
+          sourcePermanentId: undefined,
+          triggeredPermanentId: undefined,
+          targetLabels: original.targetLabels ?? original.targets.map((entry) => targetLabel(state, entry))
+        });
+      }
+      return { ...state, stack: [...state.stack, ...generated] };
     }
     case "exchange-source-power-with-blocking-creature": {
       const blockerId = object.trigger?.eventPermanentId;
@@ -9640,6 +9645,7 @@ function activatableAbility(
   }
   if (ability.energyCost !== undefined && (player.counters.energy ?? 0) < ability.energyCost) return { legal: false };
   if (ability.requiresClassLevel !== undefined && (permanent.classLevel ?? 1) !== ability.requiresClassLevel) return { legal: false };
+  if (ability.requiresLevelAtLeast !== undefined && (permanent.counters.level ?? 0) < ability.requiresLevelAtLeast) return { legal: false };
   if (ability.precombatMainOnly && (state.activeSeat !== seat || state.step !== "precombat-main" || state.stack.length !== 0)) return { legal: false };
   if (ability.notDuringCombat && ["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step)) return { legal: false };
   if (ability.requiresUntap) {

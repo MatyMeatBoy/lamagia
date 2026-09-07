@@ -884,6 +884,11 @@ const LEVELER = () => make({
   name: "Test Leveler", type_line: "Creature — Human Wizard", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "1",
   oracle_text: "Level up {1}{U}\nLEVEL 2-3\n2/3\nHexproof\nLEVEL 4+\n3/4\nFlying"
 });
+const ECHO_MAGE = () => make({
+  name: "Echo Mage", type_line: "Creature — Human Wizard", mana_cost: "{2}{U}{U}", cmc: 4, power: "2", toughness: "2",
+  oracle_text: "Level up {1}{U} ({1}{U}: Put a level counter on this. Level up only as a sorcery.)\nLEVEL 2-3\n2/4\n{U}{U}, {T}: Copy target instant or sorcery spell. You may choose new targets for the copy.\nLEVEL 4+\n2/5\n{U}{U}, {T}: Copy target instant or sorcery spell twice. You may choose new targets for the copies.",
+  scryfall_id: "fb98f6b7-5986-4c5d-98fc-e5c4106f48bf"
+});
 const STEELSHAPERS_GIFT = () => make({ name: "Steelshaper's Gift", type_line: "Sorcery", mana_cost: "{W}", cmc: 1, oracle_text: "Search your library for an Equipment card, reveal it, put it into your hand, then shuffle." });
 const EXILE_EQUIPMENT = () => make({ name: "Exile Equipment", type_line: "Instant", mana_cost: "{1}{W}", cmc: 2, oracle_text: "Exile target Equipment." });
 const ACIDIC_SLIME = () => make({ name: "Acidic Slime", type_line: "Creature — Ooze", mana_cost: "{3}{G}{G}", cmc: 5, power: "2", toughness: "2", oracle_text: "When Acidic Slime enters, destroy target artifact, enchantment, or land." });
@@ -10441,6 +10446,23 @@ describe("activated abilities", () => {
     expect(powerOf(second, game)).toBe(2);
     expect(toughnessOf(second, game)).toBe(3);
     expect(legalTargets(game, 1, "permanent")).not.toContainEqual({ kind: "permanent", instanceId: second.instance_id });
+  });
+
+  it("recognizes Echo Mage's level-gated spell copies", () => {
+    const profile = profileOf(ECHO_MAGE());
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.activatedAbilities).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        requiresLevelAtLeast: 2,
+        targetKind: "instant-or-sorcery-spell",
+        effect: { kind: "copy-target-spell" }
+      }),
+      expect.objectContaining({
+        requiresLevelAtLeast: 4,
+        targetKind: "instant-or-sorcery-spell",
+        effect: { kind: "copy-target-spell", copies: 2 }
+      })
+    ]));
   });
 
   it("cycles a card from hand, pays mana, and draws", () => {

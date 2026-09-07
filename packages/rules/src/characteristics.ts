@@ -175,6 +175,8 @@ export interface ActivatedAbility {
   readonly upkeepOnly?: boolean;
   /** The same source ability can be activated only once during its controller's turn. */
   readonly oncePerTurn?: boolean;
+  /** Level counter threshold for a leveler ability (CR 702.87). */
+  readonly requiresLevelAtLeast?: number;
   /** Reveal a hand source while announcing the ability (Forecast, CR 702.57). */
   readonly revealSourceFromHand?: boolean;
   /** The ability's own source card is discarded from hand to pay its cost (Mjölnir, CR 702). */
@@ -615,8 +617,8 @@ export type SpellEffect =
   | { readonly kind: "put-event-player-hand-card-on-library-top" }
   /** Copy the instant or sorcery spell that caused this trigger (CR 707.10). */
   | { readonly kind: "copy-triggered-spell" }
-  /** Copy a target instant or sorcery spell controlled by the activating player (CR 707.10). */
-  | { readonly kind: "copy-target-spell" }
+  /** Copy a target instant or sorcery spell (CR 707.10). */
+  | { readonly kind: "copy-target-spell"; readonly copies?: number }
   /** Swap a blocking source's power with the creature it blocked until combat ends (CR 701.10). */
   | { readonly kind: "exchange-source-power-with-blocking-creature" }
   /** Exchange control of two targeted permanents without changing zones (CR 701.10). */
@@ -3827,6 +3829,13 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^That player puts a card from their hand on top of their library$/i.test(text)) {
     return { effect: { kind: "put-event-player-hand-card-on-library-top" }, target: "none" };
   }
+    const copyTarget = /^Copy target instant or sorcery spell(?: twice)?\. You may choose new targets for the cop(?:y|ies)\.?$/i.exec(text);
+    if (copyTarget) {
+      return {
+        effect: { kind: "copy-target-spell", ...(/\btwice\b/i.test(text) ? { copies: 2 } : {}) },
+        target: "instant-or-sorcery-spell"
+      };
+    }
     if (/^Copy that spell\. You may choose new targets for the copy$/i.test(text)) {
       return { effect: { kind: "copy-triggered-spell" }, target: "none" };
     }
@@ -5119,10 +5128,16 @@ function recognizeText(text: string): RecognizedText {
   const kickedEffects: SpellEffect[] = [];
   const kickedKeywords: EnforcedKeyword[] = [];
   const kickedEntersWithCounters: CounterCost[] = [];
+  let currentLevelBand = 0;
 
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    const levelBand = /^level\s+(\d+)(?:-\d+|\+)$/i.exec(line);
+    if (levelBand) {
+      currentLevelBand = Number(levelBand[1]);
+      continue;
+    }
     // Thousand-Year Elixir-style static permission (CR 302.6). The engine
     // applies this as a characteristic of the controller's battlefield, not
     // as a triggered or activated ability of the artifact.
@@ -5587,7 +5602,9 @@ function recognizeText(text: string): RecognizedText {
 
     const activated = parseActivatedAbility(line, activatedAbilities.length);
     if (activated) {
-      activatedAbilities.push(activated);
+      activatedAbilities.push(currentLevelBand > 0
+        ? { ...activated, requiresLevelAtLeast: currentLevelBand }
+        : activated);
       continue;
     }
     // Some Oracle exports print this restriction as its own sentence after
