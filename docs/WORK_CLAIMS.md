@@ -424,6 +424,11 @@ current-base scenarios for extra-combat cleanup, target validation, and the
 face-down linked card. Do not cherry-pick it wholesale or claim those cards
 again until that adaptation is complete.
 
+`0238a577` is documentation-only and claims a 341/341 direct rescan, while the
+current reproducible local engine export is 294/341. Until the catalog database
+and the exact export inputs are available, treat the 294/341 engine scan as the
+authoritative integration metric; do not copy the 100% claim into coverage UI.
+
 Integration note (2026-09-06): worker-05 currently contains useful rules
 commits based on an incompatible rewritten tree. Do not merge that branch as a
 whole. Resubmit from the published integration SHA with a focused diff; the
