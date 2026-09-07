@@ -796,6 +796,10 @@ export type SpellEffect =
   | { readonly kind: "destroy-all-artifacts-enchantments-add-counters"; readonly counter: string }
   /** Remove a counter from the source, then conditionally destroy all nonland permanents. */
   | { readonly kind: "remove-counter-then-destroy-all-nonland"; readonly counter: string; readonly amount: number }
+  /** A source chooses whether to add or remove one of its counters. */
+  | { readonly kind: "toggle-source-counter"; readonly counter: string }
+  /** Plague Boiler's threshold trigger: sacrifice the source, then destroy nonlands. */
+  | { readonly kind: "sacrifice-source-then-destroy-all-nonland" }
   | { readonly kind: "exile-target-permanent"; readonly gainSourceControl?: "target-controller" }
   /** Exile a permanent now and return it under its owner's control next end step. */
   | { readonly kind: "exile-target-permanent-delayed-return" }
@@ -967,6 +971,7 @@ export type TriggerEvent =
   | "deals-combat-damage-to-player"
   | "deals-damage-to-player"
   | "dealt-damage-to-player"
+  | "source-counter-threshold"
   | "becomes-tapped"
   | "spell-cast"
   | "card-cycled"
@@ -1031,6 +1036,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "deals-combat-damage-to-player": "habilidad de daño de combate",
   "deals-damage-to-player": "habilidad de daño a un jugador",
   "dealt-damage-to-player": "habilidad de daño recibido",
+  "source-counter-threshold": "habilidad de umbral de contador",
   "becomes-tapped": "habilidad de giro",
   "spell-cast": "habilidad de lanzamiento",
   "card-cycled": "habilidad de cycling",
@@ -2539,6 +2545,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const tokenEffect = tokenAndLife ? parseCreateToken(tokenAndLife[1]!) : null;
   const tokenLifeAmount = tokenAndLife ? toNumber(tokenAndLife[2]!) : null;
   const sacrificedToughnessLife = /^You gain life equal to the sacrificed creature's toughness\.?$/i.test(parsedEffectText);
+  const toggleSourceCounter = /^Put a plague counter on ~ or remove a plague counter from (?:it|~)\.?$/i.test(parsedEffectText);
   const removeCounterThenDestroy = /^Remove (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) ([A-Za-z][A-Za-z'’/-]*) counter from ~\. If you do, destroy all nonland permanents\.?$/i.exec(parsedEffectText);
   const removeCounterThenDestroyEffect = removeCounterThenDestroy
     ? (() => {
@@ -2551,6 +2558,8 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ? { effect: { kind: "put-source-from-command-zone" } as unknown as SpellEffect, target: "none" as TargetKind }
     : selfUntap
     ? { effect: { kind: "untap-source" } as SpellEffect, target: "none" as TargetKind }
+    : toggleSourceCounter
+    ? { effect: { kind: "toggle-source-counter", counter: "plague" } as SpellEffect, target: "none" as TargetKind }
     : selfPump
     ? { effect: { kind: "modify-source-creature", power: Number(selfPump[1]), toughness: Number(selfPump[2]) } as SpellEffect, target: "none" as TargetKind }
     : revealTopConditional
@@ -5236,6 +5245,14 @@ function recognizeText(text: string): RecognizedText {
   for (let lineIndex = 0; lineIndex < body.length; lineIndex += 1) {
     const lineEntry = body[lineIndex]!;
     const line = lineEntry.text;
+    const plagueThreshold = /^when\s+(?:this\s+artifact|~)\s+has\s+three\s+or\s+more\s+plague\s+counters?\s+on\s+it,\s+sacrifice\s+(?:it|~)\.\s*if\s+you\s+do,\s+destroy\s+all\s+nonland\s+permanents\.?$/i.test(line);
+    if (plagueThreshold) {
+      triggers.push({
+        event: "source-counter-threshold", subject: "self", effect: { kind: "sacrifice-source-then-destroy-all-nonland" },
+        optional: false, targetKind: "none", sourceText: line
+      });
+      continue;
+    }
     const levelBand = /^level\s+(\d+)(?:-\d+|\+)$/i.exec(line);
     if (levelBand) {
       currentLevelBand = Number(levelBand[1]);
