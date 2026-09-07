@@ -720,6 +720,8 @@ export type SpellEffect =
   | { readonly kind: "order-of-succession" }
   /** From the Ashes destroys nonbasic lands and offers basic-land searches. */
   | { readonly kind: "from-the-ashes" }
+  /** Flickerform returns an enchanted creature and its attached Auras. */
+  | { readonly kind: "flickerform" }
   /** Cruel Ultimatum's fixed sequence of target and controller effects. */
   | { readonly kind: "cruel-ultimatum" }
   /** Return each non-token permanent to its owner's control without changing zones. */
@@ -2017,6 +2019,11 @@ function parseAuraGrantedActivatedAbility(text: string): ActivatedAbility | null
           targetKind: "none", text: line.trim()
         };
       }
+    }
+    const flicker = /^((?:\{[^}]+\})+): Exile enchanted creature and all Auras attached to it\. At the beginning of the next end step, return that card to the battlefield under its owner'?s control\. If you do, return the other cards exiled this way to the battlefield under their owners'? control attached to that creature\.?$/i.exec(clean);
+    if (flicker) {
+      const manaCost = parseManaCost(flicker[1]!);
+      if (manaCost) return { index: 0, requiresTap: false, sacrificesSelf: false, lifeCost: 0, manaCost, effect: { kind: "flickerform" }, targetKind: "none", text: line.trim() };
     }
   }
   return null;

@@ -299,7 +299,7 @@ export interface TriggerInstance {
   /** Total mana spent to cast the triggering spell (CR 107.3h). */
   readonly eventManaSpent?: number;
   /** Delayed zone return data retained by a trigger created from an effect. */
-  readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand" };
+  readonly delayedReturn?: { readonly card: GameCard; readonly owner: SeatId; readonly destination?: "battlefield" | "hand"; readonly attachToCardInstanceId?: string };
   /** Card linked to a Fiend Hunter-style leaves-the-battlefield trigger (CR 607.1). */
   readonly linkedExiledCard?: GameCard;
   /** Last-known power carried by a creature-dies event (CR 603.3d, 608.2h). */
@@ -341,6 +341,7 @@ export interface DelayedReturn {
   readonly owner: SeatId;
   readonly sourceText: string;
   readonly destination?: "battlefield" | "hand";
+  readonly attachToCardInstanceId?: string;
 }
 
 export interface DelayedSacrifice {
@@ -4860,7 +4861,15 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         ...player,
         exile: player.exile.filter((card) => card.instance_id !== delayed.card.instance_id)
       }));
-      return putOntoBattlefield(removed, delayed.owner, exiled, false);
+      let next = putOntoBattlefield(removed, delayed.owner, exiled, false);
+      if (delayed.attachToCardInstanceId) {
+        const aura = findPermanent(next, delayed.card.instance_id);
+        const creature = findPermanent(next, delayed.attachToCardInstanceId);
+        if (aura && creature && aura.controller === creature.controller && hasSubtype(cardProfile(aura.card), "Aura")) {
+          next = withPlayer(next, aura.controller, (player) => ({ ...player, battlefield: player.battlefield.map((permanent) => permanent.instance_id === aura.instance_id ? { ...permanent, attachedTo: creature.instance_id } : permanent) }));
+        }
+      }
+      return next;
     }
     case "gain-control-of-source-random-opponent": {
       const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
@@ -4900,6 +4909,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         sourceText: `${permanent.card.name} returns at the beginning of the next end step.`
       };
       return { ...moved, delayedReturns: [...moved.delayedReturns, delayed] };
+    }
+    case "flickerform": {
+      const creature = object.sourcePermanentId ? findPermanent(state, object.sourcePermanentId) : undefined;
+      if (!creature || !isCreature(cardProfile(creature.card))) return state;
+      const cards = [creature, ...attachedAuras(state, creature)];
+      let next = state;
+      const triggerAtTurn = state.step === "end" ? state.turn + 1 : state.turn;
+      for (const permanent of cards) {
+        next = movePermanentToZone(next, permanent, "exile");
+        if (permanent.card.token) continue;
+        next = { ...next, delayedReturns: [...next.delayedReturns, { id: `${object.id}:return:${permanent.instance_id}`, triggerAtTurn, sourceCard: object.card, card: permanent.card, owner: permanent.card.owner, ...(permanent.instance_id === creature.instance_id ? {} : { attachToCardInstanceId: creature.instance_id }), sourceText: `${permanent.card.name} returns at the beginning of the next end step.` }] };
+      }
+      return logged(next, controller, `${sourceName}: exiles the enchanted creature and attached Auras.`);
     }
     case "exile-target-nontoken-creature": {
       const target = object.targets[0];
@@ -7220,7 +7242,7 @@ function queueDelayedReturns(state: GameState): GameState {
       sourceText: delayed.sourceText
     },
     cause: `${delayed.sourceCard.name}: delayed end-step return`,
-    delayedReturn: { card: delayed.card, owner: delayed.owner, ...(delayed.destination ? { destination: delayed.destination } : {}) },
+    delayedReturn: { card: delayed.card, owner: delayed.owner, ...(delayed.destination ? { destination: delayed.destination } : {}), ...(delayed.attachToCardInstanceId ? { attachToCardInstanceId: delayed.attachToCardInstanceId } : {}) },
     eventController: delayed.owner
   }));
   return { ...state, delayedReturns: remaining, triggerQueue: [...state.triggerQueue, ...triggers] };
