@@ -510,6 +510,7 @@ const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creatu
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
 const C13_DEREVI = () => make({ name: "Derevi, Empyrial Tactician", type_line: "Legendary Creature — Bird Wizard", mana_cost: "{1}{G}{W}{U}", cmc: 4, power: "2", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.", oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef" });
+const C13_MARATH = () => make({ name: "Marath, Will of the Wild", type_line: "Legendary Creature — Elemental Beast", mana_cost: "{X}{R}{G}", cmc: 2, power: "0", toughness: "0", oracle_text: "Marath enters with a number of +1/+1 counters on it equal to the amount of mana spent to cast Marath.\n{X}, Remove X +1/+1 counters from Marath: Choose one —\n— Put X +1/+1 counters on target creature. X can't be 0.\n— Marath deals X damage to any target. X can't be 0.\n— Create an X/X green Elemental creature token. X can't be 0.", oracle_id: "fae87115-8749-4d25-a594-7139dd01a034", scryfall_id: "fae87115-8749-4d25-a594-7139dd01a034" });
 const C13_JELEVA = () => make({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.", oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
@@ -2325,6 +2326,32 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
     game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
     expect(game.players[0]!.battlefield.filter((permanent) => permanent.card.name === "Kobolds of Kher Keep")).toHaveLength(6);
+  });
+
+  it("reuses mana-spent entry counters and variable counter costs for Marath", () => {
+    const profile = profileOf(C13_MARATH());
+    expect(profile).toMatchObject({ fullyImplemented: true, entersWithManaSpentCounters: { kind: "+1/+1" } });
+    expect(profile.activatedAbilities).toHaveLength(3);
+    expect(profile.activatedAbilities[0]).toMatchObject({ removeVariableCounter: "+1/+1", effect: { kind: "add-counter-target-creature", amount: "X" } });
+    expect(profile.activatedAbilities[1]).toMatchObject({ removeVariableCounter: "+1/+1", effect: { kind: "damage-any-target", amount: "X" } });
+    expect(profile.activatedAbilities[2]).toMatchObject({ removeVariableCounter: "+1/+1", effect: { kind: "create-token", amount: "X", statsFromAmount: true } });
+    let game = readyToCast([C13_MARATH()], [MOUNTAIN(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST()], [], [BROODING_SAURIAN()]);
+    game = stage(game, 0, (player) => ({ autoPass: false }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", variableValue: 2 });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    const marath = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Marath, Will of the Wild")!;
+    expect(marath.counters["+1/+1"]).toBe(4);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === marath.instance_id && entry.action.abilityIndex === 1 && entry.action.variableValue === 0)).toBe(false);
+    const damage = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === marath.instance_id && entry.action.abilityIndex === 1 && entry.action.variableValue === 2);
+    expect(damage?.action.type).toBe("activate");
+    if (damage?.action.type !== "activate") throw new Error("Marath's damage mode was not offered.");
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Brooding Saurian")!;
+    game = applyAction(game, 0, { ...damage.action, targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = passUntil(game, (state) => state.pendingChoice === null && state.stack.length === 0);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === marath.instance_id)!.counters["+1/+1"]).toBe(2);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === target.instance_id)!.damage).toBe(2);
   });
 
   it("chooses a color and returns matching permanents to their owners' hands", () => {
