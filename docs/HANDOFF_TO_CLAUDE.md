@@ -6661,3 +6661,20 @@ opponent (not the Champion's own controller, who cast the destroy
 spell that killed it), restoring them to 40. Validation: full **918**
 rules tests green (1 new), `npm run check` across all four
 workspaces, 200/200 simulated games.
+
+## C13 rescue audit: Jeleva on the current integration base (2026-09-07)
+
+The historical Jeleva commit `11440733` was rejected by the integrator
+because it used legacy spent-mana and linked-choice contracts. The focused
+rescue on `codex/c13-jeleva-current-base` adapts the card to the current
+`StackObject.spentMana`/permanent cast metadata, preserves the ETB mana count
+through last-known trigger data, searches all owners' exile zones for cards
+exiled with Jeleva, and removes the selected card from its actual owner's
+exile before casting it under the attacking controller. The choice remains
+private and target validation reuses the normal legal-target path.
+
+Scenario-tested: four mana exiles four cards from each library; an
+opponent-owned exiled instant is offered and cast for free after Jeleva
+attacks. Validation: `npm run check --workspace=@prossh/rules` and the full
+rules suite pass (**923** tests, 6 skipped). The commit is ready for
+integrator review; do not count the old `11440733` as integrated.
