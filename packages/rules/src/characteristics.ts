@@ -176,6 +176,8 @@ export interface ActivatedAbility {
   readonly requiresControlledCount?: { readonly word: string; readonly amount: number };
   /** Printed restriction that narrows activation to the precombat main phase. */
   readonly precombatMainOnly?: boolean;
+  /** Printed restriction that forbids activation during any combat step. */
+  readonly noncombatOnly?: boolean;
   /** The ability is activated from the named zone instead of the battlefield. */
   readonly sourceZone?: "hand" | "graveyard" | "command-zone";
   /** Printed upkeep restriction (Forecast, CR 702.57). */
@@ -741,6 +743,8 @@ export type SpellEffect =
   | { readonly kind: "return-owned-creatures-to-control" }
   /** Gives the source to a deterministic random opponent at the start of its controller's end step. */
   | { readonly kind: "gain-control-of-source-random-opponent" }
+  /** Exchange control of two targeted permanents without changing zones (CR 701.10). */
+  | { readonly kind: "exchange-control" }
   /** Spinal Embrace: combat-only temporary control followed by delayed sacrifice. */
   | { readonly kind: "spinal-embrace" }
   | { readonly kind: "sacrifice-delayed-creature-gain-toughness" }
@@ -2419,12 +2423,14 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
   const isLoyaltyCost = /^\s*([+−–-])?\s*(\d+)\s*$/.test(costText);
   if (!isLoyaltyCost && /^add\b/i.test(effectText.trim())) return null;
   const precombatMainOnly = /activate only during your turn, before attackers are declared/i.test(effectText);
+  const noncombatOnly = /you can'?t activate this ability during combat\.?$/i.test(effectText);
   const oncePerTurnOnly = /activate only once each turn\.?$/i.test(effectText);
   const sorcerySpeedOnly = /(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i.test(effectText);
   const controlledCountGate = /(?:^|[.\s])activate only if you control (\w+) or more ([A-Za-z][A-Za-z'’/-]*?)s?\.?$/i.exec(effectText);
   const controlledCountAmount = controlledCountGate ? toNumber(controlledCountGate[1]!) : null;
   const parsedEffectText = effectText
     .replace(/\.?\s*Activate only during your turn, before attackers are declared\.?$/i, "")
+    .replace(/\.?\s*You can'?t activate this ability during combat\.?$/i, "")
     .replace(/(?:^|[.\s])activate only as a sorcery(?:\s+and\s+only\s+once\s+each\s+turn)?\.?$/i, ".")
     .replace(/(?:^|[.\s])activate only once each turn\.?$/i, ".")
     .replace(/\.?\s*activate only if you control \w+ or more [A-Za-z][A-Za-z'’/-]*?s?\.?\s*$/i, "")
@@ -2584,6 +2590,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     ...(exilesGraveyardCardsMatch ? { exilesGraveyardCards: { amount: toNumber(exilesGraveyardCardsMatch[1])!, scope: "single-graveyard" as const } } : {}),
     ...(returnLandsMatch ? { returnLands: toNumber(returnLandsMatch[1])! } : {}),
     ...(precombatMainOnly ? { precombatMainOnly: true } : {}),
+    ...(noncombatOnly ? { noncombatOnly: true } : {}),
     ...(oncePerTurnOnly ? { oncePerTurn: true } : {}),
     ...(sorcerySpeedOnly ? { sorcerySpeed: true } : {}),
     ...(controlledCountGate && controlledCountAmount !== null ? { requiresControlledCount: { word: controlledCountGate[2]!, amount: controlledCountAmount } } : {}),
@@ -4267,6 +4274,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Each player gains control of all creatures they own$/i.test(text)) {
     return { effect: { kind: "return-owned-creatures-to-control" }, target: "none" };
+  }
+  if (/^Exchange control of two target nonlegendary creatures\.?$/i.test(text)) {
+    return { effect: { kind: "exchange-control" }, target: "nonlegendary-creature", targetKinds: ["nonlegendary-creature", "nonlegendary-creature"] };
   }
   if (/^Target opponent chosen at random gains control of ~$/i.test(text)) {
     return { effect: { kind: "gain-control-of-source-random-opponent" }, target: "none" };

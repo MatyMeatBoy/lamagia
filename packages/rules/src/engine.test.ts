@@ -455,6 +455,7 @@ const C13_WIGHT = () => make({ name: "Wight of Precinct Six", type_line: "Creatu
 const C13_HOODED_HORROR = () => make({ name: "Hooded Horror", type_line: "Creature — Horror", mana_cost: "{4}{B}", cmc: 5, power: "4", toughness: "4", oracle_text: "This creature can't be blocked as long as defending player controls the most creatures or is tied for the most.", scryfall_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e", oracle_id: "8267561e-bc25-4aaa-8242-f6d7ec88143e" });
 const C13_PROSSH = () => make({ name: "Prossh, Skyraider of Kher", type_line: "Legendary Creature — Dragon", mana_cost: "{3}{B}{R}{G}", cmc: 6, power: "5", toughness: "5", oracle_text: "Flying\nWhen you cast this spell, create X 0/1 red Kobold creature tokens named Kobolds of Kher Keep, where X is the amount of mana spent to cast it.", scryfall_id: "868882d2-ed4e-4171-a17c-478a341080fb", oracle_id: "868882d2-ed4e-4171-a17c-478a341080fb" });
 const C13_DEREVI = () => make({ name: "Derevi, Empyrial Tactician", type_line: "Legendary Creature — Bird Wizard", mana_cost: "{1}{G}{W}{U}", cmc: 4, power: "2", toughness: "3", keywords: ["Flying"], oracle_text: "Flying\nWhen ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put ~ onto the battlefield from the command zone.", oracle_id: "afa49a09-146f-4439-850e-dd1938c93cef", scryfall_id: "afa49a09-146f-4439-850e-dd1938c93cef" });
+const C13_DJINN = () => make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6, power: "2", toughness: "7", keywords: ["Flying"], oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat.", oracle_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5", scryfall_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5" });
 const C13_JELEVA = () => make({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4, power: "1", toughness: "3", keywords: ["Flying"], oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.", oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d" });
 const POWER_LOSS_REMOVAL = () => make({ name: "Power Loss Removal", type_line: "Sorcery", mana_cost: "{2}{B}", cmc: 3, oracle_text: "Destroy target creature. Its controller loses life equal to its power plus its toughness." });
 const EXILE_LIFEGAIN_REMOVAL = () => make({ name: "Peaceforge Edict", type_line: "Instant", mana_cost: "{W}", cmc: 1, oracle_text: "Exile target creature. Its controller gains life equal to its power." });
@@ -6560,6 +6561,30 @@ describe("casting", () => {
     expect(mode.type).toBe("tap-or-untap");
     game = applyAction(game, 0, { type: "choose-tap-or-untap", sourceId: mode.sourceId, mode: "tap" });
     expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === bear.instance_id)?.tapped).toBe(true);
+  });
+
+  it("exchanges two nonlegendary creatures with Djinn's tapped ability", () => {
+    const djinn = C13_DJINN();
+    expect(profileOf(djinn)).toMatchObject({
+      activatedAbilities: [{ requiresTap: true, noncombatOnly: true, effect: { kind: "exchange-control" }, targetKinds: ["nonlegendary-creature", "nonlegendary-creature"] }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([], [djinn, BEAR()], [], [FLIER()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === djinn.name)!;
+    const own = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const foe = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Storm Crow")!;
+    const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.cardId === source.instance_id);
+    expect(activation).toBeDefined();
+    game = applyAction(game, 0, { ...activation!.action, targets: [{ kind: "permanent", instanceId: own.instance_id }, { kind: "permanent", instanceId: foe.instance_id }] } as Extract<import("./engine.js").GameAction, { type: "activate" }>);
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.instance_id === foe.instance_id)).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === own.instance_id)).toBe(true);
+
+    let combat = readyToCast([], [djinn, BEAR()], [], [FLIER()]);
+    combat = { ...combat, step: "begin-combat", activeSeat: 0, prioritySeat: 0, priorityOpen: true };
+    const combatSource = combat.players[0]!.battlefield.find((permanent) => permanent.card.name === djinn.name)!;
+    expect(legalActions(combat, 0).some((entry) => entry.action.type === "activate" && entry.cardId === combatSource.instance_id)).toBe(false);
   });
 
   it("lets Brainstorm draw three then put two back on top in the chosen order", () => {
