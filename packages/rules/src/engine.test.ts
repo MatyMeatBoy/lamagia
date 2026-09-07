@@ -2310,6 +2310,7 @@ describe("casting", () => {
     expect(() => applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] })).toThrow();
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 2 }] });
     expect(game.combat.attackers).toEqual([{ instanceId: attacker.instance_id, defender: 2 }]);
+  });
   it("resolves Mosswort Bridge hideaway privately and gates its free play by power", () => {
     const bridge = C13_MOSSWORT_BRIDGE();
     expect(cardProfile(bridge)).toMatchObject({
