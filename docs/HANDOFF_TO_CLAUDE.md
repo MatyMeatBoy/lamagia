@@ -6803,3 +6803,10 @@ integrator review; do not count the old `11440733` as integrated.
 - `Uyo, Silent Prophet | 93da1e63-54d6-4b05-af91-f13e7e111176`: added the structured `returnLands` activation cost, enumerated valid land combinations, returned exactly two selected lands to their owners, and reused `copy-target-spell` for the current Oracle wording without a controller restriction.
 - Verification: authoritative C13 coverage advances from `328/341` to `329/341`; the fresh export reports `Uyo fullyImplemented: true`; targeted Uyo/Nivix/Mass scenarios and rules typecheck pass.
 - Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
+
+## C13 tapped-source control cluster — Rubinia Soulsinger (2026-09-07)
+
+- Base: `e7aab61b`.
+- `Rubinia Soulsinger | bd3eeaba-964b-49ea-bb11-5875a78b8a4c`: added source-tapped temporary control, with state-based restoration when Rubinia untaps, leaves, or changes controller; the printed optional-untap line is consumed into the profile.
+- Verification: fresh export advances C13 from `329/341` to `330/341`; Rubinia targeted scenario, rules typecheck, and full suite (**835 tests**) pass.
+- Integrator: cherry-pick the focused commit below or fast-forward `feat/activated-abilities-and-triggers`.
