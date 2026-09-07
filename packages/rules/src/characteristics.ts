@@ -1111,6 +1111,7 @@ export type TargetKind =
   | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "nonlegendary-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
+  | "creature-opponent-without-flying"
   | "creature-dealt-damage-to-you"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
   | "creature-power-at-least-5"
@@ -1235,6 +1236,9 @@ export interface CardProfile {
   /** Ordered target requirements for non-modal spells with multiple targets. */
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   readonly kickerCost: ManaCost | null;
+  /** Overload alternative cost and its text-changing replacement (CR 702.96). */
+  readonly overloadCost: ManaCost | null;
+  readonly overloadEffects: readonly SpellEffect[];
   /** Entwine additional cost for selecting every modal branch (CR 702.42). */
   readonly entwineCost: ManaCost | null;
   readonly kickedEffects: readonly SpellEffect[];
@@ -2616,6 +2620,8 @@ interface RecognizedText {
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   combatOnly?: boolean;
   kickerCost?: ManaCost | null;
+  overloadCost?: ManaCost | null;
+  overloadEffects?: SpellEffect[];
   entwineCost?: ManaCost | null;
   graftAmount?: number | null;
   devourAmount?: number | null;
@@ -4169,6 +4175,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Remove all counters from target permanent$/i.test(text)) return { effect: { kind: "remove-all-counters-target" }, target: "permanent" };
   if (/^Remove all counters from all permanents and exile all tokens$/i.test(text)) return { effect: { kind: "remove-all-counters-all-and-exile-tokens" }, target: "none" };
+  if ((match = /^~ deals (\w+) damage to target creature without flying you don't control$/i.exec(text))) {
+    const amount = toNumber(match[1]);
+    if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature-opponent-without-flying" };
+    if (match[1]!.toUpperCase() === "X") return { effect: { kind: "damage-any-target", amount: "X" }, target: "creature-opponent-without-flying" };
+  }
   if ((match = /^~ deals (\w+) damage to target creature$/i.exec(text))) {
     const amount = toNumber(match[1]);
     if (amount !== null) return { effect: { kind: "damage-any-target", amount }, target: "creature" };
@@ -4958,6 +4969,7 @@ function recognizeText(text: string): RecognizedText {
   let targetKind: TargetKind = "none";
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
+  let overloadCost: ManaCost | null = null;
   let entwineCost: ManaCost | null = null;
   let graftAmount: number | null = null;
   let devourAmount: number | null = null;
@@ -5010,6 +5022,11 @@ function recognizeText(text: string): RecognizedText {
     // Kicker / Multikicker additional cost (CR 702.33). Reminder text is dropped.
     const kicker = /^(?:Multikicker|Kicker)\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
     if (kicker) { kickerCost = parseManaCost(kicker[1]!); continue; }
+    // Overload is an alternative cost whose text-changing effect replaces
+    // every "target" with "each" (CR 702.96). The concrete replacement is
+    // derived after the base sentence has been recognized below.
+    const overload = /^Overload\s+((?:\{[^}]+\})+)(?:\s*\([^)]*\))?\.?$/i.exec(line);
+    if (overload) { overloadCost = parseManaCost(overload[1]!); continue; }
     // Partner (CR 702.123): purely a deck-construction rule — createGame
     // already accepts multiple declared commanderNames, so the printed line
     // carries no per-card state here. Reminder text (parenthetical) is
@@ -6026,7 +6043,10 @@ function recognizeText(text: string): RecognizedText {
       targetKind: "player", sourceText: "As this creature enters, choose a player."
     });
   }
-  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, kickedEffects, kickedKeywords, kickedEntersWithCounters, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  const overloadEffects: SpellEffect[] = overloadCost && targetKind === "creature-opponent-without-flying" && effects.length === 1 && effects[0]!.kind === "damage-any-target"
+    ? [{ kind: "damage-all-creatures", amount: effects[0]!.amount, excludeSource: false, filter: "without-flying" }]
+    : [];
+  return { effects, triggers: resolvedTriggers, activatedAbilities, modalChoices, targetKind, combatOnly: false, kickerCost, overloadCost, overloadEffects, kickedEffects, kickedKeywords, kickedEntersWithCounters, entwineCost, graftAmount, devourAmount, hasUpkeepSacrificeDraw, evokeCost, flashbackCost, echoCost, suspendAmount: null, suspendCost: null, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -6379,6 +6399,8 @@ export function cardProfile(card: CardData): CardProfile {
     targetKind: recognized.targetKind,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
     kickerCost: recognized.kickerCost ?? null,
+    overloadCost: recognized.overloadCost ?? null,
+    overloadEffects: recognized.overloadEffects ?? [],
     entwineCost: recognized.entwineCost ?? null,
     graftAmount,
     devourAmount,

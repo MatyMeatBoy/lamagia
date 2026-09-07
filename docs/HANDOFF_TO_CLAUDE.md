@@ -6708,3 +6708,9 @@ integrator review; do not count the old `11440733` as integrated.
 - Base: `7d5f1b70`.
 - `Deadwood Treefolk | b7efcb42-aa52-4d13-8c7c-b2db2dd51afd`: added the missing combined enters-or-leaves trigger grammar and reused the existing creature-card graveyard-to-hand primitive. The scenario validates the ETB path and target resolution.
 - Main should cherry-pick or fast-forward the focused commit after review.
+
+## C13 pending-cluster rescue — Street Spasm (2026-09-07)
+
+- Base: `2da0b604`.
+- `Street Spasm | 95385d84-550c-4d6c-a889-62bdbc1d518d`: added reusable Overload alternative-cost metadata, target-to-each replacement, and the `creature-opponent-without-flying` target restriction. The scenarios cover normal X damage and Overload X damage to every nonflying creature.
+- Main should cherry-pick or fast-forward the focused commit after review.

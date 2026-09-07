@@ -309,6 +309,51 @@ describe("smart counter response and safe mana undo", () => {
   });
 });
 
+describe("Street Spasm Overload", () => {
+  it("keeps the base target restricted to an opponent's nonflying creature", () => {
+    const card = C13_STREET_SPASM();
+    const profile = cardProfile(card);
+    expect(profile.targetKind).toBe("creature-opponent-without-flying");
+    expect(profile.overloadCost?.raw).toBe("{X}{X}{R}{R}");
+    expect(profile.overloadEffects).toEqual([{ kind: "damage-all-creatures", amount: "X", excludeSource: false, filter: "without-flying" }]);
+  });
+
+  it("casts the normal and Overload modes with the correct damage scope", () => {
+    const card = C13_STREET_SPASM();
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false, hand: toHand(0, [card], "spasm") }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    game = putOnBattlefield(game, 1, [TRAMPLER(), FLIER()]);
+    game = passUntil(game, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const opponentBear = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")!;
+    const normal = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "spasm-0" && !entry.action.overloaded && entry.action.variableValue === 2);
+    expect(normal).toBeDefined();
+    if (!normal || normal.action.type !== "cast") throw new Error("Street Spasm normal cast missing.");
+    game = applyAction(game, 0, { ...normal.action, targets: [{ kind: "permanent", instanceId: opponentBear.instance_id }] });
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.instance_id === opponentBear.instance_id)?.damage).toBe(2);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Storm Crow")?.damage).toBe(0);
+
+    let overloaded = twoSeatGame([], []);
+    overloaded = stage(overloaded, 0, () => ({ autoPass: false, hand: toHand(0, [C13_STREET_SPASM()], "overload") }));
+    overloaded = stage(overloaded, 1, () => ({ autoPass: false }));
+    overloaded = putOnBattlefield(overloaded, 0, [MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN(), MOUNTAIN()]);
+    overloaded = putOnBattlefield(overloaded, 0, [TRAMPLER()]);
+    overloaded = putOnBattlefield(overloaded, 1, [TRAMPLER(), FLIER()]);
+    overloaded = passUntil(overloaded, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
+    const overload = legalActions(overloaded, 0).find((entry) => entry.action.type === "cast" && entry.cardId === "overload-0" && entry.action.overloaded && entry.action.variableValue === 2);
+    expect(overload).toBeDefined();
+    overloaded = applyAction(overloaded, 0, overload!.action);
+    overloaded = applyAction(overloaded, 0, { type: "pass" });
+    overloaded = applyAction(overloaded, 1, { type: "pass" });
+    expect(overloaded.players[0]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")?.damage).toBe(2);
+    expect(overloaded.players[1]!.battlefield.find((permanent) => permanent.card.name === "Big Stomper")?.damage).toBe(2);
+    expect(overloaded.players[1]!.battlefield.find((permanent) => permanent.card.name === "Storm Crow")?.damage).toBe(0);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -385,6 +430,7 @@ const DESTROY_TARGET_CREATURE = () => make({ name: "Destroy Target Creature", ty
 const DECREE_OF_PAIN = () => make({ name: "Decree of Pain", type_line: "Sorcery", mana_cost: "{4}{B}{B}", cmc: 6, oracle_text: "Destroy all creatures. They can't be regenerated. Draw a card for each creature destroyed this way.\nCycling {3}{B}{B}\nWhen you cycle this card, all creatures get -2/-2 until end of turn." });
 const C13_SUDDEN_DEMISE = () => make({ name: "Sudden Demise", type_line: "Sorcery", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Choose a color. ~ deals X damage to each creature of the chosen color.", oracle_id: "b34b5b3f-7f17-4292-814e-634408a5d7a5", scryfall_id: "7217afaa-00e1-45a7-bb7f-66a770487b77" });
 const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcery", mana_cost: "{R}{G}{W}", cmc: 3, oracle_text: "Fiery Justice deals 5 damage divided as you choose among any number of targets. Target opponent gains 5 life.", oracle_id: "333809cb-e196-45f2-8a67-31374438e56e", scryfall_id: "ab5056f0-8297-4b83-9655-7ff385e309a8" });
+const C13_STREET_SPASM = () => make({ name: "Street Spasm", type_line: "Instant", mana_cost: "{X}{R}", cmc: 1, oracle_text: "Street Spasm deals X damage to target creature without flying you don't control.\nOverload {X}{X}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")", oracle_id: "95385d84-550c-4d6c-a889-62bdbc1d518d", scryfall_id: "95385d84-550c-4d6c-a889-62bdbc1d518d" });
 const C13_SUDDEN_SPOILING = () => make({ name: "Sudden Spoiling", type_line: "Instant", mana_cost: "{1}{B}{B}", cmc: 3, keywords: ["Split Second"], oracle_text: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntil end of turn, creatures target player controls lose all abilities and have base power and toughness 0/2.", oracle_id: "dce202c7-fe8e-462a-858e-7a5a69bd5b6b", scryfall_id: "14d8bf94-ba55-437f-ac69-ece24049944d" });
 const C13_PHANTOM_NANTUKO = () => make({ name: "Phantom Nantuko", type_line: "Creature — Insect", mana_cost: "{2}{G}{G}", cmc: 4, power: "2", toughness: "2", keywords: ["Trample"], oracle_text: "Trample\nThis creature enters with two +1/+1 counters on it.\nIf damage would be dealt to this creature, prevent that damage. Remove a +1/+1 counter from this creature.\n{T}: Put a +1/+1 counter on this creature.", oracle_id: "0951b529-646c-4dfd-88ad-84ee117ce722", scryfall_id: "0951b529-646c-4dfd-88ad-84ee117ce722" });
 const C13_HULL_BREACH = () => make({ name: "Hull Breach", type_line: "Sorcery", mana_cost: "{R}{G}", cmc: 2, oracle_text: "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Destroy target artifact and target enchantment.", oracle_id: "2da232d8-580f-4116-b977-2c59cd21b5a4", scryfall_id: "6e8c6558-ff31-4511-942a-8fe88ac20f1f" });
