@@ -61,6 +61,8 @@ for (const row of rows) {
     targetKind: profile.targetKind,
     entersTapped: profile.entersTapped,
     unimplementedText: profile.unimplementedText
+    ,doublesPlusOneCounters: profile.doublesPlusOneCounters
+    ,doublesTokens: profile.doublesTokens
   });
 }
 
