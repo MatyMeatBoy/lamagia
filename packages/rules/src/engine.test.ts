@@ -4531,7 +4531,7 @@ describe("casting", () => {
   });
 
   it("triggers C13 Furnace Celebration from another permanent sacrificed", () => {
-    let game = readyToCast([], [C13_FURNACE_CELEBRATION(), C13_CARNAGE_ALTAR(), FOREST(), FOREST(), FOREST(), BEAR()]);
+    let game = readyToCast([], [C13_FURNACE_CELEBRATION(), C13_CARNAGE_ALTAR(), FOREST(), FOREST(), FOREST(), FOREST(), FOREST(), BEAR()]);
     const altar = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Carnage Altar")!;
     const opponent = game.players[1]!;
     const activation = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === altar.instance_id && entry.action.sacrificeId !== undefined);
@@ -4544,12 +4544,17 @@ describe("casting", () => {
       if (!action) throw new Error("No se pudo avanzar hasta el trigger de Furnace Celebration.");
       game = applyAction(game, seat, action);
     }
+    if (game.pendingChoice?.type === "trigger-target") {
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "player", seat: opponent.seat } });
+      game = passUntil(game, (state) => state.pendingChoice?.type === "optional-trigger");
+    }
     const choice = game.pendingChoice;
-    expect(choice?.type).toBe("trigger-target");
-    if (!choice || choice.type !== "trigger-target") throw new Error("Furnace Celebration target was not offered.");
-    game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: choice.sourceId, target: { kind: "player", seat: opponent.seat } });
-    const actionsAfterTarget = legalActions(game, 0);
-    expect(actionsAfterTarget.length).toBeGreaterThan(0);
+    expect(choice?.type).toBe("optional-trigger");
+    if (!choice || choice.type !== "optional-trigger") throw new Error("Furnace Celebration payment was not offered.");
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    if (game.pendingChoice?.type === "trigger-target") {
+      game = applyAction(game, 0, { type: "choose-trigger-target", sourceId: game.pendingChoice.sourceId, target: { kind: "player", seat: opponent.seat } });
+    }
     while (game.players[1]!.life !== 38 && !game.finished) {
       const seat = pendingSeat(game);
       if (seat === null) break;
@@ -4557,7 +4562,7 @@ describe("casting", () => {
       if (!action) break;
       game = applyAction(game, seat, action);
     }
-    expect(game.players[1]!.life).toBe(40);
+    expect(game.players[1]!.life).toBe(38);
   });
 
   it("reuses the upkeep compound trigger for C13 Baleful Force", () => {
