@@ -42,6 +42,13 @@ describe("type line parsing", () => {
     expect(profile.fullyImplemented).toBe(true);
     expect(profile.unimplementedText).toEqual([]);
   });
+
+  it("does not turn changeling into a land subtype", () => {
+    const profile = cardProfile(card({ name: "Shapeshifter", type_line: "Creature — Shapeshifter", keywords: ["Changeling"] }));
+    expect(hasSubtype(profile, "Island")).toBe(true);
+    expect(profile.types).not.toContain("Land");
+    expect(profile.supertypes).not.toContain("Basic");
+  });
 });
 
 describe("mana abilities", () => {

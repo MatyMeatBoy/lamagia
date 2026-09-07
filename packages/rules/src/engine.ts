@@ -1029,6 +1029,11 @@ function hasPermanentSubtype(state: GameState, permanent: Permanent, subtype: st
 function hasLandSubtype(profile: CardProfile, subtype: string): boolean {
   return isLand(profile) && profile.subtypes.some((candidate) => candidate.toLowerCase() === subtype.toLowerCase());
 }
+function hasSubtypeForCardType(profile: CardProfile, subtype: string, type?: CardType): boolean {
+  if (subtype.toLowerCase() === "basic") return profile.supertypes.some((value) => value.toLowerCase() === "basic");
+  if (type === "Land") return hasLandSubtype(profile, subtype);
+  return hasSubtype(profile, subtype);
+}
 function attachedEquipment(state: GameState, creature: Permanent): Permanent[] {
   return allPermanents(state).filter((candidate) => candidate.attachedTo === creature.instance_id
     && cardProfile(candidate.card).subtypes.some((subtype) => subtype.toLowerCase() === "equipment"));
@@ -1227,7 +1232,7 @@ function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyw
         && grant.scope === "creatures-you-control"
         && grant.requiresControlledLandSubtype
         && player.battlefield.some((source) => isLand(cardProfile(source.card))
-          && hasSubtype(cardProfile(source.card), grant.requiresControlledLandSubtype!)))))) return true;
+          && hasLandSubtype(cardProfile(source.card), grant.requiresControlledLandSubtype!)))))) return true;
   if (attachedEquipment(state, permanent).some((equipment) => cardProfile(equipment.card).equipmentModification?.keywords.includes(keyword))) return true;
   return attachedAuras(state, permanent).some((aura) => cardProfile(aura.card).auraModification?.keywords.includes(keyword));
 }
@@ -1410,7 +1415,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
       // "<Basic type>s you control produce an additional {C}" (Crypt Ghast):
       // a matching land's ability produces one extra of the granted colour.
       const bonus = [...landBonuses, ...globalLandBonuses].find((entry) =>
-        isLand(profile) && hasSubtype(profile, entry.subtype)
+        isLand(profile) && hasLandSubtype(profile, entry.subtype)
         && (options as readonly string[]).includes(entry.mana));
       const bonusTypes = state && isLand(profile) ? auraLandManaBonusTypes(state, permanent) : [];
       const bonusOptions = doublesLandMana && isLand(profile) ? [...new Set(options)] : [];
@@ -2362,9 +2367,9 @@ function triggerMatches(
     if (permanent?.castSpentMana?.includes(definition.requiresManaTypeNotSpent)) return false;
   }
   const condition = definition.condition;
-  if (condition?.kind === "no-controlled-subtype") {
-    const subtype = condition.subtype.toLowerCase();
-    if (playerAt(state, watcher.controller).battlefield.some((permanent) => hasSubtype(cardProfile(permanent.card), subtype))) return false;
+    if (condition?.kind === "no-controlled-subtype") {
+      const subtype = condition.subtype.toLowerCase();
+      if (playerAt(state, watcher.controller).battlefield.some((permanent) => hasSubtypeForCardType(cardProfile(permanent.card), subtype))) return false;
   }
   if (condition?.kind === "controlled-creature-power-at-least") {
     if (!playerAt(state, watcher.controller).battlefield.some((permanent) => isCreature(cardProfile(permanent.card))
@@ -2754,7 +2759,9 @@ function raiseTapEvents(state: GameState, before: GameState, ids: Iterable<strin
 
 function revealOptions(player: PlayerState, subtypes: readonly string[]): GameCard[] {
   const wanted = new Set(subtypes.map((subtype) => subtype.toLowerCase()));
-  return player.hand.filter((card) => Array.from(wanted).some((subtype) => hasSubtype(cardProfile(card), subtype)));
+  return player.hand.filter((card) => Array.from(wanted).some((subtype) =>
+    subtype === "basic" ? cardProfile(card).supertypes.some((value) => value.toLowerCase() === "basic")
+      : hasSubtype(cardProfile(card), subtype)));
 }
 
 function pendingRevealFor(state: GameState, seat: SeatId, sourceId: string, subtypes: readonly string[]): PendingChoice {
@@ -6404,9 +6411,9 @@ function resolveTop(state: GameState): GameState {
         .filter((card) => {
           const candidateProfile = cardProfile(card);
           const typeMatches = triggerSearchMulti.types.some((type) => candidateProfile.types.includes(type));
-          const subtypeMatches = triggerSearchMulti.subtypes?.every((subtype) => subtype.toLowerCase() === "basic"
+        const subtypeMatches = triggerSearchMulti.subtypes?.every((subtype) => subtype.toLowerCase() === "basic"
             ? candidateProfile.supertypes.some((value) => value.toLowerCase() === "basic")
-            : candidateProfile.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase())) ?? true;
+            : (triggerSearchMulti.types.includes("Land") ? hasLandSubtype(candidateProfile, subtype) : candidateProfile.subtypes.some((value) => value.toLowerCase() === subtype.toLowerCase()))) ?? true;
           const budgetMatches = triggerSearchMulti.maxTotalManaValue === undefined
             || candidateProfile.manaValue <= triggerSearchMulti.maxTotalManaValue;
           return typeMatches && subtypeMatches && budgetMatches;
@@ -7750,7 +7757,7 @@ function controlsCommander(state: GameState, seat: SeatId): boolean {
 }
 
 function controlsLandType(state: GameState, seat: SeatId, subtype: string): boolean {
-  return playerAt(state, seat).battlefield.some((permanent) => isLand(cardProfile(permanent.card)) && hasSubtype(cardProfile(permanent.card), subtype));
+  return playerAt(state, seat).battlefield.some((permanent) => hasLandSubtype(cardProfile(permanent.card), subtype));
 }
 
 function castableCard(state: GameState, seat: SeatId, card: GameCard, fromCommandZone: boolean, variableValue = 0, mode?: number, kicked = false, evoked = false, flashback = false, entwined = false, freeCast = false, payLifeCost = false, returnPermanentId?: string, payReducedCost = false, giftPromised = false, overloaded = false): { legal: boolean; note?: string; targetKind?: Exclude<TargetKind, "none">; targetKinds?: readonly Exclude<TargetKind, "none">[] } {
@@ -7783,7 +7790,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if (returnPermanentId) {
     if (!profile.returnLandInsteadOfManaCost) return { legal: false };
     const returned = player.battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
-    if (!returned || !isLand(cardProfile(returned.card)) || !hasSubtype(cardProfile(returned.card), profile.returnLandInsteadOfManaCost.subtype)) return { legal: false };
+    if (!returned || !hasLandSubtype(cardProfile(returned.card), profile.returnLandInsteadOfManaCost.subtype)) return { legal: false };
   }
   if (payReducedCost && (!profile.payReducedCostInstead || fromCommandZone || flashback)) return { legal: false };
   if (overloaded && (!profile.overloadCost || fromCommandZone || flashback || kicked || evoked || entwined)) return { legal: false };
@@ -8476,7 +8483,7 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     // Daze-style land return: one offer per eligible land, each alongside the normal paid cast (CR 601.2b).
     if (profile.returnLandInsteadOfManaCost) {
       for (const land of player.battlefield) {
-        if (!isLand(cardProfile(land.card)) || !hasSubtype(cardProfile(land.card), profile.returnLandInsteadOfManaCost.subtype)) continue;
+        if (!hasLandSubtype(cardProfile(land.card), profile.returnLandInsteadOfManaCost.subtype)) continue;
         const landCheck = castableCard(state, seat, card, false, 0, undefined, false, false, false, false, false, false, land.instance_id);
         if (!landCheck.legal) continue;
         actions.push({
