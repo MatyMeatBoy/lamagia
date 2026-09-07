@@ -477,6 +477,12 @@ export type SpellEffect =
   | { readonly kind: "jeleva-exile-top-spent-mana" }
   /** Jeleva offers one instant or sorcery exiled with the source for free. */
   | { readonly kind: "jeleva-cast-exiled" }
+  /** Illusionist's Gambit resets combat and schedules one extra combat phase. */
+  | { readonly kind: "illusionists-gambit" }
+  /** Hideaway reviews the top cards and stores one face down with its land. */
+  | { readonly kind: "hideaway-exile-top"; readonly amount: number }
+  /** Hideaway's threshold activation plays the linked card without its mana cost. */
+  | { readonly kind: "play-hideaway-exiled"; readonly powerThreshold: number }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -1289,6 +1295,8 @@ export interface CardProfile {
   readonly castableFromHand: boolean;
   /** Spell may only be cast during a combat step (CR 601.2b). */
   readonly combatOnly: boolean;
+  /** Spell may only be cast during an opponent's declare-blockers step (CR 601.2b). */
+  readonly declareBlockersOnly: boolean;
   /** True when every printed instruction is covered by the engine. */
   readonly fullyImplemented: boolean;
   /** Normalized clauses preventing the card from being marked implemented. */
@@ -2491,6 +2499,7 @@ interface RecognizedText {
   readonly targetKinds?: readonly Exclude<TargetKind, "none">[];
   /** Printed cast restriction: this spell may only be cast during combat. */
   readonly combatOnly?: boolean;
+  readonly declareBlockersOnly?: boolean;
   overloadCost?: ManaCost | null;
   overloadedEffects?: SpellEffect[];
   extraTargetCost?: number | null;
@@ -4172,7 +4181,7 @@ function recognizeText(text: string): RecognizedText {
       unimplementedText: [], covered: true
     };
   }
-  if (/^When ~ enters(?: the battlefield)?, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~\.\s*Whenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost\.?$/i.test(joined)) {
+  if (/^(?:Flying\s+)?When ~ enters(?: the battlefield)?, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~\.\s*Whenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost\.?$/i.test(joined)) {
     return {
       effects: [],
       triggers: [
@@ -4180,6 +4189,12 @@ function recognizeText(text: string): RecognizedText {
         { event: "attacks", subject: "self", effect: { kind: "jeleva-cast-exiled" }, optional: true, targetKind: "none", sourceText: body[1]!.text }
       ],
       activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
+    };
+  }
+  if (/^Cast ~ only during the declare blockers step on an opponent's turn\.\s*Remove all attacking creatures from combat and untap them\.\s*After this phase, there is an additional combat phase\.\s*Each of those creatures attacks that combat if able\.\s*They can't attack you or planeswalkers you control that combat\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "illusionists-gambit" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none",
+      declareBlockersOnly: true, unimplementedText: [], covered: true
     };
   }
   if (/^As ~ enters, choose a player\.\s*~ has protection from the chosen player\.?$/i.test(joined)) {
@@ -4553,6 +4568,7 @@ function recognizeText(text: string): RecognizedText {
   const combatRuleLines = parseCombatRules(body.map((entry) => entry.text)).consumed;
   let targetKind: TargetKind = "none";
   let combatOnly = false;
+  let declareBlockersOnly = false;
   const unimplementedText: string[] = [];
   let kickerCost: ManaCost | null = null;
   let kickerOptions: ManaCost[] = [];
@@ -4573,6 +4589,27 @@ function recognizeText(text: string): RecognizedText {
     if (!line.trim()) continue;
     if (/^Cast ~ only during combat\.?$/i.test(line)) {
       combatOnly = true;
+      continue;
+    }
+    if (/^Cast ~ only during the declare blockers step on an opponent's turn\.?$/i.test(line)) {
+      declareBlockersOnly = true;
+      continue;
+    }
+    const hideaway = /^hideaway\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\.?$/i.exec(line);
+    if (hideaway) {
+      const amount = toNumber(hideaway[1]!);
+      if (amount !== null) {
+        triggers.push({ event: "enters-battlefield", subject: "self", effect: { kind: "hideaway-exile-top", amount }, optional: false, targetKind: "none", sourceText: line });
+        continue;
+      }
+    }
+    const hideawayActivation = /^\{G\},\s*\{T\}:\s*You may play the exiled card without paying its mana cost if creatures you control have total power (\d+) or greater\.?$/i.exec(line);
+    if (hideawayActivation) {
+      activatedAbilities.push({
+        index: activatedAbilities.length, requiresTap: true, sacrificesSelf: false, lifeCost: 0,
+        manaCost: parseManaCost("{G}"), effect: { kind: "play-hideaway-exiled", powerThreshold: Number(hideawayActivation[1]) },
+        targetKind: "none", text: line
+      });
       continue;
     }
     if (/^You may choose new targets for the cop(?:y|ies)\.?$/i.test(line)
@@ -5530,7 +5567,7 @@ function recognizeText(text: string): RecognizedText {
     ? [{ kind: "damage-each-opponent-creature" as const, amount: effects[0]!.amount, filter: "without-flying" as const }]
     : [];
   if (overloadCost && !overloadedEffects.length) unimplementedText.push(`Overload ${overloadCost.raw}`);
-  return { effects, triggers, activatedAbilities, modalChoices, targetKind, combatOnly, overloadCost, overloadedEffects, extraTargetCost, kickerCost, kickerOptions, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
+  return { effects, triggers, activatedAbilities, modalChoices, targetKind, combatOnly, declareBlockersOnly, overloadCost, overloadedEffects, extraTargetCost, kickerCost, kickerOptions, entwineCost, graftAmount, kickedEffects, kickedKeywords, evokeCost, flashbackCost, echoCost, miracleCost, unimplementedText, covered: unimplementedText.length === 0 };
 }
 
 const profileCache = new Map<string, CardProfile>();
@@ -5865,6 +5902,7 @@ export function cardProfile(card: CardData): CardProfile {
     triggers: [...gatedTriggers, ...synthesizedTriggers],
     targetKind: recognized.targetKind,
     combatOnly: recognized.combatOnly ?? false,
+    declareBlockersOnly: recognized.declareBlockersOnly ?? false,
     ...(recognized.targetKinds?.length ? { targetKinds: recognized.targetKinds } : {}),
   overloadCost: recognized.overloadCost ?? null,
   overloadedEffects: recognized.overloadedEffects ?? [],

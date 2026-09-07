@@ -170,6 +170,16 @@ const C13_JELEVA = () => make({
   oracle_text: "When ~ enters, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~.\nWhenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost.",
   oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d"
 });
+const C13_ILLUSIONISTS_GAMBIT = () => make({
+  name: "Illusionist's Gambit", type_line: "Instant", mana_cost: "{2}{R}{R}", cmc: 4,
+  oracle_text: "Cast ~ only during the declare blockers step on an opponent's turn.\nRemove all attacking creatures from combat and untap them.\nAfter this phase, there is an additional combat phase.\nEach of those creatures attacks that combat if able.\nThey can't attack you or planeswalkers you control that combat.",
+  oracle_id: "333745d9-e930-439b-94d6-3aeea2877f69", scryfall_id: "333745d9-e930-439b-94d6-3aeea2877f69"
+});
+const C13_MOSSWORT_BRIDGE = () => make({
+  name: "Mosswort Bridge", type_line: "Land — Forest",
+  oracle_text: "Hideaway 4 (When this land enters, look at the top four cards of your library. Exile one face down and put the rest on the bottom of your library.)\nMosswort Bridge enters tapped.\n{T}: Add {G}.\n{G}, {T}: You may play the exiled card without paying its mana cost if creatures you control have total power 10 or greater.",
+  produced_mana: ["G"], oracle_id: "7cb9e29f-835f-4155-a2a5-4b778866c773", scryfall_id: "7cb9e29f-835f-4155-a2a5-4b778866c773"
+});
 const TREASURE_TOKEN = () => make({
   name: "Treasure", type_line: "Artifact — Treasure", token: true,
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
@@ -380,6 +390,74 @@ describe("Jeleva exile-and-cast primitive", () => {
     expect(cast).toBeDefined();
     game = applyAction(game, 0, cast!.action);
     expect(game.stack.at(-1)?.card.name).toBe("Exiled Draw");
+  });
+});
+
+describe("Illusionist's Gambit combat reset primitive", () => {
+  it("resets attackers and schedules a restricted extra combat", () => {
+    const gambit = C13_ILLUSIONISTS_GAMBIT();
+    expect(cardProfile(gambit)).toMatchObject({ fullyImplemented: true, declareBlockersOnly: true });
+    let game = threeSeatGame();
+    game = putOnBattlefield(game, 0, [BEAR()], { sick: false, tapped: true });
+    const attacker = game.players[0]!.battlefield.at(-1)!;
+    game = stage(game, 1, (player) => ({
+      autoPass: false,
+      hand: toHand(1, [gambit], "gambit-hand"),
+      manaPool: { W: 0, U: 0, B: 0, R: 4, G: 0, C: 0 }
+    }));
+    game = {
+      ...game,
+      step: "declare-blockers",
+      activeSeat: 0,
+      prioritySeat: 1,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      combat: { attackers: [{ instanceId: attacker.instance_id, defender: 1 }], blockers: [], attackersDeclared: true, blockersDeclared: true, blockersDeclaredBy: [1], firstStrikeResolved: false, damageResolved: false }
+    };
+    const cast = legalActions(game, 1).find((entry) => entry.action.type === "cast" && entry.action.cardId === "gambit-hand-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 1, cast!.action);
+    game = passUntil(game, (current) => current.step === "declare-attackers" && !current.combat.attackersDeclared);
+    expect(game.additionalCombatPending).toBe(false);
+    expect(game.gambitAttackerIds).toEqual([attacker.instance_id]);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === attacker.instance_id)?.tapped).toBe(false);
+    expect(legalAttackers(game, 0).map((permanent) => permanent.instance_id)).toEqual([attacker.instance_id]);
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 2 }] });
+    expect(game.combat.attackers).toEqual([{ instanceId: attacker.instance_id, defender: 2 }]);
+  });
+});
+
+describe("Mosswort Bridge hideaway primitive", () => {
+  it("reviews four cards privately, stores one, and plays it after the power threshold", () => {
+    const bridge = C13_MOSSWORT_BRIDGE();
+    const profile = cardProfile(bridge);
+    expect(profile).toMatchObject({ fullyImplemented: true, entersTapped: { kind: "tapped" }, triggers: [{ effect: { kind: "hideaway-exile-top", amount: 4 } }] });
+    expect(profile.activatedAbilities).toContainEqual(expect.objectContaining({ effect: { kind: "play-hideaway-exiled", powerThreshold: 10 } }));
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [bridge, make({ name: "Large Bear", type_line: "Creature — Bear", power: "10", toughness: "10" })], { sick: false });
+    const source = game.players[0]!.battlefield.at(-2)!;
+    const library = toHand(0, [make({ name: "Hidden Growth", type_line: "Sorcery", mana_cost: "{3}{G}", oracle_text: "Draw a card." }), BEAR(), FLIER(), WALL(), FOREST()], "hideaway-library");
+    game = stage(game, 0, (player) => ({ library, autoPass: true }));
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) };
+    game = { ...game, triggerQueue: [{ id: "hideaway-trigger", controller: 0, sourcePermanentId: source.instance_id, sourceCard: source.card, definition: profile.triggers[0]!, cause: "Mosswort Bridge enters", eventPermanentId: source.instance_id } as TriggerInstance], priorityOpen: false, pendingChoice: null };
+    game = settle(game);
+    if (game.pendingChoice?.type !== "library-pick") throw new Error(`MOSS PRE ${JSON.stringify({ pending: game.pendingChoice?.type, open: game.priorityOpen, priority: game.prioritySeat, stack: game.stack.map((entry) => entry.label), triggers: game.triggerQueue.length, log: game.log.slice(-4) })}`);
+    expect(game.pendingChoice?.type).toBe("library-pick");
+    const pick = legalActions(game, 0).find((entry) => entry.action.type === "resolve-library-pick" && entry.action.cardId === "hideaway-library-0");
+    expect(pick).toBeDefined();
+    game = applyAction(game, 0, pick!.action);
+    expect(game.players[0]!.battlefield.find((permanent) => permanent.instance_id === source.instance_id)?.exiledWith?.name).toBe("Hidden Growth");
+    game = { ...game, priorityOpen: true, prioritySeat: 0, step: "precombat-main", players: game.players.map((player) => player.seat === 0 ? { ...player, manaPool: { W: 0, U: 0, B: 0, R: 0, G: 1, C: 0 } } : player) };
+    const activate = legalActions(game, 0).find((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id);
+    expect(activate).toBeDefined();
+    game = applyAction(game, 0, activate!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    expect(game.pendingChoice?.type).toBe("hideaway-play");
+    game = applyAction(game, 0, { type: "choose-hideaway-play", sourceId: game.pendingChoice!.sourceId, play: true });
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Hidden Growth")).toBe(true);
   });
 });
 

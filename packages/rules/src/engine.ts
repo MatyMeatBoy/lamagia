@@ -480,6 +480,12 @@ export interface GameState {
   readonly blockingTaxPerCreature?: readonly number[];
   /** Last direction chosen by a Mystic Barrier-style effect. */
   readonly attackDirection?: "left" | "right";
+  /** One additional combat phase scheduled by Illusionist's Gambit. */
+  readonly additionalCombatPending?: boolean;
+  /** Attackers reset by Illusionist's Gambit must attack the extra combat if able. */
+  readonly gambitAttackerIds?: readonly string[];
+  /** Player protected from the reset attackers during that extra combat. */
+  readonly gambitController?: SeatId;
 }
 
 export type PendingChoice =
@@ -692,6 +698,8 @@ export type PendingChoice =
       readonly sourceCard: GameCard;
       readonly optionIds: readonly string[];
       readonly restDestination?: "bottom" | "graveyard";
+      /** Hideaway stores the picked card on the entering source instead of in hand. */
+      readonly hideawaySourcePermanentId?: string;
     }
   | {
       /** Widespread Panic: choose one card from the shuffling player's hand.
@@ -806,6 +814,15 @@ export type PendingChoice =
       readonly optionIds: readonly string[];
     }
   | {
+      /** Private choice to play the single face-down card linked by Hideaway. */
+      readonly type: "hideaway-play";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly sourcePermanentId: string;
+      readonly cardId: string;
+    }
+  | {
       readonly type: "draw-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -861,6 +878,7 @@ export type GameAction =
   | { readonly type: "choose-lim-duls-vault"; readonly sourceId: string; readonly decision: "continue" | "finish" }
   | { readonly type: "choose-lim-duls-vault-order"; readonly sourceId: string; readonly ordinal: number }
   | { readonly type: "choose-jeleva-cast"; readonly sourceId: string; readonly cardId?: string; readonly targets?: readonly Target[] }
+  | { readonly type: "choose-hideaway-play"; readonly sourceId: string; readonly play: boolean; readonly targets?: readonly Target[] }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
@@ -2871,6 +2889,52 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         next = applyEffect(next, object, child, childTargetIndex ?? targetIndex);
       }
       return next;
+    }
+    case "illusionists-gambit": {
+      // CR 506.4: removing an attacking creature from combat also removes it
+      // from the blocker assignments. The spell's next instruction creates a
+      // single extra combat after this one (CR 511.1), while the saved ids
+      // become attack requirements for that combat (CR 508.1d).
+      const attackerIds = state.combat.attackers.map((entry) => entry.instanceId);
+      let next: GameState = { ...state, additionalCombatPending: true, gambitAttackerIds: attackerIds, gambitController: controller };
+      for (const instanceId of attackerIds) {
+        const attacker = findPermanent(next, instanceId);
+        if (!attacker) continue;
+        next = removeFromCombat(next, instanceId);
+        next = withPlayer(next, attacker.controller, (player) => ({
+          ...player,
+          battlefield: player.battlefield.map((permanent) => permanent.instance_id === instanceId ? { ...permanent, tapped: false } : permanent)
+        }));
+      }
+      return logged(next, controller, `${sourceName}: los atacantes salen del combate; habrá un combate adicional.`);
+    }
+    case "hideaway-exile-top": {
+      const sourcePermanentId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const optionIds = playerAt(state, controller).library.slice(0, effect.amount).map((card) => card.instance_id);
+      if (!sourcePermanentId || !optionIds.length) return state;
+      return {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "library-pick", seat: controller, sourceId: object.id, sourceCard: object.card, optionIds,
+          restDestination: "bottom", hideawaySourcePermanentId: sourcePermanentId
+        }
+      };
+    }
+    case "play-hideaway-exiled": {
+      const sourcePermanentId = object.sourcePermanentId;
+      const source = sourcePermanentId ? findPermanent(state, sourcePermanentId) : undefined;
+      const linked = source?.exiledWith;
+      if (!source || !linked) return state;
+      const profile = cardProfile(linked);
+      const totalPower = playerAt(state, controller).battlefield
+        .filter((permanent) => isCreature(cardProfile(permanent.card)))
+        .reduce((total, permanent) => total + Math.max(0, powerOf(permanent, state)), 0);
+      if (totalPower < effect.powerThreshold) return state;
+      return { ...state, priorityOpen: false, pendingChoice: {
+        type: "hideaway-play", seat: controller, sourceId: object.id, sourceCard: object.card,
+        sourcePermanentId: sourcePermanentId!, cardId: linked.instance_id
+      } };
     }
     case "proliferate": {
       const options: Target[] = [];
@@ -6994,8 +7058,11 @@ function canAttack(state: GameState, permanent: Permanent): boolean {
  */
 function requiredAttackers(state: GameState, seat: SeatId): Permanent[] {
   const forcedBoardWide = allPermanents(state).some((permanent) => cardProfile(permanent.card).forcesAllCreaturesToAttack);
+  const gambitIds = new Set(state.gambitAttackerIds ?? []);
   return playerAt(state, seat).battlefield.filter((permanent) =>
-    (forcedBoardWide || cardProfile(permanent.card).combatRules.mustAttack) && canAttack(state, permanent));
+    (forcedBoardWide || cardProfile(permanent.card).combatRules.mustAttack || gambitIds.has(permanent.instance_id))
+    && canAttack(state, permanent)
+    && opponentsOf(state, seat).some((defender) => !(gambitIds.has(permanent.instance_id) && defender === state.gambitController)));
 }
 
 /** The tightest defender-controlled attacker limit (CR 508.1d). */
@@ -7070,7 +7137,9 @@ function hasProtectionFrom(source: CardProfile, target: CardProfile, sourceContr
 }
 
 export function legalAttackers(state: GameState, seat: SeatId): Permanent[] {
-  return playerAt(state, seat).battlefield.filter((permanent) => canAttack(state, permanent));
+  const gambitIds = new Set(state.gambitAttackerIds ?? []);
+  return playerAt(state, seat).battlefield.filter((permanent) => canAttack(state, permanent)
+    && !(gambitIds.has(permanent.instance_id) && opponentsOf(state, seat).every((defender) => defender === state.gambitController)));
 }
 
 /** Returns the nearest living opponent in the table direction (CR 508.1). */
@@ -7507,6 +7576,10 @@ function beginStep(state: GameState, step: TurnStep): GameState {
   next = emptyManaPools(next);
 
   switch (step) {
+    case "begin-combat": {
+      next = { ...next, combat: { attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false, blockersDeclaredBy: [], firstStrikeResolved: false, damageResolved: false } };
+      break;
+    }
     case "untap": {
       next = { ...next, creaturesDiedThisTurn: 0, creatureCardsDiedThisTurn: [] };
       next = { ...next, delayedDeathReturns: next.delayedDeathReturns.filter((delayed) => delayed.expiresTurn >= next.turn) };
@@ -7564,6 +7637,7 @@ function beginStep(state: GameState, step: TurnStep): GameState {
     case "end-combat": {
       next = {
         ...next,
+        ...(next.additionalCombatPending ? {} : { gambitAttackerIds: undefined, gambitController: undefined }),
         combat: { ...next.combat, attackers: [], blockers: [] },
         players: next.players.map((player) => ({
           ...player,
@@ -7629,6 +7703,9 @@ function beginStep(state: GameState, step: TurnStep): GameState {
 }
 
 function advanceStep(state: GameState): GameState {
+  if (state.step === "end-combat" && state.additionalCombatPending) {
+    return beginStep({ ...state, additionalCombatPending: false }, "begin-combat");
+  }
   const index = TURN_STEPS.indexOf(state.step);
   const isLast = index === TURN_STEPS.length - 1;
   if (!isLast) return beginStep(state, TURN_STEPS[index + 1]!);
@@ -7789,6 +7866,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   const instantSpeed = profile.types.includes("Instant") || profile.keywords.includes("flash");
   const inCombat = ["begin-combat", "declare-attackers", "declare-blockers", "combat-damage", "end-combat"].includes(state.step);
   if (profile.combatOnly && !inCombat) return { legal: false };
+  if (profile.declareBlockersOnly && (state.step !== "declare-blockers" || state.activeSeat === seat)) return { legal: false };
   if (!instantSpeed && !sorcerySpeed(state, seat)) return { legal: false };
   const additionalGeneric = (fromCommandZone ? commanderTax(player, card.instance_id) : 0)
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile));
@@ -8148,6 +8226,30 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         label: "Decline",
         note: "Do not cast an exiled spell."
       });
+      return actions;
+    }
+    if (choice.type === "hideaway-play") {
+      const source = findPermanent(state, choice.sourcePermanentId);
+      const card = source?.exiledWith;
+      if (!card || card.instance_id !== choice.cardId) {
+        actions.push({ action: { type: "choose-hideaway-play", sourceId: choice.sourceId, play: false }, label: "Decline", note: "The hidden card is no longer available." });
+        return actions;
+      }
+      const profile = cardProfile(card);
+      const targetKind = profile.targetKind;
+      const targetKinds = profile.targetKinds;
+      if (!targetKinds?.some((kind) => !legalTargets(state, seat, kind, profile).length)
+        && (targetKind === "none" || legalTargets(state, seat, targetKind, profile).length > 0)) {
+        actions.push({
+          action: { type: "choose-hideaway-play", sourceId: choice.sourceId, play: true },
+          label: `Play ${card.name} without paying its mana cost`,
+          cardId: card.instance_id,
+          ...(targetKind !== "none" ? { requiresTarget: targetKind } : {}),
+          ...(targetKinds?.length ? { requiresTargets: targetKinds } : {}),
+          note: `${choice.sourceCard.name}: play the hidden card.`
+        });
+      }
+      actions.push({ action: { type: "choose-hideaway-play", sourceId: choice.sourceId, play: false }, label: "Decline", note: "Do not play the hidden card." });
       return actions;
     }
     if (choice.type === "draw-cards") {
@@ -9180,6 +9282,13 @@ function activatableAbility(
   if (ability.sourceZone === "hand" && !player.hand.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
   if (ability.sourceZone === "graveyard" && !player.graveyard.some((card) => card.instance_id === permanent.instance_id)) return { legal: false };
   if (!ability.sourceZone && !player.battlefield.some((candidate) => candidate.instance_id === permanent.instance_id)) return { legal: false };
+  if (ability.effect.kind === "play-hideaway-exiled") {
+    if (!permanent.exiledWith) return { legal: false };
+    const totalPower = player.battlefield
+      .filter((candidate) => isCreature(cardProfile(candidate.card)))
+      .reduce((total, candidate) => total + Math.max(0, powerOf(candidate, state)), 0);
+    if (totalPower < ability.effect.powerThreshold) return { legal: false };
+  }
   if (ability.upkeepOnly && (state.activeSeat !== seat || state.step !== "upkeep")) return { legal: false };
   if (ability.oncePerTurn && (player.oncePerTurnActivations ?? []).includes(activationKey(permanent.instance_id, ability.index))) return { legal: false };
   if (ability.sorcerySpeed && !sorcerySpeed(state, seat)) return { legal: false };
@@ -10232,6 +10341,22 @@ function applyResolveLibraryPick(state: GameState, seat: SeatId, action: Extract
   if (!picked) throw new Error("La carta elegida ya no está en la biblioteca.");
   const optionIds = new Set(choice.optionIds);
   const unselected = player.library.filter((card) => optionIds.has(card.instance_id) && card.instance_id !== picked.instance_id);
+  if (choice.hideawaySourcePermanentId) {
+    const source = findPermanent(state, choice.hideawaySourcePermanentId);
+    if (!source || source.controller !== seat) throw new Error("La tierra de Hideaway ya no está en el campo de batalla.");
+    const shuffled = shuffle(unselected, state.rngState);
+    let next = withPlayer({ ...state, pendingChoice: null, rngState: shuffled.state }, seat, (current) => ({
+      ...current,
+      library: [...current.library.filter((card) => !optionIds.has(card.instance_id)), ...shuffled.items]
+    }));
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      battlefield: current.battlefield.map((permanent) => permanent.instance_id === source.instance_id
+        ? { ...permanent, exiledWith: picked }
+        : permanent)
+    }));
+    return logged(next, seat, `${player.name} exilia una carta boca abajo con ${source.card.name} y pone el resto en el fondo de su biblioteca.`);
+  }
   const next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
     ...current,
     library: choice.restDestination === "graveyard"
@@ -10605,6 +10730,43 @@ function applyChooseJelevaCast(state: GameState, seat: SeatId, action: Extract<G
   return logged(next, seat, `${playerAt(next, seat).name} lanza ${selected.name} gratis con Jeleva.`);
 }
 
+function applyChooseHideawayPlay(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-hideaway-play" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "hideaway-play" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes una elección pendiente de Hideaway.");
+  }
+  const source = findPermanent(state, choice.sourcePermanentId);
+  const card = source?.exiledWith;
+  if (!source || !card || card.instance_id !== choice.cardId) throw new Error("La carta de Hideaway ya no está disponible.");
+  if (!action.play) return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} no juega la carta exiliada con ${source.card.name}.`);
+  if (!action.targets?.length && cardProfile(card).targetKind !== "none") throw new Error(`${card.name} necesita un objetivo legal.`);
+  const profile = cardProfile(card);
+  let targets = [...(action.targets ?? [])];
+  if (profile.targetKinds?.length) {
+    const chosen = targets.length ? targets : profile.targetKinds.flatMap((kind) => legalTargets(state, seat, kind, profile).slice(0, 1));
+    if (chosen.length !== profile.targetKinds.length) throw new Error(`${card.name} necesita ${profile.targetKinds.length} objetivos legales.`);
+    if (!chosen.every((target, index) => legalTargets(state, seat, profile.targetKinds![index]!, profile).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) throw new Error(`Objetivo ilegal para ${card.name}.`);
+    targets = chosen;
+  } else if (profile.targetKind !== "none") {
+    const allowed = legalTargets(state, seat, profile.targetKind, profile);
+    const chosen = targets.length ? targets : allowed.slice(0, 1);
+    if (!chosen.length || !chosen.every((target) => allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) throw new Error(`Objetivo ilegal para ${card.name}.`);
+    targets = chosen;
+  }
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
+    ...player,
+    battlefield: player.battlefield.map((permanent) => permanent.instance_id === source.instance_id ? { ...permanent, exiledWith: undefined } : permanent)
+  }));
+  if (profile.types.includes("Land")) {
+    next = putOntoBattlefield(next, seat, card, false);
+    return logged(next, seat, `${playerAt(next, seat).name} juega ${card.name} gratis con ${source.card.name}.`);
+  }
+  next = pushOnStack(next, seat, card, targets, false, 0);
+  next = queueWardChoice(next, next.stack.at(-1)!);
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)! });
+  return logged(next, seat, `${playerAt(next, seat).name} lanza ${card.name} gratis con ${source.card.name}.`);
+}
+
 function applyChooseDraw(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-draw" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "draw-cards" || choice.seat !== seat) throw new Error("No tienes una elección de robo pendiente.");
@@ -10627,6 +10789,9 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   for (const entry of attackers) {
     if (!available.has(entry.instanceId)) throw new Error("Esa criatura no puede atacar.");
     if (!defenders.has(entry.defender)) throw new Error("Ese jugador no puede ser atacado.");
+    if ((state.gambitAttackerIds ?? []).includes(entry.instanceId) && entry.defender === state.gambitController) {
+      throw new Error("Ese atacante no puede atacar al jugador protegido por Illusionist's Gambit.");
+    }
     if (state.attackDirection && nearestOpponentInDirection(state, seat, state.attackDirection) !== entry.defender) {
       throw new Error("Mystic Barrier limita el ataque al oponente más cercano en la dirección elegida.");
     }
@@ -11200,6 +11365,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-lim-duls-vault": next = applyChooseLimDulsVault(state, seat, action); break;
     case "choose-lim-duls-vault-order": next = applyChooseLimDulsVaultOrder(state, seat, action); break;
     case "choose-jeleva-cast": next = applyChooseJelevaCast(state, seat, action); break;
+    case "choose-hideaway-play": next = applyChooseHideawayPlay(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;

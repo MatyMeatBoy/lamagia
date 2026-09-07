@@ -680,8 +680,11 @@ describe("C13 primitive reuse", () => {
     const satchel = card({ name: "Druidic Satchel", type_line: "Artifact", oracle_text: "{2}, {T}: Reveal the top card of your library. If it's a creature card, create a 1/1 green Saproling creature token. If it's a land card, put that card onto the battlefield under your control. If it's a noncreature, nonland card, you gain 2 life." });
     expect(cardProfile(satchel)).toMatchObject({ fullyImplemented: true, activatedAbilities: [{ effect: { kind: "reveal-top-card-conditional" } }] });
 
-    const jeleva = card({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", oracle_text: "When Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost." });
+    const jeleva = card({ name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", keywords: ["Flying"], oracle_text: "Flying\nWhen Jeleva, Nephalia's Scourge enters the battlefield, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva, Nephalia's Scourge attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost." });
     expect(cardProfile(jeleva)).toMatchObject({ fullyImplemented: true, triggers: [{ effect: { kind: "jeleva-exile-top-spent-mana" } }, { effect: { kind: "jeleva-cast-exiled" } }] });
+
+    const gambit = card({ name: "Illusionist's Gambit", type_line: "Instant", oracle_text: "Cast Illusionist's Gambit only during the declare blockers step on an opponent's turn.\nRemove all attacking creatures from combat and untap them.\nAfter this phase, there is an additional combat phase.\nEach of those creatures attacks that combat if able.\nThey can't attack you or planeswalkers you control that combat." });
+    expect(cardProfile(gambit)).toMatchObject({ fullyImplemented: true, declareBlockersOnly: true, effects: [{ kind: "illusionists-gambit" }] });
 
     for (const name of ["Rupture Spire", "Transguild Promenade"]) {
       const land = card({ name, type_line: "Land", oracle_text: `${name} enters the battlefield tapped.\nWhen ${name} enters the battlefield, sacrifice it unless you pay {1}.\n{T}: Add one mana of any color.` });
