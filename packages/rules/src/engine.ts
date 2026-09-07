@@ -77,6 +77,8 @@ export interface GameCard extends CardData {
   readonly instance_id: string;
   readonly owner: SeatId;
   readonly token?: boolean;
+  /** Jeleva linkage for cards exiled by that permanent. */
+  readonly exiledWithSourceId?: string;
 }
 
 export interface SuspendedCard {
@@ -796,6 +798,14 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** Private choice among instant/sorcery cards exiled with Jeleva. */
+      readonly type: "jeleva-cast-exiled";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly optionIds: readonly string[];
+    }
+  | {
       readonly type: "draw-cards";
       readonly seat: SeatId;
       readonly sourceId: string;
@@ -850,6 +860,7 @@ export type GameAction =
   | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "choose-lim-duls-vault"; readonly sourceId: string; readonly decision: "continue" | "finish" }
   | { readonly type: "choose-lim-duls-vault-order"; readonly sourceId: string; readonly ordinal: number }
+  | { readonly type: "choose-jeleva-cast"; readonly sourceId: string; readonly cardId?: string; readonly targets?: readonly Target[] }
   | { readonly type: "choose-draw"; readonly sourceId: string; readonly amount: number }
   | { readonly type: "choose-discard"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "choose-proliferate-target"; readonly sourceId: string; readonly target: Target }
@@ -6121,6 +6132,31 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       // The private review loop is completed by the controller's explicit
       // choices; no library card is exposed to other seats.
       return state;
+    case "jeleva-exile-top-spent-mana": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(state, sourceId) : undefined;
+      const amount = source?.castSpentMana?.length ?? 0;
+      if (!source || amount <= 0) return state;
+      let next = state;
+      for (const player of state.players) {
+        const exiled = player.library.slice(0, amount).map((card) => ({ ...card, exiledWithSourceId: sourceId }));
+        next = withPlayer(next, player.seat, (current) => ({
+          ...current,
+          library: current.library.slice(exiled.length),
+          exile: [...current.exile, ...exiled]
+        }));
+      }
+      return logged(next, controller, `${source.card.name} exilia hasta ${amount} carta(s) de la parte superior de cada biblioteca.`);
+    }
+    case "jeleva-cast-exiled": {
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      if (!sourceId) return state;
+      const options = playerAt(state, controller).exile
+        .filter((card) => card.exiledWithSourceId === sourceId && (cardProfile(card).types.includes("Instant") || cardProfile(card).types.includes("Sorcery")))
+        .map((card) => card.instance_id);
+      if (!options.length) return logged(state, controller, `${object.card.name}: no hay instantáneos o conjuros exiliados para lanzar.`);
+      return { ...state, pendingChoice: { type: "jeleva-cast-exiled", seat: controller, sourceId: object.trigger?.id ?? object.id, sourceCard: object.card, optionIds: options } };
+    }
     case "attach-equipment": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -6479,6 +6515,15 @@ function resolveTop(state: GameState): GameState {
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
     if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount === "source-counter" ? object.variableValue : triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep, false, false, triggerLookTop.minPower);
+    if (object.trigger.definition.effect.kind === "jeleva-cast-exiled") {
+      const sourceId = object.trigger.sourcePermanentId;
+      const options = playerAt(next, object.controller).exile
+        .filter((card) => card.exiledWithSourceId === sourceId && (cardProfile(card).types.includes("Instant") || cardProfile(card).types.includes("Sorcery")))
+        .map((card) => card.instance_id);
+      if (!options.length) return logged(next, object.controller, `${object.card.name}: no hay instantáneos o conjuros exiliados para lanzar.`);
+      if (!object.trigger.definition.optional) return next;
+      return { ...next, pendingChoice: { type: "jeleva-cast-exiled", seat: object.controller, sourceId: object.trigger.id, sourceCard: object.trigger.sourceCard, optionIds: options } };
+    }
     if (object.trigger.definition.drawUpTo !== undefined) {
       return {
         ...next,
@@ -8078,6 +8123,31 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         cardId: card.instance_id,
         note: `${choice.sourceCard.name}: choose the next card in the bottom/top order.`
       }));
+      return actions;
+    }
+    if (choice.type === "jeleva-cast-exiled") {
+      for (const cardId of choice.optionIds) {
+        const card = player.exile.find((candidate) => candidate.instance_id === cardId);
+        if (!card) continue;
+        const profile = cardProfile(card);
+        const targetKind = profile.targetKind;
+        const targetKinds = profile.targetKinds;
+        if (targetKinds?.some((kind) => !legalTargets(state, seat, kind, profile).length)) continue;
+        if (targetKind !== "none" && !legalTargets(state, seat, targetKind, profile).length) continue;
+        actions.push({
+          action: { type: "choose-jeleva-cast", sourceId: choice.sourceId, cardId },
+          label: `Cast ${card.name} without paying its mana cost`,
+          cardId,
+          ...(targetKind !== "none" ? { requiresTarget: targetKind } : {}),
+          ...(targetKinds?.length ? { requiresTargets: targetKinds } : {}),
+          note: `${choice.sourceCard.name}: choose one exiled instant or sorcery to cast.`
+        });
+      }
+      actions.push({
+        action: { type: "choose-jeleva-cast", sourceId: choice.sourceId },
+        label: "Decline",
+        note: "Do not cast an exiled spell."
+      });
       return actions;
     }
     if (choice.type === "draw-cards") {
@@ -10500,6 +10570,41 @@ function applyChooseLimDulsVaultOrder(state: GameState, seat: SeatId, action: Ex
   return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} ordena una carta de Lim-Dûl's Vault.`);
 }
 
+function applyChooseJelevaCast(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-jeleva-cast" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "jeleva-cast-exiled" || choice.seat !== seat || choice.sourceId !== action.sourceId) {
+    throw new Error("No tienes una elección pendiente de Jeleva.");
+  }
+  if (!action.cardId) return logged({ ...state, pendingChoice: null }, seat, `${playerAt(state, seat).name} no lanza un hechizo de Jeleva.`);
+  if (!choice.optionIds.includes(action.cardId)) throw new Error("Esa carta no fue exiliada con Jeleva.");
+  const selected = playerAt(state, seat).exile.find((card) => card.instance_id === action.cardId);
+  if (!selected) throw new Error("Ese hechizo ya no está en el exilio.");
+  const profile = cardProfile(selected);
+  if (!(profile.types.includes("Instant") || profile.types.includes("Sorcery"))) throw new Error("Jeleva solo puede lanzar instantáneos o conjuros.");
+  let targets: readonly Target[] = action.targets ?? [];
+  if (profile.targetKinds?.length) {
+    targets = targets.length ? targets : profile.targetKinds.flatMap((kind) => legalTargets(state, seat, kind, profile).slice(0, 1));
+    if (targets.length !== profile.targetKinds.length || targets.some((target, index) => !legalTargets(state, seat, profile.targetKinds![index]!, profile).some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
+      throw new Error(`${selected.name} necesita objetivos legales.`);
+    }
+  } else if (profile.targetKind !== "none") {
+    const allowed = legalTargets(state, seat, profile.targetKind, profile);
+    targets = targets.length ? targets : allowed.slice(0, 1);
+    if (!targets.length || targets.some((target) => !allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target)))) {
+      throw new Error(`${selected.name} necesita un objetivo legal.`);
+    }
+  }
+  const card = { ...selected, exiledWithSourceId: undefined };
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (player) => ({
+    ...player,
+    exile: player.exile.filter((candidate) => candidate.instance_id !== selected.instance_id)
+  }));
+  next = pushOnStack(next, seat, card, targets, false, 0);
+  next = queueWardChoice(next, next.stack.at(-1)!);
+  next = raiseEvent(next, { kind: "spell-cast", controller: seat, card, spell: next.stack.at(-1)! });
+  return logged(next, seat, `${playerAt(next, seat).name} lanza ${selected.name} gratis con Jeleva.`);
+}
+
 function applyChooseDraw(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-draw" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "draw-cards" || choice.seat !== seat) throw new Error("No tienes una elección de robo pendiente.");
@@ -11094,6 +11199,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-look-top-bottom": next = applyChooseLookTopBottom(state, seat, action); break;
     case "choose-lim-duls-vault": next = applyChooseLimDulsVault(state, seat, action); break;
     case "choose-lim-duls-vault-order": next = applyChooseLimDulsVaultOrder(state, seat, action); break;
+    case "choose-jeleva-cast": next = applyChooseJelevaCast(state, seat, action); break;
     case "choose-draw": next = applyChooseDraw(state, seat, action); break;
     case "choose-discard": next = applyChooseDiscard(state, seat, action); break;
     case "choose-proliferate-target": next = applyChooseProliferateTarget(state, seat, action); break;

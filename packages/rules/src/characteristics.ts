@@ -473,6 +473,10 @@ export type SpellEffect =
   | { readonly kind: "look-top-select"; readonly amount: number | "source-counter"; readonly types: readonly CardType[]; readonly destination: "hand" | "battlefield"; readonly minPower?: number; readonly returnAtEndStep?: boolean }
   /** Lim-Dûl's Vault's repeatable top-five review and life-payment loop. */
   | { readonly kind: "lim-duls-vault" }
+  /** Jeleva exiles each player's top cards using the mana spent on entry. */
+  | { readonly kind: "jeleva-exile-top-spent-mana" }
+  /** Jeleva offers one instant or sorcery exiled with the source for free. */
+  | { readonly kind: "jeleva-cast-exiled" }
   /** "Look at target player's hand" (Gitaxian Probe, CR 701.20): a private reveal to the caster only. */
   | { readonly kind: "look-at-target-players-hand" }
   | { readonly kind: "each-player-draw"; readonly amount: number | "X" }
@@ -4166,6 +4170,16 @@ function recognizeText(text: string): RecognizedText {
     return {
       effects: [{ kind: "lim-duls-vault" }], triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "none",
       unimplementedText: [], covered: true
+    };
+  }
+  if (/^When ~ enters(?: the battlefield)?, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~\.\s*Whenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost\.?$/i.test(joined)) {
+    return {
+      effects: [],
+      triggers: [
+        { event: "enters-battlefield", subject: "self", effect: { kind: "jeleva-exile-top-spent-mana" }, optional: false, targetKind: "none", sourceText: body[0]!.text },
+        { event: "attacks", subject: "self", effect: { kind: "jeleva-cast-exiled" }, optional: true, targetKind: "none", sourceText: body[1]!.text }
+      ],
+      activatedAbilities: [], modalChoices: [], targetKind: "none", unimplementedText: [], covered: true
     };
   }
   if (/^As ~ enters, choose a player\.\s*~ has protection from the chosen player\.?$/i.test(joined)) {

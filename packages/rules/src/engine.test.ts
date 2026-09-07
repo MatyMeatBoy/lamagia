@@ -164,6 +164,12 @@ const C13_LIM_DULS_VAULT = () => make({
   oracle_text: "Look at the top five cards of your library. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library. Then shuffle and put the last cards you looked at this way on top in any order.",
   oracle_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97", scryfall_id: "3f8e7a45-4c6e-4ee6-93d0-b7de9715ec97"
 });
+const C13_JELEVA = () => make({
+  name: "Jeleva, Nephalia's Scourge", type_line: "Legendary Creature — Vampire Wizard", mana_cost: "{1}{U}{B}{R}", cmc: 4,
+  power: "1", toughness: "3", keywords: ["Flying"],
+  oracle_text: "When ~ enters, each player exiles the top X cards of their library, where X is the amount of mana spent to cast ~.\nWhenever ~ attacks, you may cast an instant or sorcery spell from among cards exiled with ~ without paying its mana cost.",
+  oracle_id: "a014f283-c531-415c-ac00-e6773ea5d64d", scryfall_id: "a014f283-c531-415c-ac00-e6773ea5d64d"
+});
 const TREASURE_TOKEN = () => make({
   name: "Treasure", type_line: "Artifact — Treasure", token: true,
   oracle_text: "{T}, Sacrifice this artifact: Add one mana of any color."
@@ -325,6 +331,55 @@ describe("Lim-Dûl's Vault primitive", () => {
     }
     expect(game.players[0]!.graveyard.some((card) => card.name === vault.name)).toBe(true);
     expect(game.players[0]!.library).toHaveLength(10);
+  });
+});
+
+describe("Jeleva exile-and-cast primitive", () => {
+  it("exiles X cards from each library using spent mana and offers a linked spell on attack", () => {
+    const jeleva = C13_JELEVA();
+    const profile = cardProfile(jeleva);
+    expect(profile.fullyImplemented).toBe(true);
+    let game = twoSeatGame([], []);
+    game = {
+      ...game,
+      step: "precombat-main",
+      activeSeat: 0,
+      prioritySeat: 0,
+      priorityOpen: true,
+      stack: [],
+      triggerQueue: [],
+      pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: player.seat === 0 ? toHand(0, [jeleva]) : [], commandZone: [] }))
+    };
+    const leftLibrary = toHand(0, [BEAR(), FLIER(), WALL(), BEAST_WITHIN(), COUNTER(), SWAMP()], "jeleva-left");
+    const rightLibrary = toHand(1, [FOREST(), PLAINS(), ISLAND(), MOUNTAIN(), SWAMP(), BEAR()], "jeleva-right");
+    game = stage(game, 0, (player) => ({ library: leftLibrary, manaPool: { W: 0, U: 1, B: 1, R: 1, G: 0, C: 1 } }));
+    game = stage(game, 1, (player) => ({ library: rightLibrary }));
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "cast" && entry.action.cardId === "hand-0");
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast!.action);
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "pass" });
+    game = passUntil(game, (current) => current.players[0]!.exile.filter((card) => card.exiledWithSourceId).length >= 4);
+    expect(game.players[0]!.exile.filter((card) => card.exiledWithSourceId).length).toBe(4);
+    expect(game.players[1]!.exile.filter((card) => card.exiledWithSourceId).length).toBe(4);
+  });
+
+  it("casts a linked exiled sorcery for free after Jeleva attacks", () => {
+    const jeleva = C13_JELEVA();
+    let game = twoSeatGame([], []);
+    game = { ...game, step: "declare-attackers", activeSeat: 0, prioritySeat: 0, priorityOpen: true, stack: [], triggerQueue: [], pendingChoice: null,
+      players: game.players.map((player) => ({ ...player, autoPass: false, hand: [], commandZone: [] })) };
+    game = putOnBattlefield(game, 0, [jeleva], { sick: false });
+    const source = game.players[0]!.battlefield.at(-1)!;
+    const exiled = { ...make({ name: "Exiled Draw", type_line: "Sorcery", mana_cost: "{2}{U}", cmc: 3, oracle_text: "Draw three cards." }), instance_id: "jeleva-exiled-draw", owner: 0, exiledWithSourceId: source.instance_id };
+    game = stage(game, 0, (player) => ({ exile: [exiled] }));
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: source.instance_id, defender: 1 }] });
+    game = passUntil(game, (current) => current.pendingChoice?.type === "jeleva-cast-exiled");
+    const cast = legalActions(game, 0).find((entry) => entry.action.type === "choose-jeleva-cast" && entry.action.cardId === exiled.instance_id);
+    expect(cast).toBeDefined();
+    game = applyAction(game, 0, cast!.action);
+    expect(game.stack.at(-1)?.card.name).toBe("Exiled Draw");
   });
 });
 
