@@ -637,6 +637,8 @@ export type PendingChoice =
       readonly sourceId: string;
       readonly optionIds: readonly string[];
       readonly selectedIds: readonly string[];
+      /** Resolved cap for dynamic "up to X" searches. */
+      readonly selectionLimit?: number;
       readonly sourceCard: GameCard;
       readonly search: Extract<SpellEffect, { kind: "search-library-multi" }>;
       readonly returnSourceToGraveyard: boolean;
@@ -6693,7 +6695,14 @@ function resolveTop(state: GameState): GameState {
         return typeMatches && subtypeMatches;
       })
       .map((card) => card.instance_id);
-    if (!options.length) {
+    const selectionLimit = multiSearch.maxCount === "players-with-two-more-lands"
+      ? (() => {
+          const ownLands = playerAt(next, object.controller).battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length;
+          return next.players.filter((player) => player.seat !== object.controller
+            && player.battlefield.filter((permanent) => isLand(cardProfile(permanent.card))).length >= ownLands + 2).length;
+        })()
+      : undefined;
+    if (!options.length || selectionLimit === 0) {
       next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library);
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
       return logged(next, object.controller, `${object.card.name}: no hay tierras básicas que buscar; ${playerAt(next, object.controller).name} baraja su biblioteca.`);
@@ -6706,6 +6715,7 @@ function resolveTop(state: GameState): GameState {
         sourceId: object.id,
         optionIds: options,
         selectedIds: [],
+        ...(selectionLimit === undefined ? {} : { selectionLimit: Math.min(selectionLimit, options.length) }),
         sourceCard: object.card,
         search: multiSearch,
         returnSourceToGraveyard: !object.activated && !object.fromCopy,
@@ -8005,9 +8015,10 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
       return actions;
     }
     if (choice.type === "search-library-multi") {
+      const limit = choice.selectionLimit ?? choice.search.destinations.length;
       actions.push({
         action: { type: "choose-library-card", sourceId: choice.sourceId, query: "" },
-        label: `Elegir carta de la biblioteca (${choice.selectedIds.length}/${choice.search.destinations.length})`,
+        label: `Elegir carta de la biblioteca (${choice.selectedIds.length}/${limit})`,
         note: "Escribe el nombre de una carta legal de tu biblioteca; puedes terminar después de elegir una o más."
       });
       actions.push({
@@ -9624,6 +9635,13 @@ function applyActivate(state: GameState, seat: SeatId, action: Extract<GameActio
   if (ability.requiresTap) next = raiseTapEvents(next, state, [source.instance_id]);
   if (ability.lifeCost) next = logged(next, seat, `${player.name} paga ${ability.lifeCost} de vida por ${source.card.name}.`);
 
+  if (ability.exilesSelf) {
+    const paid = playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === source.instance_id);
+    if (!paid) throw new Error(`${source.card.name} ya no está en el campo para exiliarse.`);
+    next = movePermanentToZone(next, paid, "exile", true);
+    next = logged(next, seat, `${player.name} exilia ${source.card.name}.`);
+  }
+
   if (ability.manaCost && ability.manaCost.symbols.length) {
     const plan = action.manaAlreadyPaid ? null : planManaPayment(ability.manaCost, playerAt(next, seat), {
       state: next,
@@ -10574,7 +10592,7 @@ function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extrac
   // "Any number, total mana value" (Protean Hulk): every selected card goes
   // to the battlefield untapped, unlike the fixed per-slot destinations
   // array every other `search-library-multi` template uses.
-  const anyTotal = choice.search.maxTotalManaValue !== undefined;
+  const anyTotal = choice.search.maxTotalManaValue !== undefined || choice.selectionLimit !== undefined;
   const handCards = anyTotal ? [] : selected.filter((_, index) => choice.search.destinations[index] === "hand");
   next = withPlayer(next, seat, (current) => ({
     ...current,
@@ -10620,6 +10638,9 @@ function applyChooseMultiLibraryCard(
     return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${selected.name}.`);
   }
   const selectedIds = [...choice.selectedIds, selected.instance_id];
+  if (choice.selectionLimit !== undefined && selectedIds.length >= choice.selectionLimit) {
+    return finishMultiLibrarySearch(state, seat, choice, selectedIds);
+  }
   if (selectedIds.length >= choice.search.destinations.length) return finishMultiLibrarySearch(state, seat, choice, selectedIds);
   return logged({ ...state, pendingChoice: { ...choice, selectedIds } }, seat, `${playerAt(state, seat).name} selecciona ${selected.name}.`);
 }

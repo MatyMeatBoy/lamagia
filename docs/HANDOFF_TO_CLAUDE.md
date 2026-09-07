@@ -6696,3 +6696,9 @@ integrator review; do not count the old `11440733` as integrated.
 - Base: `3013f88f`.
 - `Sun Droplet | 1820af5c-9cc2-4b77-b4ca-86084442f087`: added generic player-damage event tracking and event-amount counter handling; the scenario validates damage to charge counters and the optional upkeep counter-to-life conversion.
 - Main should cherry-pick or fast-forward the focused commit after review.
+
+## C13 pending-cluster rescue — Surveyor's Scope (2026-09-07)
+
+- Base: `052b7d19`.
+- `Surveyor's Scope | 9633730d-c41f-4597-b806-55ce2dd848e9`: added the dynamic multiplayer land-lead count, reusable up-to-X basic-land search, and exile-as-activation-cost handling. The scenario verifies a player two lands behind can fetch one basic land and the Scope is exiled.
+- Main should cherry-pick or fast-forward the focused commit after review.

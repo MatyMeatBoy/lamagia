@@ -120,6 +120,8 @@ export interface ActivatedAbility {
   readonly index: number;
   readonly requiresTap: boolean;
   readonly sacrificesSelf: boolean;
+  /** Exile the source permanent as an activation cost (e.g. Surveyor's Scope). */
+  readonly exilesSelf?: boolean;
   /** Untapped creature chosen as an activation cost, optionally by subtype. */
   readonly tapsCreature?: { readonly subtype?: string; readonly mode: "any" | "another" };
   readonly tapCost?: { readonly amount: number; readonly mode: "any" };
@@ -885,6 +887,8 @@ export type SpellEffect =
       readonly reveal: boolean;
       /** "any number of ... cards with total mana value N or less" (Protean Hulk): the pick count is open-ended, capped by the running total instead of `destinations.length`. */
       readonly maxTotalManaValue?: number;
+      /** Dynamic "up to X" count based on the current multiplayer board. */
+      readonly maxCount?: "players-with-two-more-lands";
     }
   /** Partner with <name> (CR 702.124f): a deterministic, name-exact search — no candidate choice, unlike `search-library`. */
   | { readonly kind: "partner-with-search"; readonly cardName: string }
@@ -2475,6 +2479,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
 
   const namedSelfSacrifice = /\bsacrifice\s+(?!a\b|an\b|another\b|~\b|this\b)([A-Z][^,:]*?)(?=,|$)/.test(costText);
   const sacrificesSelf = /sacrifice\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/i.test(costText) || namedSelfSacrifice;
+  const exilesSelf = /\bexile\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))(?:\b|$)/i.test(costText);
   const tapCreatureMatch = /tap\s+(an|another)\s+untapped\s+([A-Za-z][A-Za-z'’/-]*)\s+you\s+control/i.exec(costText);
   const tapsCreature = tapCreatureMatch ? {
     mode: tapCreatureMatch[1]!.toLowerCase() === "another" ? "another" as const : "any" as const,
@@ -2513,6 +2518,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
+    .replace(/exile\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
     .replace(/discard\s+(?:a|one)\s+card\b/gi, "")
     .replace(/discard\s+a\s+creature\s+card\b/gi, "")
@@ -2526,6 +2532,7 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     index,
     requiresTap,
     sacrificesSelf,
+    ...(exilesSelf ? { exilesSelf: true } : {}),
     ...(tapsCreature ? { tapsCreature } : {}),
     ...(sacrificeCreatures ? { sacrificesCreatures: { amount: toNumber(sacrificeCreatures[1])!, ...(sacrificeCreatures[2] ? { subtype: sacrificeCreatures[2].trim() } : {}) } } : {}),
     ...(sacrificeCreature ? { sacrificesCreature: sacrificeCreature[1] ? "another" as const : "any" as const } : {}),
@@ -2780,6 +2787,14 @@ function parseLibrarySearch(text: string): SpellEffect | null {
       destinations: ["battlefield"],
       reveal: false,
       maxTotalManaValue: Number(anyNumberTotalMv[2])
+    };
+  }
+  const playersWithLandLead = /^Search your library for up to X basic land cards, where X is the number of players who control at least two more lands than you\. Put those cards onto the battlefield, then shuffle\.?$/i.exec(text);
+  if (playersWithLandLead) {
+    return {
+      kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"],
+      destinations: ["battlefield"], reveal: false,
+      maxCount: "players-with-two-more-lands"
     };
   }
   // "...card with mana value X or less, put it onto the battlefield, then

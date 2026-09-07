@@ -335,6 +335,7 @@ const TEMPT_WITH_IMMORTALITY = () => make({ name: "Tempt with Immortality", type
 const TEMPT_WITH_REFLECTIONS = () => make({ name: "Tempt with Reflections", type_line: "Sorcery", mana_cost: "{3}{U}", cmc: 4, oracle_text: "Tempting offer — Choose target creature you control. Create a token that's a copy of that creature. Each opponent may create a token that's a copy of that creature. For each opponent who does, create a token that's a copy of that creature.", oracle_id: "76c142ef-0f07-4215-8d11-d25f7114c70d", scryfall_id: "76c142ef-0f07-4215-8d11-d25f7114c70d" });
 const PLAGUE_BOILER = () => make({ name: "Plague Boiler", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "Plague Boiler enters the battlefield with a plague counter on it.\nAt the beginning of your upkeep, put a plague counter on Plague Boiler.\n{1}{B}{G}, {T}: Remove a plague counter from Plague Boiler. If you do, destroy all nonland permanents.", oracle_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a", scryfall_id: "fef502af-6e79-4c55-a86a-b45adb3fc64a" });
 const SUN_DROPLET = () => make({ name: "Sun Droplet", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "Whenever you're dealt damage, put that many charge counters on this artifact. At the beginning of each upkeep, you may remove a charge counter from this artifact. If you do, you gain 1 life.", oracle_id: "1820af5c-9cc2-4b77-b4ca-86084442f087", scryfall_id: "1820af5c-9cc2-4b77-b4ca-86084442f087" });
+const SURVEYORS_SCOPE = () => make({ name: "Surveyor's Scope", type_line: "Artifact", mana_cost: "{2}", cmc: 2, oracle_text: "{T}, Exile this artifact: Search your library for up to X basic land cards, where X is the number of players who control at least two more lands than you. Put those cards onto the battlefield, then shuffle.", oracle_id: "9633730d-c41f-4597-b806-55ce2dd848e9", scryfall_id: "9633730d-c41f-4597-b806-55ce2dd848e9" });
 const EYE_OF_DOOM = () => make({ name: "Eye of Doom", type_line: "Artifact", mana_cost: "{4}", cmc: 4, oracle_text: "When this artifact enters, each player chooses a nonland permanent and puts a doom counter on it. {2}, {T}, Sacrifice this artifact: Destroy each permanent with a doom counter on it." });
 const MYSTIC_BARRIER = () => make({ name: "Mystic Barrier", type_line: "Enchantment", mana_cost: "{3}{W}{U}", cmc: 5, oracle_text: "When this enchantment enters and at the beginning of your upkeep, choose left or right. Each player may attack only the nearest opponent in the last chosen direction and planeswalkers controlled by that opponent.", oracle_id: "0caf42f5-abff-48aa-9bbf-df6cba169ef3" });
 const CRUEL_ULTIMATUM = () => make({ name: "Cruel Ultimatum", type_line: "Sorcery", mana_cost: "{U}{U}{B}{B}{B}{R}{R}", cmc: 7, oracle_text: "Target opponent sacrifices a creature of their choice, discards three cards, then loses 5 life. You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life." });
@@ -1994,6 +1995,29 @@ describe("casting", () => {
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[0]!.life).toBe(41);
     expect(game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Sun Droplet")!.counters.charge).toBe(0);
+  });
+
+  it("uses the multiplayer land-lead count for Surveyor's Scope", () => {
+    const profile = cardProfile(SURVEYORS_SCOPE());
+    expect(profile.activatedAbilities).toMatchObject([{
+      requiresTap: true, exilesSelf: true,
+      effect: { kind: "search-library-multi", types: ["Land"], subtypes: ["Basic"], maxCount: "players-with-two-more-lands" }
+    }]);
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [FOREST(), ISLAND(), PLAINS()], "scope-library"), autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [SURVEYORS_SCOPE()]);
+    game = putOnBattlefield(game, 1, [MOUNTAIN(), MOUNTAIN()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const source = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library-multi");
+    const search = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "search-library-multi" }>;
+    expect(search.selectionLimit).toBe(1);
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId: search.sourceId, query: "Forest" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Forest")).toBe(true);
+    expect(game.players[0]!.exile.some((card) => card.name === "Surveyor's Scope")).toBe(true);
   });
 
   it("recognizes Eye of Doom's ETB marker and activated wipe", () => {
