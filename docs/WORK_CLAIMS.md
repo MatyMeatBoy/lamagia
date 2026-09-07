@@ -412,6 +412,12 @@ rules citations and the integrator review remain mandatory.
   the linked exile choice. Adapt it to the current APIs before claiming the
   card; do not cherry-pick the historical branch wholesale.
 
+Historical C13 commits that are already represented in the current base
+(`Tempting Offer`, `Flickerform`, `From the Ashes`, `Mystic Barrier`, and
+related rescues) must be treated as references only. Forks should claim a
+different unclaimed cluster before editing; do not reimplement an example just
+because its old branch still appears ahead of the current base.
+
 Integration note (2026-09-06): worker-05 currently contains useful rules
 commits based on an incompatible rewritten tree. Do not merge that branch as a
 whole. Resubmit from the published integration SHA with a focused diff; the
