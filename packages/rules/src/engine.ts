@@ -3889,6 +3889,23 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return next;
     }
+    case "each-opponent-sacrifice": {
+      let next = state;
+      for (const player of state.players) {
+        if (player.seat === controller || player.lost) continue;
+        const permanents = playerAt(next, player.seat).battlefield.filter((permanent) => {
+          const profile = cardProfile(permanent.card);
+          const type = effect.type === "artifact" ? "Artifact" : "Enchantment";
+          return effect.type === "creature" ? isCreature(profile) : profile.types.includes(type);
+        });
+        if (!permanents.length) continue;
+        const victim = [...permanents].sort((left, right) =>
+          (powerOf(left, next) + toughnessOf(left, next)) - (powerOf(right, next) + toughnessOf(right, next)))[0]!;
+        next = movePermanentToZone(next, victim, "graveyard", true);
+        next = logged(next, player.seat, `${player.name} sacrifica ${victim.card.name}.`);
+      }
+      return next;
+    }
     case "event-player-sacrifice-creature": {
       const victimSeat = object.trigger?.eventPlayer;
       if (victimSeat === undefined || playerAt(state, victimSeat).lost) return state;

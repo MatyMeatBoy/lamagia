@@ -573,6 +573,8 @@ export type SpellEffect =
   | { readonly kind: "oblation"; readonly draw: number }
   | { readonly kind: "devotion-drain"; readonly color: string }
   | { readonly kind: "each-opponent-sacrifice-creature" }
+  /** Each opponent sacrifices a permanent of the stated type (CR 701.17). */
+  | { readonly kind: "each-opponent-sacrifice"; readonly type: "creature" | "artifact" | "enchantment" }
   /** Thraximundar: the defending player sacrifices a creature when the source attacks. */
   | { readonly kind: "event-player-sacrifice-creature" }
   | { readonly kind: "syphon-mind" }
@@ -2594,7 +2596,9 @@ function parseActivatedAbility(line: string, index: number): ActivatedAbility | 
     .replace(/\bsacrifice\s+(?!a\b|an\b|another\b|~\b)([A-Z][^,:]*?)(?=,|$)/g, "")
     .replace(/sacrifice\s+(?:two|three|four|five|\d+)\s+(?:(?:a|an)\s+)?(?:[A-Za-z][A-Za-z'’-]*\s+)?creatures\b/gi, "")
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?creature/gi, "")
-    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature ? "" : match)
+    // The broad subtype fallback runs before the typed-permanent cleanup;
+    // artifact/enchantment costs must therefore be consumed here too.
+    .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?[A-Za-z][A-Za-z'’-]*\b/gi, (match) => typedCreature || (sacrificePermanent && !/\s/.test(sacrificePermanent[2]!)) ? "" : match)
     .replace(/sacrifice\s+(?:another\s+|a\s+|an\s+)?(?:nontoken\s+artifact|artifact|enchantment|land|noncreature\s+permanent|token|permanent)\b/gi, "")
     .replace(/exile\s+(?:~|this\s+(?:artifact|permanent|creature|enchantment|land))/gi, "")
     .replace(/tap\s+(?:an|another)\s+untapped\s+[A-Za-z][A-Za-z'’/-]*\s+you\s+control/gi, "")
@@ -4136,6 +4140,10 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^each opponent sacrifices a creature of their choice$/i.test(text)) {
     return { effect: { kind: "each-opponent-sacrifice-creature" }, target: "none" };
+  }
+  const eachOtherPlayerSacrifice = /^Each other player sacrifices an? (creature|artifact|enchantment)\.?$/i.exec(text);
+  if (eachOtherPlayerSacrifice) {
+    return { effect: { kind: "each-opponent-sacrifice", type: eachOtherPlayerSacrifice[1]!.toLowerCase() as "creature" | "artifact" | "enchantment" }, target: "none" };
   }
   if (/^that attacking player may tap or untap target permanent of their choice$/i.test(text)) {
     return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };

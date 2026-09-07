@@ -433,6 +433,7 @@ const C13_FIERY_JUSTICE = () => make({ name: "Fiery Justice", type_line: "Sorcer
 const C13_INCENDIARY_COMMAND = () => make({ name: "Incendiary Command", type_line: "Sorcery", mana_cost: "{3}{R}{R}", cmc: 5, oracle_text: "Choose two —\n• Incendiary Command deals 4 damage to target player or planeswalker.\n• Incendiary Command deals 2 damage to each creature.\n• Destroy target nonbasic land.\n• Each player discards all the cards in their hand, then draws that many cards.", oracle_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870", scryfall_id: "d45a4924-daa0-4ac3-afd7-b66f636ce870" });
 const C13_MAGUS_OF_THE_ARENA = () => make({ name: "Magus of the Arena", type_line: "Creature — Human Wizard", mana_cost: "{3}{R}{R}", cmc: 5, power: "5", toughness: "5", oracle_text: "{3}, {T}: Tap target creature you control and target creature of an opponent's choice they control. Those creatures fight each other. (Each deals damage equal to its power to the other.)", oracle_id: "44865261-16f8-42d2-a388-a57173142eb0", scryfall_id: "44865261-16f8-42d2-a388-a57173142eb0" });
 const C13_DJINN_OF_INFINITE_DECEITS = () => make({ name: "Djinn of Infinite Deceits", type_line: "Creature — Djinn", mana_cost: "{4}{U}{U}", cmc: 6, power: "2", toughness: "7", oracle_text: "Flying\n{T}: Exchange control of two target nonlegendary creatures. You can't activate this ability during combat.", oracle_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5", scryfall_id: "f9de4cea-27c4-4343-8a7a-09b8f346c3b5" });
+const C13_SHATTERGANG_BROTHERS = () => make({ name: "Shattergang Brothers", type_line: "Legendary Creature — Goblin Shaman", mana_cost: "{1}{B}{R}{G}", cmc: 4, power: "3", toughness: "3", oracle_text: "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.", oracle_id: "7fb63d9a-8d90-4b43-8390-924de2d7e32c", scryfall_id: "7fb63d9a-8d90-4b43-8390-924de2d7e32c" });
 const C13_REINCARNATION = () => make({ name: "Reincarnation", type_line: "Instant", mana_cost: "{1}{G}{G}", cmc: 3, oracle_text: "Choose target creature. When that creature dies this turn, return a creature card from its owner's graveyard to the battlefield under the control of that creature's owner.", oracle_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a", scryfall_id: "d6bf5e22-8d33-43a9-8824-435068e0a87a" });
 const C13_ENDREK = () => make({ name: "Endrek Sahr, Master Breeder", type_line: "Legendary Creature — Human Wizard", mana_cost: "{4}{B}", cmc: 5, power: "2", toughness: "2", oracle_text: "Whenever you cast a creature spell, create X 1/1 black Thrull creature tokens, where X is that spell's mana value.\nWhen you control seven or more Thrulls, sacrifice ~.", oracle_id: "47a0079f-3544-45bc-a32a-bd93844c8c43", scryfall_id: "47a0079f-3544-45bc-a32a-bd93844c8c43" });
 const THRULL = () => make({ name: "Thrull", type_line: "Creature — Thrull", power: "1", toughness: "1" });
@@ -3568,6 +3569,42 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === own.instance_id)).toBe(true);
     const combatState = { ...game, step: "declare-attackers" as const, activeSeat: 0 as SeatId, prioritySeat: 0 as SeatId, priorityOpen: true, passedSeats: [] };
     expect(legalActions(combatState, 0).some((entry) => entry.action.type === "activate" && entry.action.sourceId === source.instance_id)).toBe(false);
+  });
+
+  it("reuses the opponent-sacrifice primitive for all Shattergang Brothers modes", () => {
+    const shattergang = C13_SHATTERGANG_BROTHERS();
+    expect(profileOf(shattergang)).toMatchObject({
+      fullyImplemented: true,
+      activatedAbilities: [
+        { sacrificesCreature: "any", effect: { kind: "each-opponent-sacrifice", type: "creature" } },
+        { sacrificesPermanent: { type: "Artifact" }, effect: { kind: "each-opponent-sacrifice", type: "artifact" } },
+        { sacrificesPermanent: { type: "Enchantment" }, effect: { kind: "each-opponent-sacrifice", type: "enchantment" } }
+      ]
+    });
+    const enchantment = () => make({ name: "Test Enchantment", type_line: "Enchantment", mana_cost: "{2}", cmc: 2 });
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ autoPass: false, manaPool: { W: 0, U: 0, B: 1, R: 1, G: 1, C: 6 } }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 0, [shattergang, BEAR(), RAKDOS_SIGNET(), enchantment()]);
+    game = putOnBattlefield(game, 1, [BEAR(), RAKDOS_SIGNET(), enchantment()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const source = game.players[0]!.battlefield.find((permanent) => permanent.card.name === shattergang.name)!;
+    const activateAndResolve = (effectKind: string, sacrificeName: string) => {
+      const action = legalActions(game, 0).find((entry) => entry.action.type === "activate"
+        && entry.action.sourceId === source.instance_id
+        && profileOf(shattergang).activatedAbilities[entry.action.abilityIndex]?.effect.kind === effectKind);
+      expect(action).toBeDefined();
+      const sacrifice = game.players[0]!.battlefield.find((permanent) => permanent.card.name === sacrificeName)!;
+      game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: action!.action.type === "activate" ? action!.action.abilityIndex : 0, sacrificeId: sacrifice.instance_id });
+      game = applyAction(game, 0, { type: "pass" });
+      game = applyAction(game, 1, { type: "pass" });
+    };
+    activateAndResolve("each-opponent-sacrifice", "Grizzly Bears");
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Grizzly Bears")).toBe(false);
+    activateAndResolve("each-opponent-sacrifice", "Rakdos Signet");
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Rakdos Signet")).toBe(false);
+    activateAndResolve("each-opponent-sacrifice", "Test Enchantment");
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Test Enchantment")).toBe(false);
   });
 
   it("filters Harald, King of Skemfar's top-five review by creature subtype, not card type", () => {
