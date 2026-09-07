@@ -60,6 +60,10 @@ one random **unclaimed C13** cluster from the latest
 base SHA before editing. If it is already listed, choose again. Do not work
 from a stale card list. Push one focused commit and report `CLAIM`, `BASE`,
 `COMMIT`, changed files, Oracle IDs, tests, and limits for overlap auditing.
+The current integration base is the published tip of
+`origin/feat/activated-abilities-and-triggers`; refresh it immediately before
+claiming. Rows marked `merged` or `Ready for integrator review` are occupied,
+not available work. Only rows absent from the claims table may be claimed.
 
 ## Generate the next task
 
