@@ -4,7 +4,7 @@
 
 Repository: <https://github.com/MatyMeatBoy/lamagia>.
 
-## Current published checkpoint — 2026-09-05
+## Current published checkpoint — 2026-09-06
 
 The latest source checkpoint includes the verified C13 Prossh cast-trigger,
 Hooded Horror combat evasion, Dungeon Geists untap lock, Standstill event-player
@@ -32,7 +32,9 @@ Coverage numbers have two deliberate units:
   editions. This is what the public implementation-by-edition view displays,
   so it is expected to be lower than the total catalog size and to count a
   shared card once per edition.
-- **Commander 2013:** 292 / 341 unique cards (85.6%), 49 pending.
+- **Commander 2013:** 334 / 341 unique cards (97.9%) in the source profile rescan; the
+  checked-in derived cache still shows the prior generated count until the catalog
+  database is restored and `npm run rules:oracle:c13` can run.
 - **Commander 2014:** 203 / 322 unique cards (63.0%), 119 pending.
 
 ### Derived-index refresh — 2026-09-05
@@ -55,6 +57,14 @@ primitives
 were added;
 the C13
 dictionary remains 341 profiles with 292 complete.
+
+The latest C13 commits include `3eba7bd6` (Order of Succession), `5ea35912`
+(From the Ashes), `7d78bb5c` (Flickerform), and `b483c101` (Suspend, starting
+with Phthisis). Suspend now exiles a card with time counters, decrements them at
+its owner's upkeep, and exposes the mandatory free-cast decision with legal
+target filtering (CR 702.62). The remaining source-rescan queue is seven cards:
+Illusionist's Gambit, Stormscape Battlemage, Lim-Dûl's Vault, Mosswort Bridge,
+Jeleva, Nephalia's Scourge, Derevi, Empyrial Tactician, and Rubinia Soulsinger.
 
 Commit `2d45d2ad` adds the `global-multi-card-discard-cost` primitive and a
 Fae of Wishes scenario (`c0abbed2-d213-47ef-8d6c-4a21efb9a55f`). The source
