@@ -121,6 +121,8 @@ export interface Permanent {
   readonly combatPowerModifier?: number;
   /** Keyword effects from spells/abilities that expire during cleanup. */
   readonly temporaryKeywords?: readonly EnforcedKeyword[];
+  /** Previous controller for temporary control effects that expire during cleanup. */
+  readonly temporaryControllerFrom?: SeatId;
   /** Trigger definitions granted by a resolving ability until cleanup. */
   readonly temporaryTriggers?: readonly TriggerDefinition[];
   /** Temporary characteristic-setting animation, cleared during cleanup (CR 613.6). */
@@ -4922,6 +4924,28 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const delayed: DelayedSacrifice = { id: `${object.id}:sacrifice`, triggerAtTurn: next.step === "end" ? next.turn + 1 : next.turn, targetPermanentId: moved.instance_id, sourceCard: object.card, controller, sourceText: `${object.card.name}: sacrifice the creature at the beginning of the next end step` };
       return logged({ ...next, delayedSacrifices: [...next.delayedSacrifices, delayed] }, controller, `${object.card.name}: ${moved.card.name} queda bajo tu control hasta el próximo paso final.`);
     }
+    case "gain-control-target-until-end-of-turn": {
+      const target = object.targets[targetIndex];
+      if (target?.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent || permanent.controller === controller || !isCreature(cardProfile(permanent.card))) return state;
+      const previousController = permanent.temporaryControllerFrom ?? permanent.controller;
+      let next = changePermanentController(state, permanent, controller);
+      const moved = findPermanent(next, permanent.instance_id);
+      if (!moved) return next;
+      next = withPlayer(next, controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === moved.instance_id
+          ? {
+              ...candidate,
+              tapped: false,
+              temporaryControllerFrom: previousController,
+              temporaryKeywords: [...new Set([...(candidate.temporaryKeywords ?? []), "haste" as EnforcedKeyword])]
+            }
+          : candidate)
+      }));
+      return logged(next, controller, `${object.card.name}: ${moved.card.name} is under your control until end of turn.`);
+    }
     case "tempting-offer": {
       let next = applyEffect(state, object, effect.base);
       const opponents = opponentsOf(next, controller);
@@ -7808,13 +7832,18 @@ function beginStep(state: GameState, step: TurnStep): GameState {
         next = discardCards(next, next.activeSeat, discarded);
         next = logged(next, next.activeSeat, `${player.name} descarta ${excess} carta(s) al límite de mano.`);
       }
+      for (const permanent of allPermanents(next)) {
+        if (permanent.temporaryControllerFrom !== undefined && permanent.controller !== permanent.temporaryControllerFrom) {
+          next = changePermanentController(next, permanent, permanent.temporaryControllerFrom);
+        }
+      }
       next = {
         ...next,
         blockingTaxPerCreature: undefined,
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryControllerFrom: undefined, temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false }))
         }))
       };
       break;
