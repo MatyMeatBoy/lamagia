@@ -171,6 +171,13 @@ function toggleStop(scope: StopScope, step: TurnStep, seat?: number): void {
   render();
 }
 
+/** Actions that do not justify holding priority by themselves. This mirrors
+ * the rules engine: mana production and yield toggles are conveniences, but a
+ * castable spell, land, equip or non-mana activation is a real decision. */
+function hasClientDecision(actions: readonly LegalAction[]): boolean {
+  return actions.some(({ action }) => !["pass", "concede", "activate-mana", "toggle-trigger-yield"].includes(action.type));
+}
+
 function autoPassForPhase(): boolean {
   if (!ui.autoPass || !view) return false;
   const scope: StopScope = view.activeSeat === view.viewerSeat ? "mine" : "opponents";
@@ -181,11 +188,7 @@ function autoPassForPhase(): boolean {
   const playerDecision = Boolean(
     view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand
       || view.combat.awaitingAttackers || view.combat.awaitingBlockersFrom.includes(view.viewerSeat)
-      || view.legalActions.some((entry) => entry.requiresTarget || entry.requiresTargets?.length
-        || entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger-target"
-        || (entry.action.type !== "pass" && entry.action.type !== "concede"
-          && entry.action.type !== "activate-mana" && entry.action.type !== "toggle-trigger-yield"
-          && entry.action.type !== "cast" && entry.action.type !== "activate"))
+      || hasClientDecision(view.legalActions)
   );
   return !playerDecision;
 }
@@ -197,11 +200,7 @@ function shouldAutoPassServer(next: GameView): boolean {
   const playerDecision = Boolean(
     next.librarySearch || next.scry || next.topSelection || next.reorderTop || next.viewedHand
       || next.combat.awaitingAttackers || next.combat.awaitingBlockersFrom.includes(next.viewerSeat)
-      || next.legalActions.some((entry) => entry.requiresTarget || entry.requiresTargets?.length
-        || entry.action.type === "choose-reveal" || entry.action.type === "choose-trigger-target"
-        || (entry.action.type !== "pass" && entry.action.type !== "concede"
-          && entry.action.type !== "activate-mana" && entry.action.type !== "toggle-trigger-yield"
-          && entry.action.type !== "cast" && entry.action.type !== "activate"))
+      || hasClientDecision(next.legalActions)
   );
   return !playerDecision;
 }
