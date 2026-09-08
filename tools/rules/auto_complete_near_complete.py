@@ -41,6 +41,9 @@ SAFE_FAMILIES: dict[str, dict[str, str]] = {
     "~ can't attack unless defending player controls an Island.": {
         "primitive": "cannotAttackUnlessDefenderControlsLandSubtype", "rules": "CR 508.1d",
     },
+    "If a creature dealt damage this way would die this turn, exile it instead.": {
+        "primitive": "damage-all-creatures.exilesIfWouldDie", "rules": "CR 614.1, 700.4",
+    },
     "Gain control of target creature until end of turn.": {
         "primitive": "gain-control-target-until-end-of-turn",
         "rules": "CR 611.2, 701.7",

@@ -721,7 +721,7 @@ export type SpellEffect =
   | { readonly kind: "lose-life-each-player-equal-hand" }
   | { readonly kind: "damage-active-player-hand-minus"; readonly offset: number }
   | { readonly kind: "damage-each-opponent"; readonly amount: number | "X" }
-  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" | "with-flying"; readonly alsoPlaneswalkers?: boolean }
+  | { readonly kind: "damage-all-creatures"; readonly amount: number | "X"; readonly excludeSource: boolean; readonly filter?: "nonartifact" | "without-flying" | "with-flying"; readonly alsoPlaneswalkers?: boolean; readonly exilesIfWouldDie?: boolean }
   /** Sudden Demise: damage each creature of a chosen color (CR 105.2, 609.3). */
   | { readonly kind: "damage-all-creatures-of-color"; readonly amount: number | "X"; readonly color: MagicColor | "chosen" }
   | { readonly kind: "damage-attacking-creatures"; readonly amount: number | "X"; readonly filter?: "without-flying" | "with-flying" }
@@ -6515,8 +6515,14 @@ function recognizeText(text: string): RecognizedText {
         sentenceIndex += 1;
         continue;
       }
+      if (recognized.effect.kind === "damage-all-creatures"
+        && /^if a creature dealt damage this way would die this turn, exile it instead\.?$/i.test(noRegenerationRider ?? "")) {
+        effects.push({ ...recognized.effect, exilesIfWouldDie: true });
+        sentenceIndex += 1;
+        continue;
+      }
       if (recognized.effect.kind === "damage-any-target"
-        && /^if that creature would die this turn, exile it instead\.?$/i.test(noRegenerationRider ?? "")) {
+        && /^if (?:that creature(?: dealt damage this way)?|a creature dealt damage this way) would die this turn, exile it instead\.?$/i.test(noRegenerationRider ?? "")) {
         effects.push({ kind: "damage-any-target-exiles-if-dies", amount: recognized.effect.amount });
         if (recognized.target !== "none") targetKind = recognized.target;
         sentenceIndex += 1;

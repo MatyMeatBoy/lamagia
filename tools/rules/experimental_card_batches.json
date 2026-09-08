@@ -12,7 +12,8 @@
           "Attacking creatures you control get",
           "Target creature with power 2 or less can't be blocked this turn.",
           "Bushido 1",
-          "can't attack unless defending player controls an Island."
+          "can't attack unless defending player controls an Island.",
+          "If a creature dealt damage this way would die this turn, exile it instead."
         ],
         "effectKinds": [
           "fight",

@@ -4634,7 +4634,17 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
         if (!planeswalker && effect.filter === "nonartifact" && profile.types.includes("Artifact")) continue;
         if (!planeswalker && effect.filter === "without-flying" && keywordOf(next, permanent, "flying")) continue;
         if (effect.filter === "with-flying" && !keywordOf(next, permanent, "flying")) continue;
+        const before = findPermanent(next, permanent.instance_id);
         next = dealDamageToPermanent(next, permanent.instance_id, amount, false, sourceName, cardProfile(object.card), { controller, permanentId: object.sourcePermanentId });
+        const after = findPermanent(next, permanent.instance_id);
+        if (effect.exilesIfWouldDie && before && after && isCreature(profile) && after.damage > before.damage) {
+          next = withPlayer(next, after.controller, (player) => ({
+            ...player,
+            battlefield: player.battlefield.map((candidate) => candidate.instance_id === after.instance_id
+              ? { ...candidate, exileIfWouldDieUntilEndOfTurn: true }
+              : candidate)
+          }));
+        }
       }
       return next;
     }

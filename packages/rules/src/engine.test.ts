@@ -7324,6 +7324,22 @@ describe("casting", () => {
     expect(game.players[1]!.exile.some((card) => card.name === "Lava Coil Target")).toBe(true);
   });
 
+  it("applies the exile rider to every creature damaged by a mass spell", () => {
+    const anger = make({
+      name: "Anger of the Gods", type_line: "Sorcery", mana_cost: "{1}{R}{R}", cmc: 3,
+      oracle_text: "Anger of the Gods deals 3 damage to each creature. If a creature dealt damage this way would die this turn, exile it instead."
+    });
+    expect(profileOf(anger)).toMatchObject({
+      effects: [{ kind: "damage-all-creatures", amount: 3, exilesIfWouldDie: true }],
+      fullyImplemented: true
+    });
+    const targetCard = make({ name: "Mass Damage Target", type_line: "Creature — Beast", mana_cost: "{4}{G}", cmc: 5, power: "2", toughness: "2" });
+    let game = readyToCast([anger], [MOUNTAIN(), MOUNTAIN(), MOUNTAIN()], [], [targetCard]);
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.players[1]!.exile.some((card) => card.name === "Mass Damage Target")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Mass Damage Target")).toBe(false);
+  });
+
   it("uses the kicked damage amount for Burst Lightning without changing its target restriction", () => {
     // CR 702.33e, 614.1: the kicked clause replaces the base damage amount;
     // it does not create a second damage event or widen the target set.
