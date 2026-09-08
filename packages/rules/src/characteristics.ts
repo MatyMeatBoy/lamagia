@@ -1257,6 +1257,8 @@ export interface CardProfile {
   readonly wardCost: ManaCost | null;
   /** Ward's non-mana payment, when the printed cost is a life payment. */
   readonly wardLifeCost: number | null;
+  /** Ward's life payment is the source creature's current power. */
+  readonly wardLifeCostPower: boolean;
   /** Ward's non-mana payment, when the printed cost is discarding a card. */
   readonly wardDiscard: boolean;
   /** Card types accepted by a restricted Ward discard cost. Empty means any card. */
@@ -6500,6 +6502,7 @@ export function cardProfile(card: CardData): CardProfile {
   const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
   const wardLifeMatch = /^Ward\s*(?:[—–-]|:)\s*(?:(?:\{[^}]+\})+\s*,\s*)?Pay\s+(\d+)\s+life\.?(?:\s*\([^)]*\))?\s*$/im.exec(text);
   const wardLifeCost = wardMatch?.[2] ? Number(wardMatch[2]) : wardLifeMatch ? Number(wardLifeMatch[1]) : null;
+  const wardLifeCostPower = /^Ward\s*(?:[—–-]|:)\s*Pay\s+life\s+equal\s+to\s+(?:this\s+creature|~|[^.]+)'s\s+power\.?/im.test(text);
   const wardDiscard = /^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\.?\s*$/im.test(text);
   const wardDiscardTypesMatch = /^Ward\s*(?:[—–-]|:)\s*Discard\s+an?\s+((?:enchantment|instant|sorcery)(?:(?:,\s*or\s+|,\s*|\s+or\s+)(?:enchantment|instant|sorcery))*)\s+card\.?\s*$/im.exec(text);
   const wardDiscardTypes = wardDiscardTypesMatch
@@ -6792,6 +6795,7 @@ export function cardProfile(card: CardData): CardProfile {
     vanishingAmount,
     wardCost,
     wardLifeCost,
+    wardLifeCostPower,
     wardDiscard,
     wardDiscardTypes,
     wardSacrifice: wardSacrifice ?? null,

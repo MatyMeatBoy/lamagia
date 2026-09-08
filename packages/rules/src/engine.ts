@@ -615,6 +615,7 @@ export type PendingChoice =
       readonly remainingWardTargets?: readonly string[];
       /** Ward payment that is not mana (CR 702.21). */
       readonly wardLifeCost?: number;
+      readonly wardLifeCostPower?: boolean;
       readonly wardDiscard?: boolean;
       readonly wardDiscardTypes?: readonly CardType[];
       readonly wardSacrifice?: "creature" | "permanent" | "legendary-artifact-or-creature";
@@ -8772,12 +8773,15 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         });
         return actions;
       }
-      if (choice.paymentBy === "opponent" && choice.wardLifeCost !== undefined) {
+      if (choice.paymentBy === "opponent" && (choice.wardLifeCost !== undefined || choice.wardLifeCostPower)) {
+        const wardPermanent = choice.sourcePermanentId ? findPermanent(state, choice.sourcePermanentId) : undefined;
+        const wardLifeCost = choice.wardLifeCost ?? (wardPermanent ? powerOf(wardPermanent, state) : null);
+        if (wardLifeCost === null) return actions;
         const manaCanPay = !choice.manaCost || Boolean(planManaPayment(choice.manaCost, player, { state }));
-        if (player.life >= choice.wardLifeCost && manaCanPay) {
+        if (player.life >= wardLifeCost && manaCanPay) {
           actions.push({
             action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true },
-            label: choice.manaCost ? `Pay ${choice.manaCost.raw} and ${choice.wardLifeCost} life to pay Ward` : `Pay ${choice.wardLifeCost} life to pay Ward`,
+            label: choice.manaCost ? `Pay ${choice.manaCost.raw} and ${wardLifeCost} life to pay Ward` : `Pay ${wardLifeCost} life to pay Ward`,
             note: `${choice.sourceCard.name}: pay the Ward life tax to keep the spell on the stack.`
           });
         }
@@ -11038,7 +11042,7 @@ function queueWardPayment(state: GameState, object: StackObject, remainingWardTa
     const permanent = findPermanent(state, instanceId);
     const profile = permanent ? cardProfile(permanent.card) : null;
     return Boolean(permanent && permanent.controller !== object.controller
-      && (profile?.wardCost || profile?.wardLifeCost !== null && profile?.wardLifeCost !== undefined || profile?.wardDiscard || profile?.wardDiscardTypes.length || profile?.wardSacrifice));
+      && (profile?.wardCost || profile?.wardLifeCost !== null && profile?.wardLifeCost !== undefined || profile?.wardLifeCostPower || profile?.wardDiscard || profile?.wardDiscardTypes.length || profile?.wardSacrifice));
   });
   if (!wardId) return state;
   const permanent = findPermanent(state, wardId)!;
@@ -11059,6 +11063,7 @@ function queueWardPayment(state: GameState, object: StackObject, remainingWardTa
       paymentBy: "opponent",
       ...(cost ? { payCost: cost, manaCost: cost } : {}),
       ...(profile.wardLifeCost !== null ? { wardLifeCost: profile.wardLifeCost } : {}),
+      ...(profile.wardLifeCostPower ? { wardLifeCostPower: true } : {}),
       ...(profile.wardDiscard || profile.wardDiscardTypes.length ? { wardDiscard: true } : {}),
       ...(profile.wardDiscardTypes.length ? { wardDiscardTypes: profile.wardDiscardTypes } : {}),
       ...(profile.wardSacrifice ? { wardSacrifice: profile.wardSacrifice } : {}),
@@ -11495,23 +11500,26 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
       return logged(next, seat, `${playerAt(next, seat).name} descarta ${discarded.name} para pagar Ward.`);
     }
-    if (choice.wardLifeCost !== undefined) {
-      if (playerAt(next, seat).life < choice.wardLifeCost) throw new Error(`No puedes pagar ${choice.wardLifeCost} vidas por ${choice.sourceCard.name}.`);
+    if (choice.wardLifeCost !== undefined || choice.wardLifeCostPower) {
+      const wardPermanent = choice.sourcePermanentId ? findPermanent(next, choice.sourcePermanentId) : undefined;
+      const wardLifeCost = choice.wardLifeCost ?? (wardPermanent ? powerOf(wardPermanent, next) : null);
+      if (wardLifeCost === null) throw new Error(`No se pudo determinar el coste de Ward de ${choice.sourceCard.name}.`);
+      if (playerAt(next, seat).life < wardLifeCost) throw new Error(`No puedes pagar ${wardLifeCost} vidas por ${choice.sourceCard.name}.`);
       if (choice.manaCost) {
         const plan = planManaPayment(choice.manaCost, playerAt(next, seat), { state: next });
         if (!plan) throw new Error(`No tienes maná suficiente para pagar ${choice.manaCost.raw} por ${choice.sourceCard.name}.`);
         next = applyManaPlan(next, seat, plan);
         const paid = payCost(choice.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
         if (!paid) throw new Error(`No se pudo pagar ${choice.manaCost.raw} por ${choice.sourceCard.name}.`);
-        next = withPlayer(next, seat, (current) => ({ ...consumeManaPayment(current, paid), life: current.life - choice.wardLifeCost! - paid.lifePaid }));
+        next = withPlayer(next, seat, (current) => ({ ...consumeManaPayment(current, paid), life: current.life - wardLifeCost - paid.lifePaid }));
       } else {
-        next = withPlayer(next, seat, (current) => ({ ...current, life: current.life - choice.wardLifeCost! }));
+        next = withPlayer(next, seat, (current) => ({ ...current, life: current.life - wardLifeCost }));
       }
       const wardTarget = choice.targets?.[0];
       const wardStackId = wardTarget?.kind === "spell" ? wardTarget.stackId : undefined;
       const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;
       if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
-      return logged(next, seat, `${playerAt(next, seat).name} paga ${choice.wardLifeCost} vidas para evitar Ward.`);
+      return logged(next, seat, `${playerAt(next, seat).name} paga ${wardLifeCost} vidas para evitar Ward.`);
     }
     if (choice.wardSacrifice) {
       const sacrificed = action.sacrificeId ? playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === action.sacrificeId) : undefined;
