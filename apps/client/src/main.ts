@@ -193,14 +193,26 @@ function autoPassForPhase(): boolean {
   return !playerDecision;
 }
 
+function serverAutoPassForView(next: GameView): boolean {
+  if (!ui.autoPass) return false;
+  const scope: StopScope = next.activeSeat === next.viewerSeat ? "mine" : "opponents";
+  if (stopSet(scope, next.activeSeat).has(next.step)) return false;
+  return !Boolean(
+    next.librarySearch || next.scry || next.topSelection || next.reorderTop || next.viewedHand
+      || next.combat.awaitingAttackers || next.combat.awaitingBlockersFrom.includes(next.viewerSeat)
+      || hasClientDecision(next.legalActions)
+  );
+}
+
 /** Keep the server preference aligned after opening-hand decisions and normal
  * actions. The checkbox is local UI state, but the authoritative engine must
  * receive it even while another seat currently has priority. */
 async function syncServerAutoPass(next: GameView): Promise<GameView> {
-  if (next.finished || next.viewerAutoPass === ui.autoPass) return next;
+  const desired = !next.finished && serverAutoPassForView(next);
+  if (next.viewerAutoPass === desired) return next;
   return api<GameView>(`/api/matches/${session!.matchId}/settings`, {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token: session!.token, autoPass: ui.autoPass })
+    body: JSON.stringify({ token: session!.token, autoPass: desired })
   });
 }
 
