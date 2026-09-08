@@ -152,7 +152,10 @@ function driveBots(match: MatchRecord): void {
 export function createMatch(decks: readonly ImportedDeck[], options: { seed?: number; source: string; humanSeats?: readonly SeatId[] }): CreatedMatch {
   evictStaleMatches();
   const humanSeats = new Set<SeatId>(options.humanSeats ?? [0]);
-  const state = createGame(toDeckInputs(decks, humanSeats), { seed: options.seed ?? Date.now() & 0x7fffffff });
+  const state = createGame(toDeckInputs(decks, humanSeats), {
+    seed: options.seed ?? Date.now() & 0x7fffffff,
+    enableMulligan: true
+  });
   const id = randomUUID();
   const token = randomUUID();
   const record: MatchRecord = {

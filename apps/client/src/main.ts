@@ -89,7 +89,9 @@ interface UiState {
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
   /** MTGO-style phase stops, kept separately for the local seat's turns and for opponents' turns. */
-  stops: { mine: Set<TurnStep>; opponents: Set<TurnStep> };
+  stops: { mine: Set<TurnStep>; opponents: Map<number, Set<TurnStep>> };
+  /** Opponent whose upper-row stop buttons are currently being edited. */
+  stopPlayer: number | null;
   /** Version at which the player dismissed the non-mandatory decision overlay. */
   dismissedDecisionVersion: number | null;
 }
@@ -98,22 +100,32 @@ type StopScope = "mine" | "opponents";
 
 /** MTGO factory-default stops. */
 const DEFAULT_STOPS: Record<StopScope, TurnStep[]> = {
-  mine: ["precombat-main", "begin-combat", "declare-attackers", "declare-blockers", "postcombat-main", "end"],
-  opponents: ["upkeep", "declare-attackers", "declare-blockers", "end"]
+  mine: ["precombat-main", "declare-attackers", "declare-blockers", "postcombat-main"],
+  opponents: ["declare-attackers", "declare-blockers"]
 };
 
-function loadStops(): { mine: Set<TurnStep>; opponents: Set<TurnStep> } {
+function loadStops(): { mine: Set<TurnStep>; opponents: Map<number, Set<TurnStep>> } {
   try {
     const v2 = window.localStorage.getItem("prossh.stops.v2");
     if (v2) {
-      const parsed = JSON.parse(v2) as { mine: TurnStep[]; opponents: TurnStep[] };
-      return { mine: new Set(parsed.mine ?? DEFAULT_STOPS.mine), opponents: new Set(parsed.opponents ?? DEFAULT_STOPS.opponents) };
+      const parsed = JSON.parse(v2) as { mine: TurnStep[]; opponents: TurnStep[] | Record<string, TurnStep[]> };
+      const raw = parsed.opponents;
+      // v2 stored one shared opponent row. Do not carry that broad setting
+      // into the per-player model; new opponent seats receive the MTGO
+      // defaults independently.
+      const opponentEntries = Array.isArray(raw)
+        ? []
+        : Object.entries(raw ?? {}).map(([seat, steps]) => [Number(seat), steps] as const);
+      return {
+        mine: new Set(parsed.mine ?? DEFAULT_STOPS.mine),
+        opponents: new Map(opponentEntries.map(([seat, steps]) => [seat, new Set(steps)]))
+      };
     }
     // Migrate the single legacy list into both scopes.
     const legacy = JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") as TurnStep[] | null;
-    if (legacy) return { mine: new Set(legacy), opponents: new Set(legacy) };
+    if (legacy) return { mine: new Set(legacy), opponents: new Map() };
   } catch { /* fall through to defaults */ }
-  return { mine: new Set(DEFAULT_STOPS.mine), opponents: new Set(DEFAULT_STOPS.opponents) };
+  return { mine: new Set(DEFAULT_STOPS.mine), opponents: new Map() };
 }
 
 let session: MatchSession | null = null;
@@ -132,15 +144,30 @@ const ui: UiState = {
   actionsOpen: false,
   layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
   ,stops: loadStops(),
+  stopPlayer: null,
   dismissedDecisionVersion: null
 };
 
 function persistStops(): void {
-  window.localStorage.setItem("prossh.stops.v2", JSON.stringify({ mine: [...ui.stops.mine], opponents: [...ui.stops.opponents] }));
+  window.localStorage.setItem("prossh.stops.v2", JSON.stringify({
+    mine: [...ui.stops.mine],
+    opponents: Object.fromEntries([...ui.stops.opponents].map(([seat, steps]) => [String(seat), [...steps]]))
+  }));
 }
 
-function toggleStop(scope: StopScope, step: TurnStep): void {
-  const set = ui.stops[scope];
+function stopSet(scope: StopScope, seat?: number): Set<TurnStep> {
+  if (scope === "mine") return ui.stops.mine;
+  const key = seat ?? ui.stopPlayer ?? view?.activeSeat ?? -1;
+  const legacy = ui.stops.opponents.get(-1);
+  const existing = ui.stops.opponents.get(key);
+  if (existing) return existing;
+  const created = new Set(legacy ?? DEFAULT_STOPS.opponents);
+  ui.stops.opponents.set(key, created);
+  return created;
+}
+
+function toggleStop(scope: StopScope, step: TurnStep, seat?: number): void {
+  const set = stopSet(scope, seat);
   if (set.has(step)) set.delete(step); else set.add(step);
   persistStops();
   render();
@@ -149,7 +176,7 @@ function toggleStop(scope: StopScope, step: TurnStep): void {
 function autoPassForPhase(): boolean {
   if (!ui.autoPass || !view) return false;
   const scope: StopScope = view.activeSeat === view.viewerSeat ? "mine" : "opponents";
-  if (ui.stops[scope].has(view.step)) return false;
+  if (stopSet(scope, view.activeSeat).has(view.step)) return false;
   // Smart pass is only a priority convenience. Any player-owned decision,
   // target selection, combat declaration, or legal response must keep the
   // decision surface under human control (MTGO-style yield semantics).
@@ -168,7 +195,7 @@ function autoPassForPhase(): boolean {
 function shouldAutoPassServer(next: GameView): boolean {
   if (!ui.autoPass) return false;
   const scope: StopScope = next.activeSeat === next.viewerSeat ? "mine" : "opponents";
-  if (ui.stops[scope].has(next.step)) return false;
+  if (stopSet(scope, next.activeSeat).has(next.step)) return false;
   const playerDecision = Boolean(
     next.librarySearch || next.scry || next.topSelection || next.reorderTop || next.viewedHand
       || next.combat.awaitingAttackers || next.combat.awaitingBlockersFrom.includes(next.viewerSeat)
@@ -207,21 +234,29 @@ function phaseRailHtml(): string {
  */
 function priorityBarHtml(): string {
   if (!view || view.finished) return "";
-  const activeScope: StopScope = view.activeSeat === view.viewerSeat ? "mine" : "opponents";
+  const currentView = view;
+  const activeScope: StopScope = currentView.activeSeat === currentView.viewerSeat ? "mine" : "opponents";
+  const selectedOpponent = ui.stopPlayer ?? (activeScope === "opponents" ? currentView.activeSeat : currentView.players.find((player) => player.seat !== currentView.viewerSeat)?.seat ?? -1);
+  const selectedStops = stopSet(activeScope, selectedOpponent);
   const cell = (step: TurnStep, scope: StopScope): string => {
-    const on = ui.stops[scope].has(step);
+    const on = (scope === "mine" ? ui.stops.mine : selectedStops).has(step);
     const dirLabel = scope === "opponents" ? "turnos rivales" : "tu turno";
     return `<button class="stop-tri stop-${scope}${on ? " on" : ""}${scope === activeScope ? " live" : ""}" type="button"
-      data-stop-scope="${scope}" data-stop-step="${step}"
+      data-stop-scope="${scope}" data-stop-step="${step}"${scope === "opponents" ? ` data-stop-player="${selectedOpponent}"` : ""}
       aria-pressed="${on}" title="${on ? "Quitar parada" : "Parar"} en ${STEP_LABELS[step]} · ${dirLabel}"></button>`;
   };
+  const opponentButtons = currentView.players.filter((player) => player.seat !== currentView.viewerSeat).map((player) =>
+    `<button class="stop-player${selectedOpponent === player.seat ? " selected" : ""}" type="button" data-stop-player-select="${player.seat}" title="Editar paradas de ${escapeHtml(player.name)}">${escapeHtml(player.name)}</button>`).join("");
+  const activeStopped = stopSet(activeScope, currentView.activeSeat).has(currentView.step);
   return `<div class="priority-bar" role="group" aria-label="Paradas de fase">
     <label class="priority-autopass"><input id="auto-pass-bar" type="checkbox" ${ui.autoPass ? "checked" : ""}/><span>Auto-pasar</span></label>
     <div class="priority-phases">
+      <div class="stop-players" aria-label="Jugador rival para configurar paradas">${opponentButtons}</div>
       <div class="stop-row stop-row-opponents${activeScope === "opponents" ? " live" : ""}" aria-label="Paradas en turnos rivales">${STEP_ORDER.map((step) => cell(step, "opponents")).join("")}</div>
-      <div class="phase-track">${STEP_ORDER.map((step) => `<span class="phase-cell${step === view!.step ? " current" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}</div>
+      <div class="phase-track">${STEP_ORDER.map((step) => `<span class="phase-cell${step === currentView.step ? " current" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}</div>
       <div class="stop-row stop-row-mine${activeScope === "mine" ? " live" : ""}" aria-label="Paradas en tu turno">${STEP_ORDER.map((step) => cell(step, "mine")).join("")}</div>
     </div>
+    <span class="stop-status${activeStopped ? " active" : ""}">${activeStopped ? `Parada activa · ${escapeHtml(STEP_LABELS[currentView.step])}` : "Sin parada en esta fase"}</span>
   </div>`;
 }
 
@@ -546,7 +581,7 @@ function applyView(next: GameView): void {
 
 function seatOf(seat: number): PlayerView | undefined { return view?.players.find((player) => player.seat === seat); }
 const CARD_ACTION_TYPES = new Set<LegalAction["action"]["type"]>([
-  "cast", "cycle", "play-land", "activate", "activate-mana", "equip", "choose-reveal", "toggle-trigger-yield"
+  "cast", "cycle", "play-land", "activate", "activate-mana", "equip", "choose-reveal", "toggle-trigger-yield", "choose-mulligan-card"
 ]);
 
 /**
@@ -1025,10 +1060,16 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
     permanent.producesMana && !permanent.tapped ? `<i class="tile-badge mana" title="Puede producir maná">◇</i>` : ""
   ].join("");
   const icons = abilityIconsHtml(permanent);
+  const summoningSickness = permanent.summoningSick ? `<svg class="summoning-sickness" viewBox="0 0 100 100" aria-label="Mareo de invocación" role="img" focusable="false">
+    <defs><linearGradient id="sickness-vortex" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9e7d5" stop-opacity=".15"/><stop offset=".52" stop-color="#f4e8bb" stop-opacity=".78"/><stop offset="1" stop-color="#a9d0c4" stop-opacity=".12"/></linearGradient></defs>
+    <path d="M79 26C61 11 30 19 25 43c-5 23 19 40 42 31 18-7 20-30 5-41-13-10-34-5-37 10-3 14 13 24 26 18 10-5 11-18 3-24-8-6-19-2-20 7-1 7 7 12 14 9"/>
+    <path d="M62 12c18 15 26 33 15 54-8 16-27 25-45 22"/>
+    <path d="M39 14c-14 12-21 29-15 47 5 15 20 27 37 28"/>
+  </svg>` : "";
 
   return `<button class="${classes.join(" ")}" type="button" data-permanent="${escapeHtml(permanent.instance_id)}"
     data-preview="${escapeHtml(permanent.instance_id)}" title="${escapeHtml(permanent.name)}">
-    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" data-card-name="${escapeHtml(permanent.name)}" alt="${escapeHtml(permanent.name)}" loading="lazy" decoding="async"/>` : permanent.isToken ? `<span class="card-image-fallback token-image-fallback" role="img" aria-label="Ficha: ${escapeHtml(permanent.name)}">${escapeHtml(permanent.name)}</span>` : ""}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
+    ${permanent.image_art_crop || permanent.image_normal ? `<img src="${escapeHtml(permanent.image_art_crop ?? permanent.image_normal ?? "")}" data-card-name="${escapeHtml(permanent.name)}" alt="${escapeHtml(permanent.name)}" loading="lazy" decoding="async"/>` : permanent.isToken ? `<span class="card-image-fallback token-image-fallback" role="img" aria-label="Ficha: ${escapeHtml(permanent.name)}">${escapeHtml(permanent.name)}</span>` : ""}${summoningSickness}<span class="token-placeholder" aria-hidden="true">${permanent.isToken ? "✦" : ""}</span>
     <span class="tile-name">${escapeHtml(permanent.name)}</span>${stats}<span class="tile-badges">${badges}</span>${icons}
   </button>`;
 }
@@ -1071,6 +1112,7 @@ function seatPanelHtml(player: PlayerView): string {
   if (player.lost) classes.push("eliminated");
   if (isPlayerTargetable(player.seat)) classes.push("targetable-player");
   const commander = player.commandZone[0];
+  const commanderCasts = commander ? (player.commanderCasts[commander.instance_id] ?? 0) : 0;
   const cmdDamage = Object.values(player.commanderDamage).filter((amount) => amount > 0);
   const counters = Object.entries(player.counters).filter(([, amount]) => amount > 0);
   return `<article class="${classes.join(" ")}" style="--accent: var(--seat-${player.seat})" aria-label="Campo de ${escapeHtml(player.name)}">
@@ -1083,8 +1125,8 @@ function seatPanelHtml(player: PlayerView): string {
     </header>
     <section class="seat-board${isPlayerTargetable(player.seat) ? " targetable-player" : ""}" data-target-player="${player.seat}" aria-label="Objetivo jugador ${escapeHtml(player.name)}">${boardHtml(player, false)}</section>
     <footer class="commander-strip">
-      ${commander ? `<span class="thumb"${commander.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}></span>
-        <span class="meta"><b>${escapeHtml(commander.name)}</b><span>Zona de mando</span></span>` : `<span class="meta"><b>—</b><span>Comandante en juego</span></span>`}
+      ${commander ? `<button class="thumb commander-toggle" type="button" data-zone="command" data-seat="${player.seat}" title="Abrir zona de mando: lanzar ${escapeHtml(commander.name)}" aria-label="Abrir zona de mando"><span${commander.image_art_crop ? ` style="background-image:url('${escapeHtml(commander.image_art_crop)}')"` : ""}></span></button>
+        <span class="meta"><b>${escapeHtml(commander.name)}</b><span>Zona de mando · ${commanderCasts ? `+${commanderCasts * 2} coste` : "sin impuesto"}</span></span>` : `<span class="meta"><b>—</b><span>Comandante en juego</span></span>`}
       <span class="zone-chips">
         ${zoneChipHtml("library", player.seat, player.libraryCount)}
         ${zoneChipHtml("hand", player.seat, player.handCount)}
@@ -1583,7 +1625,10 @@ function wireBoard(): void {
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
   document.querySelectorAll<HTMLButtonElement>("[data-stop-scope]").forEach((button) =>
-    button.addEventListener("click", () => toggleStop(button.dataset.stopScope as StopScope, button.dataset.stopStep as TurnStep)));
+    button.addEventListener("click", () => toggleStop(button.dataset.stopScope as StopScope, button.dataset.stopStep as TurnStep,
+      button.dataset.stopPlayer ? Number(button.dataset.stopPlayer) : undefined)));
+  document.querySelectorAll<HTMLButtonElement>("[data-stop-player-select]").forEach((button) =>
+    button.addEventListener("click", () => { ui.stopPlayer = Number(button.dataset.stopPlayerSelect); render(); }));
   document.querySelector<HTMLInputElement>("#auto-pass-bar")?.addEventListener("change", (event) =>
     void setAutoPass((event.target as HTMLInputElement).checked));
   document.querySelector<HTMLElement>(".table")?.addEventListener("contextmenu", (event) => {

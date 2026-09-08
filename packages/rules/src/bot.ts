@@ -121,6 +121,17 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
   const available = legalActions(state, seat);
   if (!available.length) return null;
 
+  if (state.opening && state.opening.decisionOrder[state.opening.decisionIndex] === seat) {
+    // Keep bot games deterministic and quick. Human seats still receive the
+    // complete London-mulligan/opening-action menu from legalActions.
+    const chosen = state.opening.phase === "mulligan"
+      ? available.find((entry) => entry.action.type === "keep-hand")
+      : state.opening.phase === "bottom"
+      ? available.find((entry) => entry.action.type === "choose-mulligan-card") ?? available.find((entry) => entry.action.type === "finish-mulligan")
+      : available.find((entry) => entry.action.type === "skip-opening-actions");
+    if (chosen) return { action: chosen.action, label: chosen.label };
+  }
+
   if (state.pendingChoice?.type === "reveal-card" && state.pendingChoice.seat === seat) {
     // The deterministic policy reveals the first valid card when possible;
     // otherwise it accepts the tapped default.
@@ -451,6 +462,7 @@ export function runBots(state: GameState, isBot: (seat: SeatId) => boolean, budg
 /** The single seat that owes the next decision, or null when nobody does. */
 export function pendingSeat(state: GameState): SeatId | null {
   if (state.finished) return null;
+  if (state.opening) return state.opening.decisionOrder[state.opening.decisionIndex] ?? null;
   if (state.pendingChoice) return state.pendingChoice.seat;
   if (state.step === "declare-attackers" && !state.combat.attackersDeclared) return state.activeSeat;
   if (state.step === "declare-blockers" && !state.combat.blockersDeclared) return defendersAwaitingBlocks(state)[0] ?? null;

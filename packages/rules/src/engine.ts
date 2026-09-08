@@ -24,6 +24,17 @@ const EXTORT_COST: ManaCost = parseManaCost("{W/B}")!;
 
 export type SeatId = number;
 
+/** Opening procedure state (CR 103.5, 103.6). Kept private in the engine and
+ * projected only as the current viewer's legal actions. */
+export interface OpeningState {
+  readonly phase: "mulligan" | "bottom" | "opening-actions";
+  readonly decisionOrder: readonly SeatId[];
+  readonly decisionIndex: number;
+  readonly mulligans: Readonly<Record<string, number>>;
+  readonly roundMulliganed: readonly SeatId[];
+  readonly bottomSelectedIds: readonly string[];
+}
+
 export type TurnStep =
   | "untap" | "upkeep" | "draw" | "precombat-main" | "begin-combat"
   | "declare-attackers" | "declare-blockers" | "combat-damage" | "end-combat"
@@ -479,6 +490,10 @@ export interface GameState {
   readonly startingSeat: SeatId;
   /** A replacement-effect choice that must be completed before priority resumes. */
   readonly pendingChoice: PendingChoice | null;
+  /** Non-null while the London mulligan and opening-hand actions are pending. */
+  readonly opening?: OpeningState | null;
+  /** Size used by the opening-hand procedure; normally seven. */
+  readonly openingHand?: number;
   /** Creatures that died (battlefield → graveyard) this turn — powers Morbid (CR 702.66). */
   readonly creaturesDiedThisTurn: number;
   /** Keys (`${sourceInstanceId}:${triggerIndex}`) of "once each turn" triggers (CR 603.3) that have already fired this turn. */
@@ -900,6 +915,12 @@ export type PendingChoice =
 
 export type GameAction =
   | { readonly type: "pass" }
+  | { readonly type: "keep-hand" }
+  | { readonly type: "mulligan" }
+  | { readonly type: "choose-mulligan-card"; readonly cardId: string }
+  | { readonly type: "finish-mulligan" }
+  | { readonly type: "activate-opening-card"; readonly cardId: string; readonly exileCardId: string }
+  | { readonly type: "skip-opening-actions" }
   | { readonly type: "play-land"; readonly cardId: string }
   | { readonly type: "cast"; readonly cardId: string; readonly targets?: readonly Target[]; readonly variableValue?: number; readonly mode?: number; readonly kicked?: boolean; readonly kickerIndices?: readonly number[]; readonly overloaded?: boolean; readonly evoked?: boolean; readonly entwined?: boolean; readonly fromGraveyard?: boolean; readonly flashback?: boolean; readonly freeCast?: boolean; readonly payLifeCost?: boolean; readonly returnPermanentId?: string; readonly payReducedCost?: boolean; readonly giftPromised?: boolean; readonly sacrificeId?: string; readonly discardCardId?: string }
   | { readonly type: "cycle"; readonly cardId: string; readonly cyclingIndex?: number }
@@ -1005,6 +1026,170 @@ function playerAt(state: GameState, seat: SeatId): PlayerState {
 
 function withPlayer(state: GameState, seat: SeatId, update: (player: PlayerState) => PlayerState): GameState {
   return { ...state, players: state.players.map((player, index) => (index === seat ? update(player) : player)) };
+}
+
+function openingDecisionSeat(state: GameState): SeatId | null {
+  const opening = state.opening;
+  if (!opening) return null;
+  return opening.decisionOrder[opening.decisionIndex] ?? null;
+}
+
+function openingHandActions(player: PlayerState): readonly GameCard[] {
+  // Gemstone Caverns is the first opening-hand action supported by the typed
+  // procedure. The wording check deliberately avoids name-only matching so a
+  // future reprint/translation cannot silently gain a rules action.
+  return player.hand.filter((card) => /if\s+gemstone\s+caverns\s+is\s+in\s+your\s+opening\s+hand/i.test(card.oracle_text ?? ""));
+}
+
+function redrawMulliganHands(state: GameState, seats: readonly SeatId[]): GameState {
+  let next = state;
+  const handSize = next.openingHand ?? 7;
+  for (const seat of seats) {
+    const player = playerAt(next, seat);
+    const shuffled = shuffle([...player.library, ...player.hand], next.rngState);
+    next = { ...next, rngState: shuffled.state };
+    const hand = shuffled.items.slice(0, Math.min(handSize, shuffled.items.length));
+    next = withPlayer(next, seat, (current) => ({
+      ...current,
+      hand,
+      library: shuffled.items.slice(hand.length)
+    }));
+  }
+  return next;
+}
+
+function beginOpeningActions(state: GameState): GameState {
+  const order = state.players
+    .filter((player) => player.seat !== state.startingSeat && openingHandActions(player).length > 0)
+    .sort((left, right) => ((left.seat - state.startingSeat + state.players.length) % state.players.length)
+      - ((right.seat - state.startingSeat + state.players.length) % state.players.length))
+    .map((player) => player.seat);
+  if (!order.length) return { ...state, opening: null };
+  return {
+    ...state,
+    opening: {
+      phase: "opening-actions",
+      decisionOrder: order,
+      decisionIndex: 0,
+      mulligans: state.opening?.mulligans ?? {},
+      roundMulliganed: [],
+      bottomSelectedIds: []
+    }
+  };
+}
+
+function finishMulliganRound(state: GameState, opening: OpeningState): GameState {
+  const remaining = [...opening.roundMulliganed];
+  if (remaining.length) {
+    const redrawn = redrawMulliganHands(state, remaining);
+    return {
+      ...redrawn,
+      opening: {
+        ...opening,
+        phase: "mulligan",
+        decisionOrder: remaining,
+        decisionIndex: 0,
+        roundMulliganed: [],
+        bottomSelectedIds: []
+      }
+    };
+  }
+
+  const bottomOrder = state.players
+    .filter((player) => (opening.mulligans[String(player.seat)] ?? 0) > 0)
+    .sort((left, right) => ((left.seat - state.startingSeat + state.players.length) % state.players.length)
+      - ((right.seat - state.startingSeat + state.players.length) % state.players.length))
+    .map((player) => player.seat);
+  if (!bottomOrder.length) return beginOpeningActions({ ...state, opening });
+  return {
+    ...state,
+    opening: {
+      ...opening,
+      phase: "bottom",
+      decisionOrder: bottomOrder,
+      decisionIndex: 0,
+      roundMulliganed: [],
+      bottomSelectedIds: []
+    }
+  };
+}
+
+function applyOpeningAction(state: GameState, seat: SeatId, action: Extract<GameAction,
+  { type: "keep-hand" | "mulligan" | "choose-mulligan-card" | "finish-mulligan" | "activate-opening-card" | "skip-opening-actions" }>): GameState {
+  const opening = state.opening;
+  if (!opening || openingDecisionSeat(state) !== seat) throw new Error("No tienes una decisión de apertura pendiente.");
+  const player = playerAt(state, seat);
+
+  if (opening.phase === "mulligan") {
+    if (action.type !== "keep-hand" && action.type !== "mulligan") throw new Error("Primero debes decidir si conservas la mano.");
+    const mulligans = { ...opening.mulligans };
+    const roundMulliganed = [...opening.roundMulliganed];
+    if (action.type === "mulligan") {
+      const count = (mulligans[String(seat)] ?? 0) + 1;
+      if (count > (state.openingHand ?? 7)) throw new Error("No puedes hacer más mulligans que cartas de la mano inicial.");
+      mulligans[String(seat)] = count;
+      roundMulliganed.push(seat);
+    }
+    const next = { ...state, opening: { ...opening, decisionIndex: opening.decisionIndex + 1, mulligans, roundMulliganed } };
+    return opening.decisionIndex + 1 >= opening.decisionOrder.length
+      ? finishMulliganRound(next, next.opening!)
+      : next;
+  }
+
+  if (opening.phase === "bottom") {
+    const required = opening.mulligans[String(seat)] ?? 0;
+    if (action.type === "choose-mulligan-card") {
+      if (opening.bottomSelectedIds.length >= required) throw new Error("Ya elegiste todas las cartas que debes poner debajo.");
+      if (!player.hand.some((card) => card.instance_id === action.cardId)) throw new Error("Esa carta no está en tu mano.");
+      if (opening.bottomSelectedIds.includes(action.cardId)) throw new Error("Esa carta ya fue elegida.");
+      return { ...state, opening: { ...opening, bottomSelectedIds: [...opening.bottomSelectedIds, action.cardId] } };
+    }
+    if (action.type !== "finish-mulligan") throw new Error("Elige las cartas que pondrás debajo de tu biblioteca.");
+    if (opening.bottomSelectedIds.length !== required) throw new Error(`Debes poner ${required} carta(s) debajo de tu biblioteca.`);
+    const selected = new Set(opening.bottomSelectedIds);
+    const bottom = player.hand.filter((card) => selected.has(card.instance_id));
+    let next = withPlayer(state, seat, (current) => ({
+      ...current,
+      hand: current.hand.filter((card) => !selected.has(card.instance_id)),
+      library: [...current.library, ...bottom]
+    }));
+    const nextIndex = opening.decisionIndex + 1;
+    if (nextIndex < opening.decisionOrder.length) {
+      return { ...next, opening: { ...opening, decisionIndex: nextIndex, bottomSelectedIds: [] } };
+    }
+    return beginOpeningActions({ ...next, opening: { ...opening, bottomSelectedIds: [] } });
+  }
+
+  if (seat === state.startingSeat) throw new Error("El jugador inicial no puede usar esta acción de Gemstone Caverns.");
+  if (action.type === "skip-opening-actions") {
+    const nextIndex = opening.decisionIndex + 1;
+    return nextIndex < opening.decisionOrder.length
+      ? { ...state, opening: { ...opening, decisionIndex: nextIndex } }
+      : { ...state, opening: null };
+  }
+  if (action.type !== "activate-opening-card") throw new Error("Elige una acción de apertura válida.");
+  const gemstone = openingHandActions(player).find((card) => card.instance_id === action.cardId);
+  const exiled = player.hand.find((card) => card.instance_id === action.exileCardId);
+  if (!gemstone || !exiled || gemstone.instance_id === exiled.instance_id) throw new Error("Gemstone Caverns necesita exiliar otra carta de tu mano.");
+  let next = withPlayer(state, seat, (current) => ({
+    ...current,
+    hand: current.hand.filter((card) => card.instance_id !== gemstone.instance_id && card.instance_id !== exiled.instance_id),
+    exile: [...current.exile, exiled]
+  }));
+  next = putOntoBattlefield(next, seat, gemstone, false);
+  next = withPlayer(next, seat, (current) => ({
+    ...current,
+    battlefield: current.battlefield.map((permanent) => permanent.instance_id === gemstone.instance_id
+      ? { ...permanent, counters: { ...permanent.counters, luck: 1 } }
+      : permanent)
+  }));
+  next = logged(next, seat, `${player.name} comienza con Gemstone Caverns y exilia ${exiled.name}.`);
+  const remaining = openingHandActions(playerAt(next, seat));
+  if (remaining.length) return next;
+  const nextIndex = opening.decisionIndex + 1;
+  return nextIndex < opening.decisionOrder.length
+    ? { ...next, opening: { ...opening, decisionIndex: nextIndex } }
+    : { ...next, opening: null };
 }
 
 function logged(state: GameState, seat: SeatId | null, text: string): GameState {
@@ -1791,6 +1976,22 @@ function shouldPromptManaPayment(
   });
   if (!plan?.taps.length) return false;
   const sources = manaSources(payer, state, { allowedRestrictions: options.allowedRestrictions });
+  const restrictedCapacity = (payer.restrictedMana ?? [])
+    .filter((mana) => !options.allowedRestrictions?.length || options.allowedRestrictions.includes(mana.restriction.kind)).length;
+  const required = cost.manaValue
+    + (options.variableValue ?? 0) * (cost.symbols.filter((symbol) => symbol.kind === "variable").length)
+    + (options.additionalGeneric ?? 0);
+  // Professional-client fast path: when paying this cost necessarily spends
+  // every mana currently available, there is no strategic tap decision to ask
+  // about. Keep the explicit selector whenever one or more mana remains, so a
+  // player can preserve a source for a later response.
+  const totalCapacity = poolTotal(payer.manaPool) + restrictedCapacity + manaSourceCapacity(sources);
+  const allSourcesInterchangeable = new Set(sources.map(sourceSignature)).size <= 1;
+  if (totalCapacity === required && allSourcesInterchangeable) return false;
+  // A surplus is a strategic decision even when every source makes the same
+  // colour: the player may deliberately preserve one untapped land for a
+  // response later in the turn.
+  if (totalCapacity > required) return true;
   // Preserve the fast path when every available source is interchangeable:
   // two Mountains paying generic one do not need a dialog.
   const usable = sources.filter((source) => !options.excludePermanentId || source.permanentId !== options.excludePermanentId);
@@ -1969,6 +2170,8 @@ export interface GameOptions {
   readonly seed?: number;
   readonly startingLife?: number;
   readonly openingHand?: number;
+  /** Runs the London mulligan and opening-hand procedure before turn one. */
+  readonly enableMulligan?: boolean;
   /** Relaxes the exact-100 deck check for focused tests. */
   readonly allowPartialDecks?: boolean;
 }
@@ -2058,6 +2261,17 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     version: 0,
     startingSeat: 0,
     pendingChoice: null,
+    ...(options.enableMulligan ? {
+      opening: {
+        phase: "mulligan" as const,
+        decisionOrder: players.map((player) => player.seat),
+        decisionIndex: 0,
+        mulligans: Object.fromEntries(players.map((player) => [String(player.seat), 0])),
+        roundMulliganed: [],
+        bottomSelectedIds: []
+      },
+      openingHand
+    } : {}),
     creaturesDiedThisTurn: 0,
     creatureCardsDiedThisTurn: [],
     triggeredOncePerTurnKeys: [],
@@ -8351,6 +8565,42 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
   if (player.lost) return [];
   const actions: LegalAction[] = [];
 
+  const opening = state.opening;
+  if (opening) {
+    if (openingDecisionSeat(state) !== seat) return actions;
+    if (opening.phase === "mulligan") {
+      actions.push({ action: { type: "keep-hand" }, label: "Keep hand", note: "Keep this opening hand." });
+      if ((opening.mulligans[String(seat)] ?? 0) < (state.openingHand ?? 7)) {
+        actions.push({ action: { type: "mulligan" }, label: "Mulligan", note: "Shuffle this hand into your library and draw a new hand of seven." });
+      }
+      return actions;
+    }
+    if (opening.phase === "bottom") {
+      const required = opening.mulligans[String(seat)] ?? 0;
+      const selected = new Set(opening.bottomSelectedIds);
+      if (opening.bottomSelectedIds.length < required) {
+        for (const card of player.hand) if (!selected.has(card.instance_id)) {
+          actions.push({ action: { type: "choose-mulligan-card", cardId: card.instance_id }, label: `Put ${card.name} on bottom`, cardId: card.instance_id });
+        }
+      }
+      if (opening.bottomSelectedIds.length === required) {
+        actions.push({ action: { type: "finish-mulligan" }, label: "Finish mulligan", note: `Put ${required} card(s) on the bottom of your library.` });
+      }
+      return actions;
+    }
+    for (const card of seat !== state.startingSeat ? openingHandActions(player) : []) for (const exile of player.hand) {
+      if (card.instance_id === exile.instance_id) continue;
+      actions.push({
+        action: { type: "activate-opening-card", cardId: card.instance_id, exileCardId: exile.instance_id },
+        label: `Start with ${card.name}, exile ${exile.name}`,
+        cardId: card.instance_id,
+        note: "Gemstone Caverns: exile a card from your hand to begin with it on the battlefield."
+      });
+    }
+    actions.push({ action: { type: "skip-opening-actions" }, label: "Skip opening-hand actions", note: "Take no opening-hand action." });
+    return actions;
+  }
+
   if (state.pendingChoice) {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
@@ -12390,6 +12640,12 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
 
   let next: GameState;
   switch (action.type) {
+    case "keep-hand": next = applyOpeningAction(state, seat, action); break;
+    case "mulligan": next = applyOpeningAction(state, seat, action); break;
+    case "choose-mulligan-card": next = applyOpeningAction(state, seat, action); break;
+    case "finish-mulligan": next = applyOpeningAction(state, seat, action); break;
+    case "activate-opening-card": next = applyOpeningAction(state, seat, action); break;
+    case "skip-opening-actions": next = applyOpeningAction(state, seat, action); break;
     case "pass": next = applyPass(state, seat); break;
     case "play-land": next = applyPlayLand(state, seat, action.cardId); break;
     case "cast": next = applyCast(state, seat, action); break;
@@ -12587,6 +12843,10 @@ export function stabilizationDiagnostic(state: GameState): string {
  * seat with no legal option other than passing passes automatically.
  */
 export function settle(state: GameState): GameState {
+  // The opening procedure is intentionally outside turn progression. No
+  // priority, triggers, or auto-pass may consume a player's mulligan or
+  // opening-hand action before the human has answered it.
+  if (state.opening) return state;
   let next = state;
   for (let guard = 0; guard < 4096; guard += 1) {
     next = applyStateBasedActions(next);

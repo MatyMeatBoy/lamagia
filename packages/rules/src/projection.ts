@@ -82,6 +82,8 @@ export interface PlayerView {
   readonly graveyard: readonly CardView[];
   readonly exile: readonly CardView[];
   readonly commandZone: readonly CardView[];
+  /** Number of previous casts from the command zone, used for the visible +2 tax. */
+  readonly commanderCasts: Readonly<Record<string, number>>;
   readonly commanderDamage: Readonly<Record<string, number>>;
   /** Player counters are public game information (poison, energy, experience, etc.). */
   readonly counters: Readonly<Record<string, number>>;
@@ -374,6 +376,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
     graveyard: player.graveyard.map(cardView),
     exile: player.exile.map((card) => card.faceDown && player.seat !== viewerSeat ? faceDownCardView(card) : cardView(card)),
     commandZone: player.commandZone.map(cardView),
+    commanderCasts: player.commanderCasts,
     commanderDamage: player.commanderDamage,
     counters: player.counters,
     landsPlayedThisTurn: player.landsPlayedThisTurn,

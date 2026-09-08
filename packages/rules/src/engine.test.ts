@@ -1161,6 +1161,7 @@ const GREEN_COMMANDER = () => make({ name: "Green Commander", type_line: "Legend
 const COMMAND_TOWER = () => make({ name: "Command Tower", type_line: "Land", oracle_text: "{T}: Add one mana of any color in your commander's color identity.", produced_mana: ["W", "U", "B", "R", "G"] });
 const OPAL_PALACE = () => make({ name: "Opal Palace", type_line: "Land", oracle_text: "{T}: Add {C}.\n{1}, {T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it equal to the number of times it's been cast from the command zone this game.", produced_mana: ["B", "C", "G", "R", "U", "W"], scryfall_id: "912553e7-1e67-4045-84fd-0a791754cf6c" });
 const RAKDOS_SIGNET = () => make({ name: "Rakdos Signet", type_line: "Artifact", mana_cost: "{2}", oracle_text: "{1}, {T}: Add {B}{R}." });
+const GEMSTONE_CAVERNS = () => make({ name: "Gemstone Caverns", type_line: "Legendary Land", oracle_text: "If Gemstone Caverns is in your opening hand and you're not the starting player, you may begin the game with Gemstone Caverns on the battlefield with a luck counter on it. If you do, exile a card from your hand." });
 
 function deck(id: string, commander: CardData, contents: CardData[], size = 40): DeckInput {
   const cards = [commander, ...contents];
@@ -1169,10 +1170,10 @@ function deck(id: string, commander: CardData, contents: CardData[], size = 40):
 }
 
 /** Builds a two-seat game with fully controlled libraries. */
-function twoSeatGame(left: CardData[], right: CardData[], options: { seed?: number } = {}): GameState {
+function twoSeatGame(left: CardData[], right: CardData[], options: { seed?: number; enableMulligan?: boolean } = {}): GameState {
   return createGame(
     [deck("A", COMMANDER("Alpha Captain"), left), deck("B", COMMANDER("Beta Captain"), right)],
-    { seed: options.seed ?? 7, allowPartialDecks: true }
+    { seed: options.seed ?? 7, allowPartialDecks: true, enableMulligan: options.enableMulligan }
   );
 }
 
@@ -1341,6 +1342,66 @@ describe("game creation", () => {
     expect(game.players[0]!.kind).toBe("human");
     expect(game.players[0]!.autoPass).toBe(false);
     expect(game.players[1]!.autoPass).toBe(true);
+  });
+
+  it("runs the London mulligan in turn order and bottoms exactly the mulligans taken", () => {
+    let game = twoSeatGame([], [], { enableMulligan: true });
+    expect(pendingSeat(game)).toBe(0);
+    expect(legalActions(game, 0).map((entry) => entry.action.type)).toEqual(["keep-hand", "mulligan"]);
+    game = applyAction(game, 0, { type: "mulligan" });
+    expect(pendingSeat(game)).toBe(1);
+    game = applyAction(game, 1, { type: "keep-hand" });
+    expect(game.opening?.phase).toBe("mulligan");
+    expect(pendingSeat(game)).toBe(0);
+    game = applyAction(game, 0, { type: "keep-hand" });
+    expect(game.opening?.phase).toBe("bottom");
+    expect(legalActions(game, 0).filter((entry) => entry.action.type === "choose-mulligan-card")).toHaveLength(7);
+    const bottom = legalActions(game, 0).find((entry) => entry.action.type === "choose-mulligan-card")!;
+    game = applyAction(game, 0, bottom.action);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "finish-mulligan")).toBe(true);
+    game = applyAction(game, 0, { type: "finish-mulligan" });
+    expect(game.opening).toBeNull();
+    expect(game.step).not.toBe("untap");
+  });
+
+  it("offers Gemstone Caverns only after mulligans and resolves its opening-hand exile atomically", () => {
+    let game = twoSeatGame([], [], { enableMulligan: true });
+    const gemstone = toHand(1, [GEMSTONE_CAVERNS()], "opening")[0]!;
+    const exileCard = toHand(1, [BEAR()], "opening-exile")[0]!;
+    game = stage(game, 1, (player) => ({ hand: [gemstone, exileCard] }));
+    game = { ...game, opening: { ...game.opening!, decisionOrder: [1], decisionIndex: 0 } };
+    game = applyAction(game, 1, { type: "keep-hand" });
+    const openingAction = legalActions(game, 1).find((entry) => entry.action.type === "activate-opening-card")!;
+    expect(openingAction).toBeDefined();
+    game = applyAction(game, 1, openingAction.action);
+    expect(game.players[1]!.exile.some((card) => card.name === "Grizzly Bears")).toBe(true);
+    expect(game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Gemstone Caverns")?.counters.luck).toBe(1);
+    expect(game.opening).toBeNull();
+  });
+});
+
+describe("professional mana autopay", () => {
+  it("autopays when identical sources exactly cover the cost", () => {
+    const spell = make({ name: "Exact Three", type_line: "Artifact", mana_cost: "{3}", cmc: 3 });
+    let game = twoSeatGame([], [], { seed: 21 });
+    game = stage(game, 0, () => ({ kind: "human", hand: toHand(0, [spell], "exact-three") }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, pendingChoice: null, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "exact-three-0" });
+    expect(game.pendingChoice).toBeNull();
+    expect(game.stack.at(-1)?.card.name).toBe("Exact Three");
+    expect(game.players[0]!.battlefield.filter((permanent) => permanent.tapped)).toHaveLength(3);
+  });
+
+  it("keeps manual payment when one mana remains available", () => {
+    const spell = make({ name: "Save One", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
+    let game = twoSeatGame([], [], { seed: 22 });
+    game = stage(game, 0, () => ({ kind: "human", hand: toHand(0, [spell], "save-one") }));
+    game = putOnBattlefield(game, 0, [FOREST(), FOREST(), FOREST()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, pendingChoice: null, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "cast", cardId: "save-one-0" });
+    expect(game.pendingChoice?.type).toBe("mana-payment");
+    expect(game.players[0]!.battlefield.every((permanent) => !permanent.tapped)).toBe(true);
   });
 });
 

@@ -112,6 +112,11 @@ h1, h2, h3 { margin: 0; }
   padding: 2px 12px 3px;
   background: #060f0ae8; border-block: 1px solid var(--line-soft);
 }
+.stop-players { display: flex; gap: 3px; justify-content: center; min-height: 18px; }
+.stop-player { padding: 1px 5px; border: 1px solid var(--line-soft); border-radius: 5px; background: transparent; color: var(--text-faint); font: inherit; font-size: .52rem; cursor: pointer; }
+.stop-player.selected, .stop-player:hover, .stop-player:focus-visible { border-color: var(--gold-dim); color: var(--gold); background: #1a2919; }
+.stop-status { align-self: center; color: var(--text-faint); font-size: .52rem; white-space: nowrap; }
+.stop-status.active { color: var(--gold); }
 .priority-autopass { display: flex; align-items: center; gap: 5px; color: var(--text-dim); font-size: .62rem; white-space: nowrap; }
 .priority-phases { display: grid; gap: 0; width: min(760px, 72vw); }
 .priority-phases .stop-row,
@@ -261,7 +266,9 @@ h1, h2, h3 { margin: 0; }
   border-top: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line-soft));
   background: #060e09cc;
 }
-.commander-strip .thumb { flex: 0 0 auto; width: 30px; height: 22px; border-radius: 3px; background-size: cover; background-position: center 22%; border: 1px solid var(--gold-dim); }
+.commander-strip .thumb { flex: 0 0 auto; width: 30px; height: 22px; padding: 0; border-radius: 3px; background: transparent; border: 1px solid var(--gold-dim); overflow: hidden; cursor: pointer; }
+.commander-strip .thumb > span { display: block; width: 100%; height: 100%; background-size: cover; background-position: center 22%; }
+.commander-strip .thumb:hover, .commander-strip .thumb:focus-visible { border-color: var(--gold); outline: 1px solid var(--gold-dim); }
 .commander-strip .meta { min-width: 0; display: grid; line-height: 1.2; }
 .commander-strip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); font-size: .64rem; }
 .commander-strip span { color: var(--text-faint); font-size: .55rem; }
@@ -283,6 +290,24 @@ h1, h2, h3 { margin: 0; }
   object-fit: cover; object-position: center;
   filter: contrast(1.09) saturate(1.06);
 }
+/* MTGO-like summoning-sickness marker: a translucent vortex over the card,
+   kept as a pointer-transparent vector so it never blocks targeting/clicks. */
+.summoning-sickness {
+  position: absolute; inset: 6% 9%; z-index: 2; width: 82%; height: 88%;
+  pointer-events: none; opacity: .72; transform-origin: 50% 50%;
+  filter: drop-shadow(0 0 2px #dcebd088);
+  animation: summoningVortex 4.6s linear infinite;
+}
+.summoning-sickness path {
+  fill: none; stroke: url(#sickness-vortex); stroke-width: 4.5;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+@keyframes summoningVortex {
+  from { transform: rotate(0deg) scale(.94); }
+  50% { transform: rotate(180deg) scale(1.02); opacity: .5; }
+  to { transform: rotate(360deg) scale(.94); }
+}
+.card-tile.tapped .summoning-sickness { animation-duration: 4.6s; }
 .card-image-fallback {
   display: grid; place-items: center; width: 100%; height: 100%; min-height: 2rem;
   padding: 7px; overflow: hidden; background: radial-gradient(circle at 50% 25%, #2b4632, #0b1710 72%);
@@ -844,7 +869,9 @@ dialog {
   border: 1px solid var(--line); border-radius: 14px;
   background: var(--bg-panel); color: var(--text);
 }
-dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
+/* Keep card/zone information crisp while a non-modal gameplay choice is open.
+   The table may dim, but the browser must not blur the information dialog. */
+dialog::backdrop { background: #000a; }
 .panel { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: 88vh; }
 .panel-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line-soft); }
 .panel-head h2 { color: var(--text); font-size: .95rem; }
