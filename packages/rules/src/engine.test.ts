@@ -77,6 +77,16 @@ describe("smart counter response and safe mana undo", () => {
     }]);
   });
 
+  it("restricts power-limited unblockable targets during activation parsing", () => {
+    const profile = profileOf(make({
+      name: "Power Limited Unblockable",
+      type_line: "Artifact",
+      oracle_text: "{T}: Target creature with power 2 or less can't be blocked this turn."
+    }));
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.activatedAbilities[0]).toMatchObject({ targetKind: "creature-power-at-most-2", effect: { kind: "target-cant-be-blocked" } });
+  });
+
   it("offers Derevi's command-zone return ability without treating it as a cast", () => {
     let game = twoSeatGame([], []);
     const derevi = C13_DEREVI();

@@ -32,6 +32,7 @@ SAFE_FAMILIES: dict[str, dict[str, str]] = {
     "Prevent all combat damage that would be dealt this turn.": {"primitive": "prevent-all-combat-damage-this-turn", "rules": "CR 615"},
     "Destroy all enchantments.": {"primitive": "destroy-all-enchantments", "rules": "CR 701.8"},
     "Target creature can't be blocked this turn.": {"primitive": "target-cant-be-blocked", "rules": "CR 509.1a"},
+    "Target creature with power 2 or less can't be blocked this turn.": {"primitive": "target-cant-be-blocked", "rules": "CR 509.1a"},
     "When ~ enters, attach it to target creature you control.": {"primitive": "attach-equipment", "rules": "CR 301.5"},
     "When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield.": {
         "primitive": "exile-target-permanent-until-source-leaves", "rules": "CR 400.7, 610"

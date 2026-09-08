@@ -4821,6 +4821,11 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   }
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
   if (/^Target creature can'?t be blocked this turn$/i.test(text)) return { effect: { kind: "target-cant-be-blocked" }, target: "creature" };
+  const targetCantBeBlockedPower = /^Target creature with power (\d+) or less can'?t be blocked this turn$/i.exec(text);
+  if (targetCantBeBlockedPower) return {
+    effect: { kind: "target-cant-be-blocked" },
+    target: `creature-power-at-most-${Number(targetCantBeBlockedPower[1])}`
+  };
   if (/^Prevent all combat damage that would be dealt this turn$/i.test(text)) return { effect: { kind: "prevent-all-combat-damage-this-turn" }, target: "none" };
   if (/^Attach it to target creature you control$/i.test(text)) return { effect: { kind: "attach-equipment" }, target: "creature-you-control" };
   const exileUntilSourceLeaves = /^Exile target (nonland permanent|creature) an opponent controls until (?:~|this (?:creature|enchantment|permanent|Aura)) (?:leaves the battlefield|is put into a graveyard from the battlefield)$/i.exec(text);
