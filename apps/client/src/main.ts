@@ -235,9 +235,12 @@ function priorityBarHtml(): string {
   const currentView = view;
   const activeScope: StopScope = currentView.activeSeat === currentView.viewerSeat ? "mine" : "opponents";
   const selectedOpponent = ui.stopPlayer ?? (activeScope === "opponents" ? currentView.activeSeat : currentView.players.find((player) => player.seat !== currentView.viewerSeat)?.seat ?? -1);
-  const selectedStops = stopSet(activeScope, selectedOpponent);
+  // Each rendered row must read its own scope. Using the active scope here
+  // made the opponent row mirror the local defaults whenever our turn was
+  // active (so Main 1/Main 2 appeared enabled for opponents too).
+  const opponentStops = stopSet("opponents", selectedOpponent);
   const cell = (step: TurnStep, scope: StopScope): string => {
-    const on = (scope === "mine" ? ui.stops.mine : selectedStops).has(step);
+    const on = (scope === "mine" ? ui.stops.mine : opponentStops).has(step);
     const dirLabel = scope === "opponents" ? "turnos rivales" : "tu turno";
     return `<button class="stop-tri stop-${scope}${on ? " on" : ""}${scope === activeScope ? " live" : ""}" type="button"
       data-stop-scope="${scope}" data-stop-step="${step}"${scope === "opponents" ? ` data-stop-player="${selectedOpponent}"` : ""}
