@@ -876,6 +876,8 @@ export type SpellEffect =
   | { readonly kind: "tap-all-creatures-target-player" }
   | { readonly kind: "destroy-all-creatures-draw-destroyed" }
   | { readonly kind: "counter-target-spell" }
+  /** Dissipate/Hinder: counter the spell and exile it instead of its owner's graveyard (CR 701.5, 608.2b). */
+  | { readonly kind: "counter-target-spell-exile" }
   | { readonly kind: "counter-target-object" }
   /** "Target spell can't be countered" (Vexing Shusher): tags the targeted stack object, mirroring the cast-time StackObject.cantBeCountered flag. */
   | { readonly kind: "make-target-spell-uncounterable" }
@@ -4971,6 +4973,13 @@ function recognizeText(text: string): RecognizedText {
   const joined = body.map((entry) => entry.text).join(" ").replace(/\s+/g, " ").trim();
   // Stormscape Battlemage has two independent kicker components. Keep the
   // component index on each ETB trigger so paying one does not fire the other.
+  if (/^Counter target spell\. If that spell is countered this way, exile it instead of putting it into its owner'?s graveyard\.?$/i.test(joined)) {
+    return {
+      effects: [{ kind: "counter-target-spell-exile" }],
+      triggers: [], activatedAbilities: [], modalChoices: [], targetKind: "spell",
+      unimplementedText: [], covered: true
+    };
+  }
   if (/^Kicker \{W\} and\/or \{2\}\{B\}\s+When ~ enters, if it was kicked with its \{W\} kicker, you gain 3 life\.\s+When ~ enters, if it was kicked with its \{2\}\{B\} kicker, destroy target nonblack creature\. That creature can't be regenerated\.?$/i.test(joined)) {
     return {
       effects: [],

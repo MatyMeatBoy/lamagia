@@ -468,6 +468,7 @@ const SPHINX_OF_THE_STEEL_WIND = () => make({
 const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "3", colors: ["R"] });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
 const TEST_PLANESWALKER = () => make({ name: "Test Planeswalker", type_line: "Legendary Planeswalker — Test", mana_cost: "{3}{R}", cmc: 4, loyalty: "4" });
+const DISSIPATE = () => make({ name: "Dissipate", type_line: "Instant", mana_cost: "{U}", cmc: 1, oracle_text: "Counter target spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard." });
 const SIMIAN_SPIRIT_GUIDE = () => make({ name: "Simian Spirit Guide", type_line: "Creature — Ape Spirit", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile Simian Spirit Guide from your hand: Add {R}." });
 const WAR_CADENCE = () => make({ name: "War Cadence", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "{X}: This turn, creatures can't block unless their controller pays {X} for each blocking creature they control.", oracle_id: "49d0fdd6-cc8f-4fe1-a6bd-4321dac18404" });
 const SEKKUAR = () => make({ name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3", colors: ["B", "R", "G"], oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.", oracle_id: "94426127-65c2-435e-ba92-423a3c102061" });
@@ -7677,6 +7678,23 @@ describe("casting", () => {
     expect(game.players[0]!.life).toBe(life0Before);
     expect(game.players[1]!.battlefield.filter((permanent) => permanent.card.name === "Treasure")).toHaveLength(2);
     expect(game.players[0]!.battlefield.some((permanent) => permanent.card.name === "Treasure")).toBe(false);
+  });
+
+  it("exiles a spell countered by Dissipate instead of sending it to its graveyard", () => {
+    const profile = cardProfile(DISSIPATE());
+    expect(profile).toMatchObject({ targetKind: "spell", effects: [{ kind: "counter-target-spell-exile" }] });
+    expect(profile.fullyImplemented).toBe(true);
+
+    let game = readyToCast([DISSIPATE()], [ISLAND(), ISLAND()], [BOLT()], [MOUNTAIN()]);
+    game = { ...game, players: game.players.map((player) => ({ ...player, autoPass: false })) };
+    game = applyAction(game, 0, { type: "pass" });
+    game = applyAction(game, 1, { type: "cast", cardId: "foe-0", targets: [{ kind: "player", seat: 0 }] });
+    const bolt = game.stack.at(-1)!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "spell", stackId: bolt.id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+
+    expect(game.players[1]!.exile.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(false);
   });
 
   it("lets the targeted spell's own controller pay to avoid a counter-unless-pay effect", () => {

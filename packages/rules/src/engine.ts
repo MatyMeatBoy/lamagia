@@ -268,6 +268,8 @@ export interface StackObject {
   readonly cantBeCountered?: boolean;
   /** Seat that countered this spell with a replacement-to-battlefield effect. */
   readonly counteredToBattlefieldController?: SeatId;
+  /** A Dissipate/Hinder-style replacement sends the countered spell to exile. */
+  readonly counteredToExile?: boolean;
   /** The spell was cast for its kicker cost (CR 702.33). */
   readonly kicked?: boolean;
   /** Kicker components paid for this spell, in printed order (CR 702.33). */
@@ -6193,6 +6195,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       if (!target || target.kind !== "spell") return state;
       return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state) ? { ...entry, countered: true } : entry)) };
     }
+    case "counter-target-spell-exile": {
+      const target = object.targets[targetIndex];
+      if (!target || target.kind !== "spell") return state;
+      return { ...state, stack: state.stack.map((entry) => (entry.id === target.stackId && canCounterSpell(entry, state)
+        ? { ...entry, countered: true, counteredToExile: true }
+        : entry)) };
+    }
     case "counter-target-object": {
       const target = object.targets[targetIndex];
       if (!target || target.kind !== "spell") return state;
@@ -7024,6 +7033,10 @@ function resolveTop(state: GameState): GameState {
       return logged(entered, object.counteredToBattlefieldController, `${object.card.name} entra al campo de batalla bajo su control.`);
     }
     if (object.fromCopy) return logged(next, object.controller, `La copia de ${object.card.name} es contrarrestada.`);
+    if (object.counteredToExile) {
+      next = withPlayer(next, object.card.owner, (player) => ({ ...player, exile: [...player.exile, object.card] }));
+      return logged(next, object.controller, `${object.card.name} es contrarrestado y exiliado.`);
+    }
     next = sendSpellToOwnerZone(next, object);
     return logged(next, object.controller, `${object.card.name} es contrarrestado.`);
   }
@@ -13033,12 +13046,12 @@ export function canCounterSpell(spell: StackObject, state?: GameState): boolean 
 }
 
 function isCounterOnlyEffect(effect: SpellEffect): boolean {
-  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-battlefield"
+  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-exile" || effect.kind === "counter-target-spell-to-battlefield"
     || (effect.kind === "compound" && effect.effects.length > 0 && effect.effects.every(isCounterOnlyEffect));
 }
 
 function hasCounterTarget(effect: SpellEffect): boolean {
-  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-to-battlefield"
+  return effect.kind === "counter-target-spell" || effect.kind === "counter-target-spell-exile" || effect.kind === "counter-target-spell-to-battlefield"
     || (effect.kind === "compound" && effect.effects.some(hasCounterTarget));
 }
 
