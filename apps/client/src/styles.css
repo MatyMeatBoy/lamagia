@@ -299,17 +299,24 @@ h1, h2, h3 { margin: 0; }
 .summoning-sickness {
   position: absolute; inset: 6% 9%; z-index: 2; width: 82%; height: 88%;
   pointer-events: none; opacity: .72; transform-origin: 50% 50%;
-  filter: drop-shadow(0 0 2px #dcebd088);
+  filter: drop-shadow(0 0 2px #dcebd088) drop-shadow(0 0 8px #739b8d33);
+  mix-blend-mode: screen;
   animation: summoningVortex 4.6s linear infinite;
 }
 .summoning-sickness path {
-  fill: none; stroke: var(--sickness-gradient); stroke-width: 4.5;
+  fill: none; stroke: var(--sickness-gradient); stroke-width: 3.7;
+  stroke-dasharray: 31 8; stroke-dashoffset: 0;
   stroke-linecap: round; stroke-linejoin: round;
+  animation: summoningVortexStroke 2.8s ease-in-out infinite alternate;
 }
 @keyframes summoningVortex {
   from { transform: rotate(0deg) scale(.94); }
   50% { transform: rotate(180deg) scale(1.02); opacity: .5; }
   to { transform: rotate(360deg) scale(.94); }
+}
+@keyframes summoningVortexStroke {
+  from { stroke-dashoffset: 0; opacity: .45; }
+  to { stroke-dashoffset: -39; opacity: .92; }
 }
 .card-tile.tapped .summoning-sickness { animation-duration: 4.6s; }
 .card-image-fallback {

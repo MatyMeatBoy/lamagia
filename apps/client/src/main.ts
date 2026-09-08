@@ -1073,10 +1073,12 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
   const isCreaturePermanent = /\bCreature\b/.test(permanent.type_line.split("//")[0] ?? "");
   const sicknessGradientId = `sickness-vortex-${permanent.instance_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   const summoningSickness = permanent.summoningSick && isCreaturePermanent ? `<svg class="summoning-sickness" style="--sickness-gradient:url(#${sicknessGradientId})" viewBox="0 0 100 100" aria-label="Mareo de invocación" role="img" focusable="false">
-    <defs><linearGradient id="${sicknessGradientId}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9e7d5" stop-opacity=".15"/><stop offset=".52" stop-color="#f4e8bb" stop-opacity=".78"/><stop offset="1" stop-color="#a9d0c4" stop-opacity=".12"/></linearGradient></defs>
-    <path d="M79 26C61 11 30 19 25 43c-5 23 19 40 42 31 18-7 20-30 5-41-13-10-34-5-37 10-3 14 13 24 26 18 10-5 11-18 3-24-8-6-19-2-20 7-1 7 7 12 14 9"/>
-    <path d="M62 12c18 15 26 33 15 54-8 16-27 25-45 22"/>
-    <path d="M39 14c-14 12-21 29-15 47 5 15 20 27 37 28"/>
+    <defs><linearGradient id="${sicknessGradientId}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dce6bd" stop-opacity=".08"/><stop offset=".28" stop-color="#b8c48f" stop-opacity=".72"/><stop offset=".56" stop-color="#e7d9a2" stop-opacity=".9"/><stop offset=".78" stop-color="#7ea2ad" stop-opacity=".64"/><stop offset="1" stop-color="#79a8b4" stop-opacity=".08"/></linearGradient></defs>
+    <path d="M82 22C66 8 35 13 24 35c-12 25 9 51 35 49 23-2 34-26 21-43-10-13-32-14-42-1-10 13-1 32 15 33 15 1 24-13 17-25-6-10-22-10-27-1-5 8 2 19 12 18"/>
+    <path d="M69 10c17 14 24 34 16 54-7 19-27 31-48 27"/>
+    <path d="M48 8C27 13 13 31 15 51c2 21 19 38 40 42"/>
+    <path d="M91 42c-11-6-23-5-31 2-10 8-11 23-2 32"/>
+    <path d="M12 67c11 5 23 3 30-5 8-9 7-22-1-30"/>
   </svg>` : "";
 
   return `<button class="${classes.join(" ")}" type="button" data-permanent="${escapeHtml(permanent.instance_id)}"
