@@ -6,7 +6,7 @@ Generated from the local Comprehensive Rules snapshot and the normalized catalog
 
 `catalog occurrences` counts Scryfall keyword metadata and is used to prioritize reusable primitives. Every implementation still requires a scenario test and a Comprehensive Rules citation.
 
-Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the checked-in [Comprehensive Rules](docs/COMPREHENSIVE_RULES.md).
+Source: the [official Wizards rules](https://magic.wizards.com/en/rules) and the checked-in [Comprehensive Rules](docs/COMPREHENSIVE_RULES.md).
 
 | CR | Keyword | Status | Catalog occurrences | Engine contract |
 |---|---|---|---:|---|
