@@ -8773,10 +8773,11 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         return actions;
       }
       if (choice.paymentBy === "opponent" && choice.wardLifeCost !== undefined) {
-        if (player.life >= choice.wardLifeCost) {
+        const manaCanPay = !choice.manaCost || Boolean(planManaPayment(choice.manaCost, player, { state }));
+        if (player.life >= choice.wardLifeCost && manaCanPay) {
           actions.push({
             action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true },
-            label: `Pay ${choice.wardLifeCost} life to pay Ward`,
+            label: choice.manaCost ? `Pay ${choice.manaCost.raw} and ${choice.wardLifeCost} life to pay Ward` : `Pay ${choice.wardLifeCost} life to pay Ward`,
             note: `${choice.sourceCard.name}: pay the Ward life tax to keep the spell on the stack.`
           });
         }
@@ -11496,7 +11497,16 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     }
     if (choice.wardLifeCost !== undefined) {
       if (playerAt(next, seat).life < choice.wardLifeCost) throw new Error(`No puedes pagar ${choice.wardLifeCost} vidas por ${choice.sourceCard.name}.`);
-      next = withPlayer(next, seat, (current) => ({ ...current, life: current.life - choice.wardLifeCost! }));
+      if (choice.manaCost) {
+        const plan = planManaPayment(choice.manaCost, playerAt(next, seat), { state: next });
+        if (!plan) throw new Error(`No tienes maná suficiente para pagar ${choice.manaCost.raw} por ${choice.sourceCard.name}.`);
+        next = applyManaPlan(next, seat, plan);
+        const paid = payCost(choice.manaCost, playerAt(next, seat).manaPool, { availableLife: playerAt(next, seat).life });
+        if (!paid) throw new Error(`No se pudo pagar ${choice.manaCost.raw} por ${choice.sourceCard.name}.`);
+        next = withPlayer(next, seat, (current) => ({ ...consumeManaPayment(current, paid), life: current.life - choice.wardLifeCost! - paid.lifePaid }));
+      } else {
+        next = withPlayer(next, seat, (current) => ({ ...current, life: current.life - choice.wardLifeCost! }));
+      }
       const wardTarget = choice.targets?.[0];
       const wardStackId = wardTarget?.kind === "spell" ? wardTarget.stackId : undefined;
       const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;

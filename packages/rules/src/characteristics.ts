@@ -6496,10 +6496,10 @@ export function cardProfile(card: CardData): CardProfile {
   const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
   const affinityMatch = /^Affinity for (.+)$/im.exec(text);
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
-  const wardMatch = /^Ward\s+((?:\{[^}]+\})+)\s*$/im.exec(text);
+  const wardMatch = /^Ward\s*(?:[—–-]|:)?\s*((?:\{[^}]+\})+)(?:\s*,\s*Pay\s+(\d+)\s+life\.?)?(?:\s*\([^)]*\))?\s*$/im.exec(text);
   const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
-  const wardLifeMatch = /^Ward\s*(?:[—–-]|:)\s*Pay\s+(\d+)\s+life\.?\s*$/im.exec(text);
-  const wardLifeCost = wardLifeMatch ? Number(wardLifeMatch[1]) : null;
+  const wardLifeMatch = /^Ward\s*(?:[—–-]|:)\s*(?:(?:\{[^}]+\})+\s*,\s*)?Pay\s+(\d+)\s+life\.?(?:\s*\([^)]*\))?\s*$/im.exec(text);
+  const wardLifeCost = wardMatch?.[2] ? Number(wardMatch[2]) : wardLifeMatch ? Number(wardLifeMatch[1]) : null;
   const wardDiscard = /^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\.?\s*$/im.test(text);
   const wardDiscardTypesMatch = /^Ward\s*(?:[—–-]|:)\s*Discard\s+an?\s+((?:enchantment|instant|sorcery)(?:(?:,\s*or\s+|,\s*|\s+or\s+)(?:enchantment|instant|sorcery))*)\s+card\.?\s*$/im.exec(text);
   const wardDiscardTypes = wardDiscardTypesMatch
@@ -6516,8 +6516,8 @@ export function cardProfile(card: CardData): CardProfile {
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
     .replace(/^Affinity for .+$/gim, "")
-    .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, "")
-    .replace(/^Ward\s*(?:[—–-]|:)\s*Pay\s+\d+\s+life\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)?\s*(?:\{[^}]+\})+(?:\s*,\s*Pay\s+\d+\s+life)?(?:\s*\([^)]*\))?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*(?:(?:\{[^}]+\})+\s*,\s*)?Pay\s+\d+\s+life(?:\s*\([^)]*\))?\s*$/gim, "")
     .replace(/^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\.?\s*$/gim, "")
     .replace(/^Ward\s*(?:[—–-]|:)\s*Discard\s+an?\s+(?:enchantment|instant|sorcery)(?:(?:,\s*or\s+|,\s*|\s+or\s+)(?:enchantment|instant|sorcery))*\s+card\.?\s*$/gim, "")
     .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+(?:creature|permanent)\.?\s*$/gim, "")

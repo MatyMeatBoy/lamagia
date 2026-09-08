@@ -436,6 +436,7 @@ const OPTIONAL_ETB_DRAWER = () => make({ name: "Optional Archivist", type_line: 
 const WALL = () => make({ name: "Stone Wall", type_line: "Creature — Wall", mana_cost: "{W}", cmc: 1, power: "0", toughness: "4", keywords: ["Defender"], oracle_text: "Defender" });
 const WARD_SENTINEL = () => make({ name: "Ward Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward {2}" });
 const WARD_LIFE_SENTINEL = () => make({ name: "Ward Life Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Pay 2 life." });
+const WARD_COMBINED_SENTINEL = () => make({ name: "Ward Combined Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—{2}, Pay 2 life. (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays the cost.)" });
 const WARD_DISCARD_SENTINEL = () => make({ name: "Ward Discard Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Discard a card." });
 const WARD_SACRIFICE_SENTINEL = () => make({ name: "Ward Sacrifice Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Sacrifice a creature." });
 const WARD_RESTRICTED_DISCARD_SENTINEL = () => make({ name: "Ward Restricted Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Discard an enchantment, instant, or sorcery card." });
@@ -2092,6 +2093,25 @@ describe("casting", () => {
     expect(legalActions(game, 0).some((entry) => entry.label.includes("Pay 2 life"))).toBe(true);
     game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
     expect(game.players[0]!.life).toBe(0);
+    expect(game.stack.at(-1)?.countered).toBe(false);
+  });
+
+  it("requires both halves of a compound Ward payment", () => {
+    const wardCard = WARD_COMBINED_SENTINEL();
+    expect(profileOf(wardCard).wardCost?.raw).toBe("{2}");
+    expect(profileOf(wardCard).wardLifeCost).toBe(2);
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [WARD_BOLT()]), life: 2, manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 2 }, autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [wardCard]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const ward = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: ward.instance_id }] });
+    const choice = game.pendingChoice!;
+    expect(legalActions(game, 0).some((entry) => entry.label.includes("{2} and 2 life"))).toBe(true);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.life).toBe(0);
+    expect(game.players[0]!.manaPool.C).toBe(0);
     expect(game.stack.at(-1)?.countered).toBe(false);
   });
 
