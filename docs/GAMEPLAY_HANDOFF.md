@@ -66,6 +66,17 @@ submits actions already exposed as legal.
   diagnostic: turn, step, priority, stack summary, pending choice, combat
   declarations, and recent log entries. Hidden hands and libraries are omitted.
 
+### Ward payment coverage
+
+The Ward primitive now accepts the common non-mana forms in addition to mana
+([CR 702.21](https://magic.wizards.com/en/rules)):
+`Ward—Pay N life` and `Ward—Discard a card`. Both are exposed as explicit
+centered decisions, decline still counters the targeted spell or ability, and
+the life payment may reduce the payer to exactly 0. Multiple Ward permanents
+remain chained one at a time. More specialized costs (sacrifice, collect
+evidence, or variable conditions) stay partial until they have dedicated
+scenario coverage; do not infer them from the generic mana Ward path.
+
 ## Play-test commands
 
 ```text

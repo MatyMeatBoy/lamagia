@@ -1244,6 +1244,12 @@ export interface CardProfile {
   readonly suspendCost: ManaCost | null;
   readonly vanishingAmount: number | null;
   readonly wardCost: ManaCost | null;
+  /** Ward's non-mana payment, when the printed cost is a life payment. */
+  readonly wardLifeCost: number | null;
+  /** Ward's non-mana payment, when the printed cost is discarding a card. */
+  readonly wardDiscard: boolean;
+  /** Ward's non-mana payment, when the printed cost sacrifices a permanent. */
+  readonly wardSacrifice: "creature" | "permanent" | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
   /** Additional life payment bundled into a Flashback cost (CR 118.8). */
@@ -6479,6 +6485,11 @@ export function cardProfile(card: CardData): CardProfile {
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
   const wardMatch = /^Ward\s+((?:\{[^}]+\})+)\s*$/im.exec(text);
   const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
+  const wardLifeMatch = /^Ward\s*(?:[—–-]|:)\s*Pay\s+(\d+)\s+life\.?\s*$/im.exec(text);
+  const wardLifeCost = wardLifeMatch ? Number(wardLifeMatch[1]) : null;
+  const wardDiscard = /^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\.?\s*$/im.test(text);
+  const wardSacrificeMatch = /^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+(creature|permanent)\.?\s*$/im.exec(text);
+  const wardSacrifice = wardSacrificeMatch?.[1]?.toLowerCase() as "creature" | "permanent" | undefined;
   const suspend = parseSuspend(text);
   const vanishingMatch = /(?:^|\n)Vanishing\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/im.exec(text);
   const vanishingAmount = toNumber(vanishingMatch?.[1]) ?? null;
@@ -6486,6 +6497,9 @@ export function cardProfile(card: CardData): CardProfile {
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
     .replace(/^Affinity for .+$/gim, "")
     .replace(/^Ward\s+(?:\{[^}]+\})+\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Pay\s+\d+\s+life\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+(?:creature|permanent)\.?\s*$/gim, "")
     .replace(/^Vanishing\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*(?:\([^\n]*\))?\s*$/gim, "")
     .replace(/^Suspend\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*[—-]\s*(?:\{[^}]+\})+\s*$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
@@ -6755,6 +6769,9 @@ export function cardProfile(card: CardData): CardProfile {
     suspendCost: suspend?.cost ?? null,
     vanishingAmount,
     wardCost,
+    wardLifeCost,
+    wardDiscard,
+    wardSacrifice: wardSacrifice ?? null,
     flashbackLifeCost,
     additionalLifeCost,
     additionalLifeCostVariable,

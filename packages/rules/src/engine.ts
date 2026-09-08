@@ -613,6 +613,10 @@ export type PendingChoice =
       readonly paymentBy?: "opponent";
       /** Remaining Ward permanents that still need a payment decision for the same spell. */
       readonly remainingWardTargets?: readonly string[];
+      /** Ward payment that is not mana (CR 702.21). */
+      readonly wardLifeCost?: number;
+      readonly wardDiscard?: boolean;
+      readonly wardSacrifice?: "creature" | "permanent";
       readonly unlessPayCost?: ManaCost;
       /** For "exile ~ unless you discard a creature card": declining the discard applies the effect. */
       readonly unlessDiscardCreatureCard?: boolean;
@@ -933,7 +937,7 @@ export type GameAction =
   | { readonly type: "cancel-mana-payment"; readonly sourceId: string }
   | { readonly type: "toggle-trigger-yield"; readonly sourceId: string; readonly abilityIndex?: number; readonly enabled: boolean }
   | { readonly type: "choose-basic-land-search"; readonly sourceId: string; readonly accept: boolean }
-  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number; readonly discardCardId?: string }
+  | { readonly type: "choose-trigger"; readonly sourceId: string; readonly accept: boolean; readonly tapIds?: readonly string[]; readonly variableValue?: number; readonly discardCardId?: string; readonly sacrificeId?: string }
   | { readonly type: "choose-graveyard-card"; readonly sourceId: string; readonly accept: boolean; readonly cardId?: string }
   | { readonly type: "choose-hand-attacking-creature"; readonly sourceId: string; readonly accept: boolean; readonly cardId?: string }
   | { readonly type: "choose-color"; readonly sourceId: string; readonly color: MagicColor; readonly amount?: number }
@@ -8743,6 +8747,54 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     }
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
+      if (choice.paymentBy === "opponent" && choice.wardDiscard) {
+        for (const card of player.hand) {
+          actions.push({
+            action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, discardCardId: card.instance_id },
+            label: `Discard ${card.name} to pay Ward`,
+            cardId: card.instance_id,
+            note: `${choice.sourceCard.name}: discard a card to prevent the spell from being countered.`
+          });
+        }
+        actions.push({
+          action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
+          label: "Do not discard",
+          note: `${choice.sourceCard.name}: the targeted spell will be countered.`
+        });
+        return actions;
+      }
+      if (choice.paymentBy === "opponent" && choice.wardLifeCost !== undefined) {
+        if (player.life >= choice.wardLifeCost) {
+          actions.push({
+            action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true },
+            label: `Pay ${choice.wardLifeCost} life to pay Ward`,
+            note: `${choice.sourceCard.name}: pay the Ward life tax to keep the spell on the stack.`
+          });
+        }
+        actions.push({
+          action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
+          label: "Do not pay Ward",
+          note: `${choice.sourceCard.name}: the targeted spell will be countered.`
+        });
+        return actions;
+      }
+      if (choice.paymentBy === "opponent" && choice.wardSacrifice) {
+        const candidates = player.battlefield.filter((permanent) => choice.wardSacrifice === "permanent" || isCreature(cardProfile(permanent.card)));
+        for (const permanent of candidates) {
+          actions.push({
+            action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, sacrificeId: permanent.instance_id },
+            label: `Sacrifice ${permanent.card.name} to pay Ward`,
+            cardId: permanent.instance_id,
+            note: `${choice.sourceCard.name}: sacrifice a ${choice.wardSacrifice} to prevent the spell from being countered.`
+          });
+        }
+        actions.push({
+          action: { type: "choose-trigger", sourceId: choice.sourceId, accept: false },
+          label: "Do not sacrifice",
+          note: `${choice.sourceCard.name}: the targeted spell will be countered.`
+        });
+        return actions;
+      }
       if (choice.unlessDiscardCreatureCard) {
         for (const card of player.hand.filter((candidate) => isCreature(cardProfile(candidate)))) {
           actions.push({
@@ -10969,11 +11021,14 @@ function queueWardPayment(state: GameState, object: StackObject, remainingWardTa
     .map((target) => target.instanceId);
   const wardId = candidates.find((instanceId) => {
     const permanent = findPermanent(state, instanceId);
-    return Boolean(permanent && permanent.controller !== object.controller && cardProfile(permanent.card).wardCost);
+    const profile = permanent ? cardProfile(permanent.card) : null;
+    return Boolean(permanent && permanent.controller !== object.controller
+      && (profile?.wardCost || profile?.wardLifeCost !== null && profile?.wardLifeCost !== undefined || profile?.wardDiscard || profile?.wardSacrifice));
   });
   if (!wardId) return state;
   const permanent = findPermanent(state, wardId)!;
-  const cost = cardProfile(permanent.card).wardCost!;
+  const profile = cardProfile(permanent.card);
+  const cost = profile.wardCost;
   const remaining = candidates.filter((instanceId) => instanceId !== wardId);
   return {
     ...state,
@@ -10987,8 +11042,10 @@ function queueWardPayment(state: GameState, object: StackObject, remainingWardTa
       targets: [{ kind: "spell", stackId: object.id }],
       sourceController: permanent.controller,
       paymentBy: "opponent",
-      payCost: cost,
-      manaCost: cost,
+      ...(cost ? { payCost: cost, manaCost: cost } : {}),
+      ...(profile.wardLifeCost !== null ? { wardLifeCost: profile.wardLifeCost } : {}),
+      ...(profile.wardDiscard ? { wardDiscard: true } : {}),
+      ...(profile.wardSacrifice ? { wardSacrifice: profile.wardSacrifice } : {}),
       sourcePermanentId: permanent.instance_id,
       remainingWardTargets: remaining
     }
@@ -11408,6 +11465,39 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
       const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;
       if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
       return logged(next, source.controller, choice.sourceCard.name + " resuelve su habilidad porque el oponente no paga.");
+    }
+    if (choice.wardDiscard) {
+      const discarded = action.discardCardId
+        ? playerAt(next, seat).hand.find((card) => card.instance_id === action.discardCardId)
+        : undefined;
+      if (!discarded) throw new Error(`Debes elegir una carta para pagar Ward de ${choice.sourceCard.name}.`);
+      next = discardCard(next, seat, discarded);
+      const wardTarget = choice.targets?.[0];
+      const wardStackId = wardTarget?.kind === "spell" ? wardTarget.stackId : undefined;
+      const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;
+      if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
+      return logged(next, seat, `${playerAt(next, seat).name} descarta ${discarded.name} para pagar Ward.`);
+    }
+    if (choice.wardLifeCost !== undefined) {
+      if (playerAt(next, seat).life < choice.wardLifeCost) throw new Error(`No puedes pagar ${choice.wardLifeCost} vidas por ${choice.sourceCard.name}.`);
+      next = withPlayer(next, seat, (current) => ({ ...current, life: current.life - choice.wardLifeCost! }));
+      const wardTarget = choice.targets?.[0];
+      const wardStackId = wardTarget?.kind === "spell" ? wardTarget.stackId : undefined;
+      const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;
+      if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
+      return logged(next, seat, `${playerAt(next, seat).name} paga ${choice.wardLifeCost} vidas para evitar Ward.`);
+    }
+    if (choice.wardSacrifice) {
+      const sacrificed = action.sacrificeId ? playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === action.sacrificeId) : undefined;
+      if (!sacrificed || (choice.wardSacrifice === "creature" && !isCreature(cardProfile(sacrificed.card))) || sacrificed.controller !== seat) {
+        throw new Error(`Debes elegir un ${choice.wardSacrifice} que controles para pagar Ward de ${choice.sourceCard.name}.`);
+      }
+      next = movePermanentToZone(next, sacrificed, "graveyard", true);
+      const wardTarget = choice.targets?.[0];
+      const wardStackId = wardTarget?.kind === "spell" ? wardTarget.stackId : undefined;
+      const wardSpell = wardStackId ? next.stack.find((entry) => entry.id === wardStackId) : undefined;
+      if (wardSpell && choice.remainingWardTargets?.length) next = queueWardPayment(next, wardSpell, choice.remainingWardTargets);
+      return logged(next, seat, `${playerAt(next, seat).name} sacrifica ${sacrificed.card.name} para pagar Ward.`);
     }
     if (!choice.manaCost) throw new Error("La habilidad de pago no tiene coste.");
     const plan = planManaPayment(choice.manaCost, playerAt(next, seat), { state: next });
