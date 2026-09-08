@@ -14482,3 +14482,78 @@ describe("bot games", () => {
     expect(choice?.action).toMatchObject({ type: "activate-mana", sourceId: "fast-0" });
   });
 });
+
+describe("Infect (CR 702.90)", () => {
+  const INFECTER = () => make({
+    name: "Test Phyrexian", type_line: "Creature — Phyrexian", mana_cost: "{1}{B}", cmc: 2,
+    power: "2", toughness: "2", keywords: ["Infect"], oracle_text: "Infect"
+  });
+
+  it("recognizes the keyword as executable coverage", () => {
+    const profile = profileOf(INFECTER());
+    expect(profile.keywords).toContain("infect");
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("recognizes Wither as the creature-only sibling primitive (CR 702.80)", () => {
+    const profile = profileOf(make({
+      name: "Test Wither", type_line: "Creature — Elemental", power: "1", toughness: "1",
+      keywords: ["Wither"], oracle_text: "Wither"
+    }));
+    expect(profile.keywords).toContain("wither");
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.fullyImplemented).toBe(true);
+  });
+
+  it("adds Toxic counters in addition to normal combat damage (CR 702.164)", () => {
+    const toxic = make({
+      name: "Test Toxic", type_line: "Creature — Phyrexian", power: "2", toughness: "2",
+      oracle_text: "Toxic 2"
+    });
+    expect(profileOf(toxic).toxicAmount).toBe(2);
+    expect(profileOf(toxic).fullyImplemented).toBe(true);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [toxic]);
+    game = stage(game, 0, (player) => ({ autoPass: false, battlefield: player.battlefield.map((permanent) => ({ ...permanent, summoningSick: false })) }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const attacker = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" && state.activeSeat === 0);
+    expect(game.players[1]!.life).toBe(38);
+    expect(game.players[1]!.counters.poison).toBe(2);
+  });
+
+  it("deals combat damage to a player as poison instead of life loss", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [INFECTER()]);
+    game = stage(game, 0, (player) => ({ autoPass: false, battlefield: player.battlefield.map((permanent) => ({ ...permanent, summoningSick: false })) }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const attacker = game.players[0]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" && state.activeSeat === 0);
+    expect(game.players[1]!.life).toBe(40);
+    expect(game.players[1]!.counters.poison).toBe(2);
+  });
+
+  it("deals damage to a creature as -1/-1 counters, not marked damage", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [INFECTER()]);
+    game = putOnBattlefield(game, 1, [make({ name: "Test Blocker", type_line: "Creature — Soldier", power: "3", toughness: "3" })]);
+    game = stage(game, 0, (player) => ({ autoPass: false, battlefield: player.battlefield.map((permanent) => ({ ...permanent, summoningSick: false })) }));
+    game = stage(game, 1, (player) => ({ autoPass: false }));
+    game = passUntil(game, (state) => state.step === "declare-attackers" && state.activeSeat === 0);
+    const attacker = game.players[0]!.battlefield[0]!;
+    const blocker = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender: 1 }] });
+    game = passUntil(game, (state) => state.step === "declare-blockers" && !state.combat.blockersDeclared);
+    game = applyAction(game, 1, { type: "declare-blockers", blockers: [{ instanceId: blocker.instance_id, attackerId: attacker.instance_id }] });
+    game = passUntil(game, (state) => state.step === "postcombat-main" && state.activeSeat === 0);
+    const survivingBlocker = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Test Blocker")!;
+    expect(survivingBlocker.counters["-1/-1"]).toBe(2);
+    expect(survivingBlocker.damage).toBe(0);
+    expect(toughnessOf(survivingBlocker, game)).toBe(1);
+  });
+});

@@ -45,7 +45,7 @@ const CARD_TYPES: readonly CardType[] = ["Land", "Creature", "Artifact", "Enchan
 export const ENFORCED_KEYWORDS = [
   "flying", "reach", "first strike", "double strike", "deathtouch", "trample",
   "vigilance", "lifelink", "menace", "defender", "haste", "indestructible",
-  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "shadow", "exalted", "split second"
+  "hexproof", "shroud", "flash", "fear", "intimidate", "horsemanship", "prowess", "shadow", "exalted", "split second", "infect", "wither"
 ] as const;
 export type EnforcedKeyword = (typeof ENFORCED_KEYWORDS)[number];
 
@@ -1221,6 +1221,8 @@ export interface CardProfile {
   readonly colors: readonly string[];
   readonly colorIdentity: readonly string[];
   readonly keywords: readonly EnforcedKeyword[];
+  /** Poison counters added when this creature deals combat damage to a player (CR 702.164). */
+  readonly toxicAmount: number;
   /** Static effect that lets creatures' activated abilities ignore summoning sickness (CR 302.6). */
   readonly grantsCreatureActivationHaste: boolean;
   readonly doublesPlusOneCounters: boolean;
@@ -5733,6 +5735,8 @@ function recognizeText(text: string): RecognizedText {
     if (/^You may choose not to untap ~ during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     if (/^Skip your draw step\.?$/i.test(line)) continue;
+    // Toxic's number is a static combat effect; cardProfile stores its operand.
+    if (/^toxic\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
     const words = line.replace(/\.$/, "").split(/,\s*/).map((word) => word.trim().toLowerCase());
     if (words.length && words.every((word) => (ENFORCED_KEYWORDS as readonly string[]).includes(word))) continue;
@@ -6464,6 +6468,8 @@ export function cardProfile(card: CardData): CardProfile {
   const keywords = (card.keywords ?? [])
     .map((keyword) => keyword.toLowerCase())
     .filter((keyword): keyword is EnforcedKeyword => (ENFORCED_KEYWORDS as readonly string[]).includes(keyword));
+  const toxicMatch = /(?:^|\n)toxic\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\.?(?=\n|$)/i.exec(text);
+  const toxicAmount = toxicMatch ? (toNumber(toxicMatch[1]) ?? 0) : 0;
   const changeling = (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "changeling");
   const isPermanent = types.some((type) => type === "Land" || type === "Creature" || type === "Artifact" || type === "Enchantment" || type === "Planeswalker" || type === "Battle");
   const cost = parseManaCost(face.mana_cost);
@@ -6731,6 +6737,7 @@ export function cardProfile(card: CardData): CardProfile {
     colors: [...(face.colors ?? card.colors ?? [])],
     colorIdentity: [...(card.color_identity ?? [])],
     keywords,
+    toxicAmount,
     grantsCreatureActivationHaste,
     doublesPlusOneCounters,
     doublesTokens,

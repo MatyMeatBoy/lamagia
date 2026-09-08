@@ -3028,10 +3028,17 @@ function dealDamageToPlayer(
   amount: number,
   sourceName: string,
   source?: DamageSource,
-  emitDamageEvent = true
+  emitDamageEvent = true,
+  sourceProfile?: CardProfile
 ): GameState {
   if (amount <= 0) return state;
-  let next = loseLife(state, seat, amount);
+  const infect = (sourceProfile ?? (source ? cardProfile(source.card) : undefined))?.keywords.includes("infect") ?? false;
+  let next = infect
+    ? withPlayer(state, seat, (player) => ({
+      ...player,
+      counters: { ...player.counters, poison: (player.counters.poison ?? 0) + amount }
+    }))
+    : loseLife(state, seat, amount);
   next = raiseEvent(next, { kind: "dealt-damage-to-player", seat, amount });
   if (source && emitDamageEvent) {
     next = raiseEvent(next, {
@@ -3043,7 +3050,9 @@ function dealDamageToPlayer(
       amount
     });
   }
-  return logged(next, seat, `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name}.`);
+  return logged(next, seat, infect
+    ? `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name} en forma de contadores de veneno.`
+    : `${sourceName} hace ${amount} de daño a ${playerAt(next, seat).name}.`);
 }
 
 function sourceForDamage(state: GameState, object: StackObject): DamageSource | undefined {
@@ -3064,7 +3073,7 @@ function sourceForDamage(state: GameState, object: StackObject): DamageSource | 
 function dealDamageFromObject(state: GameState, seat: SeatId, amount: number, sourceName: string, object: StackObject): GameState {
   const bonus = damageAmplifyBonus(state, object.controller, cardProfile(object.card), object.sourcePermanentId, seat);
   const multiplier = equippedCreatureDamageMultiplier(state, object.sourcePermanentId);
-  return dealDamageToPlayer(state, seat, amount * multiplier + bonus, sourceName, sourceForDamage(state, object));
+  return dealDamageToPlayer(state, seat, amount * multiplier + bonus, sourceName, sourceForDamage(state, object), true, cardProfile(object.card));
 }
 
 function loseLife(state: GameState, seat: SeatId, amount: number): GameState {
@@ -3127,6 +3136,7 @@ function dealDamageToPermanent(
   }
   const multiplier = source ? equippedCreatureDamageMultiplier(state, source.permanentId) : 1;
   const total = amount * multiplier + (source ? damageAmplifyBonus(state, source.controller, sourceProfile, source.permanentId, permanent.controller, combat) : 0);
+  const witherOrInfect = sourceProfile?.keywords.some((keyword) => keyword === "infect" || keyword === "wither") ?? false;
   // Damage to a planeswalker removes that many loyalty counters (CR 120.3c).
   const isPlaneswalker = cardProfile(permanent.card).types.includes("Planeswalker") && "loyalty" in permanent.counters;
   const next = withPlayer(state, permanent.controller, (player) => ({
@@ -3134,10 +3144,15 @@ function dealDamageToPermanent(
     battlefield: player.battlefield.map((candidate) => {
       if (candidate.instance_id !== instanceId) return candidate;
       if (isPlaneswalker) return { ...candidate, counters: { ...candidate.counters, loyalty: Math.max(0, (candidate.counters.loyalty ?? 0) - total) } };
+      if (witherOrInfect && isCreature(targetProfile)) {
+        return { ...candidate, counters: { ...candidate.counters, "-1/-1": (candidate.counters["-1/-1"] ?? 0) + total } };
+      }
       return { ...candidate, damage: candidate.damage + total, deathtouched: candidate.deathtouched || deathtouch };
     })
   }));
-  return logged(next, permanent.controller, `${sourceName} hace ${total} de daño a ${permanent.card.name}.`);
+  return logged(next, permanent.controller, witherOrInfect && isCreature(targetProfile)
+    ? `${sourceName} hace ${total} daño a ${permanent.card.name} en forma de contadores -1/-1.`
+    : `${sourceName} hace ${total} de daño a ${permanent.card.name}.`);
 }
 
 /** Applies a layer 7c P/T modifier which cleanup removes (CR 613.4c, 514.2). */
@@ -7474,6 +7489,8 @@ function applyStateBasedActions(state: GameState): GameState {
         ? "vidas a 0"
         : player.drewFromEmptyLibrary
           ? "robó de una biblioteca vacía"
+          : (player.counters.poison ?? 0) >= 10
+            ? "10 contadores de veneno"
           : lethalCommander
             ? "21 de daño de comandante"
             : null;
@@ -7791,10 +7808,19 @@ function applyCombatDamage(state: GameState, firstStrikeStep: boolean): GameStat
     const dealer = findPermanent(state, hit.sourceId);
     const bonus = dealer ? damageAmplifyBonus(next, dealer.controller, cardProfile(dealer.card), dealer.instance_id, hit.seat, true) : 0;
     const multiplier = dealer ? equippedCreatureDamageMultiplier(next, dealer.instance_id) : 1;
-    next = dealDamageToPlayer(next, hit.seat, hit.amount * multiplier + bonus, hit.sourceName, dealer
+    const dealtAmount = hit.amount * multiplier + bonus;
+    next = dealDamageToPlayer(next, hit.seat, dealtAmount, hit.sourceName, dealer
       ? { permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card }
-      : undefined, false);
-    if (dealer && hit.amount > 0) {
+      : undefined, false, dealer ? cardProfile(dealer.card) : undefined);
+    if (dealer && dealtAmount > 0) {
+      const toxicAmount = cardProfile(dealer.card).toxicAmount;
+      if (toxicAmount > 0) {
+        next = withPlayer(next, hit.seat, (player) => ({
+          ...player,
+          counters: { ...player.counters, poison: (player.counters.poison ?? 0) + toxicAmount }
+        }));
+        next = logged(next, hit.seat, `${dealer.card.name} agrega ${toxicAmount} contador(es) de veneno por tóxico.`);
+      }
       next = raiseEvent(next, {
         kind: "deals-combat-damage-to-player",
         permanentId: dealer.instance_id, controller: dealer.controller, card: dealer.card, victim: hit.seat, amount: hit.amount

@@ -5,10 +5,10 @@ The engine profile is authoritative: a card belongs here only when exactly one O
 Before editing, claim the shared template, reuse the listed fields/handlers, add a scenario with the Comprehensive Rules citation, and regenerate the export.
 
 - Scope: **catalog**
-- One-line cards: **15,108**
-- Cards with a reusable existing primitive hint: **11,373**
-- Cards needing new primitive review: **3,735**
-- Templates: **12,238**
+- One-line cards: **15,079**
+- Cards with a reusable existing primitive hint: **11,402**
+- Cards needing new primitive review: **3,677**
+- Templates: **12,261**
 
 ## Worker rule
 
@@ -320,7 +320,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Pendelhaven | `f70e72e1-9abe-485b-9fea-e8b35352f5b3` | pump | activated ability / mana | {T}: Target 1/1 creature gets +1/+2 until end of turn. |
 | reuse-existing | Timetwister | `c823e687-6311-4c99-974b-fd77d204141a` | draw | draw / discard | Each player shuffles their hand and graveyard into their library, then draws seven cards. |
 | reuse-existing | Old Man of the Sea | `cce84cf1-5574-43b0-9d75-72e6451403a7` | static-continuous | activated ability / mana | {T}: Gain control of target creature with power less than or equal to ~'s power for as long as ~ remains tapped and that creature's power remains less than or equal to ~'s power. |
-| needs-new-primitive | Plague Stinger | `047e761e-7bbe-403b-86d7-cb9fb0b20b21` | activated | new primitive review | Infect |
 | reuse-existing | Gemstone Mine | `0c828f10-4775-492f-9224-1e2814ad2cad` | counters | sacrifice | {T}, Remove a mining counter from ~: Add one mana of any color. If there are no mining counters on ~, sacrifice it. |
 | needs-new-primitive | Time Walk | `d0209d3f-3f7e-4fd5-bce5-10bce6f29c86` | activated | new primitive review | Take an extra turn after this one. |
 | needs-new-primitive | Tormented Soul | `ee334bd7-d344-4684-85c8-d0464bbaf2b4` | combat-restriction | new primitive review | ~ can't block and can't be blocked. |
@@ -373,9 +372,7 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Wall of Roots | `3a21a6ae-b2f2-4f0c-acfd-5f3e8d63fd2f` | counters | activated ability / mana | Put a -0/-1 counter on ~: Add {G}. Activate only once each turn. |
 | reuse-existing | Circle of Flame | `c31801e6-2444-4158-8e19-2afe751d7cff` | damage | damage / life | Whenever a creature without flying attacks you or a planeswalker you control, ~ deals 1 damage to that creature. |
 | reuse-existing | Squadron Hawk | `00ab9841-934f-4a66-a98d-68d01661b1c9` | library-look | trigger / ETB | When ~ enters, you may search your library for up to three cards named ~, reveal them, put them into your hand, then shuffle. |
-| needs-new-primitive | Boggart Ram-Gang | `30d2437a-87c9-4f88-8fb8-b686d6522677` | activated | new primitive review | Wither |
 | reuse-existing | Yixlid Jailer | `1f55303e-1369-4e42-9ed4-36609887c7c1` | static-continuous | static / continuous | Cards in graveyards lose all abilities. |
-| needs-new-primitive | Glistener Elf | `9d95d173-5c7f-4e0c-bcdc-9b90fcd7339b` | activated | new primitive review | Infect |
 | reuse-existing | Ghost-Lit Raider | `3d772c44-a756-406d-a83f-f671a81513b0` | damage | damage / life | Channel — {3}{R}, Discard ~: It deals 4 damage to target creature. |
 | needs-new-primitive | Blastoderm | `d6ee8bd6-0207-46ee-9892-c1d1b23b934e` | activated | new primitive review | Fading 3 |
 | reuse-existing | Electrolyze | `07b222d7-24f2-4994-9004-ff6672ebe161` | damage | damage / life | ~ deals 2 damage divided as you choose among one or two targets. |
@@ -419,7 +416,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Gerrard's Verdict | `670b5dfb-ffdf-43ed-acc3-855006e352fc` | discard | damage / life | You gain 3 life for each land card discarded this way. |
 | reuse-existing | Smother | `acdf9fb0-96eb-4520-bd4b-b6480c7c9b29` | destroy | activated ability / mana | Destroy target creature with mana value 3 or less. |
 | reuse-existing | Forked Lightning | `66107cfd-4bdb-4266-a650-940743555ea4` | damage | damage / life | ~ deals 4 damage divided as you choose among one, two, or three target creatures. |
-| needs-new-primitive | Plague Myr | `2f328e05-5edf-4b21-9c2a-50dcf1e7b3ec` | activated | new primitive review | Infect |
 | needs-new-primitive | Lord of Atlantis | `cc7f290f-ca00-4285-9bdb-4b4402444f30` | pump | new primitive review | Other Merfolk get +1/+1 and have islandwalk. |
 | reuse-existing | Goblin Guide | `51d9564b-44fc-4de1-9119-09d7b4089378` | activated | trigger / ETB | Whenever ~ attacks, defending player reveals the top card of their library. If it's a land card, that player puts it into their hand. |
 | needs-new-primitive | Deadbridge Goliath | `1498f5a1-6df7-4f80-9470-c93528b64a9c` | activated | new primitive review | Scavenge {4}{G}{G} |
@@ -475,7 +471,6 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | reuse-existing | Talruum Champion | `9352e742-9a22-4463-b41f-3117ff1540ed` | activated | trigger / ETB | Whenever ~ blocks or becomes blocked by a creature, that creature loses first strike until end of turn. |
 | needs-new-primitive | Sandbar Crocodile | `e11926bf-ca14-4e1e-aca5-9ffedb91868c` | activated | new primitive review | Phasing |
 | needs-new-primitive | Zhalfirin Knight | `a534f06e-dae4-4d1a-96e9-7693bbb21e12` | activated | new primitive review | Flanking |
-| needs-new-primitive | Phyrexian Mite | `2667d723-01c8-4ea3-ac17-cedb3b842c3b` | activated | new primitive review | Toxic 1 |
 | reuse-existing | Gwenna, Eyes of Gaea | `7d95e72a-461e-4993-a190-847466a4b17c` | counters | trigger / ETB | Whenever you cast a creature spell with power 5 or greater, put a +1/+1 counter on ~ and untap it. |
 | reuse-existing | Guardian of Faith | `8e04a5e0-e22c-430b-a39a-c9f38e16ea86` | static-continuous | trigger / ETB | When ~ enters, any number of other target creatures you control phase out. |
 | needs-new-primitive | Changeling Outcast | `a61ef0cc-1da9-49f9-b0dc-01cf9f6205be` | combat-restriction | new primitive review | ~ can't block and can't be blocked. |
@@ -518,5 +513,10 @@ Fix the shared primitive, not the first card name. Preserve type, zone, target, 
 | needs-new-primitive | Wish | `2ccbf0ee-c856-4f67-8579-811fe8571a2e` | activated | new primitive review | You may play a card you own from outside the game this turn. |
 | reuse-existing | Mishra's Bauble | `63afc3d1-7653-476e-838f-fc18d4a62a21` | sacrifice | sacrifice | {T}, Sacrifice ~: Look at the top card of target player's library. |
 | reuse-existing | Echo of Eons | `23d3e5fe-3f82-44cf-91a1-6646a12a0255` | draw | draw / discard | Each player shuffles their hand and graveyard into their library, then draws seven cards. |
+| needs-new-primitive | Ice-Fang Coatl | `f4b1bbd1-f1b2-4c7d-bafd-9d2857f92a89` | static-continuous | new primitive review | ~ has deathtouch as long as you control at least three other snow permanents. |
+| reuse-existing | Scale Up | `2fd025ef-14f5-4621-831d-dd12b7c604dd` | static-continuous | static / continuous | Until end of turn, target creature you control becomes a green Wurm with base power and toughness 6/4. |
+| reuse-existing | Tasha's Hideous Laughter | `e352f5b9-6406-4914-bc79-f24608be6bc9` | exile | activated ability / mana | Each opponent exiles cards from the top of their library until that player has exiled cards with total mana value 20 or greater. |
+| reuse-existing | Shield Broker | `481234e5-fbfd-46e8-8b9a-a4e708dd2195` | counters | trigger / ETB | When ~ enters, put a shield counter on target noncommander creature you don't control. You gain control of that creature for as long as it has a shield counter on it. |
+| reuse-existing | Rain of Riches | `ef1e2d3d-e977-4729-9430-eba6242e5dfe` | activated | activated ability / mana | The first spell you cast each turn that mana from a Treasure was spent to cast has cascade. |
 
-The JSON contains the remaining 14,608 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.
+The JSON contains the remaining 14,579 cards. Regenerate with `--markdown-max-cards 0` for a full Markdown listing.

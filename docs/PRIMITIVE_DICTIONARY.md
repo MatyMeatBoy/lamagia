@@ -2,9 +2,9 @@
 
 Generated from the current `packages/rules` parser/engine. This is a contributor index: it links common Oracle words to reusable code surfaces and does not replace the authoritative rules engine.
 
-- Generated: `2026-09-08T05:59:41.952212+00:00`
+- Generated: `2026-09-08T06:16:35.251900+00:00`
 - Scope: **catalog**
-- Exported profiles in scope: **38711**; fully implemented: **11215**
+- Exported profiles in scope: **38711**; fully implemented: **11283**
 - Source of truth: `packages/rules/src/characteristics.ts`, `packages/rules/src/engine.ts`, and the engine export.
 
 ## Workflow
@@ -281,7 +281,7 @@ Apply a continuous layer effect to the correct set of permanents without putting
 
 ## Mass review: catalog one-line queue
 
-The engine export currently marks **11215/38711** profiles complete; **15108** unfinished cards have exactly one unmatched line.
+The engine export currently marks **11283/38711** profiles complete; **15079** unfinished cards have exactly one unmatched line.
 These are generated candidates, not automatic approvals: claim the suggested cluster, inspect the exact Oracle text, add a scenario, then regenerate the export.
 
 | Suggested claim | Cards | Remaining line template |
@@ -293,7 +293,8 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `catalog-bushido` | 20 | bushido <n> — Araba Mothrider, Battle-Mad Ronin, Cursed Ronin, Devoted Retainer, Hand of Cruelty, Hand of Honor, Inner-Chamber Guard, Isao, Enlightened Bushi, Jade Avenger, Kitsune Blademaster, Kitsune Dawnblade, Konda, Lord of Eiganjo, Kuro's Taken, Mothrider Samurai, Nezumi Ronin, Numai Outcast, Ronin Cavekeeper, Ronin Houndmaster, Samurai Enforcers, Silverstorm Samurai |
 | `catalog-buyback-cost` | 19 | buyback {cost} — Allay, Capsize, Disturbed Burial, Elvish Fury, Evincar's Justice, Fanning the Flames, Haze of Rage, Innocuous Insect, Lab Rats, Mind Peel, Mystic Speculation, Recruit the Worthy, Reiterate, Searing Touch, Seething Anger, Shattering Pulse, Whispers of the Muse, Worthy Cause, Wurmcalling |
 | `catalog-can-attack-unless-defending` | 11 | ~ can't attack unless defending player controls <n> island — Armored Galleon, Deep-Sea Serpent, Ethereal Whiskergill, Hammerhead Shark, Red Cliffs Armada, Sea Monster, Slipstream Eel, Steam Frigate, Vodalian Serpent, Wu Warship, Zhou Yu, Chief Commander |
-| `catalog-can-blocked-creatures-with` | 12 | ~ can't be blocked by creatures with power <n> or less — Arlinn's Wolf, Brushfire Elemental, Cold-Blooded Crew, Demolition Stomper, Dread Linnorm // Scale Deflection, Enraged Ceratok, Giltgrove Stalker, Greater Sandwurm, Outland Boar, Rust-Shield Rampager, Steel Leaf Champion, Stormkeld Vanguard // Bear Down |
+| `catalog-can-blocked-creatures-with` | 13 | ~ can't be blocked by creatures with power <n> or less — Arlinn's Wolf, Brushfire Elemental, Cold-Blooded Crew, Demolition Stomper, Dread Linnorm // Scale Deflection, Enraged Ceratok, Giltgrove Stalker, Greater Sandwurm, Outland Boar, Paladin of Predation, Rust-Shield Rampager, Steel Leaf Champion, Stormkeld Vanguard // Bear Down |
+| `catalog-can-blocked-more-than` | 10 | ~ can't be blocked by more than <n> creature — Bristling Boar, Charging Rhino, Foot Enforcer, Huang Zhong, Shu General, Ironhoof Ox, Norwood Riders, Professional Wrestler, Stalking Tiger, Tenacious Tosk, The Tiger God |
 | `catalog-cascade` | 21 | cascade — Annoyed Altisaur, Ardent Plea, Bituminous Blast, Bloodbraid Elf, Boarding Party, Captured Sunlight, Demonic Dread, Deny Reality, Enlisted Wurm, Etherium-Horn Sorcerer, Ethersworn Sphinx, Forceful Denial, Heralds of Tzeentch, Into the Time Vortex, Kathari Remnant, Maelstrom Colossus, Meteoric Mace, Natural Reclamation, Shardless Agent, Stormcaller's Boon, Violent Outburst |
 | `catalog-convoke` | 50 | convoke — Aerial Boost, Arboretum Elemental, Artistic Refusal, Astral Wingspan, Autochthon Wurm, Chord of Calling, Collective Nightmare, Conclave Equenaut, Conclave Phalanx, Covenant of Blood, Crowd's Favor, Endless Obedience, Ephemeral Shields, Feaster of Fools, Feral Incarnation, Flight of Equenauts, Gather Courage, Guardian of Vitu-Ghazi, Halo Hopper, Impervious Greatwurm, Kavu Primarch, Ledev Guardian, Lofty Dreams, Loxodon Restorer, March of the Multitudes, Meditation Puzzle, Meeting of Minds, Merrow Skyswimmer, Mob, Nissa's Expedition, Overwhelm, Pack's Favor, Ramosian Greatsword, Rosemane Centaur, Scatter the Seeds, Seraph of the Masses, Shivan Branch-Burner, Siege Wurm, Sprouting Renewal, Stoke the Flames, Sun-Dappled Celebrant, Sundering Vitae, Thunderhead Squadron, Transcendent Message, Triplicate Spirits, Unexpected Assistance, Vote Out, Wildfire Awakener, Will-Forged Golem, Worldsoul Colossus |
 | `catalog-cost-prevent-the-next` | 17 | {cost}: prevent the next <n> damage that would be dealt to any target this turn — Alabaster Wall, Aven Redeemer, Benevolent Ancestor, Clergy en-Vec, Combat Medic, D'Avenant Healer, Femeref Healer, Kithkin Healer, Loxodon Anchorite, Master Healer, Militant Monk, Orim, Samite Healer, Samite Archer, Samite Healer, Sanctum Custodian, Serra Paladin, The Protector |
@@ -308,17 +309,17 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `catalog-fabricate` | 11 | fabricate <n> — Accomplished Automaton, Ambitious Aetherborn, Angel of Invention, Glint-Sleeve Artisan, Highspire Artisan, Iron League Steed, Maulfist Squad, Peema Outrider, Propeller Pioneer, Visionary Augmenter, Weaponcraft Enthusiast |
 | `catalog-flanking` | 11 | flanking — Benalish Cavalry, Burning Shield Askari, Cadaverous Knight, Fallen Askari, Femeref Knight, Jolrael's Centaur, Mtenda Herder, Searing Spear Askari, Shadow Rider, Suq'Ata Lancer, Zhalfirin Knight |
 | `catalog-foretell-cost` | 17 | foretell {cost} — Alrund's Epiphany, Augury Raven, Behold the Multiverse, Depart the Realm, Doomskar, Doomskar Titan, Dwarven Reinforcements, Gods' Hall Guardian, Kaya's Onslaught, Mammoth Growth, Sarulf's Packmate, Saw It Coming, Scorn Effigy, Shepherd of the Cosmos, Starnheim Unleashed, Vengeful Reaper, Warhorn Blast |
+| `catalog-fuse` | 11 | fuse — Alive // Well, Armed // Dangerous, Breaking // Entering, Down // Dirty, Far // Away, Fear (split card) // Loathing, Give // Take, Profit // Loss, Protect // Serve, Toil // Trouble, Wear // Tear |
 | `catalog-improvise` | 14 | improvise — Arc Reactor, Barricade Breaker, Bastion Inventor, Enraged Giant, Foundry Assembler, Freejam Regent, Herald of Anguish, Maverick Thopterist, Metallic Rebuke, Reverse Engineer, Sweatworks Brawler, Universal Surveillance, Whir of Invention, Wind-Kin Raiders |
-| `catalog-infect` | 33 | infect — Blackcleave Goblin, Blight Mamba, Blighted Agent, Blightwidow, Contagious Nim, Core Prowler, Cystbearer, Fallen Ferromancer, Flensermite, Flesh-Eater Imp, Glistener Elf, Insect, Lost Leonin, Necropede, Ogre Menial, Phyrexian Crusader, Phyrexian Digester, Phyrexian Insect, Phyrexian Juggernaut, Phyrexian Swarmlord, Plague Myr, Plague Stinger, Priests of Norn, Putrefax, Razor Swine, Scourge Servant, Shriek Raptor, Skithiryx, the Blight Dragon, Spinebiter, Tine Shrike, Toxic Nim, Viral Drake, Viridian Corrupter |
 | `catalog-living-weapon` | 13 | living weapon — Batterbone, Batterskull, Bitterthorn, Nissa's Animus, Colossal Dreadmask, Drossclaw, Flayer Husk, Kaldra Compleat, Mandibular Kite, Mortarpod, Necropouncer, Sickleslicer, Skinwing, Strandwalker |
 | `catalog-madness-cost` | 28 | madness {cost} — Alchemist's Greeting, Alms of the Vein, Arrogant Wurm, Biting Rain, Bloodmad Vampire, Broken Concentration, Dark Withering, Distemper of the Blood, Fiery Temper, Frantic Purification, Gisa's Bidding, Hell Mongrel, Ichor Slick, Incorrigible Youths, Insatiable Gorgers, Just the Wind, Kitchen Imp, Madlands, Obsessive Search, Psychotic Haze, Reckless Wurm, Revolutionist, Senseless Rage, Strength of Isolation, Strength of Lunacy, Terminal Agony, Twins of Maurer Estate, Weirded Vampire |
 | `catalog-megamorph-cost` | 11 | megamorph {cost} — Aerie Bowmasters, Aven Sunstriker, Dirgur Nemesis, Gudul Lurker, Marang River Skeleton, Marsh Hulk, Misthoof Kirin, Ojutai Interceptor, Sandstorm Charger, Segmented Krotiq, Stormcrag Elemental |
 | `catalog-modular` | 12 | modular <n> — Arcbound Bruiser, Arcbound Condor, Arcbound Hybrid, Arcbound Lancer, Arcbound Mouser, Arcbound Prototype, Arcbound Ravager, Arcbound Slith, Arcbound Stinger, Arcbound Whelp, Arcbound Worker, Scrapyard Recombiner |
 | `catalog-morph-cost` | 49 | morph {cost} — Abzan Guide, Ainok Tracker, Akroma, Angel of Fury, Ascending Aven, Battering Craghorn, Birchlore Rangers, Blistering Firecat, Boneknitter, Branchsnap Lorian, Canyon Lurkers, Charging Slateback, Crude Rampart, Daru Lancer, Disruptive Pitmage, Dwarven Blastminer, Fledgling Mawcor, Glacial Stalker, Gravel Slinger, Grim Haruspex, Grinning Demon, Hystrodon, Kin-Tree Warden, Krosan Cloudscraper, Krosan Colossus, Krumar Bond-Kin, Lumithread Field, Monastery Flock, Mystic of the Hidden Way, Rockshard Elemental, Sage-Eye Harrier, Sagu Archer, Sagu Mauler, Scornful Egotist, Sidisi's Pet, Snowhorn Rider, Sootfeather Flock, Spined Basher, Spitting Gourna, Titanic Bulvox, Towering Baloth, Treespring Lorian, Voidmage Prodigy, War Behemoth, Whetwheel, Whip-Spine Drake, Whipcorder, Witness of the Ages, Woolly Loxodon, Zoetic Cavern |
+| `catalog-renown` | 11 | renown <n> — Akroan Sergeant, Citadel Castellan, Firefiend Elemental, Knight of the Pilgrim's Road, Kytheon's Irregulars, Pharika's Disciple, Rhox Maulers, Stalwart Aven, Topan Freeblade, Undercity Troll, War Oracle |
 | `catalog-soulshift` | 17 | soulshift <n> — Body of Jukai, Burr Grafter, Crawling Filth, Gibbering Kami, Hundred-Talon Kami, Kami of Empty Graves, Kami of Lunacy, Kami of the Palace Fields, Kami of the Tended Garden, Nightsoil Kami, Promised Kannushi, Pus Kami, Scuttling Death, Thousand-legged Kami, Torii Watchward, Venerable Kumo, Vine Kami |
 | `catalog-splice-onto-arcane-cost` | 12 | splice onto arcane {cost} — Consuming Vortex, Dampen Thought, Desperate Ritual, Evermind, Glacial Ray, Hideous Laughter, Kodama's Might, Lifted by Clouds, Soulless Revival, Spiritual Visit, Vital Surge, Wear Away |
 | `catalog-the-beginning-each-upkeep` | 23 | at the beginning of each upkeep, if no spells were cast last turn, transform ~ — Afflicted Deserter // Werewolf Ransacker, Breakneck Rider // Neck Breaker, Convicted Killer // Branded Howler, Gatstaf Arsonists // Gatstaf Ravagers, Gatstaf Shepherd // Gatstaf Howler, Geier Reach Bandit // Vildin-Pack Alpha, Grizzled Outcasts // Krallenhorde Wantons, Hanweir Watchkeep // Bane of Hanweir, Hinterland Hermit // Hinterland Scourge, Hinterland Logger // Timber Shredder, Kruin Outlaw // Terror of Kruin Pass, Lambholt Elder // Silverpelt Werewolf, Mayor of Avabruck // Howlpack Alpha, Mondronen Shaman // Tovolar's Magehunter, Reckless Waif // Merciless Predator, Sage of Ancient Lore // Werewolf of Ancient Hunger, Scorned Villager // Moonscarred Werewolf, Solitary Hunter // One of the Pack, Tormented Pariah // Rampaging Werewolf, Ulvenwald Mystics // Ulvenwald Primordials, Village Ironsmith // Ironfang, Village Messenger // Moonrise Intruder, Villagers of Estwald // Howlpack of Estwald |
-| `catalog-toxic` | 19 | toxic <n> — Bilious Skulldweller, Blightbelly Rat, Bloated Contaminator, Branchblight Stalker, Crawling Chorus, Dune Mover, Ichorspit Basilisk, Jawbone Duelist, Myr Convert, Pestilent Syphoner, Phyrexian Beast, Phyrexian Mite, Phyrexian Wurm, Ribskiff, Sheoldred's Headcleaver, Stinging Hivemaster, Tainted Observer, Tyrranax Atrocity, Venomous Brutalizer |
 | `unclaimed` | 1 | +<n>/+<n> counters give −<n>/−<n> and −<n>/−<n> counters give +<n>/+<n> — Uh, Squen & Cragg Made a Card |
 | `unclaimed` | 1 | +<n>: elementals you control get +<n>/+<n> until end of turn — Chandra, Novice Pyromancer |
 | `unclaimed` | 1 | +<n>: until your next turn, whenever <n> creature deals combat damage to vraska, destroy that creature — Vraska the Unseen |
@@ -1412,7 +1413,8 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | at the beginning of your upkeep, put <n> +<n>/+<n> counter on ~, then sacrifice ~ unless you pay {cost} for each +<n>/+<n> counter on it — Phantasmal Sphere |
 | `unclaimed` | 1 | at the beginning of your upkeep, put <n> +<n>/+<n> counter on ~. then you may pay {cost}, where <n> is the number of +<n>/+<n> counters on it. if you don't, tap ~ and it deals <n> damage to you — Primordial Ooze |
 | `unclaimed` | 1 | at the beginning of your upkeep, put <n> +<n>/+<n> counters on target creature you control and <n> +<n>/+<n> counters on target creature <n> opponent controls — Evolutionary Escalation |
-| `unclaimed` | 1 | at the beginning of your upkeep, put <n> -<n>/-<n> counter on enchanted creature — Biting Tether |
+| `unclaimed` | 1 | at the beginning of your upkeep, put <n> -<n>/-<n> counter on each nonblack creature — Midnight Banshee |
+| `unclaimed` | 2 | at the beginning of your upkeep, put <n> -<n>/-<n> counter on enchanted creature — Biting Tether, Glistening Oil |
 | `unclaimed` | 1 | at the beginning of your upkeep, put <n> descent counters on ~. then each player creates <n> treasure tokens and ~ deals <n> damage to each player, where <n> is the number of descent counters on ~ — Descent into Avernus |
 | `unclaimed` | 1 | at the beginning of your upkeep, put <n> despair counter on ~, then each player exiles <n> permanents they control and/or cards from their hand, where <n> is the number of despair counters on ~ — Descent into Madness |
 | `unclaimed` | 1 | at the beginning of your upkeep, put <n> devotion counter on ~. then if <n> creature named <n>-and-<n>-half-tails is on the battlefield, you gain <n> life for each devotion counter on ~ — Pious Kitsune |
@@ -1500,6 +1502,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | at the beginning of your upkeep, you draw <n> cards and you lose <n> life, where <n> is the number of zombies you control — Graveborn Muse |
 | `unclaimed` | 1 | at the beginning of your upkeep, you gain <n> life for each card in your hand — Venser's Journal |
 | `unclaimed` | 1 | at the beginning of your upkeep, you gain <n> life, where <n> is the number of cards in your hand minus <n> — Ivory Tower |
+| `unclaimed` | 1 | at the beginning of your upkeep, you get <n> poison counter — Phyrexian Vatmother |
 | `unclaimed` | 1 | at the beginning of your upkeep, you lose <n> life and create <n> <n>/<n> black faerie rogue creature token with flying — Bitterblossom |
 | `unclaimed` | 1 | at the beginning of your upkeep, you lose <n> life and create <n> <n>/<n> blue and black faerie creature token with flying — Bitterbloom Bearer |
 | `unclaimed` | 1 | at the beginning of your upkeep, you lose <n> life and draw <n> card. then, double the amount of life you lose and cards you draw for the rest of the game from this ability — The Keeper of Dark Pacts |
@@ -2099,6 +2102,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | creatures you control with flying have <name> — Jubilant Skybonder |
 | `unclaimed` | 1 | creatures you control with no abilities can't be blocked by creatures with abilities — Jasmine Boreal of the Seven |
 | `unclaimed` | 1 | creatures you control with power or toughness <n> or less can't be blocked — Tetsuko Umezawa, Fugitive |
+| `unclaimed` | 1 | creatures you control with toxic lose toxic and gain infect — Old Way Phyrexian |
 | `unclaimed` | 1 | creatures you control with trample have <name> — Proud Wildbonder |
 | `unclaimed` | 1 | creatures you control with vigilance have <name> — Frondland Felidar |
 | `unclaimed` | 1 | creatures your opponents control attack each combat if able — Angler Turtle |
@@ -2114,6 +2118,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | creatures your opponents control lose flying until end of turn if {cost} was spent to cast ~, and creatures you control gain flying until end of turn if {cost} was spent to cast ~ — Invert the Skies |
 | `unclaimed` | 1 | creatures your opponents control lose hexproof and can't have or gain hexproof — Archetype of Endurance |
 | `unclaimed` | 1 | creatures your opponents control lose trample and can't have or gain trample — Archetype of Aggression |
+| `unclaimed` | 1 | creatures your opponents control with counters on them can't attack or block — Kulrath Knight |
 | `unclaimed` | 1 | crushing teeth - whenever ~ deals combat damage to <n> player, put <n> +<n>/+<n> counter on each other creature you control — Thunderwolf Cavalry |
 | `unclaimed` | 1 | cumulative upkeep {cost} or {cost} — Jötun Owl Keeper |
 | `unclaimed` | 1 | cumulative upkeep-<n> opponent gains <n> life — Wall of Shards |
@@ -2515,7 +2520,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | during your turn, spells you cast cost {cost} less to cast for each creature you control with power <n> or greater — Temur Battlecrier |
 | `unclaimed` | 4 | during your turn, ~ gets +<n>/+<n> — Dapper Shieldmate, Hardy Veteran, Sporeback Wolf, Wildwood Geist |
 | `unclaimed` | 1 | during your turn, ~ gets +<n>/+<n> and has first strike — Prickleboar |
-| `unclaimed` | 9 | during your turn, ~ has first strike — Ahn-Crop Invader, Bearer of Glory, Feisty Spikeling, Fresh-Faced Recruit, Null Group Biological Assets, Pouncing Lynx, Ratcatcher Trainee // Pest Problem, Spartan Veteran, Spiteful Prankster |
+| `unclaimed` | 10 | during your turn, ~ has first strike — Ahn-Crop Invader, Bearer of Glory, Duelist of Deep Faith, Feisty Spikeling, Fresh-Faced Recruit, Null Group Biological Assets, Pouncing Lynx, Ratcatcher Trainee // Pest Problem, Spartan Veteran, Spiteful Prankster |
 | `unclaimed` | 5 | during your turn, ~ has flying — Daggersail Aeronaut, Hookblade Veteran, Shuttle Ace, Spider-Girl, Legacy Hero, Sun-Spider, Nimble Webber |
 | `unclaimed` | 1 | during your turn, ~ has indestructible — Colossus, Steel Stalwart |
 | `unclaimed` | 2 | during your turn, ~ has lifelink — Blood Burglar, Leech Fanatic |
@@ -2822,7 +2827,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | enchanted creature has first strike as long as you control <n> white or black permanent — Mardu Runemark |
 | `unclaimed` | 1 | enchanted creature has flying as long as you control <n> red or white permanent — Jeskai Runemark |
 | `unclaimed` | 1 | enchanted creature has forestwalk — Dryad's Favor |
-| `unclaimed` | 2 | enchanted creature has infect — Corrupted Conscience, Phyresis |
 | `unclaimed` | 1 | enchanted creature has intimidate as long as its controller controls no other creatures — Predator's Gambit |
 | `unclaimed` | 1 | enchanted creature has islandwalk — Fishliver Oil |
 | `unclaimed` | 1 | enchanted creature has mountainwalk — Burrowing |
@@ -3176,7 +3180,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 6 | freerunning {cost} — Achilles Davenport, Brotherhood Ambushers, Distract the Guards, Eagle Vision, Merciless Harlequin, Restart Sequence |
 | `unclaimed` | 1 | freerunning-return <n> blue creature you control to its owner's hand — Escape Detection |
 | `unclaimed` | 1 | from downtown - if <n> source you control would deal exactly <n> damage to <n> permanent or player, it deals <n> damage instead — Mijo, the Bull |
-| `unclaimed` | 11 | fuse — Alive // Well, Armed // Dangerous, Breaking // Entering, Down // Dirty, Far // Away, Fear (split card) // Loathing, Give // Take, Profit // Loss, Protect // Serve, Toil // Trouble, Wear // Tear |
 | `unclaimed` | 1 | g — Ramp |
 | `unclaimed` | 1 | gain control of <n> target creatures and/or planeswalkers — Mass Manipulation |
 | `unclaimed` | 1 | gain control of all auras and equipment that were attached to it, then attach them to another creature — Fumble |
@@ -3637,7 +3640,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | if ~ was kicked, you may put <n> land card from your hand onto the battlefield — Joint Exploration |
 | `unclaimed` | 1 | if ~ was kicked, zombie creatures you control get <n> additional +<n>/+<n> until end of turn — Strength of Night |
 | `unclaimed` | 1 | if ~ was kicked, ~ deals damage equal to that creature's power to the creature's controller — Agonizing Demise |
-| `unclaimed` | 3 | if ~ would be put into <n> graveyard from anywhere, reveal ~ and shuffle it into its owner's library instead — Darksteel Colossus, Darksteel Colossus // Darksteel Colossus, Legacy Weapon |
+| `unclaimed` | 5 | if ~ would be put into <n> graveyard from anywhere, reveal ~ and shuffle it into its owner's library instead — Blightsteel Colossus, Blightsteel Colossus // Blightsteel Colossus, Darksteel Colossus, Darksteel Colossus // Darksteel Colossus, Legacy Weapon |
 | `unclaimed` | 1 | if ~ would deal combat damage to <n> player, instead put that many +<n>/+<n> counters on ~ and that player mills that many cards — Szadek, Lord of Secrets |
 | `unclaimed` | 1 | if ~ would deal combat damage to <n> player, it deals double that damage to that player instead — Charging Tuskodon |
 | `unclaimed` | 1 | if ~ would deal damage to <n> creature, that damage can't be prevented or dealt instead to another permanent or player — Lava Burst |
@@ -4195,7 +4198,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | proliferate <n> times — Expansion Algorithm |
 | `unclaimed` | 1 | proliferatelink — Phyrexian Seedling |
 | `unclaimed` | 1 | protection fighting style - when ~ enters, exile up to <n> target non-warrior creature you control, then return it to the battlefield under its owner's control — Icewind Stalwart |
-| `unclaimed` | 6 | protection from artifacts — Nacatl Savage, Needlebug, Tel-Jilad Archers, Tel-Jilad Chosen, Tel-Jilad Outrider, Yavimaya Scion |
+| `unclaimed` | 7 | protection from artifacts — Nacatl Savage, Needlebug, Tel-Jilad Archers, Tel-Jilad Chosen, Tel-Jilad Fallen, Tel-Jilad Outrider, Yavimaya Scion |
 | `unclaimed` | 1 | protection from blue, from black, and from red — Oversoul of Dusk |
 | `unclaimed` | 1 | protection from creatures — Beloved Chaplain |
 | `unclaimed` | 1 | protection from elves — Nath's Buffoon |
@@ -4389,7 +4392,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | remove <n> spore counters from ~: prevent all combat damage that would be dealt this turn — Spore Flower |
 | `unclaimed` | 1 | remove up to <n> counters from target artifact, creature, planeswalker, or opponent — Price of Betrayal |
 | `unclaimed` | 1 | remove up to <n> counters from target permanent — Render Inert |
-| `unclaimed` | 11 | renown <n> — Akroan Sergeant, Citadel Castellan, Firefiend Elemental, Knight of the Pilgrim's Road, Kytheon's Irregulars, Pharika's Disciple, Rhox Maulers, Stalwart Aven, Topan Freeblade, Undercity Troll, War Oracle |
 | `unclaimed` | 1 | repair barge - whenever ~ becomes crewed, each artifact creature card in your graveyard gains unearth {cost} until end of turn — Ghost Ark |
 | `unclaimed` | 1 | repartee - whenever you cast <n> instant or sorcery spell that targets <n> creature, conjure <n> card named ~ into your hand — Glorifying Verse |
 | `unclaimed` | 1 | repartee - whenever you cast <n> instant or sorcery spell that targets <n> creature, create <n> <n>/<n> white and black inkling creature token with flying — Informed Inkwright |
@@ -5241,6 +5243,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | tragic backstory - cast ~ only if <n> creature died this turn — Grim Wanderer |
 | `unclaimed` | 5 | training — Apprentice Sharpshooter, Gryff Rider, Human Soldier, Rural Recruit, Torens, Fist of the Angels |
 | `unclaimed` | 1 | trample, ward {cost} — Koma, World-Eater |
+| `unclaimed` | 1 | trample, ward {cost}, haste — Tyrranax Rex |
 | `unclaimed` | 2 | trample; banding — Noble Elephant, War Elephant |
 | `unclaimed` | 1 | trample; haste; shroud — Giant Solifuge |
 | `unclaimed` | 1 | transfigure {cost} — Fleshwrither |
@@ -5686,6 +5689,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when you gain life for the first time each turn, return ~ from your graveyard to your hand — Deathless Knight |
 | `unclaimed` | 1 | when you have <n> or less life, if ~ is <n> enchantment, it becomes <n> <n>/<n> soldier creature — Opal Avenger |
 | `unclaimed` | 1 | when you have <n> or more life, flip ~ — Rune-Tail, Kitsune Ascendant // Rune-Tail's Essence |
+| `unclaimed` | 1 | when you proliferate, return ~ from your graveyard to your hand — Voidwing Hybrid |
 | `unclaimed` | 1 | when you roll <n> natural <n>, return ~ from your graveyard to your hand — Critical Hit |
 | `unclaimed` | 1 | when you sacrifice <n> clue, return ~ from your graveyard to your hand — Curious Cadaver |
 | `unclaimed` | 1 | when you sacrifice <n> clue, transform ~ — Daring Sleuth // Bearer of Overwhelming Truths |
@@ -5876,6 +5880,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ dies, put <n> +<n>/+<n> counter on target knight you control — Venerable Knight |
 | `unclaimed` | 1 | when ~ dies, put <n> +<n>/+<n> counters on each legendary creature you control, where <n> is the number of +<n>/+<n> counters on ~ — Aerith Gainsborough |
 | `unclaimed` | 1 | when ~ dies, put <n> +<n>/+<n> counters on target creature you control, where <n> is the number of +<n>/+<n> counters on ~ — Servant of the Scale |
+| `unclaimed` | 1 | when ~ dies, put <n> -<n>/-<n> counter on each creature with <n> -<n>/-<n> counter on it — Lockjaw Snapper |
 | `unclaimed` | 1 | when ~ dies, put <n> -<n>/-<n> counter on target creature for each -<n>/-<n> counter on ~ — Grief Tyrant |
 | `unclaimed` | 1 | when ~ dies, put <n> -<n>/-<n> counter on up to <n> target creature — Bile-Vial Boggart |
 | `unclaimed` | 1 | when ~ dies, put <n> flying counter on target creature you control — Recycla-bird |
@@ -6093,6 +6098,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, another target creature you control gains hexproof until end of turn — Void Grafter |
 | `unclaimed` | 1 | when ~ enters, another target creature you control gains lifelink until end of turn — Scourge of the Undercity |
 | `unclaimed` | 1 | when ~ enters, another target creature you control gets +<n>/+<n> and gains flying until end of turn — Imperial Aerosaur |
+| `unclaimed` | 1 | when ~ enters, another target creature you control with toxic gets +<n>/+<n> and gains flying until end of turn — Flensing Raptor |
 | `unclaimed` | 1 | when ~ enters, another target human you control gets +<n>/+<n> until end of turn — Intrepid Provisioner |
 | `unclaimed` | 1 | when ~ enters, another target knight you control gets +<n>/+<n> and gains trample and haste until end of turn — Burning-Yard Trainer |
 | `unclaimed` | 2 | when ~ enters, another target permanent gains indestructible for as long as you control ~ — Aegis Angel, Kyodai, Soul of Kamigawa |
@@ -6199,6 +6205,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, create ~ twin, <n> legendary <n>/<n> red and green human warrior creature token. exile that token when ~ leaves the battlefield. sacrifice ~ when that token leaves the battlefield — Stangg |
 | `unclaimed` | 1 | when ~ enters, creatures target player controls get +<n>/+<n> until end of turn. untap them — Great Oak Guardian |
 | `unclaimed` | 1 | when ~ enters, creatures without flying can't block this turn — Seismic Elemental |
+| `unclaimed` | 1 | when ~ enters, creatures you control and creature cards in your hand perpetually gain "when ~ dies, create <n> <n>/<n> colorless phyrexian mite artifact creature token with toxic <n> and '~ can't block.'" — Seething Skitter-Priest |
 | `unclaimed` | 1 | when ~ enters, creatures you control gain flying and get +<n>/+<n> until end of turn, where <n> is the number of creatures you control — Moonshaker Cavalry |
 | `unclaimed` | 1 | when ~ enters, creatures you control gain trample and get +<n>/+<n> until end of turn, where <n> is the number of artifacts you control — Craterclaw Colossus |
 | `unclaimed` | 1 | when ~ enters, creatures you control get +<n>/+<n> until end of turn. kithkin creatures you control also gain first strike until end of turn — Gallant Fowlknight |
@@ -6316,6 +6323,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 3 | when ~ enters, each player discards <n> card — Earsplitting Rats, Miasmic Mummy, Sibsig Icebreakers |
 | `unclaimed` | 1 | when ~ enters, each player discards <n> card. if you discarded <n> card this way, draw <n> card — Fanatic of the Harrowing |
 | `unclaimed` | 1 | when ~ enters, each player draws <n> cards, then discards <n> card at random — Noggle Ransacker |
+| `unclaimed` | 1 | when ~ enters, each player gets <n> poison counter — Ichor Rats |
 | `unclaimed` | 1 | when ~ enters, each player loses <n> third of their life, rounded up — Dire Fleet Ravager |
 | `unclaimed` | 1 | when ~ enters, each player may discard <n> card. each player who discarded <n> card this way may search their library for <n> basic land card, reveal it, put it into their hand, then shuffle — Borderland Explorer |
 | `unclaimed` | 1 | when ~ enters, each player may scry <n> — Eager Construct |
@@ -6361,6 +6369,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, exile each opponent's graveyard. create <n> lander token — Dauntless Scrapbot |
 | `unclaimed` | 1 | when ~ enters, exile it unless you sacrifice another creature — Demonlord of Ashmouth |
 | `unclaimed` | 2 | when ~ enters, exile target artifact or creature <n> opponent controls until ~ leaves the battlefield — Detention Chariot, Thopter Arrest |
+| `unclaimed` | 1 | when ~ enters, exile target artifact or creature <n> opponent controls with mana value <n> or less until ~ leaves the battlefield — Annex Sentry |
 | `unclaimed` | 1 | when ~ enters, exile target artifact, creature, or enchantment <n> opponent controls until ~ leaves the battlefield — Trapped in the Screen |
 | `unclaimed` | 1 | when ~ enters, exile target black permanent — Devout Lightcaster |
 | `unclaimed` | 2 | when ~ enters, exile target card from <n> opponent's graveyard — Disposal Mummy, Scavenging Harpy |
@@ -6783,7 +6792,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, return target creature card of <n> opponent's choice from your graveyard to your hand — Mausoleum Turnkey |
 | `unclaimed` | 1 | when ~ enters, return target creature card with mana value <n> or less from your graveyard to the battlefield and attach ~ to it — Pre-War Formalwear |
 | `unclaimed` | 1 | when ~ enters, return target creature card with mana value <n> or less from your graveyard to the battlefield. that creature can't attack or block for as long as you control ~ — Extraction Specialist |
-| `unclaimed` | 1 | when ~ enters, return target creature card with mana value <n> or less from your graveyard to your hand — Pillardrop Rescuer |
+| `unclaimed` | 2 | when ~ enters, return target creature card with mana value <n> or less from your graveyard to your hand — Nimraiser Paladin, Pillardrop Rescuer |
 | `unclaimed` | 1 | when ~ enters, return target creature card with mana value <n> or less from your graveyard to your hand. if you gained life this turn, return that card to the battlefield instead — Doctor Jane Foster |
 | `unclaimed` | 1 | when ~ enters, return target creature or vehicle <n> opponent controls to its owner's hand. if that opponent's speed is greater than each other player's speed, reduce that opponent's speed by <n>. this effect can't reduce their speed below <n> — Spikeshell Harrier |
 | `unclaimed` | 1 | when ~ enters, return target host card or card with augment from your graveyard to your hand — Labro Bot |
@@ -7068,6 +7077,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, until end of turn, whenever another creature dies, ~ deals <n> damage to each non-wall creature — Electric Seaweed |
 | `unclaimed` | 1 | when ~ enters, until your next turn, creatures can't attack you or planeswalkers you control unless their controller pays {cost} for each of those creatures — Forbidding Spirit |
 | `unclaimed` | 1 | when ~ enters, up to <n> other target creature loses all abilities. put <n> flying counter, <n> first strike counter, and <n> lifelink counter on that creature — Abigale, Eloquent First-Year |
+| `unclaimed` | 1 | when ~ enters, up to <n> target artifact you control becomes <n> artifact creature with base power and toughness <n>/<n> for as long as ~ remains on the battlefield — Unctus's Retrofitter |
 | `unclaimed` | 1 | when ~ enters, up to <n> target creature <n> opponent controls gets -<n>/-<n> until end of turn — Nebelgast Intruder |
 | `unclaimed` | 1 | when ~ enters, up to <n> target creature gets -<n>/-<n> until end of turn, where <n> is the amount of life you gained this turn — Gumdrop Poisoner // Tempt with Treats |
 | `unclaimed` | 1 | when ~ enters, up to <n> target creature gets -<n>/-<n> until end of turn. its controller mills <n> cards — Zulaport Duelist |
@@ -7217,6 +7227,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, you may return <n> land you control to its owner's hand. when you do, ~ deals <n> damage to each opponent — Pyroclastic Hellion |
 | `unclaimed` | 1 | when ~ enters, you may return another creature you control to its owner's hand — Loyal Gryff |
 | `unclaimed` | 2 | when ~ enters, you may return another permanent you control to its owner's hand — Ambrosia Whiteheart, Aviary Mechanic |
+| `unclaimed` | 1 | when ~ enters, you may return another permanent you control to its owner's hand. if you do, create <n> <n>/<n> colorless phyrexian mite artifact creature token with toxic <n> and <name> — Indoctrination Attendant |
 | `unclaimed` | 2 | when ~ enters, you may return another target creature you control to its owner's hand — Deputy of Acquittals, Jeskai Barricade |
 | `unclaimed` | 1 | when ~ enters, you may return another target historic permanent you control to its owner's hand — Guardians of Koilos |
 | `unclaimed` | 1 | when ~ enters, you may return another target nonland permanent you control to its owner's hand. if you do, scry <n> — Stockpiling Celebrant |
@@ -7226,6 +7237,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | when ~ enters, you may return target card with awaken from your graveyard to your hand — Halimar Tidecaller |
 | `unclaimed` | 1 | when ~ enters, you may return target creature <n> opponent controls to its owner's hand — Riddlemaster Sphinx |
 | `unclaimed` | 1 | when ~ enters, you may return target creature <n> opponent controls with mana value <n> or less to its owners hand, where <n> is your devotion to jeskai — Devoted Jeskai |
+| `unclaimed` | 1 | when ~ enters, you may return target creature card with infect from your graveyard to your hand — Corpse Cur |
 | `unclaimed` | 1 | when ~ enters, you may return target creature card with mana value <n> or less from your graveyard to your hand — Midnight Scavengers |
 | `unclaimed` | 1 | when ~ enters, you may return target creature or enchantment card from your graveyard to your hand — Pharika's Mender |
 | `unclaimed` | 1 | when ~ enters, you may return target equipment card from your graveyard to the battlefield. if you do, you may attach it to ~ — Auriok Survivors |
@@ -7426,6 +7438,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 2 | whenever <n> creature <n> opponent controls enters, you may have that player lose <n> life — Blood Seeker, Suture Priest |
 | `unclaimed` | 1 | whenever <n> creature <n> opponent controls is dealt damage, put <n> +<n>/+<n> counter on ~ — Kazarov, Sengir Pureblood |
 | `unclaimed` | 1 | whenever <n> creature <n> opponent controls is dealt excess noncombat damage, amass orcs <n>, where <n> is that excess damage — Fall of Cair Andros |
+| `unclaimed` | 1 | whenever <n> creature <n> opponent controls with <n> -<n>/-<n> counter on it dies, you may return that card to the battlefield under your control — Necroskitter |
 | `unclaimed` | 1 | whenever <n> creature <n> opponent controls with the greatest power among creatures that player controls dies, draw <n> card and put <n> +<n>/+<n> counter on ~ — Kraven the Hunter |
 | `unclaimed` | 1 | whenever <n> creature attacks or blocks, ~ deals <n> damage to it — Powerstone Minefield |
 | `unclaimed` | 1 | whenever <n> creature attacks this turn, it gets +<n>/+<n> until end of turn for each creature card put into your graveyard this way — Song of Blood |
@@ -7459,6 +7472,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 7 | whenever <n> creature dealt damage by ~ this turn dies, put <n> +<n>/+<n> counter on ~ — Baron Sengir, Blood Cultist, Garza Zol, Plague Queen, Predator Ooze, Sengir Bats, Sengir Vampire, Vampiric Dragon |
 | `unclaimed` | 1 | whenever <n> creature dealt damage by ~ this turn dies, you gain <n> life and ~ deals <n> damage to target player or planeswalker — Axelrod Gunnarson |
 | `unclaimed` | 1 | whenever <n> creature dealt damage by ~ this turn dies, you gain life equal to that creature's toughness — Abattoir Ghoul |
+| `unclaimed` | 1 | whenever <n> creature dealt damage by ~ this turn dies, you may draw <n> card — Rot Wolf |
 | `unclaimed` | 1 | whenever <n> creature dies or <n> creature card is put into <n> graveyard from <n> library, each opponent loses <n> life — Dreadhound |
 | `unclaimed` | 1 | whenever <n> creature dies this turn, you gain <n> life — Death Frenzy |
 | `unclaimed` | 1 | whenever <n> creature dies, if <n> aura you controlled was attached to it, return target creature card with mana value <n> or less from your graveyard to your hand — Dawn Evangel |
@@ -7545,6 +7559,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever <n> creature you control becomes the target of <n> instant or sorcery spell, that creature gets +<n>/+<n> until end of turn — Wild Defiance |
 | `unclaimed` | 1 | whenever <n> creature you control becomes the target of <n> spell or ability <n> opponent controls, put <n> +<n>/+<n> counter on target creature you control other than that creature — Pawpatch Recruit |
 | `unclaimed` | 1 | whenever <n> creature you control becomes the target of <n> spell or ability <n> opponent controls, you may draw <n> card — Shapers' Sanctuary |
+| `unclaimed` | 1 | whenever <n> creature you control becomes the target of <n> spell, target opponent gets <n> poison counter — Venerated Rotpriest |
 | `unclaimed` | 1 | whenever <n> creature you control becomes the target of <n> spell, ~ fights up to <n> target creature you don't control — Gargos, Vicious Watcher |
 | `unclaimed` | 1 | whenever <n> creature you control blocks, you gain <n> life — Noble Stand |
 | `unclaimed` | 1 | whenever <n> creature you control connives, put <n> +<n>/+<n> counter on each villain you control — Iron Monger, Sadistic Tycoon |
@@ -8047,6 +8062,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever <n> source <n> opponent controls deals damage to you, you may put that many +<n>/+<n> counters on ~ — Retaliator Griffin |
 | `unclaimed` | 1 | whenever <n> source deals damage to ~, create <n> <n>/<n> black phyrexian zombie creature token — Nested Ghoul |
 | `unclaimed` | 1 | whenever <n> source deals damage to ~, that source's controller gains control of ~ — Crag Saurian |
+| `unclaimed` | 1 | whenever <n> source deals damage to ~, that source's controller gets <n> poison counter — Reaper of Sheoldred |
 | `unclaimed` | 1 | whenever <n> source deals damage to ~, that source's controller mills that many cards — Belltower Sphinx |
 | `unclaimed` | 1 | whenever <n> source deals damage to ~, that source's controller sacrifices that many permanents of their choice — Phyrexian Obliterator |
 | `unclaimed` | 1 | whenever <n> source you control deals <n> or more damage to <n> player, draw <n> card — Dragonborn Champion |
@@ -8140,6 +8156,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever another creature you control with flying dies, put <n> +<n>/+<n> counter on target creature you control — Shadewing Laureate |
 | `unclaimed` | 1 | whenever another creature you control with power <n> or less enters, put <n> +<n>/+<n> counters on that creature — Serra Redeemer |
 | `unclaimed` | 1 | whenever another creature you control with power <n> or less enters, target creature you control gets +<n>/+<n> until end of turn — Neighborhood Guardian |
+| `unclaimed` | 1 | whenever another creature you control with toxic attacks, it gets +<n>/+<n> until end of turn — Slaughter Singer |
 | `unclaimed` | 1 | whenever another detective you control enters and whenever <n> detective you control is turned face up, ~ gets +<n>/+<n> until end of turn — Perimeter Enforcer |
 | `unclaimed` | 1 | whenever another dinosaur you control enters, you may have ~'s base power become equal to that creature's power until end of turn — Belligerent Yearling |
 | `unclaimed` | 1 | whenever another elf enters, put <n> +<n>/+<n> counter on ~ — Elvish Vanguard |
@@ -8489,6 +8506,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell that targets only ~, copy that spell for each other creature you control that the spell could target. each copy targets <n> different <n> of those creatures — Zada, Hedron Grinder |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell that targets only ~, if you control <n> or more other creatures that spell could target, choose <n> of those creatures. copy that spell. the copy targets the chosen creature — Beamsplitter Mage |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell that targets only ~, you may pay {cost}. if you do, copy that spell. you may choose new targets for the copy — Reflective Golem |
+| `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell with <n> single target, you may copy it. if you do, those spells gain wither. you may choose new targets for the copy — Spinerock Tyrant |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, copy it for each other instant and sorcery spell you've cast before it this turn. you may choose new targets for the copies — Thousand-Year Storm |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, copy it. you may choose new targets for the copy — Will Kenrith Emblem |
 | `unclaimed` | 1 | whenever you cast <n> instant or sorcery spell, create <n> <n>/<n> blue and red elemental creature token. if that spell's mana value is <n> or greater, create <n> of those tokens instead — Prismari Pianist |
@@ -9158,6 +9176,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ attacks, if defending player controls no glimmer creatures, it gains menace and deathtouch until end of turn — Fear of the Dark |
 | `unclaimed` | 1 | whenever ~ attacks, if defending player has <n> or fewer cards in hand, it gains flying until end of turn — Reaper of Night // Harvest Fear |
 | `unclaimed` | 1 | whenever ~ attacks, if defending player has more cards in hand than you, exile the top card of their library. during any turn you attacked with <n> rogue, you may cast that card and you may spend mana as though it were mana of any color to cast that spell — Robber of the Rich |
+| `unclaimed` | 1 | whenever ~ attacks, if defending player is poisoned, it gets +<n>/+<n> until end of turn — Septic Rats |
 | `unclaimed` | 1 | whenever ~ attacks, if he's equipped, each opponent loses <n> life and you gain <n> life, where <n> is the number of equipment attached to him — Whiplash, Vengeful Engineer |
 | `unclaimed` | 1 | whenever ~ attacks, if it's enchanted, exile target permanent — Krond the Dawn-Clad |
 | `unclaimed` | 1 | whenever ~ attacks, if it's modified, you may have it deal damage equal to its power to you and any target — Ian the Reckless |
@@ -9469,7 +9488,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ becomes blocked, it deals <n> damage to target creature blocking it — Goblin Javelineer |
 | `unclaimed` | 1 | whenever ~ becomes blocked, it deals <n> damage to the player or planeswalker it's attacking — Rakdos Roustabout |
 | `unclaimed` | 1 | whenever ~ becomes blocked, it gets +<n>/+<n> and gains trample until end of turn — Dwarven Berserker |
-| `unclaimed` | 7 | whenever ~ becomes blocked, it gets +<n>/+<n> until end of turn — Deeproot Warrior, Deepwood Wolverine, Norwood Warrior, Razorclaw Bear, Slashing Tiger, Snorting Gahr, Trained Cheetah |
+| `unclaimed` | 8 | whenever ~ becomes blocked, it gets +<n>/+<n> until end of turn — Deeproot Warrior, Deepwood Wolverine, Ichorclaw Myr, Norwood Warrior, Razorclaw Bear, Slashing Tiger, Snorting Gahr, Trained Cheetah |
 | `unclaimed` | 4 | whenever ~ becomes blocked, it gets +<n>/+<n> until end of turn for each creature blocking it — Elvish Berserker, Gang of Elk, Rabid Elephant, Sparring Golem |
 | `unclaimed` | 2 | whenever ~ becomes blocked, it gets -<n>/-<n> until end of turn for each creature blocking it beyond the first — Johtull Wurm, Jungle Wurm |
 | `unclaimed` | 1 | whenever ~ becomes blocked, prevent all combat damage that would be dealt by it this turn — Ignoble Soldier |
@@ -9555,7 +9574,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 3 | whenever ~ blocks or becomes blocked, it gets +<n>/+<n> until end of turn — Chub Toad, Escaped Null, Jukai Trainee |
 | `unclaimed` | 2 | whenever ~ blocks or becomes blocked, it gets +<n>/-<n> until end of turn — Dromosaur, Raging Gorilla |
 | `unclaimed` | 2 | whenever ~ blocks or becomes blocked, it gets -<n>/+<n> until end of turn — Brushwagg, Karn, Silver Golem |
-| `unclaimed` | 1 | whenever ~ blocks or becomes blocked, it gets -<n>/-<n> until end of turn — Goblin Elite Infantry |
+| `unclaimed` | 2 | whenever ~ blocks or becomes blocked, it gets -<n>/-<n> until end of turn — Goblin Elite Infantry, Slinking Giant |
 | `unclaimed` | 1 | whenever ~ blocks or becomes blocked, target opponent gains control of it — Goblin Cadets |
 | `unclaimed` | 1 | whenever ~ blocks or becomes blocked, you may pay {cost}. if you do, ~ gains first strike until end of turn. otherwise, each creature blocking or blocked by ~ gains first strike until end of turn — Spitting Slug |
 | `unclaimed` | 1 | whenever ~ blocks, flip <n> coin. if you lose the flip, remove ~ from combat and it can't block this turn. creatures it was blocking that had become blocked by only ~ this combat become unblocked — Ydwen Efreet |
@@ -9591,7 +9610,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player or planeswalker, you may discard any number of cards. if you do, draw that many cards and add that much {cost}. until end of turn, you don't lose this mana as steps and phases end — Neheb, Dreadhorde Champion |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player who doesn't have <n> contract counter, they may discard their hand. if they do, they draw <n> cards and get <n> contract counter. for as long as they have <n> contract counter, when they lose the game, for each artifact and creature they controlled, create <n> token that's <n> copy of it — Miss Highwater |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player who is afraid of you, that player discards <n> card and you draw <n> card — Creepy Crawler |
-| `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, <n> random nonland card in that player's hand perpetually gains <name> — Wagon Wrecker |
+| `unclaimed` | 2 | whenever ~ deals combat damage to <n> player, <n> random nonland card in that player's hand perpetually gains <name> — Skullpiercer Gnat, Wagon Wrecker |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, add that much mana of any <n> color. until end of turn, you don't lose this mana as steps and phases end — Photon, Mighty Marvel |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, any number of target players each mill that many cards. then you may collect evidence <n>. when you do, you may cast target nonland card from defending player's graveyard without paying its mana cost — Memory Vampire |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, as you cast spells from your hand this turn, they gain cascade — Yidris, Maelstrom Wielder |
@@ -9638,6 +9657,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, if you control <n> swamp, you may have that player discard <n> card — Slavering Nulls |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, if you control no other creatures, look at the top <n> cards of your library. put <n> of them into your hand and the rest on the bottom of your library in any order — Lone Revenant |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, if you've committed <n> crime this turn, you may sacrifice ~. if you do, search your library for <n> card, put it into your hand, then shuffle — Servant of the Stinger |
+| `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, insects you control and insect cards in your graveyard, hand, and library perpetually gain toxic <n> — Phyresis Roach |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, it assembles <n> contraption — Overt Operative |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, it deals <n> damage to each creature that player controls — Shockmaw Dragon |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, it deals that much damage to each creature that player controls — Balefire Dragon |
@@ -9669,6 +9689,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, sacrifice all other permanents you control and discard your hand. exile the top <n> cards of your library. you may cast any number of spells from among cards exiled this way without paying their mana costs — Hellcarver Demon |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, search that player's library for <n> artifact card and exile it. then that player shuffles. until end of turn, you may play that card — Thada Adel, Acquisitor |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, search that player's library for <n> card, then that player chooses <n> card name. if you searched for <n> creature card that doesn't have that name, you may put it onto the battlefield under your control. then that player shuffles — Sphinx Ambassador |
+| `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, seek <n> card with mana value equal to the number of poison counters that player has — Blightwing Whelp |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player creates <n> <n>/<n> colorless goblin construct artifact creature token with <name> and <name> — Relic Robber |
 | `unclaimed` | 2 | whenever ~ deals combat damage to <n> player, that player discards <n> card — Blazing Specter, Chilling Apparition |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player discards <n> card and you create <n> tapped <n>/<n> black zombie creature token — Liliana's Reaver |
@@ -9676,7 +9697,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player discards <n> card at random — Rakdos Ringleader |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player discards <n> card at random. if the player can't, you draw <n> card — Urgoros, the Empty One |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player discards <n> cards — Lightning Skelemental |
-| `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player discards that many cards — Dreamstealer |
+| `unclaimed` | 2 | whenever ~ deals combat damage to <n> player, that player discards that many cards — Dreamstealer, Needle Specter |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player exiles <n> card from their hand. you may play that card for as long as it remains exiled — Fiend of the Shadows |
 | `unclaimed` | 2 | whenever ~ deals combat damage to <n> player, that player exiles cards from the top of their library until they exile <n> instant or sorcery card. you may cast that card without paying its mana cost. then that player puts the exiled cards that weren't cast this way on the bottom of their library in <n> random order — Dazzling Sphinx, Gríma, Saruman's Footman |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, that player exiles cards from the top of their library until they exile <n> nonland card. you may cast that card by paying life equal to the spell's mana value rather than paying its mana cost — Bismuth Mindrender |
@@ -9767,6 +9788,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may sacrifice it. if you do, destroy target creature that player controls — Blind Zealot |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may sacrifice it. if you do, draw <n> cards — Impaler Shrike |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may sacrifice it. if you do, proliferate — Cacophony Scamp |
+| `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may sacrifice it. if you do, that player discards <n> card for each poison counter they have — Whispering Specter |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may sacrifice it. if you do, ~ deals <n> damage to that player — Furnace Scamp |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you may sacrifice it. when you do, destroy target artifact or enchantment — Flaxen Intruder // Welcome Home |
 | `unclaimed` | 1 | whenever ~ deals combat damage to <n> player, you mill that many cards. you may put <n> saga card and/or <n> land card from among them onto the battlefield — Eivor, Wolf-Kissed |
@@ -9798,6 +9820,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | whenever ~ deals damage to <n> planeswalker, destroy that planeswalker — Assassin |
 | `unclaimed` | 1 | whenever ~ deals damage to <n> player, destroy target enchantment that player controls — Soltari Visionary |
 | `unclaimed` | 1 | whenever ~ deals damage to <n> player, destroy target permanent other than ~ with the most lines of text in its text box — Lexivore |
+| `unclaimed` | 1 | whenever ~ deals damage to <n> player, that player can't gain life for the rest of the game — Stigma Lasher |
 | `unclaimed` | 3 | whenever ~ deals damage to <n> player, that player discards <n> card — Abyssal Specter, Odylic Wraith, Order of Yawgmoth |
 | `unclaimed` | 2 | whenever ~ deals damage to <n> player, that player discards all the cards in their hand, then draws that many cards — Barbed Shocker, Shocker |
 | `unclaimed` | 1 | whenever ~ deals damage to <n> player, that player gets <n> poison counter — Pit Scorpion |
@@ -11441,7 +11464,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | {cost}: target creature becomes <n> frog with base power and toughness <n>/<n> until end of turn — Omnibian |
 | `unclaimed` | 1 | {cost}: target creature becomes the color of your choice until end of turn — Tidal Visionary |
 | `unclaimed` | 1 | {cost}: target creature becomes the color or colors of your choice until end of turn — Scuttlemutt |
-| `unclaimed` | 2 | {cost}: target creature blocks ~ this turn if able — Rampant Elephant, Trumpeting Armodon |
+| `unclaimed` | 3 | {cost}: target creature blocks ~ this turn if able — Rampant Elephant, Tangle Angler, Trumpeting Armodon |
 | `unclaimed` | 1 | {cost}: target creature can't attack or block this turn — Thundersong Trumpeter |
 | `unclaimed` | 1 | {cost}: target creature can't be blocked by walls this turn — Tower of Coireall |
 | `unclaimed` | 6 | {cost}: target creature can't be blocked this turn — Amphin Pathmage, Coralhelm Guide, Deepfathom Skulker, Elvenking's Harper, Passwall Adept, Wormhole Serpent |
@@ -11783,6 +11806,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | ~ can't attack unless defending player controls <n> blue permanent — Whimwader |
 | `unclaimed` | 1 | ~ can't attack unless defending player controls <n> creature with flying — Lurking Green Dragon |
 | `unclaimed` | 1 | ~ can't attack unless defending player controls <n> enchantment or <n> enchanted permanent — Godhunter Octopus |
+| `unclaimed` | 1 | ~ can't attack unless defending player is poisoned — Chained Throatseeker |
 | `unclaimed` | 2 | ~ can't attack unless there are <n> or more cards in your graveyard — Deep-Sea Terror, River Serpent |
 | `unclaimed` | 1 | ~ can't attack unless there are <n> or more islands on the battlefield — Harbor Serpent |
 | `unclaimed` | 1 | ~ can't attack unless there is <n> mountain on the battlefield — Glacial Crasher |
@@ -11823,7 +11847,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | ~ can't be blocked by green creatures — Wanderbrine Rootcutters |
 | `unclaimed` | 1 | ~ can't be blocked by humans — Stromkirk Noble |
 | `unclaimed` | 1 | ~ can't be blocked by knights or walls — Rampart Smasher |
-| `unclaimed` | 10 | ~ can't be blocked by more than <n> creature — Bristling Boar, Charging Rhino, Foot Enforcer, Huang Zhong, Shu General, Ironhoof Ox, Norwood Riders, Professional Wrestler, Stalking Tiger, Tenacious Tosk, The Tiger God |
 | `unclaimed` | 1 | ~ can't be blocked by red creatures — Barrenton Cragtreads |
 | `unclaimed` | 1 | ~ can't be blocked by tokens — Duskwatch Hunter |
 | `unclaimed` | 3 | ~ can't be blocked by walls — Bog Rats, Juggernaut, Rampart Crawler |
@@ -12347,7 +12370,7 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `unclaimed` | 1 | ~ is every creature type — Mistform Ultimus |
 | `unclaimed` | 1 | ~ is every nonbasic land type — Planar Nexus |
 | `unclaimed` | 1 | ~ is legendary — Tuktuk the Returned |
-| `unclaimed` | 3 | ~ must be blocked if able — Fear of Being Hunted, Gaea's Protector, Goblin Fire Fiend |
+| `unclaimed` | 4 | ~ must be blocked if able — Fear of Being Hunted, Gaea's Protector, Goblin Fire Fiend, Inescapable Brute |
 | `unclaimed` | 3 | ~ saddles mounts and crews vehicles as though its power were <n> greater — Deathless Pilot, Dynamite Diver, Pilot |
 | `unclaimed` | 1 | ~ target creature — Regenerate |
 | `unclaimed` | 1 | ~'s equip ability costs {cost} less to activate if it targets <n> colorless creature — Ghostfire Blade |
@@ -12442,7 +12465,6 @@ These are generated candidates, not automatic approvals: claim the suggested clu
 | `catalog-when-enters-attach-target` | 15 | when ~ enters, attach it to target creature you control — Biorganic Carapace, Bramble Armor, Cliffhaven Kitesail, Dueling Rapier, Falcon's Wing Harness, Infinity Formula, Malamet Scythe, Maul of the Skyclaves, Mechanical Glider, Meltstrider's Gear, Mirran Banesplitter, Paladin's Shield, Scavenged Blade, Utility Knife, Vibranium Strike Gauntlets |
 | `catalog-when-enters-exile-target` | 12 | when ~ enters, exile target nonland permanent <n> opponent controls until ~ leaves the battlefield — Banish to Another Universe, Banishing Light, Borrowed Time, Cast Out, Hieromancer's Cage, Lassoed by the Law, Malfunctioning Holodeck, Seal from Existence, Sheltered by Ghosts, Stormplain Detainment, Web Up, White Auracite |
 | `catalog-when-enters-explores` | 15 | when ~ enters, it explores — Brazen Buccaneers, Cenote Scout, Dire Fleet Interloper, Emissary of Sunrise, Ixalli's Diviner, Kinjalli's Dawnrunner, Merfolk Branchwalker, Pathfinding Axejaw, Queen's Agent, River Herald Guide, River Herald Scout, Seekers' Squire, Siren Lookout, Sunrise Seeker, Tishana's Wayfinder |
-| `catalog-wither` | 14 | wither — Boggart Ram-Gang, Cinderbones, Duergar Cave-Guard, Harvest Gwyllion, Hateflayer, Juvenile Gloomwidow, Oona's Gatewarden, Puncture Blast, Rendclaw Trow, Rustrazor Butcher, Scuzzback Scrapper, Sickle Ripper, Smoldering Butcher, Wildslayer Elves |
 
 The highest-value fix is the shared template, not the first card name. A new primitive should parameterize type, zone, target, quantity and optionality so reprints and other sets inherit it.
 
