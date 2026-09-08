@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -19,9 +20,14 @@ def identity(card: dict[str, Any]) -> str:
 def load_reusable(path: Path) -> list[dict[str, Any]]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     cards = [card for card in payload.get("cards", []) if card.get("priority") == "reuse-existing"]
+    cluster_counts = Counter(str(card.get("missing_line", "")) for card in cards)
+    # Repeated exact Oracle lines are deliberately front-loaded: one tested
+    # parser extension can close a whole cluster before unique wording is
+    # attempted.
     return sorted(cards, key=lambda card: (
+        -cluster_counts[str(card.get("missing_line", ""))],
         str(card.get("family", "")),
-        str((card.get("reusable_primitives") or [{}])[0].get("primitive", "")),
+        str(card.get("missing_line", "")),
         str(card.get("name", "")).casefold(),
         identity(card),
     ))
