@@ -40,6 +40,9 @@ submits actions already exposed as legal.
 - Exact payment with no meaningful source choice is automatic. If available
   mana exceeds the cost, the chooser remains open even for identical lands so
   the player can preserve mana for a response.
+- A printed life payment may reduce a player to exactly 0; only an amount above
+  the current life total is illegal. State-based actions are checked after the
+  cost is paid (CR 119.4).
 - Hand-based mana cards such as Simian Spirit Guide expose a separate mana
   action beside casting; selecting it exiles the card as a cost and never
   auto-casts or silently pays with it. The general menu recognizes the printed
