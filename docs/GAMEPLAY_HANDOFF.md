@@ -70,13 +70,17 @@ submits actions already exposed as legal.
 
 The Ward primitive now accepts the common non-mana forms in addition to mana
 ([CR 702.21](https://magic.wizards.com/en/rules)): pay life, discard any card,
-discard an enchantment/instant/sorcery, sacrifice a creature/permanent, and
-sacrifice a legendary artifact or legendary creature. These are exposed as
-explicit centered decisions, decline still counters the targeted spell or
-ability, and a life payment may reduce the payer to exactly 0. Multiple Ward
-permanents remain chained one at a time. Compound, random, variable-power,
-Food, and collect-evidence costs stay partial until they have dedicated
-scenario coverage; do not infer them from the generic mana Ward path.
+discard an enchantment/instant/sorcery, discard at random, sacrifice a
+creature/permanent, sacrifice two permanents, sacrifice three nonland
+permanents, sacrifice a Food, sacrifice a permanent with mana value 1 or
+greater, and sacrifice a legendary artifact or legendary creature. It also
+supports the explicit “discard a card or pay {N}” alternative. These are
+exposed as centered decisions, random discard never exposes hand identity,
+decline still counters the targeted spell or ability, and a life payment may
+reduce the payer to exactly 0. Multiple Ward permanents remain chained one at
+a time. Waterbend, poison, blight, collect evidence, and other set-specific
+costs remain partial until their primitives have dedicated scenario coverage;
+do not infer them from the generic mana Ward path.
 
 ## Play-test commands
 

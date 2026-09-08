@@ -442,6 +442,10 @@ const WARD_DISCARD_SENTINEL = () => make({ name: "Ward Discard Sentinel", type_l
 const WARD_SACRIFICE_SENTINEL = () => make({ name: "Ward Sacrifice Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Sacrifice a creature." });
 const WARD_RESTRICTED_DISCARD_SENTINEL = () => make({ name: "Ward Restricted Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Discard an enchantment, instant, or sorcery card." });
 const WARD_LEGENDARY_SACRIFICE_SENTINEL = () => make({ name: "Ward Legendary Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Sacrifice a legendary artifact or legendary creature." });
+const WARD_TWO_SACRIFICE_SENTINEL = () => make({ name: "Ward Two Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Sacrifice two permanents." });
+const WARD_RANDOM_DISCARD_SENTINEL = () => make({ name: "Ward Random Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Discard a card at random." });
+const WARD_DISCARD_OR_PAY_SENTINEL = () => make({ name: "Ward Choice Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Ward"], oracle_text: "Ward—Discard a card or pay {2}." });
+const WARD_INLINE_SENTINEL = () => make({ name: "Ward Inline Sentinel", type_line: "Creature — Spirit", mana_cost: "{2}{U}", cmc: 3, power: "2", toughness: "3", keywords: ["Flying", "Ward"], oracle_text: "Flying, ward {2}" });
 const WARD_BOLT = () => make({ name: "Ward Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Destroy target creature." });
 const SERENE_MASTER = () => make({ name: "Serene Master", type_line: "Creature — Human Monk", mana_cost: "{1}{W}", cmc: 2, power: "0", toughness: "2", oracle_text: "Whenever this creature blocks, exchange its power and the power of target creature it's blocking until end of combat.", oracle_id: "2ce0d583-81ca-4dca-bde0-52f86b683afd", scryfall_id: "06223a09-a32c-4c60-86a1-f8f7bf5a7cdd" });
 const FLIER = () => make({ name: "Storm Crow", type_line: "Creature — Bird", mana_cost: "{1}{U}", cmc: 2, power: "1", toughness: "2", keywords: ["Flying"], oracle_text: "Flying" });
@@ -2196,6 +2200,66 @@ describe("casting", () => {
     const actions = legalActions(game, 0);
     expect(actions.some((entry) => entry.action.type === "choose-trigger" && entry.action.sacrificeId === game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Legendary Bear")?.instance_id)).toBe(true);
     expect(actions.some((entry) => entry.action.type === "choose-trigger" && entry.action.sacrificeId === game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")?.instance_id)).toBe(false);
+  });
+
+  it("offers and validates multiple permanents for Ward", () => {
+    const ward = WARD_TWO_SACRIFICE_SENTINEL();
+    expect(profileOf(ward).wardSacrifice).toBe("two-permanents");
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [WARD_BOLT()]), manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 0 }, autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [ward]);
+    game = putOnBattlefield(game, 0, [BEAR(), FOREST()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const wardPermanent = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: wardPermanent.instance_id }] });
+    const choice = game.pendingChoice!;
+    const ids = game.players[0]!.battlefield.map((permanent) => permanent.instance_id);
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "choose-trigger" && JSON.stringify(entry.action.sacrificeIds) === JSON.stringify(ids))).toBe(true);
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true, sacrificeIds: ids });
+    expect(game.players[0]!.battlefield).toHaveLength(0);
+    expect(game.stack.at(-1)?.countered).toBe(false);
+  });
+
+  it("recognizes Ward costs printed beside evergreen keywords", () => {
+    expect(profileOf(WARD_INLINE_SENTINEL()).wardCost?.raw).toBe("{2}");
+  });
+
+  it("handles random Ward discard without exposing a hand-card choice", () => {
+    const ward = WARD_RANDOM_DISCARD_SENTINEL();
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [WARD_BOLT(), FOREST(), MOUNTAIN()]), manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 0 }, autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [ward]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const wardPermanent = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: wardPermanent.instance_id }] });
+    expect(legalActions(game, 0).some((entry) => entry.action.type === "choose-trigger" && entry.action.accept && entry.action.discardCardId === undefined)).toBe(true);
+    const before = game.players[0]!.hand.map((card) => card.instance_id);
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.graveyard.some((card) => before.includes(card.instance_id))).toBe(true);
+    expect(game.stack.at(-1)?.countered).toBe(false);
+  });
+
+  it("offers the printed discard-or-pay Ward alternative", () => {
+    const ward = WARD_DISCARD_OR_PAY_SENTINEL();
+    expect(profileOf(ward).wardDiscardOrPayCost?.raw).toBe("{2}");
+    let game = twoSeatGame([], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [WARD_BOLT(), FOREST()]), manaPool: { W: 0, U: 0, B: 0, R: 1, G: 0, C: 2 }, autoPass: false }));
+    game = stage(game, 1, () => ({ autoPass: false }));
+    game = putOnBattlefield(game, 1, [ward]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true, passedSeats: [] };
+    const wardPermanent = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: game.players[0]!.hand[0]!.instance_id, targets: [{ kind: "permanent", instanceId: wardPermanent.instance_id }] });
+    const payment = legalActions(game, 0).find((entry) => entry.label.includes("Pay {2}"));
+    expect(payment?.action.type).toBe("choose-trigger");
+    const choice = game.pendingChoice!;
+    game = applyAction(game, 0, { type: "choose-trigger", sourceId: choice.sourceId, accept: true });
+    expect(game.players[0]!.hand).toHaveLength(1);
+    expect(game.players[0]!.manaPool.C).toBe(0);
+    expect(game.stack.at(-1)?.countered).toBe(false);
   });
   function readyToCast(cards: readonly CardData[], battlefield: readonly CardData[], opponentHand: readonly CardData[] = [], opponentBoard: readonly CardData[] = []) {
     let game = twoSeatGame([], []);

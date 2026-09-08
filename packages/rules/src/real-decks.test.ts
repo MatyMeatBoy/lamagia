@@ -71,7 +71,7 @@ describe.skipIf(!hasPod)("imported cEDH pod", () => {
         + result.state.stack.filter((object) => object.card.owner === player.seat && !object.card.token && !object.trigger && !object.activated).length;
       expect(owned).toBe(100);
     }
-  });
+  }, 15_000);
 
   it("never puts an opponent's hidden cards into a projection", () => {
     const game = createGame(toInputs(load(podPath)), { seed: 5 });

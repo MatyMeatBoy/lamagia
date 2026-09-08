@@ -1264,7 +1264,11 @@ export interface CardProfile {
   /** Card types accepted by a restricted Ward discard cost. Empty means any card. */
   readonly wardDiscardTypes: readonly CardType[];
   /** Ward's non-mana payment, when the printed cost sacrifices a permanent. */
-  readonly wardSacrifice: "creature" | "permanent" | "legendary-artifact-or-creature" | null;
+  readonly wardSacrifice: "creature" | "permanent" | "legendary-artifact-or-creature" | "two-permanents" | "three-nonland-permanents" | "food" | "permanent-mana-value-at-least-one" | null;
+  /** Ward's random discard payment (the discarded card is never exposed as a choice). */
+  readonly wardDiscardRandom: boolean;
+  /** Ward's alternative discard-or-mana payment. */
+  readonly wardDiscardOrPayCost: ManaCost | null;
   /** Alternative cost for casting this instant or sorcery from a graveyard (CR 702.34). */
   readonly flashbackCost: ManaCost | null;
   /** Additional life payment bundled into a Flashback cost (CR 118.8). */
@@ -6499,32 +6503,58 @@ export function cardProfile(card: CardData): CardProfile {
   const affinityMatch = /^Affinity for (.+)$/im.exec(text);
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
   const wardMatch = /^Ward\s*(?:[—–-]|:)?\s*((?:\{[^}]+\})+)(?:\s*,\s*Pay\s+(\d+)\s+life\.?)?(?:\s*\([^)]*\))?\s*$/im.exec(text);
-  const wardCost = wardMatch ? parseManaCost(wardMatch[1]!) : null;
+  // Ward is frequently printed beside evergreen keywords, e.g. "Flying,
+  // ward {2}". Keep the same profile regardless of whether it is a complete
+  // line or a keyword list (CR 702.21).
+  const wardInlineMatch = /\bWard\s*((?:\{[^}]+\})+)(?:\s*,\s*Pay\s+(\d+)\s+life\.?)?/i.exec(text);
+  const wardCostText = wardMatch?.[1] ?? wardInlineMatch?.[1];
+  const wardCost = wardCostText ? parseManaCost(wardCostText) : null;
   const wardLifeMatch = /^Ward\s*(?:[—–-]|:)\s*(?:(?:\{[^}]+\})+\s*,\s*)?Pay\s+(\d+)\s+life\.?(?:\s*\([^)]*\))?\s*$/im.exec(text);
-  const wardLifeCost = wardMatch?.[2] ? Number(wardMatch[2]) : wardLifeMatch ? Number(wardLifeMatch[1]) : null;
+  const wardLifeCost = wardMatch?.[2] ? Number(wardMatch[2]) : wardInlineMatch?.[2] ? Number(wardInlineMatch[2]) : wardLifeMatch ? Number(wardLifeMatch[1]) : null;
   const wardLifeCostPower = /^Ward\s*(?:[—–-]|:)\s*Pay\s+life\s+equal\s+to\s+(?:this\s+creature|~|[^.]+)'s\s+power\.?/im.test(text);
   const wardDiscard = /^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\.?\s*$/im.test(text);
+  const wardDiscardRandom = /^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\s+at\s+random\.?\s*$/im.test(text);
+  const wardDiscardOrPayMatch = /^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\s+or\s+pay\s+((?:\{[^}]+\})+)\.?\s*$/im.exec(text);
+  const wardDiscardOrPayCost = wardDiscardOrPayMatch ? parseManaCost(wardDiscardOrPayMatch[1]!) : null;
   const wardDiscardTypesMatch = /^Ward\s*(?:[—–-]|:)\s*Discard\s+an?\s+((?:enchantment|instant|sorcery)(?:(?:,\s*or\s+|,\s*|\s+or\s+)(?:enchantment|instant|sorcery))*)\s+card\.?\s*$/im.exec(text);
   const wardDiscardTypes = wardDiscardTypesMatch
     ? wardDiscardTypesMatch[1]!.split(/,\s*or\s+|,\s*|\s+or\s+/i).map((type) => type[0]!.toUpperCase() + type.slice(1) as CardType)
     : [];
   const wardSacrificeMatch = /^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+(creature|permanent)\.?\s*$/im.exec(text);
   const wardLegendarySacrifice = /^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+legendary\s+artifact\s+or\s+legendary\s+creature\.?\s*$/im.test(text);
-  const wardSacrifice = wardLegendarySacrifice
-    ? "legendary-artifact-or-creature"
-    : wardSacrificeMatch?.[1]?.toLowerCase() as "creature" | "permanent" | undefined;
+  const wardSacrifice = /^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+two\s+permanents\.?\s*$/im.test(text)
+    ? "two-permanents"
+    : /^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+three\s+nonland\s+permanents\.?\s*$/im.test(text)
+      ? "three-nonland-permanents"
+      : /^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+Food\.?\s*$/im.test(text)
+        ? "food"
+        : /^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+permanent\s+with\s+mana\s+value\s+1\s+or\s+greater\.?\s*$/im.test(text)
+          ? "permanent-mana-value-at-least-one"
+          : wardLegendarySacrifice
+            ? "legendary-artifact-or-creature"
+            : wardSacrificeMatch?.[1]?.toLowerCase() as "creature" | "permanent" | undefined;
   const suspend = parseSuspend(text);
   const vanishingMatch = /(?:^|\n)Vanishing\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/im.exec(text);
   const vanishingAmount = toNumber(vanishingMatch?.[1]) ?? null;
   const recognized = recognizeText(text
     .replace(/(?:^|\n)(?:~|This spell) can't be countered\.(?=\s|$)/gi, "\n")
     .replace(/^Affinity for .+$/gim, "")
-    .replace(/^Ward\s*(?:[—–-]|:)?\s*(?:\{[^}]+\})+(?:\s*,\s*Pay\s+\d+\s+life)?(?:\s*\([^)]*\))?\s*$/gim, "")
-    .replace(/^Ward\s*(?:[—–-]|:)\s*(?:(?:\{[^}]+\})+\s*,\s*)?Pay\s+\d+\s+life(?:\s*\([^)]*\))?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)?\s*(?:\{[^}]+\})+(?:\s*,\s*Pay\s+\d+\s+life\.?)?(?:\s*\([^)]*\))?\s*$/gim, "")
+    .replace(/\bWard\s*(?:\{[^}]+\})+(?:\s*,\s*Pay\s+\d+\s+life\.?)?/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*(?:(?:\{[^}]+\})+\s*,\s*)?Pay\s+\d+\s+life\.?(?:\s*\([^)]*\))?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Pay\s+life\s+equal\s+to\s+(?:this\s+creature|~|[^.]+)'s\s+power\.?(?:\s*\([^)]*\))?\s*$/gim, "")
     .replace(/^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\s+at\s+random\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Discard\s+a\s+card\s+or\s+pay\s+(?:\{[^}]+\})+\.?\s*$/gim, "")
     .replace(/^Ward\s*(?:[—–-]|:)\s*Discard\s+an?\s+(?:enchantment|instant|sorcery)(?:(?:,\s*or\s+|,\s*|\s+or\s+)(?:enchantment|instant|sorcery))*\s+card\.?\s*$/gim, "")
     .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+(?:creature|permanent)\.?\s*$/gim, "")
     .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+legendary\s+artifact\s+or\s+legendary\s+creature\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+two\s+permanents\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+three\s+nonland\s+permanents\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+Food\.?\s*$/gim, "")
+    .replace(/^Ward\s*(?:[—–-]|:)\s*Sacrifice\s+a\s+permanent\s+with\s+mana\s+value\s+1\s+or\s+greater\.?\s*$/gim, "")
+    .replace(/(^|\n)\s*,\s*/gim, "$1")
+    .replace(/,\s*(?=\n|$)/gim, "")
     .replace(/^Vanishing\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*(?:\([^\n]*\))?\s*$/gim, "")
     .replace(/^Suspend\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*[—-]\s*(?:\{[^}]+\})+\s*$/gim, ""));
   // Extort (CR 702.39): a cast trigger with an optional {W/B} payment that
@@ -6797,6 +6827,8 @@ export function cardProfile(card: CardData): CardProfile {
     wardLifeCost,
     wardLifeCostPower,
     wardDiscard,
+    wardDiscardRandom,
+    wardDiscardOrPayCost,
     wardDiscardTypes,
     wardSacrifice: wardSacrifice ?? null,
     flashbackLifeCost,
