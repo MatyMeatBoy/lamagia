@@ -7855,8 +7855,15 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
 
 /** CR 702.16: protection prevents targeting and damage from the named quality. */
 function hasProtectionFrom(source: CardProfile, target: CardProfile): boolean {
-  return target.protectionFrom.some((quality) => source.colors.includes(quality)
-    || (quality === "Artifact" && isArtifact(source)));
+  return target.protectionFrom.some((quality) => {
+    if (["W", "U", "B", "R", "G"].includes(quality)) return source.colors.includes(quality);
+    if (quality === "everything") return true;
+    if (quality === "colorless") return source.colors.length === 0;
+    if (quality === "multicolored") return source.colors.length > 1;
+    if (quality === "artifact") return isArtifact(source);
+    if (quality === "creature") return isCreature(source);
+    return source.types.some((type) => type.toLowerCase() === quality);
+  });
 }
 
 function hasChosenPlayerProtection(state: GameState, source: Permanent, target: Permanent): boolean {

@@ -1397,6 +1397,8 @@ describe("game creation", () => {
     expect(game.opening).toBeNull();
   });
 });
+const PROTECTION_FROM_ARTIFACTS = () => make({ name: "Artifact Warder", type_line: "Creature — Human", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Protection from artifacts" });
+const PROTECTION_FROM_COLORLESS = () => make({ name: "Colorless Warder", type_line: "Creature — Human", mana_cost: "{1}{W}", cmc: 2, power: "2", toughness: "2", oracle_text: "Protection from colorless" });
 
 describe("professional mana autopay", () => {
   it("autopays when identical sources exactly cover the cost", () => {
@@ -11481,6 +11483,23 @@ describe("combat", () => {
     game = passUntil(game, (state) => state.step === "end-combat" || state.turn > 1);
     expect(game.players[0]!.battlefield).toHaveLength(0);
     expect(game.players[1]!.battlefield[0]!.damage).toBe(0);
+  });
+
+  it("recognizes protection from artifact and colorless sources", () => {
+    const artifactWarder = PROTECTION_FROM_ARTIFACTS();
+    const colorlessWarder = PROTECTION_FROM_COLORLESS();
+    expect(profileOf(artifactWarder).protectionFrom).toEqual(["artifact"]);
+    expect(profileOf(colorlessWarder).protectionFrom).toEqual(["colorless"]);
+    expect(profileOf(artifactWarder).fullyImplemented).toBe(true);
+    expect(profileOf(colorlessWarder).fullyImplemented).toBe(true);
+
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 1, [artifactWarder, colorlessWarder]);
+    game = putOnBattlefield(game, 0, [ARTIFACT_BLOCKER()]);
+    const source = profileOf(ARTIFACT_BLOCKER());
+    const legal = legalTargets(game, 0, "creature", source);
+    expect(legal).not.toContainEqual({ kind: "permanent", instanceId: game.players[1]!.battlefield[0]!.instance_id });
+    expect(legal).not.toContainEqual({ kind: "permanent", instanceId: game.players[1]!.battlefield[1]!.instance_id });
   });
 
   it("prevents combat damage dealt to Guard Gomazoa without preventing its own damage", () => {

@@ -330,7 +330,16 @@ export function parseCombatRules(lines: readonly string[]): { rules: CombatRules
 }
 
 const PROTECTION_QUALITIES: Readonly<Record<string, string>> = {
-  white: "W", blue: "U", black: "B", red: "R", green: "G"
+  white: "W", blue: "U", black: "B", red: "R", green: "G",
+  artifact: "artifact", artifacts: "artifact",
+  creature: "creature", creatures: "creature",
+  enchantment: "enchantment", enchantments: "enchantment",
+  instant: "instant", instants: "instant",
+  sorcery: "sorcery", sorceries: "sorcery",
+  land: "land", lands: "land",
+  planeswalker: "planeswalker", planeswalkers: "planeswalker",
+  battle: "battle", battles: "battle",
+  colorless: "colorless", multicolored: "multicolored", everything: "everything"
 };
 
 /**
@@ -343,7 +352,9 @@ const PROTECTION_PLAYER_QUALITY = "chosen-player";
 function parseProtectionFromLine(line: string): readonly string[] | null {
   const match = /(?:^|,\s*)protection from (.+)$/i.exec(line.trim().replace(/\.$/, ""));
   if (!match) return null;
-  const qualities = match[1]!.replace(/\s+and\s+from\s+/gi, ",").replace(/\s+and\s+/gi, ",")
+  const named = match[1]!.trim().toLowerCase();
+  if (/^(?:all|each) colors?$/.test(named)) return ["W", "U", "B", "R", "G"];
+  const qualities = named.replace(/\s+and\s+from\s+/gi, ",").replace(/\s+and\s+/gi, ",")
     .split(",").map((quality) => quality.trim().toLowerCase()).filter(Boolean);
   if (!qualities.length || qualities.some((quality) => !PROTECTION_QUALITIES[quality])) return null;
   return qualities.map((quality) => PROTECTION_QUALITIES[quality]!);
