@@ -222,6 +222,8 @@ export interface CyclingSearchAbility {
 export interface CombatRules {
   /** "~ can't attack" (CR 506.3a). Distinct from defender only in wording. */
   readonly cannotAttack: boolean;
+  /** "~ can't attack unless defending player controls an Island" (CR 508.1d). */
+  readonly cannotAttackUnlessDefenderControlsLandSubtype: string | null;
   /** "~ can't block" (CR 509.1a). */
   readonly cannotBlock: boolean;
   /** "~ can't be blocked" (CR 509.1a). */
@@ -263,6 +265,7 @@ export interface CombatRules {
 
 export const NO_COMBAT_RULES: CombatRules = {
   cannotAttack: false,
+  cannotAttackUnlessDefenderControlsLandSubtype: null,
   cannotBlock: false,
   cannotBeBlocked: false,
   cannotBeBlockedWhenDefenderHasMostCreatures: false,
@@ -293,6 +296,8 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   const text = line.trim().replace(/\.$/, "").toLowerCase();
 
   if (/^~ can't attack$/.test(text)) return { cannotAttack: true };
+  const attackLand = /^~ can't attack unless defending player controls (?:an?|one) ([a-z][a-z -]*)$/.exec(text);
+  if (attackLand) return { cannotAttackUnlessDefenderControlsLandSubtype: attackLand[1]!.trim().toLowerCase() };
   if (/^~ can't block$/.test(text)) return { cannotBlock: true };
   if (/^~ can't be blocked$/.test(text)) return { cannotBeBlocked: true };
   if (/^~ can't be blocked as long as defending player controls the most creatures or is tied for the most$/.test(text)) {

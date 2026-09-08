@@ -7927,6 +7927,26 @@ function canAttack(state: GameState, permanent: Permanent): boolean {
   return true;
 }
 
+/** Whether this attacker has a legal defender for its printed attack restriction. */
+function canAttackDefender(state: GameState, permanent: Permanent, defenderSeat: SeatId): boolean {
+  if (!canAttack(state, permanent)) return false;
+  const subtype = cardProfile(permanent.card).combatRules.cannotAttackUnlessDefenderControlsLandSubtype;
+  if (!subtype) return true;
+  const wanted = subtype.toLowerCase();
+  return playerAt(state, defenderSeat).battlefield.some((candidate) => {
+    const profile = cardProfile(candidate.card);
+    return isLand(profile) && profile.subtypes.some((landSubtype) => landSubtype.toLowerCase() === wanted);
+  });
+}
+
+function canAttackAnyDefender(state: GameState, permanent: Permanent): boolean {
+  const opponents = opponentsOf(state, permanent.controller);
+  const allowed = state.attackDirection
+    ? opponents.filter((seat) => nearestOpponentInDirection(state, permanent.controller, state.attackDirection!) === seat)
+    : opponents;
+  return allowed.some((defender) => canAttackDefender(state, permanent, defender));
+}
+
 /**
  * Creatures that must be declared as attackers this combat (CR 508.1d).
  *
@@ -7938,7 +7958,8 @@ function requiredAttackers(state: GameState, seat: SeatId): Permanent[] {
   const forcedBoardWide = allPermanents(state).some((permanent) => cardProfile(permanent.card).forcesAllCreaturesToAttack);
   const forcedIds = new Set(state.combat.requiredAttackers ?? []);
   return playerAt(state, seat).battlefield.filter((permanent) =>
-    (forcedIds.has(permanent.instance_id) || forcedBoardWide || cardProfile(permanent.card).combatRules.mustAttack) && canAttack(state, permanent));
+    (forcedIds.has(permanent.instance_id) || forcedBoardWide || cardProfile(permanent.card).combatRules.mustAttack)
+    && canAttackAnyDefender(state, permanent));
 }
 
 /** The tightest defender-controlled attacker limit (CR 508.1d). */
@@ -9456,20 +9477,22 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     const attackers = legalAttackers(state, seat);
     actions.push({ action: { type: "declare-attackers", attackers: [] }, label: "No atacar" });
     for (const attacker of attackers) {
-      const defender = state.attackDirection
-        ? nearestOpponentInDirection(state, seat, state.attackDirection)
-        : (opponentsOf(state, seat)[0] ?? seat);
-      if (defender === undefined) continue;
-      // Propaganda-style attack tax (CR 508.1a): only offer this single-attacker
-      // declaration when the defender's tax for one creature is affordable.
-      const taxPerCreature = playerAt(state, defender).battlefield
-        .reduce((sum, permanent) => sum + (cardProfile(permanent.card).attackTaxPerCreature ?? 0), 0);
-      if (taxPerCreature > 0 && !planManaPayment(parseManaCost(`{${taxPerCreature}}`)!, playerAt(state, seat), { state })) continue;
-      actions.push({
-        action: { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender }] },
-        label: `Atacar con ${attacker.card.name}`,
-        cardId: attacker.instance_id
-      });
+      const defenders = state.attackDirection
+        ? opponentsOf(state, seat).filter((candidate) => nearestOpponentInDirection(state, seat, state.attackDirection!) === candidate)
+        : opponentsOf(state, seat);
+      for (const defender of defenders) {
+        if (!canAttackDefender(state, attacker, defender)) continue;
+        // Propaganda-style attack tax (CR 508.1a): only offer this single-attacker
+        // declaration when the defender's tax for one creature is affordable.
+        const taxPerCreature = playerAt(state, defender).battlefield
+          .reduce((sum, permanent) => sum + (cardProfile(permanent.card).attackTaxPerCreature ?? 0), 0);
+        if (taxPerCreature > 0 && !planManaPayment(parseManaCost(`{${taxPerCreature}}`)!, playerAt(state, seat), { state })) continue;
+        actions.push({
+          action: { type: "declare-attackers", attackers: [{ instanceId: attacker.instance_id, defender }] },
+          label: `Atacar con ${attacker.card.name}`,
+          cardId: attacker.instance_id
+        });
+      }
     }
     return actions;
   }
@@ -12469,8 +12492,10 @@ function applyDeclareAttackers(state: GameState, seat: SeatId, attackers: readon
   const available = new Map(legalAttackers(state, seat).map((permanent) => [permanent.instance_id, permanent]));
   const defenders = new Set(opponentsOf(state, seat));
   for (const entry of attackers) {
-    if (!available.has(entry.instanceId)) throw new Error("Esa criatura no puede atacar.");
+    const attacker = available.get(entry.instanceId);
+    if (!attacker) throw new Error("Esa criatura no puede atacar.");
     if (!defenders.has(entry.defender)) throw new Error("Ese jugador no puede ser atacado.");
+    if (!canAttackDefender(state, attacker, entry.defender)) throw new Error("Esa criatura no puede atacar a ese jugador.");
     if (state.combat.forbiddenDefender !== undefined && entry.defender === state.combat.forbiddenDefender) {
       throw new Error("Esas criaturas no pueden atacar a ese jugador durante este combate.");
     }
@@ -13319,7 +13344,7 @@ export function settle(state: GameState): GameState {
 
     if (next.step === "declare-attackers" && !next.combat.attackersDeclared) {
       const active = next.activeSeat;
-      if (!legalAttackers(next, active).length || playerAt(next, active).lost) {
+      if (!legalAttackers(next, active).some((attacker) => canAttackAnyDefender(next, attacker)) || playerAt(next, active).lost) {
         next = applyDeclareAttackers(next, active, []);
         continue;
       }

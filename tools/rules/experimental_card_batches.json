@@ -11,7 +11,8 @@
           "Its controller loses",
           "Attacking creatures you control get",
           "Target creature with power 2 or less can't be blocked this turn.",
-          "Bushido 1"
+          "Bushido 1",
+          "can't attack unless defending player controls an Island."
         ],
         "effectKinds": [
           "fight",

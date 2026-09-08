@@ -11400,6 +11400,10 @@ describe("combat restrictions and landwalk", () => {
     name: "Crawlspace", type_line: "Artifact", mana_cost: "{3}", cmc: 3,
     oracle_text: "No more than one creature can attack you each combat."
   });
+  const ISLAND_ATTACKER = () => make({
+    name: "Island Raider", type_line: "Creature — Serpent", mana_cost: "{2}{U}", cmc: 3, power: "3", toughness: "3",
+    oracle_text: "Island Raider can't attack unless defending player controls an Island."
+  });
 
   it("reads each restriction off the printed line", () => {
     expect(profileOf(NO_BLOCKER()).combatRules).toMatchObject({ cannotBlock: true, mustAttack: false });
@@ -11407,6 +11411,7 @@ describe("combat restrictions and landwalk", () => {
     expect(profileOf(MUST_ATTACK()).combatRules.mustAttack).toBe(true);
     expect(profileOf(SWAMPWALKER()).combatRules.landwalk).toEqual(["swamp"]);
     expect(profileOf(CRAWLSPACE()).combatRules.maxAttackers).toBe(1);
+    expect(profileOf(ISLAND_ATTACKER()).combatRules.cannotAttackUnlessDefenderControlsLandSubtype).toBe("island");
     // A recognised restriction is not left over as unimplemented text.
     expect(profileOf(NO_BLOCKER()).fullyImplemented).toBe(true);
     expect(profileOf(SWAMPWALKER()).fullyImplemented).toBe(true);
@@ -11437,6 +11442,32 @@ describe("combat restrictions and landwalk", () => {
     game = stage(game, 1, () => ({ autoPass: false }));
     game = applyAction(game, 0, { type: "declare-attackers", attackers: [{ instanceId: bear.instance_id, defender: 1 }] });
     expect(game.combat.attackers).toHaveLength(1);
+  });
+
+  it("checks the defending player's land types when declaring attacks", () => {
+    const attackState = (land: CardData): GameState => {
+      let game = twoSeatGame([], []);
+      game = stage(game, 0, () => ({ autoPass: false, hand: [] }));
+      game = stage(game, 1, () => ({ autoPass: false, hand: [] }));
+      game = putOnBattlefield(game, 0, [ISLAND_ATTACKER()]);
+      game = putOnBattlefield(game, 1, [BEAR(), land]);
+      return { ...game, step: "declare-attackers" as const, activeSeat: 0 as SeatId, prioritySeat: 0 as SeatId,
+        priorityOpen: true, passedSeats: [], combat: { ...game.combat, attackers: [], blockers: [], attackersDeclared: false, blockersDeclared: false } };
+    };
+    let dry = attackState(FOREST());
+    const raider = permanentNamed(dry, 0, "Island Raider");
+    expect(legalActions(dry, 0).some((entry) => entry.action.type === "declare-attackers"
+      && entry.action.attackers.some((attacker) => attacker.instanceId === raider.instance_id))).toBe(false);
+    expect(() => applyAction(dry, 0, {
+      type: "declare-attackers", attackers: [{ instanceId: raider.instance_id, defender: 1 }]
+    })).toThrow(/no puede atacar/i);
+
+    let wet = attackState(ISLAND());
+    const wetRaider = permanentNamed(wet, 0, "Island Raider");
+    wet = applyAction(wet, 0, {
+      type: "declare-attackers", attackers: [{ instanceId: wetRaider.instance_id, defender: 1 }]
+    });
+    expect(wet.combat.attackers).toHaveLength(1);
   });
 
   it("advances each defending player once in multiplayer combat", () => {
