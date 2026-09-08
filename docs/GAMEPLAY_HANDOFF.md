@@ -9,6 +9,10 @@ submits actions already exposed as legal.
 - `Auto-pasar` skips empty priority windows and counter-only responses when the
   stack has no counterable spell. It still stops for a real response, trigger,
   target, modal choice, combat declaration, or activated ability.
+- Opening play uses the London mulligan: each player keeps or redraws in turn,
+  then bottoms exactly one card per mulligan. Opening-hand actions such as
+  Gemstone Caverns are offered only after all mulligans and never to the
+  starting player. See `docs/GAMEPLAY_MULLIGAN_AND_PAYMENT.md`.
 - The centered decision overlay is the primary surface for library searches,
   graveyard targets, trigger choices, mana/land choices, cycle-versus-cast
   choices, and stack responses. The dock remains a compact fallback.
@@ -20,6 +24,10 @@ submits actions already exposed as legal.
   non-reversible mana ability clears undo history.
 - Tokens have unique `instance_id` values, names, token frames, and independent
   combat/target selection. Creature stats are hidden on lands and noncreatures.
+- Newly entered creatures show a pointer-transparent animated vortex for
+  summoning sickness. The engine may retain the flag on other permanents for
+  type-changing rules, but the client deliberately renders the marker only on
+  creatures (CR 302.6).
 - Right-click/long-press opens the general card action menu for battlefield,
   hand, graveyard, exile, and command-zone cards. It lists legal cast/cycle/
   activation/yield actions and keeps **View information** as the final row.
@@ -29,6 +37,9 @@ submits actions already exposed as legal.
   interchangeable; bots retain the deterministic fast planner. The menu also
   supports MTGO-style yielding from optional triggers of one source without
   suppressing mandatory triggers or response priority.
+- Exact payment with no meaningful source choice is automatic. If available
+  mana exceeds the cost, the chooser remains open even for identical lands so
+  the player can preserve mana for a response.
 - Hand-based mana cards such as Simian Spirit Guide expose a separate mana
   action beside casting; selecting it exiles the card as a cost and never
   auto-casts or silently pays with it. The general menu recognizes the printed
@@ -37,11 +48,17 @@ submits actions already exposed as legal.
 - The graphical stack shows one card-like item per spell, activated ability, or
   trigger, with top-first resolution order, controller, targets, and rules
   text. Priority remains authoritative in `packages/rules`.
-- The central phase rail is the MTGO-style stopper surface. White triangles
-  mark local phase stops; dark/hollow triangles are disabled. Left-click toggles
-  a phase stop and right-click opens the same toggle as a context menu. Stops
-  persist in local storage and prevent the client from enabling smart auto-pass
-  at that phase; they do not invent server priority or alter turn rules.
+- The lower central bar is the MTGO-style stopper surface; the redundant upper
+  phase rail is intentionally removed. It carries the compact turn/fase
+  readout, white triangles for enabled stops, dark/hollow triangles for disabled
+  stops, and a visible active-stop status. Opponent stops are edited per seat;
+  local defaults are Main 1/attack/block/Main 2 and opponent defaults are
+  attack/block. Stops persist in local storage and prevent the client from
+  enabling smart auto-pass at that phase; they do not invent server priority
+  or alter turn rules.
+- The `CMD` toggle is on by default and controls compact commander previews.
+  The command-zone chip remains available when previews are hidden. Commander
+  tax is tracked as `{2}` per previous cast from the command zone, not per death.
 - Stabilization failures are logged server-side with a bounded public-state
   diagnostic: turn, step, priority, stack summary, pending choice, combat
   declarations, and recent log entries. Hidden hands and libraries are omitted.
