@@ -546,6 +546,7 @@ export type PendingChoice =
       readonly lifeCost: number;
       readonly allowedRestrictions: readonly ManaRestrictionKind[];
       readonly convoke: boolean;
+      readonly improvise: boolean;
       readonly excludePermanentId?: string;
       readonly selected: readonly ManaPaymentSelection[];
       readonly continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>;
@@ -1390,10 +1391,12 @@ function auraBonus(state: GameState | undefined, permanent: Permanent): { power:
   }, { power: 0, toughness: 0 });
 }
 function staticPowerToughnessBonus(state: GameState, permanent: Permanent): { power: number; toughness: number } {
+  const attackingIds = new Set(state.combat.attackers.map((entry) => entry.instanceId));
   const base = allPermanents(state)
     .filter((source) => source.controller === permanent.controller)
     .flatMap((source) => cardProfile(source.card).staticPowerToughnessGrants
       .filter((grant) => grant.scope === "creatures-you-control"
+        || (grant.scope === "attacking-creatures-you-control" && attackingIds.has(permanent.instance_id))
         || (grant.scope === "other-creatures-you-control" && source.instance_id !== permanent.instance_id)
         || (grant.scope === "other-subtype-creatures-you-control" && source.instance_id !== permanent.instance_id
           && (hasSubtype(cardProfile(permanent.card), grant.subtype!)
@@ -1539,6 +1542,8 @@ export interface ManaSource {
   readonly restriction?: ManaRestriction;
   /** This source is a creature tapped for Convoke rather than a mana ability. */
   readonly convoke?: boolean;
+  /** This source is an artifact tapped for Improvise rather than a mana ability. */
+  readonly improvise?: boolean;
 }
 
 /** Rule 302.6 applies to a creature's own tap ability, including Llanowar Elves. */
@@ -1671,7 +1676,7 @@ function allowedManaRestrictions(profile: CardProfile): ManaRestrictionKind[] {
 }
 
 /** Untapped permanents this player can currently tap for mana. */
-export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly includeConvoke?: boolean } = {}): ManaSource[] {
+export function manaSources(player: PlayerState, state?: GameState, sourceOptions: { readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly includeConvoke?: boolean; readonly includeImprovise?: boolean } = {}): ManaSource[] {
   const sources: ManaSource[] = [];
   const landBonuses = player.battlefield
     .map((permanent) => cardProfile(permanent.card).staticLandManaBonus)
@@ -1736,6 +1741,24 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
         lifeCost: 0,
         requiresTap: true,
         convoke: true
+      });
+    }
+  }
+  if (sourceOptions.includeImprovise) {
+    for (const permanent of player.battlefield) {
+      const profile = cardProfile(permanent.card);
+      if (!profile.types.includes("Artifact") || permanent.tapped) continue;
+      sources.push({
+        permanentId: permanent.instance_id,
+        abilityIndex: -2,
+        name: permanent.card.name,
+        // Improvise pays {1} per tapped artifact; the artifact's color is
+        // irrelevant (CR 702.126), so it is always a generic source.
+        options: ["C"],
+        amount: 1,
+        lifeCost: 0,
+        requiresTap: true,
+        improvise: true
       });
     }
   }
@@ -1883,6 +1906,8 @@ export function planManaPayment(
     readonly allowedRestrictions?: readonly ManaRestrictionKind[];
     /** Allows untapped creatures to contribute one mana each while casting. */
     readonly convoke?: boolean;
+    /** Allows untapped artifacts to contribute one generic mana each while casting. */
+    readonly improvise?: boolean;
   } = {}
 ): ManaPlan | null {
   const existingRestricted = options.allowedRestrictions?.length
@@ -1896,7 +1921,7 @@ export function planManaPayment(
         : permanent) }
       : player,
     options.state,
-    { allowedRestrictions: options.allowedRestrictions, includeConvoke: options.convoke }
+    { allowedRestrictions: options.allowedRestrictions, includeConvoke: options.convoke, includeImprovise: options.improvise }
   );
   const variableValue = options.variableValue ?? 0;
   const additionalGeneric = options.additionalGeneric ?? 0;
@@ -2011,7 +2036,7 @@ function shouldPromptManaPayment(
   state: GameState,
   seat: SeatId,
   cost: ManaCost,
-  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly convoke?: boolean; readonly excludePermanentId?: string }
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly convoke?: boolean; readonly improvise?: boolean; readonly excludePermanentId?: string }
 ): boolean {
   // Manual source selection is a player-facing decision. Bots keep the
   // deterministic planner so AI turns do not stall on a UI-only choice.
@@ -2023,10 +2048,11 @@ function shouldPromptManaPayment(
     additionalGeneric: options.additionalGeneric,
     variableValue: options.variableValue,
     allowedRestrictions: options.allowedRestrictions,
-    convoke: options.convoke
+    convoke: options.convoke,
+    improvise: options.improvise
   });
   if (!plan?.taps.length) return false;
-  const sources = manaSources(payer, state, { allowedRestrictions: options.allowedRestrictions, includeConvoke: options.convoke });
+  const sources = manaSources(payer, state, { allowedRestrictions: options.allowedRestrictions, includeConvoke: options.convoke, includeImprovise: options.improvise });
   const restrictedCapacity = (payer.restrictedMana ?? [])
     .filter((mana) => !options.allowedRestrictions?.length || options.allowedRestrictions.includes(mana.restriction.kind)).length;
   const required = cost.manaValue
@@ -2068,7 +2094,7 @@ function normalizeCardName(value: string): string {
 function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan | null {
   const player = playerAt(state, choice.seat);
   const payer = paymentPlayer(state, choice.seat, choice.excludePermanentId);
-  const sources = manaSources(payer, state, { allowedRestrictions: choice.allowedRestrictions, includeConvoke: choice.convoke });
+  const sources = manaSources(payer, state, { allowedRestrictions: choice.allowedRestrictions, includeConvoke: choice.convoke, includeImprovise: choice.improvise });
   const existingRestricted = choice.allowedRestrictions.length
     ? (player.restrictedMana ?? []).filter((mana) => choice.allowedRestrictions.includes(mana.restriction.kind))
     : [];
@@ -2104,7 +2130,7 @@ function beginManaPayment(
   sourceCard: GameCard,
   cost: ManaCost,
   continuation: Extract<GameAction, { type: "cast" | "activate-mana" | "activate" | "equip" }>,
-  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly convoke?: boolean; readonly excludePermanentId?: string }
+  options: { readonly additionalGeneric?: number; readonly variableValue?: number; readonly lifeCost?: number; readonly allowedRestrictions?: readonly ManaRestrictionKind[]; readonly convoke?: boolean; readonly improvise?: boolean; readonly excludePermanentId?: string }
 ): GameState | null {
   if (!shouldPromptManaPayment(state, seat, cost, options)) return null;
   return {
@@ -2120,6 +2146,7 @@ function beginManaPayment(
       lifeCost: options.lifeCost ?? 0,
       allowedRestrictions: options.allowedRestrictions ?? [],
       convoke: Boolean(options.convoke),
+      improvise: Boolean(options.improvise),
       ...(options.excludePermanentId ? { excludePermanentId: options.excludePermanentId } : {}),
       selected: [],
       continuation
@@ -4469,6 +4496,18 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const amount = effectAmount(effect.amount, object);
       const next = loseLife(state, target.seat, amount);
       return logged(next, controller, `${playerAt(next, target.seat).name} pierde ${amount} vidas.`);
+    }
+    case "lose-life-target-controller": {
+      const target = object.targets[0];
+      const seat = target?.kind === "permanent"
+        ? findPermanent(state, target.instanceId)?.controller
+        : target?.kind === "spell"
+          ? state.stack.find((entry) => entry.id === target.stackId)?.controller
+          : undefined;
+      if (seat === undefined) return state;
+      const amount = effectAmount(effect.amount, object);
+      const next = loseLife(state, seat, amount);
+      return logged(next, controller, `${playerAt(next, seat).name} pierde ${amount} vidas.`);
     }
     case "lose-life-target-player-remembered": {
       const target = object.targets[0];
@@ -8681,7 +8720,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
     - (flashback ? 0 : boardCostReduction(state, seat, card, profile))
     + profile.additionalGenericPerTargetBeyondFirst * Math.max(0, targetCount - 1);
   const allowedRestrictions = allowedManaRestrictions(profile);
-  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowedRestrictions, convoke: profile.convoke });
+  const plan = (freeCast || payLifeCost || returnPermanentId) ? true : planManaPayment(cost, player, { additionalGeneric, variableValue, state, lifeCost, allowedRestrictions, convoke: profile.convoke, improvise: profile.improvise });
   if (!plan) return { legal: false };
   const modal = entwined ? combinedModalChoice(profile) : profile.modalChoices.length ? profile.modalChoices[mode ?? -1] : undefined;
   if (profile.modalChoices.length && !modal) return { legal: false };
@@ -11032,7 +11071,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     - (fromGraveyard ? 0 : boardCostReduction(state, seat, card, profile))
     + profile.additionalGenericPerTargetBeyondFirst * Math.max(0, requested.length - 1);
   const allowedRestrictions = allowedManaRestrictions(profile);
-  const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowedRestrictions, convoke: profile.convoke });
+  const plan = (freeCast || payLifeCost || returnPermanentId || manaAlreadyPaid) ? null : planManaPayment(spellCost, player, { additionalGeneric, variableValue: action.variableValue ?? 0, state, lifeCost, allowedRestrictions, convoke: profile.convoke, improvise: profile.improvise });
   if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid && !plan) throw new Error(`No tienes maná suficiente para ${card.name}.`);
 
   if (check.targetKinds?.length) {
@@ -11058,7 +11097,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
   }
 
   if (!freeCast && !payLifeCost && !returnPermanentId && !manaAlreadyPaid) {
-    const manual = beginManaPayment(state, seat, card, spellCost, action, { additionalGeneric, variableValue: action.variableValue ?? 0, lifeCost, allowedRestrictions, convoke: profile.convoke });
+    const manual = beginManaPayment(state, seat, card, spellCost, action, { additionalGeneric, variableValue: action.variableValue ?? 0, lifeCost, allowedRestrictions, convoke: profile.convoke, improvise: profile.improvise });
     if (manual) return manual;
   }
 

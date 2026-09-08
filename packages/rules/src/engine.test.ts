@@ -23,6 +23,19 @@ describe("smart counter response and safe mana undo", () => {
     expect(manaSources(player, game, { includeConvoke: true })).toContainEqual(expect.objectContaining({ permanentId: bear.instance_id, abilityIndex: -1, convoke: true }));
   });
 
+  it("uses Convoke for a colored pip without treating a creature as unrestricted mana", () => {
+    let game = twoSeatGame([], []);
+    const greenCreature = make({ name: "Green Convoker", type_line: "Creature — Elf", mana_cost: "{G}", cmc: 1, power: "1", toughness: "1", colors: ["G"] });
+    game = putOnBattlefield(game, 0, [greenCreature, ISLAND()]);
+    const plan = planManaPayment(parseManaCost("{1}{G}")!, game.players[0]!, { state: game, convoke: true });
+    expect(plan).not.toBeNull();
+    const creatureId = game.players[0]!.battlefield.find((permanent) => permanent.card.name === "Green Convoker")!.instance_id;
+    expect(plan!.taps).toEqual(expect.arrayContaining([
+      expect.objectContaining({ permanentId: creatureId, type: "G" }),
+      expect.objectContaining({ type: "U" })
+    ]));
+  });
+
   it("applies the Convoke plan when casting a spell instead of only exporting the keyword", () => {
     const spell = make({ name: "Test Convoke Spell", type_line: "Sorcery", mana_cost: "{2}", oracle_text: "Convoke\nDraw a card." });
     let game = twoSeatGame([spell], []);
@@ -32,6 +45,36 @@ describe("smart counter response and safe mana undo", () => {
     game = applyAction(game, 0, { type: "cast", cardId: "convoke-0" });
     expect(game.players[0]!.battlefield.every((permanent) => permanent.tapped)).toBe(true);
     expect(game.stack.at(-1)?.card.name).toBe("Test Convoke Spell");
+  });
+
+  it("uses untapped artifacts as generic Improvise sources", () => {
+    let game = twoSeatGame([], []);
+    const artifactA = make({ name: "Improvise Rock A", type_line: "Artifact", mana_cost: "{2}", cmc: 2 });
+    const artifactB = make({ name: "Improvise Rock B", type_line: "Artifact", mana_cost: "{2}", cmc: 2, colors: ["R"] });
+    game = putOnBattlefield(game, 0, [artifactA, artifactB]);
+    const plan = planManaPayment(parseManaCost("{2}")!, game.players[0]!, { state: game, improvise: true });
+    expect(plan).not.toBeNull();
+    expect(plan!.taps).toHaveLength(2);
+    expect(manaSources(game.players[0]!, game, { includeImprovise: true })).toEqual(expect.arrayContaining([
+      expect.objectContaining({ permanentId: expect.any(String), abilityIndex: -2, improvise: true, options: ["C"] })
+    ]));
+  });
+
+  it("folds the dependent Untap it rider into the same target effect", () => {
+    const profile = profileOf(make({
+      name: "Untap Rider",
+      type_line: "Instant",
+      mana_cost: "{G}",
+      oracle_text: "Target creature gets +2/+2 and gains trample until end of turn. Untap it."
+    }));
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.effects).toEqual([{
+      kind: "compound",
+      effects: [
+        { kind: "modify-and-grant-target-creature", power: 2, toughness: 2, keyword: "trample" },
+        { kind: "untap-target-permanent" }
+      ]
+    }]);
   });
 
   it("offers Derevi's command-zone return ability without treating it as a cast", () => {
@@ -3390,6 +3433,19 @@ describe("casting", () => {
       amount: 13,
       token: { name: "Zombie", power: 2, toughness: 2, tapped: true }
     });
+  });
+
+  it("parses the static attacking anthem and target-controller life rider", () => {
+    const anthem = profileOf(make({ name: "Attacking Anthem", type_line: "Artifact", oracle_text: "Attacking creatures you control get +1/+0." }));
+    expect(anthem.fullyImplemented).toBe(true);
+    expect(anthem.staticPowerToughnessGrants).toContainEqual({ scope: "attacking-creatures-you-control", power: 1, toughness: 0 });
+
+    const removal = profileOf(make({ name: "Controller Loss Removal", type_line: "Instant", mana_cost: "{1}{B}", oracle_text: "Destroy target creature. Its controller loses 2 life." }));
+    expect(removal.fullyImplemented).toBe(true);
+    expect(removal.effects).toEqual([{ kind: "compound", effects: [
+      { kind: "destroy-target-creature" },
+      { kind: "lose-life-target-controller", amount: 2 }
+    ] }]);
   });
 
   it("resolves the C13 Army print into thirteen tapped Zombies", () => {

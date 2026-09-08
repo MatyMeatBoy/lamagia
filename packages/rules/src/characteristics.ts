@@ -433,6 +433,7 @@ export interface TriggerDoubler {
 
 export interface StaticPowerToughnessGrant {
   readonly scope: "creatures-you-control" | "other-creatures-you-control" | "all-creatures"
+    | "attacking-creatures-you-control"
     | "source-opponents-graveyard-creatures" | "source-controller-life-threshold" | "other-subtype-creatures-you-control"
     | "other-all-creatures" | "creatures-you-control-source-counter-threshold" | "source-controller-graveyard-threshold";
   readonly power: number;
@@ -642,6 +643,8 @@ export type SpellEffect =
   | { readonly kind: "target-player-sacrifice-attacking-creature" }
   | { readonly kind: "target-player-sacrifice-creature" }
   | { readonly kind: "lose-life-target-player"; readonly amount: number | "X" }
+  /** Dependent rider: the controller of the preceding target loses life. */
+  | { readonly kind: "lose-life-target-controller"; readonly amount: number | "X" }
   /** Laquatus's Champion: remembers the targeted player on the source permanent for a later "that player" LTB trigger. */
   | { readonly kind: "lose-life-target-player-remembered"; readonly amount: number }
   | { readonly kind: "gain-life-remembered-player"; readonly amount: number }
@@ -1424,6 +1427,8 @@ export interface CardProfile {
   readonly affinityFor: string | null;
   /** Convoke lets each creature tap for one mana while casting this spell (CR 702.51). */
   readonly convoke: boolean;
+  /** Improvise lets each artifact tap for one generic mana while casting this spell (CR 702.126). */
+  readonly improvise: boolean;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
   readonly spellCostReductionGrant: {
     readonly amount: number;
@@ -2389,6 +2394,11 @@ function parseUntapColorsDuringOtherPlayersUntap(text: string): string[] {
 
 function parseStaticPowerToughnessGrant(line: string): StaticPowerToughnessGrant | null {
   const clean = line.trim().replace(/\.$/, "");
+  const attacking = /^attacking creatures you control get ([+-]\d+)\/([+-]\d+)$/i.exec(clean);
+  if (attacking) return {
+    scope: "attacking-creatures-you-control",
+    power: Number(attacking[1]), toughness: Number(attacking[2])
+  };
   const graveyard = /^~ gets ([+-]\d+)\/([+-]\d+) for each creature card in your opponents' graveyards$/i.exec(clean);
   if (graveyard) return { scope: "source-opponents-graveyard-creatures", power: Number(graveyard[1]), toughness: Number(graveyard[2]) };
   const life = /^~ gets ([+-]\d+)\/([+-]\d+) as long as you have (\d+) or more life$/i.exec(clean);
@@ -4245,8 +4255,15 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Return to your hand all creature cards that were put into your graveyard from the battlefield this turn$/i.test(text)) {
     return { effect: { kind: "return-creatures-died-this-turn-to-hand" }, target: "none" };
   }
-  if ((match = /^Attacking creatures get ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
+  if ((match = /^Attacking creatures(?: you control)? get ([+-]\d+)\/([+-]\d+) until end of turn$/i.exec(text))) {
     return { effect: { kind: "modify-all-attacking-creatures", power: Number(match[1]), toughness: Number(match[2]) }, target: "none" };
+  }
+  if (/^Target creature you control fights target creature (?:you don't control|an opponent controls)$/i.test(text)) {
+    return {
+      effect: { kind: "fight" },
+      target: "creature-you-control",
+      targetKinds: ["creature-you-control", "creature-opponent"]
+    };
   }
   if (/^Target player sacrifices an attacking creature of their choice$/i.test(text)) {
     return { effect: { kind: "target-player-sacrifice-attacking-creature" }, target: "player" };
@@ -4806,8 +4823,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Target creature can'?t be blocked this turn$/i.test(text)) return { effect: { kind: "target-cant-be-blocked" }, target: "creature" };
   if (/^Prevent all combat damage that would be dealt this turn$/i.test(text)) return { effect: { kind: "prevent-all-combat-damage-this-turn" }, target: "none" };
   if (/^Attach it to target creature you control$/i.test(text)) return { effect: { kind: "attach-equipment" }, target: "creature-you-control" };
-  if (/^Exile target nonland permanent an opponent controls until ~ (?:leaves the battlefield|is put into a graveyard from the battlefield)$/i.test(text)) {
-    return { effect: { kind: "exile-target-permanent-until-source-leaves" }, target: "nonland-opponent" };
+  const exileUntilSourceLeaves = /^Exile target (nonland permanent|creature) an opponent controls until (?:~|this (?:creature|enchantment|permanent|Aura)) (?:leaves the battlefield|is put into a graveyard from the battlefield)$/i.exec(text);
+  if (exileUntilSourceLeaves) {
+    return {
+      effect: { kind: "exile-target-permanent-until-source-leaves" },
+      target: exileUntilSourceLeaves[1]!.toLowerCase() === "creature" ? "creature-opponent" : "nonland-opponent"
+    };
   }
   if (/^Your opponents can'?t cast spells this turn$/i.test(text)) return { effect: { kind: "opponents-cant-cast-spells-this-turn" }, target: "none" };
   if (/^This turn, creatures can'?t block unless their controller pays \{X\} for each blocking creature they control$/i.test(text)) {
@@ -5754,6 +5775,9 @@ function recognizeText(text: string): RecognizedText {
     if (parseDamageAmplify(line)) continue;
     // Rebound is synthesised from the keyword; consume the reminder line.
     if (/^rebound$/i.test(line)) continue;
+    // Convoke/Improvise are consumed into the card-level alternative-payment
+    // flags below; their parenthetical reminder text is not a second effect.
+    if (/^improvise(?:\s*\([^\n]*\))?\.?$/i.test(line)) continue;
     // Extort is synthesised from the keyword below (CR 702.39).
     if (/^extort\.?$/i.test(line)) continue;
     // Undying / Persist (CR 702.93/702.92) are synthesised from the keyword below.
@@ -6449,6 +6473,18 @@ function recognizeText(text: string): RecognizedText {
       }
       const recognized = recognizeSentence(sentence);
       if (!recognized) {
+        const controllerLifeLoss = /^Its controller loses (\w+) life\.?$/i.exec(sentence);
+        const controllerLifeAmount = controllerLifeLoss
+          ? (controllerLifeLoss[1]!.toUpperCase() === "X" ? "X" as const : toNumber(controllerLifeLoss[1]!))
+          : null;
+        const previous = effects.at(-1);
+        if (controllerLifeAmount !== null && previous && targetKind !== "none") {
+          effects[effects.length - 1] = {
+            kind: "compound",
+            effects: [previous, { kind: "lose-life-target-controller", amount: controllerLifeAmount }]
+          };
+          continue;
+        }
         if (!isIgnorableSentence(sentence, /chosen color/i.test(joined))) unimplementedText.push(sentence.trim());
         continue;
       }
@@ -6484,6 +6520,25 @@ function recognizeText(text: string): RecognizedText {
           continue;
         }
         unimplementedText.push(sentence.trim());
+        continue;
+      }
+      // "Untap it" refers to the same target as the preceding sentence
+      // (CR 109.5). Fold it into one compound effect so resolution preserves
+      // the target identity instead of silently leaving the rider pending.
+      if (/^Untap it\.?$/i.test(noRegenerationRider ?? "") && recognized.target !== "none") {
+        effects.push({ kind: "compound", effects: [recognized.effect, { kind: "untap-target-permanent" }] });
+        targetKind = recognized.target;
+        sentenceIndex += 1;
+        continue;
+      }
+      const controllerLifeLoss = /^Its controller loses (\w+) life\.?$/i.exec(noRegenerationRider ?? "");
+      const controllerLifeAmount = controllerLifeLoss
+        ? (controllerLifeLoss[1]!.toUpperCase() === "X" ? "X" as const : toNumber(controllerLifeLoss[1]!))
+        : null;
+      if (controllerLifeAmount !== null && recognized.target !== "none") {
+        effects.push({ kind: "compound", effects: [recognized.effect, { kind: "lose-life-target-controller", amount: controllerLifeAmount }] });
+        targetKind = recognized.target;
+        sentenceIndex += 1;
         continue;
       }
       effects.push(recognized.effect);
@@ -6547,6 +6602,8 @@ export function cardProfile(card: CardData): CardProfile {
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
   const convoke = /(?:^|\n)Convoke(?:\s*\([^\n]*\))?\.?\s*(?=\n|$)/i.test(text)
     || (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "convoke");
+  const improvise = /(?:^|\n)Improvise(?:\s*\([^\n]*\))?\.?\s*(?=\n|$)/i.test(text)
+    || (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "improvise");
   const wardMatch = /^Ward\s*(?:[—–-]|:)?\s*((?:\{[^}]+\})+)(?:\s*,\s*Pay\s+(\d+)\s+life\.?)?(?:\s*\([^)]*\))?\s*$/im.exec(text);
   // Ward is frequently printed beside evergreen keywords, e.g. "Flying,
   // ward {2}". Keep the same profile regardless of whether it is a complete
@@ -6984,6 +7041,7 @@ export function cardProfile(card: CardData): CardProfile {
     costReducesPerBoardCreature,
     affinityFor,
     convoke,
+    improvise,
     spellCostReductionGrant,
     staticLandManaBonus,
     globalLandManaBonus,

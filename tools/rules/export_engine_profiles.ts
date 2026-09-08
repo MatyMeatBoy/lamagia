@@ -1,5 +1,5 @@
 /** Export the actual ProsshTCG engine profile for every unique catalog card. */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { cardProfile, type CardData } from "../../packages/rules/src/characteristics.ts";
 
@@ -7,6 +7,39 @@ const catalogIndex = process.argv.indexOf("--catalog");
 const outputIndex = process.argv.indexOf("--output");
 const catalog = catalogIndex >= 0 ? process.argv[catalogIndex + 1]! : "data/catalog/prossh.sqlite";
 const output = outputIndex >= 0 ? process.argv[outputIndex + 1]! : "data/rules/engine-card-profiles.json";
+
+type ExperimentSelector = {
+  profileFlags?: string[];
+  oracleTextContains?: string[];
+  effectKinds?: string[];
+};
+type ExperimentBatch = { id: string; tag: "experimental"; selectors: ExperimentSelector };
+
+const experimentRegistryPath = new URL("./experimental_card_batches.json", import.meta.url);
+const experimentBatches: ExperimentBatch[] = existsSync(experimentRegistryPath)
+  ? JSON.parse(readFileSync(experimentRegistryPath, "utf8")).batches ?? []
+  : [];
+
+function containsValue(value: unknown, predicate: (value: unknown) => boolean): boolean {
+  if (predicate(value)) return true;
+  if (Array.isArray(value)) return value.some((child) => containsValue(child, predicate));
+  if (value && typeof value === "object") return Object.values(value).some((child) => containsValue(child, predicate));
+  return false;
+}
+
+function matchingExperimentIds(profile: Record<string, unknown>): string[] {
+  if (!profile.fullyImplemented) return [];
+  return experimentBatches.filter((batch) => {
+    const selector = batch.selectors;
+    const profileMatch = selector.profileFlags?.some((flag) => profile[flag] === true) ?? false;
+    const text = String(profile.oracle_text ?? "").toLocaleLowerCase();
+    const textMatch = selector.oracleTextContains?.some((fragment) => text.includes(fragment.toLocaleLowerCase())) ?? false;
+    const effectMatch = selector.effectKinds?.some((kind) => containsValue(profile.effects, (value) => (
+      value !== null && typeof value === "object" && (value as { kind?: unknown }).kind === kind
+    ))) ?? false;
+    return profileMatch || textMatch || effectMatch;
+  }).map((batch) => batch.id);
+}
 
 const database = new DatabaseSync(catalog, { readOnly: true });
 const rows = database.prepare(`
@@ -40,7 +73,7 @@ for (const row of rows) {
     loyalty: row.loyalty ? String(row.loyalty) : null
   };
   const profile = cardProfile(card);
-  profiles.push({
+  const exportedProfile: Record<string, unknown> = {
     oracle_id: row.oracle_id ?? null,
     scryfall_id: row.id,
     name: row.name,
@@ -60,22 +93,31 @@ for (const row of rows) {
     triggers: profile.triggers,
     targetKind: profile.targetKind,
     convoke: profile.convoke,
+    improvise: profile.improvise,
     entersTapped: profile.entersTapped,
     unimplementedText: profile.unimplementedText
     ,doublesPlusOneCounters: profile.doublesPlusOneCounters
     ,doublesTokens: profile.doublesTokens
-  });
+  };
+  const experimentBatchIds = matchingExperimentIds(exportedProfile);
+  if (experimentBatchIds.length) {
+    exportedProfile.experimental = true;
+    exportedProfile.experimentBatchIds = experimentBatchIds;
+  }
+  profiles.push(exportedProfile);
 }
 
 const separator = Math.max(output.lastIndexOf("/"), output.lastIndexOf("\\"));
 if (separator > 0) mkdirSync(output.slice(0, separator), { recursive: true });
 const implemented = profiles.filter((profile) => (profile as { fullyImplemented: boolean }).fullyImplemented).length;
+const experimental = profiles.filter((profile) => (profile as { experimental?: boolean }).experimental).length;
 writeFileSync(output, JSON.stringify({
   format: "prossh-engine-profiles/v1",
   source: "ProsshTCG packages/rules",
   cardCount: profiles.length,
   implementedCount: implemented,
+  experimentalCount: experimental,
   generatedAt: new Date().toISOString(),
   profiles
 }, null, 2) + "\n", "utf8");
-console.log(`Engine profiles written: ${profiles.length} cards; ${implemented} fully implemented -> ${output}`);
+console.log(`Engine profiles written: ${profiles.length} cards; ${implemented} fully implemented; ${experimental} experimental -> ${output}`);

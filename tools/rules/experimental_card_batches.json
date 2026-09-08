@@ -1,0 +1,22 @@
+{
+  "format": "prossh-experimental-card-batches/v1",
+  "batches": [
+    {
+      "id": "double-audit-2026-09",
+      "tag": "experimental",
+      "selectors": {
+        "profileFlags": ["convoke", "improvise"],
+        "oracleTextContains": [
+          "Untap it.",
+          "Its controller loses",
+          "Attacking creatures you control get"
+        ],
+        "effectKinds": [
+          "fight",
+          "exile-target-permanent-until-source-leaves",
+          "lose-life-target-controller"
+        ]
+      }
+    }
+  ]
+}
