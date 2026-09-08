@@ -633,7 +633,7 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 .library-search small { color: var(--text-faint); font-size: .56rem; line-height: 1.25; }
 
 .library-search-overlay {
-  position: fixed; z-index: 25; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  position: fixed; z-index: 50; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(760px, 92vw); max-height: 78vh; overflow: auto; padding: 12px;
   border: 1px solid var(--gold-dim); border-radius: var(--radius); background: #09140ff7;
   box-shadow: 0 18px 50px #000d;
@@ -670,7 +670,7 @@ body.dragging-card .self-board { outline: 1px dashed color-mix(in srgb, var(--go
 
 /* Floating, draggable panels (stack, decision windows) ---------------- */
 .floating-panel {
-  position: fixed; z-index: 34;
+  position: fixed; z-index: 52;
   border: 1px solid var(--gold-dim); border-radius: 11px;
   background: #07120cf6; box-shadow: 0 18px 48px #000c;
 }
@@ -725,7 +725,10 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 /* --------------------------------------------------------------------- */
 
 .card-preview {
-  position: fixed; z-index: 40; top: 84px; right: 12px; width: clamp(190px, 15vw, 250px);
+  /* Card information must remain above the dimmed decision surface while a
+     search/target choice is open. It is pointer-transparent, so highlighted
+     permanents underneath remain clickable. */
+  position: fixed; z-index: 80; top: 84px; right: 12px; width: clamp(190px, 15vw, 250px);
   max-height: calc(100dvh - 230px);
   display: none; pointer-events: none;
   border: 1px solid var(--gold-dim); border-radius: 12px;
@@ -783,7 +786,7 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 /* Non-modal: the board stays fully visible and interactive behind it, and the
    window can be dragged out of the way by its header (see makeDraggable). */
 .decision-overlay {
-  position: fixed; z-index: 32; left: 24px; top: 50%; transform: translateY(-50%);
+  position: fixed; z-index: 48; left: 24px; top: 50%; transform: translateY(-50%);
   width: min(430px, calc(100vw - 28px)); max-height: min(64vh, 560px); overflow: hidden;
   border: 1px solid var(--gold-dim); border-radius: 12px; background: #07120cf8;
   box-shadow: 0 18px 48px #000c;
@@ -882,6 +885,7 @@ kbd { margin-left: 8px; padding: 1px 5px; border-radius: 3px; background: #fffff
 
 dialog {
   width: min(940px, 94vw); max-height: 88vh; padding: 0;
+  position: fixed; z-index: 100;
   border: 1px solid var(--line); border-radius: 14px;
   background: var(--bg-panel); color: var(--text);
 }

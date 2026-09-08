@@ -206,6 +206,17 @@ function shouldAutoPassServer(next: GameView): boolean {
   return !playerDecision;
 }
 
+/** Keep the server preference aligned after opening-hand decisions and normal
+ * actions. The checkbox is local UI state, but the authoritative engine must
+ * receive it before it can skip an empty priority window. */
+async function syncServerAutoPass(next: GameView): Promise<GameView> {
+  if (next.finished || next.waitingOn !== next.viewerSeat || !shouldAutoPassServer(next)) return next;
+  return api<GameView>(`/api/matches/${session!.matchId}/settings`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: session!.token, autoPass: true })
+  });
+}
+
 function phaseRailHtml(): string {
   const currentIndex = STEP_ORDER.indexOf(view!.step);
   const priorityReadout = view!.finished
@@ -491,13 +502,7 @@ async function refresh(): Promise<void> {
     // A phase stopper is a local presentation preference. Re-apply the
     // authoritative auto-pass setting only when this phase is not stopped;
     // never overwrite a server response merely because the client refreshed.
-    if (!next.finished && shouldAutoPassServer(next) && next.waitingOn === next.viewerSeat && !next.priorityOpen) {
-      const settled = await api<GameView>(`/api/matches/${session.matchId}/settings`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: session.token, autoPass: true })
-      });
-      applyView(settled);
-    }
+    if (!next.finished) applyView(await syncServerAutoPass(next));
   }
   catch { session = null; window.sessionStorage.removeItem("prossh.match"); render(); }
 }
@@ -513,7 +518,7 @@ async function submit(action: LegalAction["action"]): Promise<void> {
     });
     ui.notice = "";
     ui.busy = false;
-    applyView(next);
+    applyView(await syncServerAutoPass(next));
   } catch (error) {
     ui.notice = error instanceof Error ? error.message : "La acción fue rechazada.";
     ui.busy = false;
