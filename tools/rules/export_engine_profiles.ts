@@ -19,6 +19,12 @@ const experimentRegistryPath = new URL("./experimental_card_batches.json", impor
 const experimentBatches: ExperimentBatch[] = existsSync(experimentRegistryPath)
   ? JSON.parse(readFileSync(experimentRegistryPath, "utf8")).batches ?? []
   : [];
+const nearCompleteReportPath = new URL("../../data/rules/near-complete-cards.json", import.meta.url);
+const reusableCandidateIds = new Set<string>(existsSync(nearCompleteReportPath)
+  ? (JSON.parse(readFileSync(nearCompleteReportPath, "utf8")).cards ?? [])
+    .filter((card: { priority?: string }) => card.priority === "reuse-existing")
+    .map((card: { oracle_id?: string; scryfall_id?: string }) => String(card.oracle_id ?? card.scryfall_id))
+  : []);
 
 function containsValue(value: unknown, predicate: (value: unknown) => boolean): boolean {
   if (predicate(value)) return true;
@@ -100,6 +106,10 @@ for (const row of rows) {
     ,doublesTokens: profile.doublesTokens
   };
   const experimentBatchIds = matchingExperimentIds(exportedProfile);
+  if (reusableCandidateIds.has(identity)) {
+    exportedProfile.experimentalCandidate = true;
+    exportedProfile.experimentalCandidateSource = "near-complete-reusable";
+  }
   if (experimentBatchIds.length) {
     exportedProfile.experimental = true;
     exportedProfile.experimentBatchIds = experimentBatchIds;
@@ -111,13 +121,15 @@ const separator = Math.max(output.lastIndexOf("/"), output.lastIndexOf("\\"));
 if (separator > 0) mkdirSync(output.slice(0, separator), { recursive: true });
 const implemented = profiles.filter((profile) => (profile as { fullyImplemented: boolean }).fullyImplemented).length;
 const experimental = profiles.filter((profile) => (profile as { experimental?: boolean }).experimental).length;
+const experimentalCandidates = profiles.filter((profile) => (profile as { experimentalCandidate?: boolean }).experimentalCandidate).length;
 writeFileSync(output, JSON.stringify({
   format: "prossh-engine-profiles/v1",
   source: "ProsshTCG packages/rules",
   cardCount: profiles.length,
   implementedCount: implemented,
   experimentalCount: experimental,
+  experimentalCandidateCount: experimentalCandidates,
   generatedAt: new Date().toISOString(),
   profiles
 }, null, 2) + "\n", "utf8");
-console.log(`Engine profiles written: ${profiles.length} cards; ${implemented} fully implemented; ${experimental} experimental -> ${output}`);
+console.log(`Engine profiles written: ${profiles.length} cards; ${implemented} fully implemented; ${experimental} experimental; ${experimentalCandidates} experimental candidates -> ${output}`);
