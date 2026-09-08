@@ -616,7 +616,8 @@ export type PendingChoice =
       /** Ward payment that is not mana (CR 702.21). */
       readonly wardLifeCost?: number;
       readonly wardDiscard?: boolean;
-      readonly wardSacrifice?: "creature" | "permanent";
+      readonly wardDiscardTypes?: readonly CardType[];
+      readonly wardSacrifice?: "creature" | "permanent" | "legendary-artifact-or-creature";
       readonly unlessPayCost?: ManaCost;
       /** For "exile ~ unless you discard a creature card": declining the discard applies the effect. */
       readonly unlessDiscardCreatureCard?: boolean;
@@ -8755,7 +8756,8 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (choice.type === "optional-trigger") {
       const optionalCost = choice.payCost ?? choice.manaCost;
       if (choice.paymentBy === "opponent" && choice.wardDiscard) {
-        for (const card of player.hand) {
+        const allowedTypes = choice.wardDiscardTypes ?? [];
+        for (const card of player.hand.filter((candidate) => !allowedTypes.length || allowedTypes.some((type) => cardProfile(candidate).types.includes(type)))) {
           actions.push({
             action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, discardCardId: card.instance_id },
             label: `Discard ${card.name} to pay Ward`,
@@ -8786,7 +8788,12 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
         return actions;
       }
       if (choice.paymentBy === "opponent" && choice.wardSacrifice) {
-        const candidates = player.battlefield.filter((permanent) => choice.wardSacrifice === "permanent" || isCreature(cardProfile(permanent.card)));
+        const candidates = player.battlefield.filter((permanent) => {
+          const profile = cardProfile(permanent.card);
+          if (choice.wardSacrifice === "permanent") return true;
+          if (choice.wardSacrifice === "creature") return isCreature(profile);
+          return profile.supertypes.includes("Legendary") && (isCreature(profile) || isArtifact(profile));
+        });
         for (const permanent of candidates) {
           actions.push({
             action: { type: "choose-trigger", sourceId: choice.sourceId, accept: true, sacrificeId: permanent.instance_id },
@@ -11030,7 +11037,7 @@ function queueWardPayment(state: GameState, object: StackObject, remainingWardTa
     const permanent = findPermanent(state, instanceId);
     const profile = permanent ? cardProfile(permanent.card) : null;
     return Boolean(permanent && permanent.controller !== object.controller
-      && (profile?.wardCost || profile?.wardLifeCost !== null && profile?.wardLifeCost !== undefined || profile?.wardDiscard || profile?.wardSacrifice));
+      && (profile?.wardCost || profile?.wardLifeCost !== null && profile?.wardLifeCost !== undefined || profile?.wardDiscard || profile?.wardDiscardTypes.length || profile?.wardSacrifice));
   });
   if (!wardId) return state;
   const permanent = findPermanent(state, wardId)!;
@@ -11051,7 +11058,8 @@ function queueWardPayment(state: GameState, object: StackObject, remainingWardTa
       paymentBy: "opponent",
       ...(cost ? { payCost: cost, manaCost: cost } : {}),
       ...(profile.wardLifeCost !== null ? { wardLifeCost: profile.wardLifeCost } : {}),
-      ...(profile.wardDiscard ? { wardDiscard: true } : {}),
+      ...(profile.wardDiscard || profile.wardDiscardTypes.length ? { wardDiscard: true } : {}),
+      ...(profile.wardDiscardTypes.length ? { wardDiscardTypes: profile.wardDiscardTypes } : {}),
       ...(profile.wardSacrifice ? { wardSacrifice: profile.wardSacrifice } : {}),
       sourcePermanentId: permanent.instance_id,
       remainingWardTargets: remaining
@@ -11475,7 +11483,8 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     }
     if (choice.wardDiscard) {
       const discarded = action.discardCardId
-        ? playerAt(next, seat).hand.find((card) => card.instance_id === action.discardCardId)
+        ? playerAt(next, seat).hand.find((card) => card.instance_id === action.discardCardId
+          && (!(choice.wardDiscardTypes?.length) || choice.wardDiscardTypes.some((type) => cardProfile(card).types.includes(type))))
         : undefined;
       if (!discarded) throw new Error(`Debes elegir una carta para pagar Ward de ${choice.sourceCard.name}.`);
       next = discardCard(next, seat, discarded);
@@ -11496,7 +11505,12 @@ function applyChooseTrigger(state: GameState, seat: SeatId, action: Extract<Game
     }
     if (choice.wardSacrifice) {
       const sacrificed = action.sacrificeId ? playerAt(next, seat).battlefield.find((permanent) => permanent.instance_id === action.sacrificeId) : undefined;
-      if (!sacrificed || (choice.wardSacrifice === "creature" && !isCreature(cardProfile(sacrificed.card))) || sacrificed.controller !== seat) {
+      const sacrificedProfile = sacrificed ? cardProfile(sacrificed.card) : undefined;
+      const validLegendary = sacrificedProfile?.supertypes.includes("Legendary") && (isCreature(sacrificedProfile) || isArtifact(sacrificedProfile));
+      if (!sacrificed || sacrificed.controller !== seat
+        || (choice.wardSacrifice === "creature" && !isCreature(sacrificedProfile!))
+        || (choice.wardSacrifice === "legendary-artifact-or-creature" && !validLegendary)
+        || (choice.wardSacrifice === "permanent" && !sacrificedProfile)) {
         throw new Error(`Debes elegir un ${choice.wardSacrifice} que controles para pagar Ward de ${choice.sourceCard.name}.`);
       }
       next = movePermanentToZone(next, sacrificed, "graveyard", true);
