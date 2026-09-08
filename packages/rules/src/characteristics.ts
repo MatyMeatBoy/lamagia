@@ -4769,6 +4769,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Tap enchanted creature$/i.test(text)) return { effect: { kind: "tap-enchanted-creature" }, target: "none" };
   if (/^Tap target permanent an opponent controls$/i.test(text)) return { effect: { kind: "tap-target-permanent" }, target: "permanent-opponent" };
   if (/^Tap or untap target permanent(?: of their choice)?$/i.test(text)) return { effect: { kind: "tap-or-untap-target-permanent" }, target: "permanent" };
+  if (/^Gain control of target creature until end of turn\.?$/i.test(text)) {
+    return { effect: { kind: "gain-control-target-until-end-of-turn" }, target: "creature" };
+  }
   if (/^Gain control of target creature for as long as you control ~ and ~ remains tapped\.?$/i.test(text)) {
     return { effect: { kind: "gain-control-target-while-source-tapped" }, target: "creature" };
   }

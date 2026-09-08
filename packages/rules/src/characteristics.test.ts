@@ -1066,4 +1066,14 @@ describe("faces and oracle normalisation", () => {
     });
     expect(profile.fullyImplemented).toBe(true);
   });
+
+  it("reuses the temporary creature-control primitive for theft spells", () => {
+    const profile = cardProfile(card({
+      name: "Act of Treason", type_line: "Sorcery", mana_cost: "{2}{R}",
+      oracle_text: "Gain control of target creature until end of turn. Untap that creature. It gains haste until end of turn."
+    }));
+    expect(profile.effects).toContainEqual({ kind: "gain-control-target-until-end-of-turn" });
+    expect(profile.targetKind).toBe("creature");
+    expect(profile.fullyImplemented).toBe(true);
+  });
 });
