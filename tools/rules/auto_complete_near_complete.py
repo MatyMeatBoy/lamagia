@@ -41,6 +41,7 @@ SAFE_FAMILIES: dict[str, dict[str, str]] = {
         "primitive": "gain-control-target-until-end-of-turn",
         "rules": "CR 611.2, 701.7",
     },
+    "Convoke": {"primitive": "convoke", "rules": "CR 702.51, 601.2f"},
 }
 
 

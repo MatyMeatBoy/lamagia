@@ -52,6 +52,13 @@ describe("type line parsing", () => {
 });
 
 describe("composable one-line combat and target primitives", () => {
+  it("recognises Convoke as a reusable casting primitive", () => {
+    const profile = cardProfile(card({ name: "Test Convoke", type_line: "Creature", mana_cost: "{5}{G}", keywords: ["Convoke"], oracle_text: "Convoke" }));
+    expect(profile.convoke).toBe(true);
+    expect(profile.fullyImplemented).toBe(true);
+    expect(profile.unimplementedText).toEqual([]);
+  });
+
   it("keeps target restrictions attached to the shared destroy primitive", () => {
     const attacking = cardProfile(card({ name: "Test", type_line: "Instant", oracle_text: "Destroy target attacking creature." }));
     const tapped = cardProfile(card({ name: "Test", type_line: "Instant", oracle_text: "Destroy target tapped creature." }));

@@ -11,6 +11,29 @@ import { projectGame } from "./projection.js";
 import { isSafeManaUndo } from "./undo.js";
 
 describe("smart counter response and safe mana undo", () => {
+  it("uses an untapped creature as one Convoke mana while preserving its color options", () => {
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [BEAR(), MOUNTAIN()]);
+    const player = game.players[0]!;
+    const plan = planManaPayment(parseManaCost("{2}")!, player, { state: game, convoke: true });
+    expect(plan).not.toBeNull();
+    const bear = player.battlefield.find((permanent) => permanent.card.name === "Grizzly Bears")!;
+    const mountain = player.battlefield.find((permanent) => permanent.card.name === "Mountain")!;
+    expect(plan!.taps.map((tap) => tap.permanentId)).toEqual(expect.arrayContaining([bear.instance_id, mountain.instance_id]));
+    expect(manaSources(player, game, { includeConvoke: true })).toContainEqual(expect.objectContaining({ permanentId: bear.instance_id, abilityIndex: -1, convoke: true }));
+  });
+
+  it("applies the Convoke plan when casting a spell instead of only exporting the keyword", () => {
+    const spell = make({ name: "Test Convoke Spell", type_line: "Sorcery", mana_cost: "{2}", oracle_text: "Convoke\nDraw a card." });
+    let game = twoSeatGame([spell], []);
+    game = stage(game, 0, () => ({ hand: toHand(0, [spell], "convoke"), autoPass: false, battlefield: [] }));
+    game = putOnBattlefield(game, 0, [BEAR(), MOUNTAIN()]);
+    game = { ...game, step: "precombat-main", activeSeat: 0, prioritySeat: 0, priorityOpen: true };
+    game = applyAction(game, 0, { type: "cast", cardId: "convoke-0" });
+    expect(game.players[0]!.battlefield.every((permanent) => permanent.tapped)).toBe(true);
+    expect(game.stack.at(-1)?.card.name).toBe("Test Convoke Spell");
+  });
+
   it("offers Derevi's command-zone return ability without treating it as a cast", () => {
     let game = twoSeatGame([], []);
     const derevi = C13_DEREVI();

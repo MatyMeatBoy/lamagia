@@ -1422,6 +1422,8 @@ export interface CardProfile {
   readonly costReducesPerBoardCreature: number;
   /** Affinity quality: reduce this spell's generic cost by one per matching permanent you control (CR 702.41, 118.9). */
   readonly affinityFor: string | null;
+  /** Convoke lets each creature tap for one mana while casting this spell (CR 702.51). */
+  readonly convoke: boolean;
   /** Static spell-cost reduction grant (CR 118.9); global grants apply to every player. */
   readonly spellCostReductionGrant: {
     readonly amount: number;
@@ -5800,6 +5802,7 @@ function recognizeText(text: string): RecognizedText {
     if (/^You may choose not to untap ~ during your untap step\.?$/i.test(line)) continue;
     if (/^Whenever you tap a land for mana, add one mana of any type that land produced\.?$/i.test(line)) continue;
     if (/^Skip your draw step\.?$/i.test(line)) continue;
+    if (/^Convoke(?:\s*\([^\n]*\))?\.?$/i.test(line)) continue;
     // Toxic's number is a static combat effect; cardProfile stores its operand.
     if (/^toxic\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\.?$/i.test(line)) continue;
     // A keyword-only line ("Flying, vigilance") is fully covered by the keyword engine.
@@ -6542,6 +6545,8 @@ export function cardProfile(card: CardData): CardProfile {
   const uncounterableCreaturePowerMatch = /creature spells you control with power (\d+) or greater can't be countered\.?/i.exec(text);
   const affinityMatch = /^Affinity for (.+)$/im.exec(text);
   const affinityFor = affinityMatch?.[1]?.trim().toLowerCase() ?? null;
+  const convoke = /(?:^|\n)Convoke(?:\s*\([^\n]*\))?\.?\s*(?=\n|$)/i.test(text)
+    || (card.keywords ?? []).some((keyword) => keyword.toLowerCase() === "convoke");
   const wardMatch = /^Ward\s*(?:[—–-]|:)?\s*((?:\{[^}]+\})+)(?:\s*,\s*Pay\s+(\d+)\s+life\.?)?(?:\s*\([^)]*\))?\s*$/im.exec(text);
   // Ward is frequently printed beside evergreen keywords, e.g. "Flying,
   // ward {2}". Keep the same profile regardless of whether it is a complete
@@ -6978,6 +6983,7 @@ export function cardProfile(card: CardData): CardProfile {
     redirectsOpponentDrawsExceptFirst,
     costReducesPerBoardCreature,
     affinityFor,
+    convoke,
     spellCostReductionGrant,
     staticLandManaBonus,
     globalLandManaBonus,

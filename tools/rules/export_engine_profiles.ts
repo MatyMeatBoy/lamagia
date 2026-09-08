@@ -59,6 +59,7 @@ for (const row of rows) {
     effects: profile.effects,
     triggers: profile.triggers,
     targetKind: profile.targetKind,
+    convoke: profile.convoke,
     entersTapped: profile.entersTapped,
     unimplementedText: profile.unimplementedText
     ,doublesPlusOneCounters: profile.doublesPlusOneCounters
