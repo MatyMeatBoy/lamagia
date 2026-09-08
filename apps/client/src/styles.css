@@ -299,7 +299,7 @@ h1, h2, h3 { margin: 0; }
   animation: summoningVortex 4.6s linear infinite;
 }
 .summoning-sickness path {
-  fill: none; stroke: url(#sickness-vortex); stroke-width: 4.5;
+  fill: none; stroke: var(--sickness-gradient); stroke-width: 4.5;
   stroke-linecap: round; stroke-linejoin: round;
 }
 @keyframes summoningVortex {

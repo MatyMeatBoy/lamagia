@@ -1060,8 +1060,14 @@ function tileHtml(permanent: PermanentView, own: boolean): string {
     permanent.producesMana && !permanent.tapped ? `<i class="tile-badge mana" title="Puede producir maná">◇</i>` : ""
   ].join("");
   const icons = abilityIconsHtml(permanent);
-  const summoningSickness = permanent.summoningSick ? `<svg class="summoning-sickness" viewBox="0 0 100 100" aria-label="Mareo de invocación" role="img" focusable="false">
-    <defs><linearGradient id="sickness-vortex" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9e7d5" stop-opacity=".15"/><stop offset=".52" stop-color="#f4e8bb" stop-opacity=".78"/><stop offset="1" stop-color="#a9d0c4" stop-opacity=".12"/></linearGradient></defs>
+  // The engine keeps this flag on every newly entered permanent because it is
+  // useful for later type-changing effects. The visual, however, is only a
+  // creature marker: a land or noncreature artifact is not summoning-sick in
+  // the gameplay sense (CR 302.6).
+  const isCreaturePermanent = /\bCreature\b/.test(permanent.type_line.split("//")[0] ?? "");
+  const sicknessGradientId = `sickness-vortex-${permanent.instance_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const summoningSickness = permanent.summoningSick && isCreaturePermanent ? `<svg class="summoning-sickness" style="--sickness-gradient:url(#${sicknessGradientId})" viewBox="0 0 100 100" aria-label="Mareo de invocación" role="img" focusable="false">
+    <defs><linearGradient id="${sicknessGradientId}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9e7d5" stop-opacity=".15"/><stop offset=".52" stop-color="#f4e8bb" stop-opacity=".78"/><stop offset="1" stop-color="#a9d0c4" stop-opacity=".12"/></linearGradient></defs>
     <path d="M79 26C61 11 30 19 25 43c-5 23 19 40 42 31 18-7 20-30 5-41-13-10-34-5-37 10-3 14 13 24 26 18 10-5 11-18 3-24-8-6-19-2-20 7-1 7 7 12 14 9"/>
     <path d="M62 12c18 15 26 33 15 54-8 16-27 25-45 22"/>
     <path d="M39 14c-14 12-21 29-15 47 5 15 20 27 37 28"/>
