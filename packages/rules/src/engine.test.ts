@@ -467,6 +467,7 @@ const SPHINX_OF_THE_STEEL_WIND = () => make({
 });
 const RED_RAIDER = () => make({ name: "Red Raider", type_line: "Creature — Goblin", mana_cost: "{1}{R}", cmc: 2, power: "3", toughness: "3", colors: ["R"] });
 const BOLT = () => make({ name: "Lightning Bolt", type_line: "Instant", mana_cost: "{R}", cmc: 1, oracle_text: "Lightning Bolt deals 3 damage to any target." });
+const TEST_PLANESWALKER = () => make({ name: "Test Planeswalker", type_line: "Legendary Planeswalker — Test", mana_cost: "{3}{R}", cmc: 4, loyalty: "4" });
 const SIMIAN_SPIRIT_GUIDE = () => make({ name: "Simian Spirit Guide", type_line: "Creature — Ape Spirit", mana_cost: "{2}{R}", cmc: 3, power: "2", toughness: "2", oracle_text: "Exile Simian Spirit Guide from your hand: Add {R}." });
 const WAR_CADENCE = () => make({ name: "War Cadence", type_line: "Enchantment", mana_cost: "{2}{R}", cmc: 3, oracle_text: "{X}: This turn, creatures can't block unless their controller pays {X} for each blocking creature they control.", oracle_id: "49d0fdd6-cc8f-4fe1-a6bd-4321dac18404" });
 const SEKKUAR = () => make({ name: "Sek'Kuar, Deathkeeper", type_line: "Legendary Creature — Orc Shaman", mana_cost: "{2}{B}{R}{G}", cmc: 5, power: "4", toughness: "3", colors: ["B", "R", "G"], oracle_text: "Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.", oracle_id: "94426127-65c2-435e-ba92-423a3c102061" });
@@ -7952,6 +7953,42 @@ describe("casting", () => {
     expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === land.instance_id)).toBe(false);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Fissure Vent")).toBe(true);
     expect(game.log.some((entry) => entry.text.includes("sus objetivos ya no son legales"))).toBe(false);
+  });
+
+  it("rechecks hexproof gained after casting before resolving", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [], [BEAR()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, () => ({
+      autoPass: false,
+    }));
+    const target = game.players[1]!.battlefield[0]!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = stage(game, 1, (player) => ({
+      battlefield: player.battlefield.map((permanent) => permanent.instance_id === target.instance_id
+        ? { ...permanent, temporaryKeywords: ["hexproof"] }
+        : permanent)
+    }));
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.instance_id === target.instance_id)).toBe(true);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Lightning Bolt")).toBe(true);
+    expect(game.log.some((entry) => entry.text.includes("sus objetivos ya no son legales"))).toBe(true);
+  });
+
+  it("allows any-target damage to hit a planeswalker and removes loyalty", () => {
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [], [TEST_PLANESWALKER()]);
+    game = stage(game, 0, () => ({ autoPass: false }));
+    game = stage(game, 1, (player) => ({
+      autoPass: false,
+      battlefield: player.battlefield.map((permanent) => ({
+        ...permanent,
+        counters: { ...permanent.counters, loyalty: 4 }
+      }))
+    }));
+    const walker = game.players[1]!.battlefield[0]!;
+    expect(legalTargets(game, 0, "any", profileOf(BOLT()))).toContainEqual({ kind: "permanent", instanceId: walker.instance_id });
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: walker.instance_id }] });
+    game = passUntil(game, (state) => state.stack.length === 0);
+    expect(game.players[1]!.battlefield[0]!.counters.loyalty).toBe(1);
   });
 
   it("filters creature and noncreature counterspell targets by the spell on the stack", () => {

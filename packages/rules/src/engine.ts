@@ -7036,14 +7036,29 @@ function resolveTop(state: GameState): GameState {
   }
 
   // CR 608.2b: a spell or ability is countered only when all of its targets
-  // are illegal.  Effects must receive the original target list so they can
-  // skip only the targets that are no longer legal and resolve the rest.
-  const targetIsIllegal = (target: Target): boolean =>
-    (target.kind === "permanent" && !findPermanent(next, target.instanceId)) ||
-    (target.kind === "graveyard-card" && !playerAt(next, target.seat).graveyard.some((card) => card.instance_id === target.instanceId)) ||
-    (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId)) ||
-    (target.kind === "player" && playerAt(next, target.seat).lost);
-  const legalTargetCount = object.targets.filter((target) => !targetIsIllegal(target)).length;
+  // are illegal. A target can become illegal without leaving its zone (for
+  // example, it can gain hexproof, shroud, protection, or stop matching a
+  // type restriction after the spell was cast), so re-evaluate the same
+  // target restriction at resolution rather than checking existence only.
+  const targetKindForIndex = (index: number): TargetKind | undefined =>
+    object.activated?.targetKinds?.[index]
+      ?? (index === 0 ? object.activated?.targetKind : undefined)
+      ?? object.trigger?.definition.targetKinds?.[index]
+      ?? (index === 0 ? object.trigger?.definition.targetKind : undefined)
+      ?? cardProfile(object.card).targetKinds?.[index]
+      ?? (index === 0 ? cardProfile(object.card).targetKind : undefined);
+  const targetIsIllegal = (target: Target, index: number): boolean => {
+    const missing = (target.kind === "permanent" && !findPermanent(next, target.instanceId))
+      || (target.kind === "graveyard-card" && !playerAt(next, target.seat).graveyard.some((card) => card.instance_id === target.instanceId))
+      || (target.kind === "spell" && !next.stack.some((entry) => entry.id === target.stackId))
+      || (target.kind === "player" && playerAt(next, target.seat).lost);
+    if (missing) return true;
+    const targetKind = targetKindForIndex(index);
+    if (!targetKind || targetKind === "none") return false;
+    const allowed = legalTargets(next, object.controller, targetKind, cardProfile(object.card));
+    return !allowed.some((candidate) => JSON.stringify(candidate) === JSON.stringify(target));
+  };
+  const legalTargetCount = object.targets.filter((target, index) => !targetIsIllegal(target, index)).length;
   if (object.targets.length && legalTargetCount === 0) {
     if (object.trigger) return logged(next, object.controller, `La habilidad de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
     if (object.activated) return logged(next, object.controller, `La habilidad activada de ${object.card.name} no se resuelve: su objetivo ya no es legal.`);
@@ -9961,7 +9976,11 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
   if (kind === "any") {
     return [...state.players.filter((player) => !player.lost).map((player) => ({ kind: "player", seat: player.seat }) as Target), ...filtered.filter((target) => {
       const permanent = findPermanent(state, target.kind === "permanent" ? target.instanceId : "");
-      return permanent ? isCreature(cardProfile(permanent.card)) : false;
+      if (!permanent) return false;
+      const profile = cardProfile(permanent.card);
+      // "Any target" means creature, player, or planeswalker (CR 115.4),
+      // not an arbitrary noncreature permanent.
+      return isCreature(profile) || profile.types.includes("Planeswalker");
     })];
   }
   return filtered;
