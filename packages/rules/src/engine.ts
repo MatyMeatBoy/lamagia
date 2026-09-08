@@ -8504,7 +8504,7 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
   if ((freeCast || payLifeCost) && (fromCommandZone || flashback)) return { legal: false };
   if (payLifeCost && !profile.payLifeInsteadOfManaCost) return { legal: false };
   if (payLifeCost && profile.payLifeInsteadOfManaCost
-    && (!controlsLandType(state, seat, profile.payLifeInsteadOfManaCost.controlLandType) || profile.payLifeInsteadOfManaCost.life >= player.life)) return { legal: false };
+    && (!controlsLandType(state, seat, profile.payLifeInsteadOfManaCost.controlLandType) || profile.payLifeInsteadOfManaCost.life > player.life)) return { legal: false };
   if (returnPermanentId) {
     if (!profile.returnLandInsteadOfManaCost) return { legal: false };
     const returned = player.battlefield.find((permanent) => permanent.instance_id === returnPermanentId);
@@ -8605,7 +8605,9 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
     if (state.pendingChoice.seat !== seat) return actions;
     const choice = state.pendingChoice;
     if (choice.type === "land-entry") {
-      if (player.life > choice.life) {
+      // A player may pay exactly their current life total; state-based
+      // actions are checked after the choice resolves (CR 119.4).
+      if (player.life >= choice.life) {
         actions.push({
           action: { type: "choose-land-entry", sourceId: choice.sourceId, payLife: true },
           label: `Pay ${choice.life} life — enter untapped`,

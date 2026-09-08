@@ -1504,18 +1504,20 @@ describe("turn structure", () => {
     expect(flush.players[0]!.battlefield.find((permanent) => permanent.instance_id === flushLand.instance_id)!.tapped).toBe(false);
     expect(flush.players[0]!.life).toBe(before - 2);
 
-    // At low life, the same choice protects it and the land enters tapped instead.
+    // Paying exactly the current life total is legal; the player then loses
+    // to state-based actions after the choice resolves (CR 119.4).
     let poor = twoSeatGame([], []);
     poor = stage(poor, 0, () => ({ hand: toHand(0, [SHOCK_LAND()], "shock-poor"), life: 2 }));
     poor = passUntil(poor, (state) => state.step === "precombat-main" && state.activeSeat === 0 && state.prioritySeat === 0);
     poor = applyAction(poor, 0, { type: "play-land", cardId: "shock-poor-0" });
     const poorLand = poor.players[0]!.battlefield.find((permanent) => permanent.card.name === "Test Steam Vents")!;
     expect(legalActions(poor, 0).map((entry) => entry.action)).toEqual([
+      { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: true },
       { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false }
     ]);
-    poor = applyAction(poor, 0, { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: false });
-    expect(poorLand.tapped).toBe(true);
-    expect(poor.players[0]!.life).toBe(2);
+    poor = applyAction(poor, 0, { type: "choose-land-entry", sourceId: poorLand.instance_id, payLife: true });
+    expect(poor.players[0]!.battlefield.find((permanent) => permanent.instance_id === poorLand.instance_id)!.tapped).toBe(false);
+    expect(poor.players[0]!.life).toBe(0);
   });
 
   it("skips the opening draw only for the starting player", () => {
