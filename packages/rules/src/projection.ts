@@ -181,6 +181,8 @@ export interface GameView {
   /** Set by the authoritative match registry; no undo snapshots leave it. */
   readonly undoAvailable: boolean;
   readonly viewerSeat: SeatId;
+  /** Auto-pass preference for this authenticated viewer only. */
+  readonly viewerAutoPass: boolean;
   readonly version: number;
   readonly turn: number;
   readonly step: TurnStep;
@@ -476,6 +478,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
 
   return {
     viewerSeat,
+    viewerAutoPass: viewer.autoPass,
     version: state.version,
     undoAvailable: false,
     turn: state.turn,
