@@ -3374,6 +3374,14 @@ describe("casting", () => {
     }));
     expect(anotherProfile.activatedAbilities[0]).toMatchObject({ tapsCreature: { mode: "another" } });
 
+    // Paying the full life total is legal; state-based actions are checked
+    // after the cost is paid (CR 119.4).
+    let exactLife = readyToCast([], [SWAMP(), MARROW_BATS()]);
+    exactLife = stage(exactLife, 0, () => ({ life: 4 }));
+    const exactSource = exactLife.players[0]!.battlefield.find((permanent) => permanent.card.name === "Marrow Bats")!;
+    expect(legalActions(exactLife, 0).some((entry) => entry.action.type === "activate"
+      && entry.action.sourceId === exactSource.instance_id && entry.action.abilityIndex === 0)).toBe(true);
+
     const genericProfile = profileOf(make({
       name: "Creature Chorus", type_line: "Creature — Human", mana_cost: "{2}{G}", cmc: 3, power: "2", toughness: "2",
       oracle_text: "Tap an untapped creature you control: Draw a card."

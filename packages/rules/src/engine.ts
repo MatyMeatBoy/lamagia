@@ -1546,7 +1546,9 @@ function exileCreatureCandidates(player: PlayerState, source: Permanent): Perman
 function canUseManaAbility(player: PlayerState, permanent: Permanent, ability: ManaAbility, state?: GameState): boolean {
   if (ability.requiresTap && permanent.tapped) return false;
   if (ability.requiresTap && permanent.summoningSick && isCreature(cardProfile(permanent.card))) return false;
-  if (ability.lifeCost >= player.life) return false;
+  // A life payment may reduce the total to exactly 0; only paying more than
+  // the available life is illegal (CR 119.4).
+  if (ability.lifeCost > player.life) return false;
   if (ability.requiresLands !== undefined && player.battlefield.filter((candidate) => isLand(cardProfile(candidate.card))).length < ability.requiresLands) return false;
   if (ability.activationRestriction) {
     const enteredOk = ability.activationRestriction.enteredThisTurn && permanent.enteredThisTurn;
@@ -1887,7 +1889,8 @@ export function planManaPayment(
       if (index >= spare.length) return null;
       const source = spare[index]!;
       index += 1;
-      if (player.life - externalLifeCost - currentLife - source.lifeCost <= 0) continue;
+      // Life payments may reach exactly 0; reject only an overpayment.
+      if (player.life - externalLifeCost - currentLife - source.lifeCost < 0) continue;
       // Prefer a colour the cost still asks for; otherwise any option works for generic.
       const type = source.options.find((candidate) => wanted.has(candidate)) ?? source.options[0]!;
       const bonusType = source.bonusOptions?.find((candidate) => wanted.has(candidate)) ?? source.bonusOptions?.[0];
@@ -1922,7 +1925,7 @@ export function planManaPayment(
       const signature = sourceSignature(source);
       if (tried.has(signature)) continue; // Interchangeable sources share one branch.
       tried.add(signature);
-      if (player.life - externalLifeCost - lifeSpent - source.lifeCost <= 0) continue;
+      if (player.life - externalLifeCost - lifeSpent - source.lifeCost < 0) continue;
       for (const type of requirement) {
         if (!source.options.includes(type)) continue;
         for (const bonusType of source.bonusOptions ?? [undefined]) {
@@ -2031,7 +2034,7 @@ function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan |
     if (!source || !source.options.includes(selection.mana)) return null;
     const bonusOptions = source.bonusOptions ?? [];
     if (selection.manaBonus !== undefined && !bonusOptions.includes(selection.manaBonus)) return null;
-    if (player.life - lifeCost - source.lifeCost <= 0) return null;
+    if (player.life - lifeCost - source.lifeCost < 0) return null;
     used.add(selection.sourceId);
     lifeCost += source.lifeCost;
     pool = addSourceOutput(pool, source, selection.mana, selection.manaBonus);
@@ -8522,7 +8525,9 @@ function castableCard(state: GameState, seat: SeatId, card: GameCard, fromComman
     ? profile.flashbackLifeCost
     : profile.additionalLifeCost + (profile.additionalLifeCostVariable ? variableValue : 0);
   if (flashback && (profile.isPermanent || !profile.flashbackCost)) return { legal: false };
-  if (!payLifeCost && lifeCost >= player.life) return { legal: false };
+  // Additional/flashback life payments may bring the player to 0. State-based
+  // actions are checked after the cost is paid, so reject only an overpayment.
+  if (!payLifeCost && lifeCost > player.life) return { legal: false };
   if (!flashback && (!profile.castableFromHand || !profile.cost)) return { legal: false };
   const availableKickerCosts = kickerCostsOf(profile);
   if (!flashback && kicked && !availableKickerCosts.length) return { legal: false };
@@ -10284,7 +10289,7 @@ function activatableAbility(
         source.controller === seat && cardProfile(source.card).grantsCreatureActivationHaste);
     if (!hasHaste) return { legal: false };
   }
-  if (ability.lifeCost >= player.life) return { legal: false };
+  if (ability.lifeCost > player.life) return { legal: false };
   if (ability.sacrificesCreature) {
     const candidates = player.battlefield.filter((candidate) => matchesSacrificeCreatureCost(candidate, ability, permanent.instance_id));
     if (!candidates.length) return { legal: false };
