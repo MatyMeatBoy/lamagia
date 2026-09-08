@@ -7340,6 +7340,23 @@ describe("casting", () => {
     expect(game.players[1]!.graveyard.some((card) => card.name === "Mass Damage Target")).toBe(false);
   });
 
+  it("triggers a self-sacrifice when a permanent becomes targeted", () => {
+    const targeter = make({
+      name: "Targeted Sacrifice", type_line: "Creature — Goblin", mana_cost: "{R}", cmc: 1, power: "1", toughness: "1",
+      oracle_text: "When Targeted Sacrifice becomes the target of a spell or ability, sacrifice it."
+    });
+    expect(profileOf(targeter)).toMatchObject({
+      triggers: [{ event: "becomes-targeted", subject: "self", effect: { kind: "sacrifice-source" } }],
+      fullyImplemented: true
+    });
+    let game = readyToCast([BOLT()], [MOUNTAIN()], [], [targeter]);
+    const target = game.players[1]!.battlefield.find((permanent) => permanent.card.name === "Targeted Sacrifice")!;
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0", targets: [{ kind: "permanent", instanceId: target.instance_id }] });
+    game = passUntil(game, (state) => state.players[1]!.graveyard.some((card) => card.name === "Targeted Sacrifice"));
+    expect(game.players[1]!.graveyard.some((card) => card.name === "Targeted Sacrifice")).toBe(true);
+    expect(game.players[1]!.battlefield.some((permanent) => permanent.card.name === "Targeted Sacrifice")).toBe(false);
+  });
+
   it("uses the kicked damage amount for Burst Lightning without changing its target restriction", () => {
     // CR 702.33e, 614.1: the kicked clause replaces the base damage amount;
     // it does not create a second damage event or widen the target set.

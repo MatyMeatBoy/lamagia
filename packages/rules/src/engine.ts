@@ -422,6 +422,7 @@ export type GameEvent =
   | { readonly kind: "dealt-damage-to-player"; readonly seat: SeatId; readonly amount: number }
   | { readonly kind: "source-counter-threshold"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
   | { readonly kind: "becomes-tapped"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard }
+  | { readonly kind: "becomes-targeted"; readonly permanentId: string; readonly controller: SeatId; readonly card: GameCard; readonly sourceController: SeatId; readonly sourceCard: GameCard }
   | { readonly kind: "spell-cast"; readonly controller: SeatId; readonly card: GameCard; readonly spell: StackObject; readonly spentMana?: number }
   | { readonly kind: "card-cycled"; readonly controller: SeatId; readonly card: GameCard }
   /** `count` is this player's Nth draw this turn, 1-indexed (Krang, Faerie Mastermind's "second card each turn"). */
@@ -3042,6 +3043,7 @@ function causeOf(state: GameState, event: GameEvent): string {
     case "dealt-damage-to-player": return `${playerAt(state, event.seat).name} recibe ${event.amount} daño`;
     case "source-counter-threshold": return `${object!.card.name} alcanza su umbral de contadores`;
     case "becomes-tapped": return `${object!.card.name} se gira`;
+    case "becomes-targeted": return `${event.sourceCard.name} hace objetivo a ${object!.card.name}`;
     case "spell-cast": return `${playerAt(state, event.controller).name} lanza ${event.card.name}`;
     case "card-cycled": return `${playerAt(state, event.controller).name} cicla ${event.card.name}`;
     case "card-drawn": return `${playerAt(state, event.seat).name} roba una carta`;
@@ -10180,7 +10182,26 @@ function pushOnStack(state: GameState, seat: SeatId, card: GameCard, targets: re
     ...(sacrificedManaValue === undefined ? {} : { sacrificedManaValue })
   };
   // After putting an object on the stack its controller receives priority again (rule 117.3c).
-  return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
+  return raiseTargetEvents({ ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] }, object);
+}
+
+/** Raises one event for each battlefield permanent targeted during announcement. */
+function raiseTargetEvents(state: GameState, object: StackObject): GameState {
+  let next = state;
+  for (const target of object.targets) {
+    if (target.kind !== "permanent") continue;
+    const permanent = findPermanent(next, target.instanceId);
+    if (!permanent) continue;
+    next = raiseEvent(next, {
+      kind: "becomes-targeted",
+      permanentId: permanent.instance_id,
+      controller: permanent.controller,
+      card: permanent.card,
+      sourceController: object.controller,
+      sourceCard: object.card
+    });
+  }
+  return next;
 }
 
 function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent, ability: ActivatedAbility, targets: readonly Target[], variableValue = 0): GameState {
@@ -10198,7 +10219,7 @@ function pushActivatedOnStack(state: GameState, seat: SeatId, source: Permanent,
     activated: ability,
     sourcePermanentId: source.instance_id
   };
-  return { ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] };
+  return raiseTargetEvents({ ...state, stack: [...state.stack, object], prioritySeat: seat, priorityOpen: true, passedSeats: [] }, object);
 }
 
 function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "activate-mana" }>, manaAlreadyPaid = false): GameState {
@@ -12793,7 +12814,8 @@ function openResolvedTriggerTargetChoice(
 ): GameState {
   const targetKind = trigger.definition.targetKind;
   if (targetKind === "none") {
-    return { ...state, stack: [...state.stack, triggerStackObject(state, trigger, [])], ...opened };
+    const object = triggerStackObject(state, trigger, []);
+    return raiseTargetEvents({ ...state, stack: [...state.stack, object], ...opened }, object);
   }
   if (trigger.definition.targetKinds?.length) {
     return openMultiTriggerTargetChoice(state, trigger, [], opened);
@@ -12807,7 +12829,8 @@ function openResolvedTriggerTargetChoice(
       `La habilidad disparada de ${trigger.sourceCard.name} se retira de la pila: no hay objetivo legal.`);
   }
   if (options.length === 1) {
-    return { ...state, stack: [...state.stack, triggerStackObject(state, trigger, options)], ...opened };
+    const object = triggerStackObject(state, trigger, options);
+    return raiseTargetEvents({ ...state, stack: [...state.stack, object], ...opened }, object);
   }
   return {
     ...state,
@@ -12849,7 +12872,8 @@ function openMultiTriggerTargetChoice(
     ? legalTargets(state, trigger.controller, nextKind).filter((target) => !selected.has(JSON.stringify(target)))
     : [];
   if (!nextKind || (!options.length && selectedTargets.length >= minimumTargets)) {
-    return { ...state, stack: [...state.stack, triggerStackObject(state, trigger, selectedTargets)], pendingChoice: null, ...opened };
+    const object = triggerStackObject(state, trigger, selectedTargets);
+    return raiseTargetEvents({ ...state, stack: [...state.stack, object], pendingChoice: null, ...opened }, object);
   }
   if (!options.length) {
     return logged(state, trigger.controller, `La habilidad disparada de ${trigger.sourceCard.name} se retira: no hay objetivos legales.`);
@@ -12883,15 +12907,16 @@ function applyChooseTriggerTarget(state: GameState, seat: SeatId, action: Extrac
     return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
   }
   const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const object = triggerStackObject(state, choice.trigger, [action.target]);
   const next: GameState = {
     ...state,
     pendingChoice: null,
-    stack: [...state.stack, triggerStackObject(state, choice.trigger, [action.target])],
+    stack: [...state.stack, object],
     prioritySeat: active,
     priorityOpen: true,
     passedSeats: []
   };
-  return logged(next, seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
+  return logged(raiseTargetEvents(next, object), seat, `${choice.trigger.sourceCard.name} apunta a ${targetLabel(state, action.target)}.`);
 }
 
 function applyChooseTriggerOrder(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-trigger-order" }>): GameState {
@@ -12911,15 +12936,16 @@ function applyFinishTriggerTargets(state: GameState, seat: SeatId, action: Extra
   if (choice.sourceId !== action.sourceId) throw new Error("Esa elección ya no corresponde a la habilidad pendiente.");
   if ((choice.selectedTargets?.length ?? 0) < (choice.minimumTargets ?? 1)) throw new Error("Debes elegir el objetivo obligatorio.");
   const active = playerAt(state, state.activeSeat).lost ? nextLivingSeat(state, state.activeSeat) : state.activeSeat;
+  const object = triggerStackObject(state, choice.trigger, choice.selectedTargets ?? []);
   const next: GameState = {
     ...state,
     pendingChoice: null,
-    stack: [...state.stack, triggerStackObject(state, choice.trigger, choice.selectedTargets ?? [])],
+    stack: [...state.stack, object],
     prioritySeat: active,
     priorityOpen: true,
     passedSeats: []
   };
-  return logged(next, seat, `${choice.trigger.sourceCard.name} termina la selección de objetivos.`);
+  return logged(raiseTargetEvents(next, object), seat, `${choice.trigger.sourceCard.name} termina la selección de objetivos.`);
 }
 
 /** Resolves a triggered ability's own "choose one or more" (Black Market Connections, CR 603.3d). */

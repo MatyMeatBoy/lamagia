@@ -1024,6 +1024,7 @@ export type TriggerEvent =
   | "dealt-damage-to-player"
   | "source-counter-threshold"
   | "becomes-tapped"
+  | "becomes-targeted"
   | "spell-cast"
   | "card-cycled"
   | "card-drawn"
@@ -1089,6 +1090,7 @@ export const TRIGGER_EVENT_LABELS: Readonly<Record<TriggerEvent, string>> = {
   "dealt-damage-to-player": "habilidad de daño recibido",
   "source-counter-threshold": "habilidad de umbral de contador",
   "becomes-tapped": "habilidad de giro",
+  "becomes-targeted": "habilidad al ser objetivo",
   "spell-cast": "habilidad de lanzamiento",
   "card-cycled": "habilidad de cycling",
   "card-drawn": "habilidad de robo",
@@ -3395,6 +3397,7 @@ const TRIGGER_TEMPLATES: readonly TriggerTemplate[] = [
   { event: "blocks", subject: "self", pattern: /^(?:when|whenever)\s+~\s+blocks(?:\s+a\s+creature)?,?\s*(.+)$/i },
   { event: "deals-combat-damage-to-player", subject: "self", pattern: /^(?:when|whenever)\s+~\s+deals\s+combat\s+damage\s+to\s+a\s+player,?\s*(.+)$/i },
   { event: "becomes-tapped", subject: "self", pattern: /^(?:when|whenever)\s+~\s+becomes\s+tapped,?\s*(.+)$/i },
+  { event: "becomes-targeted", subject: "self", pattern: /^(?:when|whenever)\s+~\s+becomes\s+the\s+target\s+of\s+(?:a|an)\s+spell\s+or\s+ability,?\s*(.+)$/i },
   // Equipment triggers about the creature it's attached to (Skullclamp,
   // Argentum Armor); the "equipped-creature" subject already exists for the
   // static P/T-doubler grant, wired here for the first time as a real event.
@@ -6359,7 +6362,9 @@ function recognizeText(text: string): RecognizedText {
             // invalid fragment "gain 2 life" (CR 609.3).
             ? effectText.replace(/^you\s+may\s+(?=(?:draw|mill|discard|gain|lose)\b)/i, "You ").replace(/^you\s+may\s+/i, "")
             : effectText;
-          const normalizedExecutableText = executableText.replace(/^(?:have\s+)?(?:it|~)\s+deal\b/i, "~ deals");
+          const normalizedExecutableText = executableText
+            .replace(/^sacrifice\s+it\.?$/i, triggered.event === "becomes-targeted" && triggered.subject === "self" ? "Sacrifice ~" : executableText)
+            .replace(/^(?:have\s+)?(?:it|~)\s+deal\b/i, "~ deals");
           const lookTop = parseLookTopSelection(normalizedExecutableText) ?? parseLookTopBattlefieldTapped(normalizedExecutableText);
           const manaSpentToken = parseManaSpentToken(normalizedExecutableText);
           return manaSpentToken ? { effect: manaSpentToken, target: "none" as TargetKind }

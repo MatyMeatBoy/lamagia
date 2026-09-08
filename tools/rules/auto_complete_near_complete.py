@@ -44,6 +44,9 @@ SAFE_FAMILIES: dict[str, dict[str, str]] = {
     "If a creature dealt damage this way would die this turn, exile it instead.": {
         "primitive": "damage-all-creatures.exilesIfWouldDie", "rules": "CR 614.1, 700.4",
     },
+    "When ~ becomes the target of a spell or ability, sacrifice it.": {
+        "primitive": "becomes-targeted + sacrifice-source", "rules": "CR 603.2, 603.6, 701.17",
+    },
     "Gain control of target creature until end of turn.": {
         "primitive": "gain-control-target-until-end-of-turn",
         "rules": "CR 611.2, 701.7",
