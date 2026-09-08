@@ -67,7 +67,8 @@ describe("payCost", () => {
   it("pays Phyrexian with life only when life allows it", () => {
     const withLife = payCost(cost("{B/P}"), emptyPool(), { availableLife: 40 });
     expect(withLife?.lifePaid).toBe(2);
-    expect(canPay(cost("{B/P}"), emptyPool(), { availableLife: 2 })).toBe(false);
+    expect(canPay(cost("{B/P}"), emptyPool(), { availableLife: 2 })).toBe(true);
+    expect(payCost(cost("{B/P}"), emptyPool(), { availableLife: 2 })?.lifePaid).toBe(2);
     expect(payCost(cost("{B/P}"), pool({ B: 1 }), { availableLife: 40 })?.lifePaid).toBe(0);
   });
 

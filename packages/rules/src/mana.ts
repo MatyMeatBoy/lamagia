@@ -138,7 +138,7 @@ export interface PaymentResult {
 export interface PaymentOptions {
   /** Value chosen for every `{X}` in the cost. */
   readonly variableValue?: number;
-  /** Life the payer can spend on Phyrexian symbols; payment never reduces life to 0. */
+  /** Life the payer can spend on Phyrexian symbols; payment may reach exactly 0. */
   readonly availableLife?: number;
   /** Extra generic the cost demands (commander tax, additional cost, …). */
   readonly additionalGeneric?: number;
@@ -222,8 +222,9 @@ export function payCost(cost: ManaCost, pool: ManaPool, options: PaymentOptions 
         const result = solve(position + 1, next, nextSpent, lifePaid);
         if (result) return result;
       } else {
-        // Paying life may never reduce the payer to zero or below (rule 118.4).
-        if (availableLife - lifePaid <= choice.amount) continue;
+        // A life payment may equal the current life total; only an overpayment
+        // is illegal. State-based actions are checked after costs are paid.
+        if (availableLife - lifePaid < choice.amount) continue;
         const result = solve(position + 1, working, spent, lifePaid + choice.amount);
         if (result) return result;
       }
