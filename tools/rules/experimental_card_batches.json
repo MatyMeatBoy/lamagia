@@ -14,7 +14,8 @@
           "Bushido 1",
           "can't attack unless defending player controls an Island.",
           "If a creature dealt damage this way would die this turn, exile it instead.",
-          "becomes the target of a spell or ability"
+          "becomes the target of a spell or ability",
+          "enters, it explores"
         ],
         "effectKinds": [
           "fight",

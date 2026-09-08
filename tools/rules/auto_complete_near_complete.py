@@ -47,6 +47,9 @@ SAFE_FAMILIES: dict[str, dict[str, str]] = {
     "When ~ becomes the target of a spell or ability, sacrifice it.": {
         "primitive": "becomes-targeted + sacrifice-source", "rules": "CR 603.2, 603.6, 701.17",
     },
+    "When ~ enters, it explores.": {
+        "primitive": "explore", "rules": "CR 701.44, 603.2",
+    },
     "Gain control of target creature until end of turn.": {
         "primitive": "gain-control-target-until-end-of-turn",
         "rules": "CR 611.2, 701.7",
@@ -107,7 +110,13 @@ def _candidates_for_family(payload: dict[str, Any], template: str) -> list[dict[
 def select_batches(
     payload: dict[str, Any], *, sample_size: int, max_groups: int, template: str | None = None
 ) -> list[dict[str, Any]]:
-    """Select disjoint groups, never silently shrinking a requested group."""
+    """Select disjoint groups without reusing completed families.
+
+    An explicit ``--template`` remains strict: it is a deliberate proof gate
+    and fails when its requested sample no longer exists.  Automatic mode is
+    a rolling queue, so it skips families already closed (or too small for a
+    complete sample) and continues with the next reusable primitive.
+    """
     if sample_size <= 0:
         raise ValueError("--sample-size must be positive")
     if max_groups <= 0:
@@ -120,6 +129,8 @@ def select_batches(
             break
         candidates = [row for row in _candidates_for_family(payload, family) if _identity(row) not in selected_ids]
         if len(candidates) < sample_size:
+            if template is None:
+                continue
             raise RuntimeError(
                 f"Only {len(candidates)} unresolved one-line cards found for {family}; need {sample_size}. "
                 "Completed cards are regression samples only and cannot satisfy this gate."
@@ -133,6 +144,8 @@ def select_batches(
             "cards": cards,
         })
     if not groups:
+        if template is None:
+            return []
         raise RuntimeError("No safe families selected")
     return groups
 

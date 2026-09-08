@@ -331,6 +331,10 @@ export function botAction(state: GameState, seat: SeatId): { action: GameAction;
       ?? available.find((entry) => entry.action.type === "choose-scry" && entry.action.ordinal === 0);
     if (wanted) return { action: wanted.action, label: wanted.label };
   }
+  if (state.pendingChoice?.type === "explore" && state.pendingChoice.seat === seat) {
+    const wanted = available.find((entry) => entry.action.type === "choose-explore-graveyard" && entry.action.accept);
+    if (wanted) return { action: wanted.action, label: wanted.label };
+  }
   if (state.pendingChoice?.type === "choose-direction" && state.pendingChoice.seat === seat) {
     const chosen = available.find((entry) => entry.action.type === "choose-direction");
     if (chosen) return { action: chosen.action, label: chosen.label };

@@ -180,6 +180,12 @@ export const TRIGGER_GLYPHS: Readonly<Record<TriggerEvent, AbilityGlyph>> = {
     enforced: "Cubre girar por maná, por coste de habilidad y por atacar.",
     path: "M6 5v9a6 6 0 0 0 12 0m0 0 3 3m-3-3-3 3"
   },
+  "becomes-targeted": {
+    label: "Al ser objetivo",
+    rule: "Se dispara cuando un hechizo o habilidad hace objetivo a este permanente.",
+    enforced: "Se registra al anunciar el objeto en la pila, antes de que se resuelva.",
+    path: "M4 12h9m0 0-4-4m4 4-4 4M14 5h6v14h-6"
+  },
   "spell-cast": {
     label: "Al lanzar un hechizo",
     rule: "Se dispara cuando el jugador indicado lanza un hechizo.",

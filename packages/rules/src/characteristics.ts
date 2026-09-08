@@ -532,6 +532,8 @@ export type SpellEffect =
   | { readonly kind: "surveil"; readonly amount: number }
   /** Look at the top N cards, optionally take one matching card, bottom the rest. */
   | { readonly kind: "look-top-select"; readonly amount: number; readonly types: readonly CardType[]; readonly subtypes?: readonly string[]; readonly destination: "hand" | "battlefield"; readonly returnAtEndStep?: boolean; readonly minPower?: number; readonly tapped?: boolean }
+  /** Explore a permanent (CR 701.44): reveal the top card, then handle the nonland graveyard choice. */
+  | { readonly kind: "explore" }
   /** Jar of Eyeballs-style dynamic review: X is the number of counters removed as the cost. */
   | { readonly kind: "look-top-select-by-removed-counters"; readonly counter: string }
   /** "Look at the top N cards of your library, then put them back in any order" (Ponder, Sensei's Divining Top, Sage Owl): a private reorder, unlike Scry/Surveil no card ever leaves the top group. */
@@ -6226,6 +6228,11 @@ function recognizeText(text: string): RecognizedText {
     // boundary so a malformed historical U+FFFD cannot hide a valid trigger.
     const triggerLine = (leavesLine !== line ? leavesLine : line)
       .replace(/^(?:landfall|morbid|revolt)\s+[—–-\uFFFD]\s*/i, "");
+    const entersExplores = /^(?:when|whenever)\s+~\s+enters(?:\s+the\s+battlefield)?,?\s*it\s+explores\.?$/i.test(triggerLine);
+    if (entersExplores) {
+      triggers.push({ event: "enters-battlefield", subject: "self", effect: { kind: "explore" }, optional: false, targetKind: "none", sourceText: line });
+      continue;
+    }
     const sunDropletDamage = /^whenever\s+you(?:'|’)re\s+dealt\s+damage,?\s*put\s+that\s+many\s+([A-Za-z][A-Za-z'’-]*)\s+counters?\s+on\s+~\.?$/i.exec(triggerLine);
     if (sunDropletDamage) {
       triggers.push({

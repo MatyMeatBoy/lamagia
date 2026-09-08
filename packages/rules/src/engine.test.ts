@@ -4051,6 +4051,32 @@ describe("casting", () => {
     expect(game.players[0]!.library.slice(-3).map((card) => card.name)).toEqual(["Forest", "Grizzly Bears", "Lightning Bolt"]);
   });
 
+  it("resolves Explore with the land-to-hand and nonland graveyard branches", () => {
+    const explorer = make({ name: "Explore Creature", type_line: "Creature — Merfolk", mana_cost: "{1}{G}", cmc: 2, power: "2", toughness: "2", oracle_text: "When ~ enters, it explores." });
+    expect(profileOf(explorer)).toMatchObject({
+      fullyImplemented: true,
+      triggers: [{ event: "enters-battlefield", effect: { kind: "explore" } }]
+    });
+    let game = readyToCast([explorer], [FOREST(), FOREST()], [], []);
+    game = stage(game, 0, () => ({ library: toHand(0, [BEAR(), FOREST()], "explore-library") }));
+    game = applyAction(game, 0, { type: "cast", cardId: "hand-0" });
+    expect(game.pendingChoice?.type).toBe("explore");
+    const choice = game.pendingChoice as Extract<GameState["pendingChoice"], { type: "explore" }>;
+    expect(choice.card.name).toBe("Grizzly Bears");
+    expect(legalActions(game, 1)).toHaveLength(0);
+    expect(legalActions(game, 0).filter((entry) => entry.action.type === "choose-explore-graveyard")).toHaveLength(2);
+    game = applyAction(game, 0, { type: "choose-explore-graveyard", sourceId: choice.sourceId, accept: true });
+    const explorerPermanent = game.players[0]!.battlefield.find((permanent) => permanent.card.name === explorer.name)!;
+    expect(explorerPermanent.counters["+1/+1"]).toBe(1);
+    expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
+
+    let landGame = readyToCast([explorer], [FOREST(), FOREST()], [], []);
+    landGame = stage(landGame, 0, () => ({ library: toHand(0, [FOREST(), BEAR()], "explore-land") }));
+    landGame = applyAction(landGame, 0, { type: "cast", cardId: "hand-0" });
+    expect(landGame.pendingChoice).toBeNull();
+    expect(landGame.players[0]!.hand.some((card) => card.name === "Forest")).toBe(true);
+  });
+
   it("uses Jar of Eyeballs counters as the dynamic top-library quantity", () => {
     const jar = C13_JAR_OF_EYEBALLS();
     expect(profileOf(jar)).toMatchObject({

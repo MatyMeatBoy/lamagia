@@ -1420,9 +1420,10 @@ function librarySearchHtml(): string {
 function scryHtml(): string {
   const scry = view?.scry;
   if (!scry) return "";
-  const actions = view?.legalActions.filter((entry) => entry.action.type === "choose-scry") ?? [];
-  return `<section class="library-search-overlay scry-overlay" aria-label="Scry">
-    <header><div><b>${escapeHtml(scry.sourceName)}</b><span>Scry ${scry.topCards.length}</span></div></header>
+  const exploring = view?.legalActions.some((entry) => entry.action.type === "choose-explore-graveyard") ?? false;
+  const actions = view?.legalActions.filter((entry) => entry.action.type === "choose-scry" || entry.action.type === "choose-explore-graveyard") ?? [];
+  return `<section class="library-search-overlay scry-overlay" aria-label="${exploring ? "Explore" : "Scry"}">
+    <header><div><b>${escapeHtml(scry.sourceName)}</b><span>${exploring ? "Explore" : `Scry ${scry.topCards.length}`}</span></div></header>
     <div class="scry-cards">${scry.topCards.map((card) => `<article class="scry-card">
       ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small>
     </article>`).join("")}</div>

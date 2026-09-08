@@ -9,76 +9,58 @@ primitive finishes the most cards next?* A clause that appears in thousands of
 cards but never completes one is correctly ranked low.
 
 - Catalog cards: **38,711**
-- Fully implemented: **11,283**
-- Unfinished: **27,428**, of which **15,079** are a single line away
-- This queue's 40 entries would finish **689** more cards
+- Fully implemented: **11,671**
+- Unfinished: **27,040**, of which **14,978** are a single line away
+- This queue's 40 entries would finish **620** more cards
 
 ## Queue
 
 | # | Unlocks | Cumulative | Blocks | One-line review | Family | Claim key | Template |
 | --- | --- | --- | --- | ---: | --- | --- | --- |
-| 1 | 50 | 50 | 103 | 50 | keyword-ability | `-convoke` | `convoke` |
-| 2 | 49 | 99 | 141 | 49 | keyword-ability | `-morph-cost` | `morph {cost}` |
-| 3 | 29 | 128 | 60 | 28 | keyword-ability | `-madness-cost` | `madness {cost}` |
-| 4 | 25 | 153 | 57 | 25 | keyword-ability | `-unearth-cost` | `unearth {cost}` |
-| 5 | 23 | 176 | 32 | 23 | transform | `-the-beginning-each-upkeep` | `at the beginning of each upkeep, if no spells were cast last turn, transform ~` |
-| 6 | 21 | 197 | 37 | 21 | other | `-daybound` | `daybound` |
-| 7 | 21 | 218 | 35 | 21 | keyword-ability | `-cascade` | `cascade` |
-| 8 | 20 | 238 | 42 | 20 | keyword-ability | `-bestow-cost` | `bestow {cost}` |
-| 9 | 20 | 258 | 35 | 20 | other | `-bushido` | `bushido <n>` |
-| 10 | 20 | 278 | 32 | 19 | keyword-ability | `-buyback-cost` | `buyback {cost}` |
-| 11 | 18 | 296 | 25 | 17 | activated | `-cost-prevent-the-next` | `{cost}: prevent the next <n> damage that would be dealt to any target this turn` |
-| 12 | 18 | 314 | 22 | 18 | other | `-all-slivers-have-name` | `all slivers have <name>` |
-| 13 | 17 | 331 | 54 | 17 | other | `-foretell-cost` | `foretell {cost}` |
-| 14 | 17 | 348 | 25 | 17 | keyword-ability | `-soulshift` | `soulshift <n>` |
-| 15 | 17 | 365 | 23 | 17 | other | `-enchanted-creature-has-name` | `enchanted creature has <name>` |
-| 16 | 15 | 380 | 32 | 15 | other | `-disturb-cost` | `disturb {cost}` |
-| 17 | 15 | 395 | 28 | 15 | triggered | `-when-enters-attach-target` | `when ~ enters, attach it to target creature you control` |
-| 18 | 15 | 410 | 15 | 15 | triggered | `-when-enters-explores` | `when ~ enters, it explores` |
-| 19 | 14 | 424 | 47 | 14 | other | `-untap` | `untap it` |
-| 20 | 14 | 438 | 24 | 14 | keyword-ability | `-improvise` | `improvise` |
-| 21 | 14 | 452 | 23 | 14 | keyword-ability | `-bloodthirst` | `bloodthirst <n>` |
-| 22 | 14 | 466 | 22 | 14 | keyword-ability | `-dash-cost` | `dash {cost}` |
-| 23 | 14 | 480 | 25 | 13 | other | `-backup` | `backup <n>` |
-| 24 | 14 | 494 | 35 | 13 | other | `-can-blocked-creatures-with` | `~ can't be blocked by creatures with power <n> or less` |
-| 25 | 14 | 508 | 18 | 14 | other | `-enchanted-land-has-name` | `enchanted land has <name>` |
-| 26 | 14 | 522 | 15 | 13 | triggered | `-when-becomes-the-target` | `when ~ becomes the target of <n> spell or ability, sacrifice it` |
-| 27 | 13 | 535 | 29 | 13 | other | `-delve` | `delve` |
-| 28 | 13 | 548 | 28 | 11 | keyword-ability | `-flanking` | `flanking` |
-| 29 | 13 | 561 | 20 | 12 | triggered | `-when-enters-exile-target` | `when ~ enters, exile target nonland permanent <n> opponent controls until ~ leaves the battlefield` |
-| 30 | 13 | 574 | 19 | 13 | keyword-ability | `-living-weapon` | `living weapon` |
-| 31 | 12 | 586 | 57 | 12 | keyword-ability | `-cumulative-upkeep-cost` | `cumulative upkeep {cost}` |
-| 32 | 12 | 598 | 26 | 11 | other | `-encore-cost` | `encore {cost}` |
-| 33 | 12 | 610 | 22 | 12 | keyword-ability | `-modular` | `modular <n>` |
-| 34 | 12 | 622 | 22 | 12 | keyword-ability | `-splice-onto-arcane-cost` | `splice onto arcane {cost}` |
-| 35 | 12 | 634 | 16 | 11 | other | `-fabricate` | `fabricate <n>` |
-| 36 | 11 | 645 | 31 | 11 | other | `-megamorph-cost` | `megamorph {cost}` |
-| 37 | 11 | 656 | 26 | 11 | combat-restriction | `-can-attack-unless-defending` | `~ can't attack unless defending player controls <n> island` |
-| 38 | 11 | 667 | 22 | 11 | other | `-fuse` | `fuse` |
-| 39 | 11 | 678 | 20 | 11 | keyword-ability | `-renown` | `renown <n>` |
-| 40 | 11 | 689 | 20 | 10 | other | `-can-blocked-more-than` | `~ can't be blocked by more than <n> creature` |
+| 1 | 49 | 49 | 141 | 49 | keyword-ability | `-morph-cost` | `morph {cost}` |
+| 2 | 30 | 79 | 60 | 30 | keyword-ability | `-madness-cost` | `madness {cost}` |
+| 3 | 25 | 104 | 57 | 25 | keyword-ability | `-unearth-cost` | `unearth {cost}` |
+| 4 | 24 | 128 | 32 | 24 | transform | `-the-beginning-each-upkeep` | `at the beginning of each upkeep, if no spells were cast last turn, transform ~` |
+| 5 | 21 | 149 | 42 | 21 | keyword-ability | `-bestow-cost` | `bestow {cost}` |
+| 6 | 21 | 170 | 37 | 21 | other | `-daybound` | `daybound` |
+| 7 | 21 | 191 | 35 | 21 | keyword-ability | `-cascade` | `cascade` |
+| 8 | 20 | 211 | 32 | 20 | keyword-ability | `-buyback-cost` | `buyback {cost}` |
+| 9 | 19 | 230 | 25 | 18 | activated | `-cost-prevent-the-next` | `{cost}: prevent the next <n> damage that would be dealt to any target this turn` |
+| 10 | 18 | 248 | 54 | 18 | other | `-foretell-cost` | `foretell {cost}` |
+| 11 | 18 | 266 | 22 | 18 | other | `-all-slivers-have-name` | `all slivers have <name>` |
+| 12 | 17 | 283 | 25 | 17 | keyword-ability | `-soulshift` | `soulshift <n>` |
+| 13 | 17 | 300 | 23 | 17 | other | `-enchanted-creature-has-name` | `enchanted creature has <name>` |
+| 14 | 15 | 315 | 32 | 15 | other | `-disturb-cost` | `disturb {cost}` |
+| 15 | 15 | 330 | 23 | 15 | keyword-ability | `-bloodthirst` | `bloodthirst <n>` |
+| 16 | 14 | 344 | 25 | 14 | other | `-backup` | `backup <n>` |
+| 17 | 15 | 359 | 22 | 14 | keyword-ability | `-dash-cost` | `dash {cost}` |
+| 18 | 13 | 372 | 29 | 13 | other | `-delve` | `delve` |
+| 19 | 13 | 385 | 28 | 12 | keyword-ability | `-flanking` | `flanking` |
+| 20 | 13 | 398 | 19 | 13 | keyword-ability | `-living-weapon` | `living weapon` |
+| 21 | 13 | 411 | 17 | 13 | other | `-enchanted-land-has-name` | `enchanted land has <name>` |
+| 22 | 12 | 423 | 57 | 12 | keyword-ability | `-cumulative-upkeep-cost` | `cumulative upkeep {cost}` |
+| 23 | 12 | 435 | 26 | 12 | other | `-encore-cost` | `encore {cost}` |
+| 24 | 12 | 447 | 22 | 12 | other | `-fuse` | `fuse` |
+| 25 | 12 | 459 | 22 | 12 | keyword-ability | `-modular` | `modular <n>` |
+| 26 | 12 | 471 | 22 | 12 | keyword-ability | `-splice-onto-arcane-cost` | `splice onto arcane {cost}` |
+| 27 | 12 | 483 | 20 | 12 | keyword-ability | `-renown` | `renown <n>` |
+| 28 | 12 | 495 | 16 | 12 | other | `-fabricate` | `fabricate <n>` |
+| 29 | 11 | 506 | 31 | 11 | other | `-megamorph-cost` | `megamorph {cost}` |
+| 30 | 11 | 517 | 18 | 10 | keyword-ability | `-retrace` | `retrace` |
+| 31 | 11 | 528 | 17 | 11 | other | `-return-target-creature-cards` | `return up to <n> target creature cards from your graveyard to your hand` |
+| 32 | 11 | 539 | 16 | 11 | other | `-equipped-creature-has-name` | `equipped creature has <name>` |
+| 33 | 11 | 550 | 15 | 11 | keyword-ability | `-unleash` | `unleash` |
+| 34 | 10 | 560 | 27 | 10 | other | `-sneak-cost` | `sneak {cost}` |
+| 35 | 10 | 570 | 21 | 10 | other | `-offspring-cost` | `offspring {cost}` |
+| 36 | 10 | 580 | 19 | 10 | keyword-ability | `-myriad` | `myriad` |
+| 37 | 10 | 590 | 17 | 10 | pump | `-creatures-your-opponents-control` | `creatures your opponents control get -<n>/-<n> until end of turn` |
+| 38 | 10 | 600 | 16 | 10 | other | `-umbra-armor` | `umbra armor` |
+| 39 | 10 | 610 | 14 | 9 | keyword-ability | `-banding` | `banding` |
+| 40 | 10 | 620 | 14 | 10 | keyword-ability | `-scavenge-cost` | `scavenge {cost}` |
 
 ## Work orders
 
-### 1. `-convoke` — finishes 50 cards
-
-- Template: `convoke`
-- Family: keyword-ability
-- Appears in 103 unfinished cards; it is the last blocker for 50.
-- One-line review candidates: **50**.
-
-Printed examples:
-
-- **The Wandering Rescuer** — Convoke
-- **Chord of Calling** — Convoke
-- **Stoke the Flames** — Convoke
-- **Bennie Bracks, Zoologist** — Convoke
-
-Cards finished (first 12): Aerial Boost, Arboretum Elemental, Artistic Refusal, Astral Wingspan, Autochthon Wurm, Chord of Calling, Collective Nightmare, Conclave Equenaut, Conclave Phalanx, Covenant of Blood, Crowd's Favor, Endless Obedience.
-
-All affected cards (103): Aerial Boost [d7fa5c42-7cd5-42e7-a42e-724c1a3df96a], Ancient Imperiosaur [3fe95820-cd7f-4f28-82bf-eb4350ea4179], Appeal to Eirdu [cea09261-41a2-43e5-bf43-c4097e6615c6], Arboretum Elemental [1708d60d-30af-4184-bc95-2f7a7aed4a6e], Artistic Refusal [ff192482-3808-4291-a31e-3dfaeb49cda2], Astral Wingspan [a054b6ed-f6ca-4436-a433-89771ffdd2d6], Autochthon Wurm [18379907-ddba-479e-8953-3adc1ed40458], Bennie Bracks, Zoologist [17bd7ef7-8b4b-4a2d-a667-c751e10e2a47], Bloodline Bidding [bdb9e933-f679-4930-b669-0d123db09d16], Burning Sun's Fury [9c0073d7-a12a-45ba-8ac3-9e2230e2fb06], Buxton, Decorated Host [f99b4c01-04f9-4ac1-b77e-e88f209b4e7e], Calamity of Cinders [fbcf0c1c-29a7-4e83-8b06-869f83be49cd], Chant of Vitu-Ghazi [e245a736-5f65-4159-8e39-e279e1f8794f], Chord of Calling [6789a170-f2c5-4fc0-8a45-2b2361e67410], City on Fire [41eec4e8-92d3-4f98-9346-3a3e3cc602ce], Clever Concealment [42bb7ea9-f6e4-4551-8d93-3b1eae84b865], Collective Inferno [649e4969-71d4-434f-85b0-205ec2c6b24f], Collective Nightmare [fa7b7db2-c830-405c-a5e6-e5431d573ed3], Complete the Circuit [402506fa-6bd5-4814-8353-90c148dd576c], Conclave Equenaut [4127794b-84d1-4efb-b0e9-543a02b07fa8], Conclave Phalanx [5a1bebe9-c940-4fac-8572-0833808eaa55], Conclave Tribunal [e938ee4c-d5df-4d93-bd61-9e518fb1dc30], Conclave's Blessing [938e738f-c982-4bbf-b15f-0c3dd3a9901e], Covenant of Blood [20ca6a15-ba88-4efd-b5bd-da5938e9a43e], Crowd's Favor [7a23915f-8bce-4aad-8395-0c736450a62d], Cut Short [428d131c-b0fa-4e96-9c02-e2e6714357b9], Devouring Light [5334dc24-040e-4094-80f4-8d1b9de01230], Disruptor of Currents [e76ae81f-729c-4def-ae83-6870a696cbe8], Emmara, Voice of the Conclave [257191d7-6216-4353-bb34-0587c91bae2a], Endless Obedience [312a831a-5da9-4a22-9974-f2d90ae3eb75], Ephemeral Shields [e1a89535-7126-48e0-b335-b732a677b157], Everything Comes to Dust [39acc3d0-85fc-4814-93f2-e709c3b2c86b], Feaster of Fools [3e3d4f28-93a0-4313-a9a0-48fd06540cf8], Feral Incarnation [31fefd48-6fff-41bf-a559-35a1699357ca], Flight of Equenauts [5212e707-b487-46b6-aa51-cea3be8cbe00], Flockchaser Phantom [6471335e-e054-4e68-b02e-052d65a2fdfc], Gather Courage [ae033eb6-47ec-4b9e-9cdb-6d023aca07d1], Guardian of Vitu-Ghazi [a7d5a9ca-27ec-4843-a9fd-0de0d67def39], Halo Hopper [f48d30ee-bba6-4449-8c50-caf0d7f06528], Harmonized Crescendo [b93cd38a-1d0c-40e6-aaf1-621a2c88bf46], Hoarding Broodlord [18e856b5-aab7-4802-8cec-1d44dd95d9f7], Hour of Reckoning [3bc13640-03f8-4b19-b0a4-7e7cb5271c0c], Impervious Greatwurm [65c0ab05-e740-4380-b39c-8bae9662f885], Interdisciplinary Mascot [74d9331b-832b-420b-9249-f2a58253a361], Kasla, the Broken Halo [b2d4ce3c-00b1-4a72-b652-4c129475080f], Kavu Primarch [09537e9f-6c8e-4849-9d35-d4f3950a64d7], Knight-Errant of Eos [4bd20d79-0861-494a-a8f2-f6ddb5088004], Ledev Guardian [edcf36b4-dea4-4314-94da-e0ee5e30cd37], Lethal Scheme [c4660b3c-a234-4a3e-83e7-e2fa9d556685], Living Totem [0a2e2d97-1348-4fa6-ad94-4da23ad8f43b], Lofty Dreams [f75568a0-33ed-45a0-a885-48a19a5bb58b], Loxodon Restorer [77eb2374-44a0-4383-b229-edc116c7d835], March of the Multitudes [0c26ab0d-80f6-4e5b-9d0e-af17c1519583], Markov Baron [bafc2e11-5f1c-46f1-a852-2330e099b8e2], Martyr's Soul [886382dc-5284-4b84-ad8c-8d8463d42fa0], Meditation Puzzle [724c29a2-1783-401e-887c-2189afd5a944], Meeting of Minds [3b91dc3e-46ef-4a68-829f-ef7d79598cf7], Merrow Skyswimmer [d709f396-021f-49eb-adb5-374aa790eaae], Mob [5307a61f-2142-4e12-8329-ceb729f6eb79], Nissa's Expedition [653010bc-45af-427e-a294-e0cc28d31821], Obelisk of Urd [e2ef3a24-9e78-47fc-9192-049aa0ddb7a0], Omni-Changeling [66d4370e-19b9-4680-9b1e-a192537bc002], Order of Sacred Dusk [0cb41c3f-5e6a-4c63-80b5-c9ab84b4e4bf], Overwhelm [caeaad5e-2d68-481c-9a35-c2c3b345963d], Pack's Favor [072288da-5ba0-4176-b0e6-b3e43ecab2ec], Pause for Reflection [a7f266b5-7258-4eaa-b447-66460ec38505], Pile On [361b0d7f-1e43-45c5-92c2-92baacaf326f], Protective Response [c840b89b-81be-4644-8bb5-35d14b1bc620], Ramosian Greatsword [8c53a177-c8c8-4b9f-a221-f205da67daa5], Referee Squad [e14532e9-ecc2-4028-b99e-3629533962bc], Return to the Ranks [0d4ee553-f206-4e70-a7b2-a3670440aee7], Root-Kin Ally [99d0876f-174b-4cfe-aa52-f3d5434f6cba], Rosemane Centaur [54b3ccdc-e5b0-44d9-bc81-a296fc5dc005], Scatter the Seeds [c17d5153-cc74-4fbb-9d75-f7ee7b557b0a], Selfless Safewright [ce19b337-9266-471d-bec3-49eb7f0e62ac], Seraph of the Masses [5d6f75f1-dd9c-4d94-aea8-3bdec41eaa29], Shatter the Source [d8b3bcf2-1be1-46ed-9531-ca4ce98e3b3c], Shivan Branch-Burner [bf7f5e9d-de3d-4a29-af25-f0b56336cecb], Siege Wurm [8a802eae-abfb-47fd-8458-1689055531ef], Sprout Swarm [8b33d890-7d67-44a8-a253-e2b171d7ca9d], Sprouting Renewal [674202f0-6832-4392-a118-d513162bcd03], Stain the Mind [1994d563-8726-49c9-a18a-6ba2604a8cb7], Stoke the Flames [2249001c-08d5-4c0a-86f8-d97519a39f37], Sun-Dappled Celebrant [27c87371-697e-4ca6-a7f4-d99215d908bc], Sundering Vitae [132c8a62-00bc-4b89-b775-099d8909f200], Temporal Cleansing [5f67698a-28db-43cd-aaf1-52371b0b47eb], The Wandering Rescuer [b8ef65df-f8e7-44e3-9864-9c127232a2b6], Thunderhead Squadron [d74d6f6a-aff0-4a36-9a99-8b2281f5e29d], Transcendent Message [1f7f7765-aeb9-4e47-a6b9-ce823bb29e33], Triplicate Spirits [48090c64-f41a-447b-ad7a-54e3194f759b], Unexpected Assistance [c452e748-8a2a-4f68-8869-e294925a8b0b], Unmake the Graves [d9b99c58-8e2e-496c-8288-eda934f49162], Vault Guardsman [0068f8c1-d1a2-4f7b-b39f-963acb2c023b], Venerated Loxodon [d157a9df-59bc-40ad-b62b-43f973f14be1], Vote Out [7efe9fe5-d93c-46a6-afbd-9655a902c6bc], Wanderwine Farewell [7e1da4a1-5922-4a2e-8bbc-25fbcbf20935], Web of Life and Destiny [33d556c5-1bb4-49bb-88c2-627311eb8c9b], Wicked Slumber [5b27b794-580c-472d-b63e-99b271eb115d], Wildfire Awakener [d22196b5-b111-45ce-ae51-a06ca02533b6], Will-Forged Golem [25fb0396-7355-4ff1-8ad3-d5a82adf6cc1], Winnowing [8b834f83-951b-4b5c-b9f1-3d860baa3c0e], Worldsoul Colossus [6970f285-dc2b-437b-b099-ca1d3ef106ab], Zephyr Singer [1800ae74-0b54-4547-ab8f-ea61418d73e8]
-
-### 2. `-morph-cost` — finishes 49 cards
+### 1. `-morph-cost` — finishes 49 cards
 
 - Template: `morph {cost}`
 - Family: keyword-ability
@@ -96,12 +78,12 @@ Cards finished (first 12): Abzan Guide, Ainok Tracker, Akroma, Angel of Fury, As
 
 All affected cards (141): Abomination of Gudul [3d98af5f-7a0b-4a5a-b3e4-f3c9d150c993], Abzan Guide [85b2fb89-5ebe-4c13-bc12-38d1417e5880], Ainok Tracker [bf84a598-12d3-406d-8eeb-40592e782b87], Akroma, Angel of Fury [2b80faaf-92fd-4fa0-a3f6-8bb263e7ff1d], Aphetto Alchemist [867aa0b7-b814-4d33-a677-f6368c8e93c0], Aphetto Exterminator [a3bf5d18-77d5-4881-916c-cc125e621b6e], Aquamorph Entity [ed47dd31-f7cd-4ecb-960f-470cb8f4ed3c], Ascending Aven [67b4a4bc-0b02-4cef-b5c8-41c839eaf0cd], Ashcloud Phoenix [fb2d7c3d-b68f-410e-9a73-cfcbfe702ade], Aven Liberator [0f3fff7a-cc46-4c72-9edc-fdbddd3b51b5], Bane of the Living [c99e4768-192c-49bf-8f51-c204a2248326], Battering Craghorn [a084bca4-fe72-443e-adf4-ab5456c7e699], Birchlore Rangers [667c5676-7a18-4fa9-b965-b26797538e23], Blistering Firecat [b3595359-0d40-495e-85da-6a56fbce7357], Bloodstoke Howler [41fa3954-119b-4ff2-ad56-9105482f6b7c], Boneknitter [34b2f465-0b15-428a-a1c2-bcd41af07d01], Branchsnap Lorian [e09b24a0-675b-4c64-ac44-74ddf109598a], Brine Elemental [0e7b02fd-f2a3-493c-939b-ff9bca337774], Broodhatch Nantuko [b0a54050-3493-4ff6-8eca-e43b92c1f3d3], Cabal Executioner [b7817579-df4d-41db-bb90-2aabac58f299], Canyon Lurkers [a744c5d7-c903-446a-bb30-30788058d9db], Charging Slateback [67457ecb-5ff2-4f5d-9039-b9e80f54bba8], Chromeshell Crab [8cbac2e8-5755-433b-9f42-7fd5c214aab3], Coral Trickster [11a163cc-ade3-4b55-b50e-3b3bf7e1962c], Crude Rampart [c9823e5f-d0f8-4d28-8b3b-55f94ea9d76f], Daru Healer [630b1685-d0c9-4d94-97dc-70058fb52e5d], Daru Lancer [21edfe1a-2c53-44b3-b0d1-3dba8fb3346d], Daru Mender [6072c129-9525-4630-b31a-d5d61a944d02], Daru Sanctifier [7e81539e-b790-41eb-bd5e-d1de130b46a1], Dawning Purist [9e55cde0-16e6-4d32-8a37-1ef3dc812971], Defender of the Order [f9f4c574-ddbe-4ebc-bfda-29cf3e4b7c44], Dermoplasm [963d4712-51b2-4102-9626-d810e4696b70], Disruptive Pitmage [c7a60f81-f7cb-4fd7-b422-963290964069], Dulcet Sirens [37c3cd4d-8e9a-46d4-a9c2-55f70a321eb6], Dwarven Blastminer [b373e978-c58b-465a-b68a-9d4acec9dce0], Ebonblade Reaper [86fd4652-a629-429a-bf95-0b8724708a71], Echo Tracer [34efa2fe-95ef-4a06-9a84-97f03ec68908], Efreet Weaponmaster [882a9dc9-b1bb-4be8-850f-e28bad8f5840], Exalted Angel [2f6e9ab8-6951-4c5f-bcde-0e96e0fe87f2], Fallen Cleric [7330201a-41ff-44bf-a623-2ed062878c58], Fledgling Mawcor [195f4bda-a5b9-4ac7-aa32-9ae5e5b0d374], Foothill Guide [d91c7e21-43af-40f9-b544-f39d1e77dee9], Fortune Thief [860add4f-8fe4-4441-b394-f3a48d610b90], Frontline Strategist [6e202114-48f3-46d2-bc54-df766d149d9d], Glacial Stalker [49d06291-c8cb-4e22-b178-d0598582b2ee], Goblin Taskmaster [64fddd5e-06e4-4d54-9ea6-0c9b82f3b153], Gravel Slinger [0aab31b7-7196-4843-b4f1-c15e9e05dd86], Grim Haruspex [72aef1d8-11df-4bc2-af83-907b05df73a8], Grinning Demon [3db0207d-d80b-4915-b157-6a3e5b3a154e], Haunted Cadaver [7f46839f-175d-4292-8057-c3e0da206075], Headhunter [83578de7-5488-4952-af47-8fe966897210], Hooded Hydra [637ddd65-112d-40f7-9bab-a61724d9165c], Hystrodon [17191fa9-e956-4f46-b541-465790125b6b], Icefeather Aven [9fb901db-1ff7-4a8d-8233-fe7e3dee7fd1], Imperial Hellkite [99642419-ab24-4770-9f1c-84d2806441b5], Infernal Caretaker [bd310727-1091-4474-8d9e-ce56f7dac7c1], Ironfist Crusher [ba4c9337-4cdf-44d8-849b-ffd808e5407d], Jeering Instigator [170adfe9-ffbe-40b1-b665-e756e7eb0302], Karona's Zealot [dff66bcf-e126-49d2-b67e-ea3b0a38d390], Kheru Spellsnatcher [c01411e0-77b2-4e65-a369-5dbe13745769], Kin-Tree Warden [1ea9517a-c2ed-4aec-8fd3-e603b0e7dec9], Krosan Cloudscraper [a0ff742b-f709-43ac-84d2-dc00c723bad6], Krosan Colossus [703ab192-7e0a-4f02-8381-568ad2d999ca], Krumar Bond-Kin [8e34f487-aa75-4afb-af75-3349de456c79], Liege of the Axe [d838969a-b219-4964-bc7e-df0348392bbe], Liege of the Pit [fd775874-0182-46b1-8624-267bdc4e8075], Lumithread Field [4f7fdae1-43a8-460a-8944-54c433ac83fa], Maelstrom Djinn [351988f0-59c6-492d-8a39-efa0329e1447], Master of Pearls [aca9df28-2df6-477c-b5b8-8e1863c84356], Master of the Veil [ee9104d5-3583-4549-8dd0-5b69274f4b4f], Mischievous Quanar [30e3e48c-98dc-4d27-b7ea-e81d39f7d24e], Mistfire Weaver [9af9c353-6b71-46e7-8815-a920e012dbb8], Mistform Seaswift [268f423e-b368-4561-ae24-db0f7ca775f4], Mistform Shrieker [50fe31e9-473e-4d2f-b1b5-3eef3c7bb0e6], Monastery Flock [fd05f23e-8974-445d-9059-d706a3740d89], Mystic of the Hidden Way [530853b4-68a0-4814-b0aa-ffeb5585cd43], Nameless One [bd8d0498-53f9-484c-a59a-78daca468859], Nantuko Vigilante [28ea78dc-7ad6-4006-aaf8-4b25057ec019], Patron of the Wild [7ba8ae5b-8025-40eb-969d-38a85eefe7d6], Pine Walker [4c92b862-34c7-4195-bee3-bcc0cafad140], Ponyback Brigade [8cfb5181-8ab7-484b-8821-a62c561f762f], Primal Whisperer [dfe51046-12db-4be8-a4b4-ffa6359cac15], Proteus Machine [c3acf94e-3adc-4397-a736-3f6072a5967d], Quicksilver Dragon [f9701c1f-66c7-4ac7-8106-074d6f557ad6], Rattleclaw Mystic [84c9d8b8-8dd9-41fc-a2b6-af1ffb9090f9], Raven Guild Master [1dfaa773-7cd5-4489-9790-661cef4ed6f3], Riptide Biologist [fe378f26-5c80-4548-8127-10724ac0c452], Riptide Entrancer [d0bf59a2-347c-4c3e-85cf-b27a2af77192], Riptide Pilferer [d3e40d26-1687-4cb4-9ff8-4c4421f09e53], Riptide Survivor [10a64ae9-919f-4c04-8c8a-cce12554502c], Rockshard Elemental [82cfba28-283f-44f6-8478-fd39ea5a1a29], Root Elemental [182d38b4-48bb-4050-a19a-c0a6bb241bbd], Sage-Eye Harrier [589d1c6e-5808-424c-a6e4-dadef90d119e], Sagu Archer [cf8a8482-e243-4155-bc21-a1e474c6f1e7], Sagu Mauler [8d877ee9-1751-48a1-9f2f-02897dae153b], Scornful Egotist [455cbf35-f340-4f1f-a331-5b082c9034ec], Serpentine Basilisk [bf0f3d2a-6b6a-4822-888d-1d897a8b5aea], Shaleskin Plower [859502df-127f-4577-88c0-923119d37b9d], Shaper Parasite [0f5da28f-b97c-45d5-87d4-b8ba8638ca8f], Sidisi's Pet [9b183d76-1dee-4ecf-9226-e1aa600b1247], Silent Specter [49e70569-b0bc-4705-927e-eb1504925210], Skinthinner [c4dee5fe-36f0-4155-9437-2c0504feba2c], Skirk Commando [c92f1d40-0441-4ede-9363-78821ff15f88], Skirk Marauder [8ba0e831-054a-4e01-92ed-2845bd2fa12f], Skittish Valesk [d094f78b-acec-4181-9fee-ca523fb8ccc5], Slipstream Serpent [aa1152cb-255f-43fa-81f5-430304ce4d98], Snapping Thragg [1a02cb6d-965a-4eeb-b126-8e153d4832a2], Snarling Undorak [a932e265-604a-4aed-b8a9-6234a3db16a5], Snowhorn Rider [3d5a753b-ed2d-4646-ade3-5daeba2a7270], Sootfeather Flock [54a4bde3-c61f-44ea-bd2f-cdbf6a76eefa], Soul Collector [7b7b3a34-13ff-45d4-ad0d-ac4bad9d0581], Spined Basher [4891923b-9c8c-4816-9623-d9362e4eb503], Spitting Gourna [413e8f01-4ee0-48df-8647-c614db38681e], Thelonite Hermit [69d2e5f3-2f4d-4a36-bcd5-181164ecd894], Thousand Winds [81b50d34-d778-4606-80de-0e0780610d1f], Thrashing Mudspawn [7f67b8e0-fbbd-48ef-989d-690d44b70304], Timebender [efa3e524-1591-4036-81ec-74199cee25aa], Titanic Bulvox [2cc63297-7eb9-422e-838c-a9260756d689], Towering Baloth [3607d700-5a05-4e68-8863-3514c68566ef], Treespring Lorian [6f3ed8a1-ff5f-411b-9d87-0cce52f42344], Tribal Forcemage [245934d9-c7b7-4a97-9c56-7760d934ef27], Unblinking Bleb [f6dec1e0-148a-4742-815f-56806305897d], Unstable Hulk [8d01c85c-5f83-4514-b81c-4165051d5722], Venomspout Brackus [e12f00f4-89f2-4d1d-94cf-460945d80a4e], Vesuvan Shapeshifter [ec577886-fb25-455b-9c3d-5fd610959436], Voidmage Apprentice [980939db-d867-4c16-a288-52f6528f2376], Voidmage Prodigy [7e2cacae-2934-4ff5-81c6-dfce7a2820ef], Wall of Deceit [73714a40-5e8d-4aea-87fe-5aa0db53d6ff], War Behemoth [4792a05e-b557-4132-8303-235feefe0d99], Warbreak Trumpeter [40e5c7fe-4d7a-41c0-8b90-ea0b46a01c9d], Weathered Bodyguards [86d0ba9d-6972-4cbc-871d-3fb413565c45], Weaver of Lies [bb2fca84-fc19-4c04-b146-1059aa975535], Whetwheel [c5b0cd1c-6f9b-4b48-9430-af78731e1a45], Whip-Spine Drake [70e165a1-494a-4728-8d7e-1a9f306414db], Whipcorder [4a4c187e-e10b-4fd2-b70b-6401bb0595c5], Willbender [0aae277e-e58e-4115-b5fd-0459451e17ec], Wingbeat Warrior [857392fe-1ce6-4d53-b039-98339d292ebb], Witness of the Ages [afeb9de8-7030-4797-a9c8-5a99de3c410f], Woodcloaker [92d17a26-bf73-4b62-b826-4cbe913d5c5e], Woolly Loxodon [b588df7a-64d8-449e-b573-13badc8cdf56], Zoetic Cavern [3763de30-28e1-4689-a71c-07d2fea3a466]
 
-### 3. `-madness-cost` — finishes 29 cards
+### 2. `-madness-cost` — finishes 30 cards
 
 - Template: `madness {cost}`
 - Family: keyword-ability
-- Appears in 60 unfinished cards; it is the last blocker for 29.
-- One-line review candidates: **28**.
+- Appears in 60 unfinished cards; it is the last blocker for 30.
+- One-line review candidates: **30**.
 
 Printed examples:
 
@@ -114,7 +96,7 @@ Cards finished (first 12): Alchemist's Greeting, Alms of the Vein, Arrogant Wurm
 
 All affected cards (60): Abandon Reason [fa43793d-a215-4a64-a09c-ed9799f745a4], Alchemist's Greeting [9aaf0df7-5e2d-4f49-a8cb-66523be15ad6], Alms of the Vein [2013a774-e6ab-4f2d-a84f-fd277a637d7e], Anje's Ravager [8f1016c7-0551-4813-987d-36abf3b2ffeb], Archfiend of Spite [6beec974-891f-4354-8621-ac403c07509a], Arrogant Wurm [dc7f0c33-80ea-453e-a237-473f077f038e], Asylum Visitor [870deab4-8570-40e9-aeda-ac3726cebb84], Avacyn's Judgment [f3ae58ed-8ef7-4e0a-945f-1f622157236b], Basking Rootwalla [b2ec080f-ad5d-4274-91e3-bc6ac89fc3e4], Big Game Hunter [ab55834f-c935-4773-89c6-bec9712284eb], Biting Rain [485cfaca-9348-418b-a751-2ecb19f3f210], Blazing Rootwalla [d43f5977-0532-4653-bc57-ce29f9a531c9], Bloodhall Priest [2eed5eb1-ab67-4f23-885d-922131364aba], Bloodmad Vampire [c8a20fc7-025b-403a-b893-ff5efcbdc9d8], Brain Gorgers [3b9369ae-8827-45d1-af85-c777cde8e1bc], Broken Concentration [7b0fa80e-6b16-4a4a-9776-6a91f145fc63], Call to the Netherworld [a28ef7a5-4b47-4429-838b-a64a7c0701d0], Chilling Grasp [45c517d4-944c-43f6-8ead-a47965377575], Circular Logic [b071bbaf-79fa-413b-807b-2cc86c8a8125], Curse of Fool's Wisdom [93b2a685-8267-4cbd-ac55-db6ff95fe98d], Dark Withering [ac2720d2-b010-4fa9-8c94-b13680b75aac], Distemper of the Blood [4d3e7cde-a4ed-428f-bd37-c6dda2104221], Fiery Temper [f07bd49d-8e71-4d56-be2a-638514011318], Frantic Purification [b4025136-3146-499a-8c17-ed9de548ab8d], From Under the Floorboards [a1fc4269-f3e4-4a59-849d-aa1727eef23a], Gibbering Descent [fbf6f677-d96b-406a-bc6f-4b244df72c7b], Gisa's Bidding [0abc993b-18c7-4bb8-aa58-0d06a41cb48f], Gorgon Recluse [e6c9a699-0468-42f8-aad5-b9d45a3c1d37], Grave Scrabbler [b1afaf1c-2311-4fdc-b78c-98bf1892d1de], Hell Mongrel [64aa732c-d939-48c7-b1d6-c73fa1eedb40], Ichor Slick [7a36fc2e-bb02-4222-a335-4c80e380e690], Incorrigible Youths [9c239027-c5cb-43c6-b4f3-93c269a1d853], Insatiable Gorgers [e4534f33-8784-40a5-af1a-0f9975741aa2], Just the Wind [761ebd6a-8f53-46fa-b3cd-16616b773007], Kitchen Imp [eaa2ad31-065d-4aa3-a39c-5e491dd59022], Madlands [f6521057-432a-4ff7-a400-3bb8d3275c27], Malevolent Whispers [b7ff27b6-7591-44b9-86b9-ee12f795ec25], Markov Baron [bafc2e11-5f1c-46f1-a852-2330e099b8e2], Muck Drubb [032a5616-bbaf-4659-86c4-43edf29b9788], Murderous Compulsion [8fd8b4ef-69c8-43aa-9cbe-c46dba845ba8], Nagging Thoughts [e74c70be-2b70-4b04-9909-161d6f41a156], Necrogoyf [e034a02d-3482-44eb-90dc-c38be104197f], Nightshade Assassin [370c5e5f-709b-415b-9b65-3f224d6ef1c7], Obsessive Search [116ee88e-9e13-4f21-bc6a-efa994b5bf75], Psychotic Episode [0ac7bacd-944d-44f4-927b-28e8c0a4371d], Psychotic Haze [4b6aa5e2-b539-46cd-804b-cd9e996a9456], Reckless Wurm [c9159396-81d3-4f81-88b4-dda163ff4b74], Revolutionist [d00607b1-77ce-4b89-ad04-763d0d390c5c], Senseless Rage [5036fe35-43c6-45af-99d5-7b79ebcfc406], Skophos Reaver [4bc0bdd5-32da-46df-b624-29a709efc676], Stensia Masquerade [88f5d146-420b-417c-bcf1-fe0e78312a74], Strength of Isolation [87aad9fb-e234-4171-a4ae-c686f613d37e], Strength of Lunacy [02a95ea7-cfb9-497c-a004-3e783856d79c], Stromkirk Occultist [3bdd140b-1406-4d07-8f35-78f2ba92de64], Terminal Agony [b69e68e7-0612-40f8-a40a-9c4e77653442], Twins of Maurer Estate [378110e9-62d6-4dcf-a2e3-813081c82ec4], Violent Eruption [842578ca-0a86-4e96-bfd5-45931488f7c1], Voldaren Pariah // Abolisher of Bloodlines [4399c284-e3fe-46b1-aa1f-15a2846858f5], Weirded Vampire [3af07cd3-36c3-4792-bc93-3ec82e1606bb], Welcome to the Fold [b8647f54-f50b-4bc6-bd44-fda25ef189fa]
 
-### 4. `-unearth-cost` — finishes 25 cards
+### 3. `-unearth-cost` — finishes 25 cards
 
 - Template: `unearth {cost}`
 - Family: keyword-ability
@@ -132,12 +114,12 @@ Cards finished (first 12): Ashnod's Harvester, Combat Courier, Corpse Connoisseu
 
 All affected cards (57): Anathemancer [137b5708-50a9-4f4c-84e6-9043be9f1989], Archfiend of Sorrows [fe84966e-0f0c-4df8-b61c-e9693492dfd8], Artificer's Dragon [4284ff9f-4085-4874-abc7-95467cb759a5], Ashnod's Harvester [9ea87566-43da-4ebd-a904-ae8b8830c3a2], Brackwater Elemental [a8af4d61-1aed-415d-8d8e-7384194ee3e2], Canoptek Tomb Sentinel [678b3fb5-aa9f-4268-9433-2a89dd37b927], Chronomancer [9833e3bd-6e7f-41b7-bf7e-ffb74ff17844], Cityscape Leveler [d4d65797-2b92-4265-9169-133120c86c7f], Combat Courier [54d32245-c796-4e8e-b61e-c218e3902565], Corpse Connoisseur [f39e2611-c837-4ad7-b3a8-1ee48b74777c], Dregscape Sliver [d1678eed-a335-454c-9fa1-749317500a36], Dregscape Zombie [be9d1346-4416-4ade-ae84-7a4121e0bd12], Etherium Abomination [e1135564-ca93-4c5b-8686-cafdbaf0205e], Extractor Demon [1fb5c014-9366-4f9e-9728-303ff766002b], Fatestitcher [55765934-07be-4f03-a2e8-8292c0b601ae], Fire-Field Ogre [343a258e-ea46-4acb-8543-9f869e43bc59], First-Sphere Gargantua [e101edcd-34d8-4bcd-8ba6-d5941584f9fa], Gixian Recycler [7d0c3826-1a54-458f-9665-d34c6e1ed304], Grixis Slavedriver [9087928a-4732-4661-b3ed-d0b1ea06edf6], Heavyweight Demolisher [fe71ada0-ac86-4035-9b6b-4c24ae65034c], Hell's Thunder [5aad3485-47c1-4d87-b340-61d7003cd786], Hellspark Elemental [a7ba88c6-81e7-4ab7-9c9b-308831e56833], Hexmark Destroyer [b3329240-c812-45ea-a7f8-4d79cd4ed515], Kathari Bomber [1ad39f85-799a-42ae-852c-9117d689fe65], Kathari Screecher [fb51bafe-5a70-4910-a42e-ef75d9dd2f0a], Kederekt Leviathan [edf459c0-53e4-47e8-8098-105656f9b49c], Lokhust Heavy Destroyer [fd03f20a-d365-48fb-8b2a-ad4b502a0045], Mask of the Jadecrafter [b1870fff-b87e-434e-8d4c-d9e60f7f4284], Mishra's Juggernaut [fa6fa2f5-eb9b-402e-82f4-e0a8d30df245], Mishra's Research Desk [95ac482c-c6ad-49b4-937e-460241ae355f], Molten Gatekeeper [90fdfba8-f29e-44f9-91d2-7bf3c458a9c1], Patchplate Resolute [a266e841-429c-4b1d-afa3-acda187c5a0b], Perennial Behemoth [ee4b7aca-31dd-4369-8e85-b300892b9b41], Phyrexian Dragon Engine [022b42a6-ee0f-4080-b973-c1b68938c3be], Platoon Dispenser [339c39d9-7e10-458e-b602-4f0550840436], Priest of Fell Rites [ec6ccd8f-cc75-4a50-8639-f4ec31a280aa], Reconstructed Thopter [c87ff8e8-a3da-4848-9881-fbc896acf7c5], Rotting Rats [1f361ae9-98a2-40ff-a579-fa5b9f510df4], Royal Warden [0192ba05-6144-4fec-a803-462ecdf64195], Scourge Devil [3ee65210-547f-4375-8f9a-3484d963339f], Scrapwork Cohort [149694e6-5cf0-4983-9546-a4bd579b2ade], Scrapwork Mutt [5906b378-c7a7-44fd-a63b-55a347d97854], Scrapwork Rager [552867ec-5741-4e34-813f-4aaf185661f7], Sedraxis Specter [eccc1230-df5a-44a0-859b-9e1e0d176dff], Shambling Remains [5a29fe9f-89bf-405e-acf6-1b56435cb9ee], Simian Simulacrum [77eb44ca-53e9-4924-b19f-31732f14ef14], Skorpekh Lord [c40e8d52-d4cc-4502-8b51-a5612dbe1ada], Terisian Mindbreaker [d16fcb45-7fe7-4640-a325-badb64cadd62], Terror Ballista [3044a00d-7f88-47e8-9110-2e898b20416c], Tocasia's Onulet [150dd67b-4de2-4fcd-b753-e4096de911a2], Tomb Blade [c857de66-f4e0-4e97-ad01-fac623af8225], Tri-Sentinel, Act of Vengeance [d9cc9fc9-522e-4598-9a09-c95824d77acd], Triarch Praetorian [52aa5a79-db0e-4eaa-b2df-e41674c47794], Undead Leotau [dd7df06c-9434-46ce-893c-80081fbc2df7], Viscera Dragger [77630700-3828-4063-95a7-f6283f0f9da5], Vithian Stinger [1c329131-bef2-41c6-823a-136c110ff0ad], Yotian Frontliner [cd39e485-71ba-40cb-8608-f5a0dfb7ef5f]
 
-### 5. `-the-beginning-each-upkeep` — finishes 23 cards
+### 4. `-the-beginning-each-upkeep` — finishes 24 cards
 
 - Template: `at the beginning of each upkeep, if no spells were cast last turn, transform ~`
 - Family: transform
-- Appears in 32 unfinished cards; it is the last blocker for 23.
-- One-line review candidates: **23**.
+- Appears in 32 unfinished cards; it is the last blocker for 24.
+- One-line review candidates: **24**.
 
 Printed examples:
 
@@ -146,9 +128,27 @@ Printed examples:
 - **Duskwatch Recruiter // Krallenhorde Howler** — At the beginning of each upkeep, if no spells were cast last turn, transform ~.
 - **Ulrich of the Krallenhorde // Ulrich, Uncontested Alpha** — At the beginning of each upkeep, if no spells were cast last turn, transform ~.
 
-Cards finished (first 12): Afflicted Deserter // Werewolf Ransacker, Breakneck Rider // Neck Breaker, Convicted Killer // Branded Howler, Gatstaf Arsonists // Gatstaf Ravagers, Gatstaf Shepherd // Gatstaf Howler, Geier Reach Bandit // Vildin-Pack Alpha, Grizzled Outcasts // Krallenhorde Wantons, Hanweir Watchkeep // Bane of Hanweir, Hinterland Hermit // Hinterland Scourge, Hinterland Logger // Timber Shredder, Kruin Outlaw // Terror of Kruin Pass, Lambholt Elder // Silverpelt Werewolf.
+Cards finished (first 12): Afflicted Deserter // Werewolf Ransacker, Breakneck Rider // Neck Breaker, Convicted Killer // Branded Howler, Gatstaf Arsonists // Gatstaf Ravagers, Gatstaf Shepherd // Gatstaf Howler, Geier Reach Bandit // Vildin-Pack Alpha, Grizzled Outcasts // Krallenhorde Wantons, Hanweir Watchkeep // Bane of Hanweir, Hinterland Hermit // Hinterland Scourge, Hinterland Logger // Timber Shredder, Instigator Gang // Wildblood Pack, Kruin Outlaw // Terror of Kruin Pass.
 
 All affected cards (32): Afflicted Deserter // Werewolf Ransacker [52adc761-1a0a-43d1-a706-41a92bb7880c], Breakneck Rider // Neck Breaker [51685f85-06ad-4de2-a7a6-06e6f59a1cbb], Convicted Killer // Branded Howler [c1801b5c-1a87-46d0-83d3-e8dfd94211f4], Daybreak Ranger // Nightfall Predator [280624aa-5f9a-48fd-85ea-815c96c747b3], Duskwatch Recruiter // Krallenhorde Howler [87c43776-dd98-4e12-9b95-82d2b8f4f1ab], Gatstaf Arsonists // Gatstaf Ravagers [cde622fa-a634-409d-962c-1e4c5ddf9b3b], Gatstaf Shepherd // Gatstaf Howler [c05c5375-d0d7-4cf2-92e6-76f86cd0febf], Geier Reach Bandit // Vildin-Pack Alpha [64720167-b88b-47f7-bfc1-d5e005c9fd68], Grizzled Outcasts // Krallenhorde Wantons [abcfcc71-77c0-46e7-93c3-726967946b12], Hanweir Watchkeep // Bane of Hanweir [8bdf986e-a47e-47b6-8cdb-576c86c4041b], Hermit of the Natterknolls // Lone Wolf of the Natterknolls [6d32f688-a854-4d82-b654-d720b93fb766], Hinterland Hermit // Hinterland Scourge [8287306b-47d3-4e95-aa39-551f949d687c], Hinterland Logger // Timber Shredder [29b22d41-4c6e-46de-8553-983d05f12f0f], Huntmaster of the Fells // Ravager of the Fells [582328cd-660d-47a4-bb23-e91e80b9a907], Instigator Gang // Wildblood Pack [27c2bb87-7e50-4a80-b41c-ff0237a3d648], Kessig Forgemaster // Flameheart Werewolf [b0d66546-c6a3-4052-b86e-98c3c2ab44b3], Kruin Outlaw // Terror of Kruin Pass [cf518f59-f083-42a0-9953-fac2757bf804], Lambholt Elder // Silverpelt Werewolf [12330f42-0e3f-40e1-86f3-57a34403d143], Lambholt Pacifist // Lambholt Butcher [e7d6ef32-616f-4c21-bcdd-467ce8296c31], Mayor of Avabruck // Howlpack Alpha [6e638587-30b3-4c4b-b463-fb415ea048f7], Mondronen Shaman // Tovolar's Magehunter [f94cb722-7e46-4569-b474-9654ecf7ec14], Reckless Waif // Merciless Predator [ba57df46-11c9-4f28-8818-175fb52e67bc], Sage of Ancient Lore // Werewolf of Ancient Hunger [a46454ad-d912-42f7-b228-492796161d82], Scorned Villager // Moonscarred Werewolf [52855f90-19c1-46c9-8eed-88b3c1722bb0], Solitary Hunter // One of the Pack [c99834dc-755f-407c-ad0e-550f8ae12198], Tormented Pariah // Rampaging Werewolf [bbcc2d2d-b29c-410f-bee7-5ef1609a5b32], Ulrich of the Krallenhorde // Ulrich, Uncontested Alpha [0d397c05-a680-4274-972f-6a5f778b5133], Ulvenwald Mystics // Ulvenwald Primordials [4418ff27-57c0-4c94-8aee-6151e4f8b0f9], Village Ironsmith // Ironfang [c7b1aaff-e2c3-427c-8478-1fd053f7ffb2], Village Messenger // Moonrise Intruder [f6634a84-a9ce-4bbd-bc2c-3f9179b7f16a], Villagers of Estwald // Howlpack of Estwald [dcf692f6-baec-4b60-a6e3-2a8b731d7816], Wolfbitten Captive // Krallenhorde Killer [7f59252f-3a37-4a22-938c-001f3208bd94]
+
+### 5. `-bestow-cost` — finishes 21 cards
+
+- Template: `bestow {cost}`
+- Family: keyword-ability
+- Appears in 42 unfinished cards; it is the last blocker for 21.
+- One-line review candidates: **21**.
+
+Printed examples:
+
+- **Celestial Archon** — Bestow {5}{W}{W}
+- **Nighthowler** — Bestow {2}{B}{B}
+- **Kestia, the Cultivator** — Bestow {3}{G}{W}{U}
+- **Mogis's Warhound** — Bestow {2}{R}
+
+Cards finished (first 12): Baleful Eidolon, Boon Satyr, Cavern Lampad, Celestial Archon, Chromanticore, Crystalline Nautilus, Ghostblade Eidolon, Herald of Torment, Hopeful Eidolon, Hypnotic Siren, Leafcrown Dryad, Nimbus Naiad.
+
+All affected cards (42): Baleful Eidolon [0930a976-f69e-44a8-8b19-72095f20ed13], Boon Satyr [aedcd2fb-813a-4915-b7b9-ac7479863462], Cavern Lampad [6ead91e1-4062-4080-bbc7-a4b62f8c6111], Celestial Archon [d2b29bb0-9fb5-46cd-a546-fa6c4ff6113c], Chromanticore [695ee4fe-356d-47fb-9442-d171b618151c], Crystalline Nautilus [77661282-1c98-4f70-b617-c75633ab04c8], Eidolon of Countless Battles [441b51b0-ecd0-466d-9ca8-e754eb563aec], Erebos's Emissary [dc39c52b-9bee-4cec-a970-1867314944ef], Everflame Eidolon [2c6b2f4a-4e0e-4dc1-92a8-c07e5cbba5f4], Flitterstep Eidolon [4280191f-e2cb-4cee-a3b4-660b3efd62e9], Ghostblade Eidolon [78a1f291-22ed-41f1-87fd-0bdc97f9c065], Glyph Elemental [288ea954-a880-4731-8fe7-93d2ff6a043f], Gnarled Scarhide [1ef73cc0-fe72-4040-a932-bcd4b1a704a3], Heliod's Emissary [182c9af9-d867-4848-ab36-ac7b1914f41a], Herald of Torment [3c04aeda-ae09-4162-ab51-983e29d21225], Hopeful Eidolon [13c1ca1e-cd17-49ef-bc31-97bff99ec1e3], Hypnotic Siren [54aede54-4f7d-40f5-bad0-2448293e2cf0], Indebted Spirit [c4c0a622-7325-4024-8b2e-6335f9a729e9], Kestia, the Cultivator [21620bfc-8ef0-4e43-b675-d0bbad86e83d], Leafcrown Dryad [01914751-af8e-4aea-a254-6fa4f9fd3457], Mogis's Warhound [bb87917f-33fb-4024-9317-0992c2f8f55e], Nighthowler [57b3f7fc-1812-4134-a645-6cef48a8aa71], Nimbus Naiad [1b3b14b9-088d-48df-8d21-54ee68989ac0], Noble Quarry [d549abd0-fea5-417f-93f9-255cb87ec989], Nylea's Emissary [ec30e221-ffc8-4867-ba9c-f39712b3aa93], Nyxborn Eidolon [bd7fd82f-154a-4001-bb8f-7fb50ac77b6b], Nyxborn Hydra [4d1b655f-05b8-4b82-9cb9-67660f570a9b], Nyxborn Rollicker [ebf2974a-963e-425a-8f8c-55f0a36984c3], Nyxborn Shieldmate [a1012f33-7ebd-47c6-b670-1b0dc046fbce], Nyxborn Triton [cdd37bbf-09db-4c1f-9947-312de48a0f4c], Nyxborn Unicorn [b9304d88-a1de-4300-9425-50350969bd70], Nyxborn Wolf [3fa11a6a-a760-45db-8341-f83a0f69c17f], Observant Alseid [0eb0c9d2-bc5a-4ba3-bd83-57af1da51c3b], Purphoros's Emissary [d78d7fd6-778b-4030-a776-29ddce83e33f], Sightless Brawler [0f7d76a9-3f47-4cfa-882b-1790256d15b2], Spearpoint Oread [2fa7bb26-18eb-4ff0-8558-f6f3981a84ce], Spirespine [de0edcc8-1595-4dbb-ac8a-46dcd96299cb], Spiteful Returned [e7e60afe-5ddf-406b-86e1-e82e2a660432], Springheart Nantuko [8a3ad2ef-8bcb-40c0-85de-f03328c2b644], Thassa's Emissary [fcb97d06-e0b8-4a13-ab7c-1304ccb7ace2], Trickster's Elk [5bca05c1-1c0a-45f4-aa20-69f68b99cd7e], Triton Wavebreaker [d2309fba-4273-4084-b206-642a43975c34]
 
 ### 6. `-daybound` — finishes 21 cards
 
@@ -186,48 +186,12 @@ Cards finished (first 12): Annoyed Altisaur, Ardent Plea, Bituminous Blast, Bloo
 
 All affected cards (35): Annoyed Altisaur [a8135179-51ef-454e-98ff-69137440339f], Ardent Plea [49a8ca54-30d3-42d3-b122-334d24805e1b], Aurora Phoenix [a98cc4d0-a322-4142-aee0-83f39b137616], Bituminous Blast [d291d8f7-bb67-470c-8794-cd553c91e5cc], Bloodbraid Challenger [6e111622-c7cc-49cf-83e8-3555e06518c1], Bloodbraid Elf [3f0c9466-5ab9-4205-a84f-b4b27b5a678e], Boarding Party [ef69ce86-48ae-4d90-8e29-051583671321], Captured Sunlight [937cb494-7dcb-4a40-b1e0-6e6b31f5c8a6], Demonic Dread [b090f1e5-1f7e-4492-9928-c5911a8ef95b], Deny Reality [f9e31993-bfe1-46fb-8a32-418e97f9cfe1], Enigma Sphinx [6fb84ecd-ab60-4c2c-987d-8a0749db5777], Enlisted Wurm [69191459-36ca-4e71-b4bb-0270c4cdaee9], Etherium-Horn Sorcerer [01afb7a1-6427-4bb6-935a-613e9bda9de3], Ethersworn Sphinx [71366469-04ea-4526-bf24-7abc02fdc5ab], Forceful Denial [21d3db6b-58cc-435c-bfd6-8320f6efcbbe], Garbage Elemental [20593b29-2987-4b3b-8956-66f91dfe8a13], Heralds of Tzeentch [c4ecfc13-a335-42bb-92db-133998b2af5d], Imoti, Celebrant of Bounty [eca32dcd-6845-433e-a631-ed1f0ee78f25], Ingenuity Engine [d1da2c33-2be4-4065-8e5c-613a069d2013], Into the Time Vortex [ad9d969e-def5-45a3-b65b-0c776f62ef0e], Kathari Remnant [bbf07946-33d0-48fe-85af-022e9b0b834c], Let the Galaxy Burn [8c70980b-3c38-4624-8f19-5e29d271acf5], Maelstrom Colossus [06fc3eb1-7a48-42a0-8a5c-d61bd5aacfff], Meteoric Mace [c6a607f2-4228-4bcc-84ed-37bd362d7542], Natural Reclamation [98266582-12fd-4a7b-a9bb-e9cc4370ed28], Noise Marine [1f7e85cf-afee-4041-9436-1fb69b4ec292], Quandrix, the Proof [2cbccc46-bdef-4dfb-90a4-0278c5c8488a], Sakashima's Protege [cf127842-5fb1-44df-8d91-8cc0f48c559a], Shardless Agent [2afbaa9a-c171-4a8b-90f3-5250d8498356], Stormcaller's Boon [28ebe75a-cddd-469b-be8a-286776b83388], Sweet-Gum Recluse [8ea10a5a-b698-4f7d-a9c8-520f8d835f34], The First Sliver [55e4d4b2-1bd8-4c29-a21a-c014a974b715], Throes of Chaos [e3444fcf-70ed-4d6e-aea9-030af15cad56], Violent Outburst [c0f69063-9079-4e7a-98dc-c29da8171d33], Volcanic Torrent [ec2968fb-163d-4907-862b-b84a1f167833]
 
-### 8. `-bestow-cost` — finishes 20 cards
-
-- Template: `bestow {cost}`
-- Family: keyword-ability
-- Appears in 42 unfinished cards; it is the last blocker for 20.
-- One-line review candidates: **20**.
-
-Printed examples:
-
-- **Celestial Archon** — Bestow {5}{W}{W}
-- **Nighthowler** — Bestow {2}{B}{B}
-- **Kestia, the Cultivator** — Bestow {3}{G}{W}{U}
-- **Mogis's Warhound** — Bestow {2}{R}
-
-Cards finished (first 12): Baleful Eidolon, Boon Satyr, Cavern Lampad, Celestial Archon, Chromanticore, Ghostblade Eidolon, Herald of Torment, Hopeful Eidolon, Hypnotic Siren, Leafcrown Dryad, Nimbus Naiad, Nylea's Emissary.
-
-All affected cards (42): Baleful Eidolon [0930a976-f69e-44a8-8b19-72095f20ed13], Boon Satyr [aedcd2fb-813a-4915-b7b9-ac7479863462], Cavern Lampad [6ead91e1-4062-4080-bbc7-a4b62f8c6111], Celestial Archon [d2b29bb0-9fb5-46cd-a546-fa6c4ff6113c], Chromanticore [695ee4fe-356d-47fb-9442-d171b618151c], Crystalline Nautilus [77661282-1c98-4f70-b617-c75633ab04c8], Eidolon of Countless Battles [441b51b0-ecd0-466d-9ca8-e754eb563aec], Erebos's Emissary [dc39c52b-9bee-4cec-a970-1867314944ef], Everflame Eidolon [2c6b2f4a-4e0e-4dc1-92a8-c07e5cbba5f4], Flitterstep Eidolon [4280191f-e2cb-4cee-a3b4-660b3efd62e9], Ghostblade Eidolon [78a1f291-22ed-41f1-87fd-0bdc97f9c065], Glyph Elemental [288ea954-a880-4731-8fe7-93d2ff6a043f], Gnarled Scarhide [1ef73cc0-fe72-4040-a932-bcd4b1a704a3], Heliod's Emissary [182c9af9-d867-4848-ab36-ac7b1914f41a], Herald of Torment [3c04aeda-ae09-4162-ab51-983e29d21225], Hopeful Eidolon [13c1ca1e-cd17-49ef-bc31-97bff99ec1e3], Hypnotic Siren [54aede54-4f7d-40f5-bad0-2448293e2cf0], Indebted Spirit [c4c0a622-7325-4024-8b2e-6335f9a729e9], Kestia, the Cultivator [21620bfc-8ef0-4e43-b675-d0bbad86e83d], Leafcrown Dryad [01914751-af8e-4aea-a254-6fa4f9fd3457], Mogis's Warhound [bb87917f-33fb-4024-9317-0992c2f8f55e], Nighthowler [57b3f7fc-1812-4134-a645-6cef48a8aa71], Nimbus Naiad [1b3b14b9-088d-48df-8d21-54ee68989ac0], Noble Quarry [d549abd0-fea5-417f-93f9-255cb87ec989], Nylea's Emissary [ec30e221-ffc8-4867-ba9c-f39712b3aa93], Nyxborn Eidolon [bd7fd82f-154a-4001-bb8f-7fb50ac77b6b], Nyxborn Hydra [4d1b655f-05b8-4b82-9cb9-67660f570a9b], Nyxborn Rollicker [ebf2974a-963e-425a-8f8c-55f0a36984c3], Nyxborn Shieldmate [a1012f33-7ebd-47c6-b670-1b0dc046fbce], Nyxborn Triton [cdd37bbf-09db-4c1f-9947-312de48a0f4c], Nyxborn Unicorn [b9304d88-a1de-4300-9425-50350969bd70], Nyxborn Wolf [3fa11a6a-a760-45db-8341-f83a0f69c17f], Observant Alseid [0eb0c9d2-bc5a-4ba3-bd83-57af1da51c3b], Purphoros's Emissary [d78d7fd6-778b-4030-a776-29ddce83e33f], Sightless Brawler [0f7d76a9-3f47-4cfa-882b-1790256d15b2], Spearpoint Oread [2fa7bb26-18eb-4ff0-8558-f6f3981a84ce], Spirespine [de0edcc8-1595-4dbb-ac8a-46dcd96299cb], Spiteful Returned [e7e60afe-5ddf-406b-86e1-e82e2a660432], Springheart Nantuko [8a3ad2ef-8bcb-40c0-85de-f03328c2b644], Thassa's Emissary [fcb97d06-e0b8-4a13-ab7c-1304ccb7ace2], Trickster's Elk [5bca05c1-1c0a-45f4-aa20-69f68b99cd7e], Triton Wavebreaker [d2309fba-4273-4084-b206-642a43975c34]
-
-### 9. `-bushido` — finishes 20 cards
-
-- Template: `bushido <n>`
-- Family: other
-- Appears in 35 unfinished cards; it is the last blocker for 20.
-- One-line review candidates: **20**.
-
-Printed examples:
-
-- **Toshiro Umezawa** — Bushido 1
-- **Jade Avenger** — Bushido 2
-- **Konda, Lord of Eiganjo** — Bushido 5
-- **Hand of Honor** — Bushido 1
-
-Cards finished (first 12): Araba Mothrider, Battle-Mad Ronin, Cursed Ronin, Devoted Retainer, Hand of Cruelty, Hand of Honor, Inner-Chamber Guard, Isao, Enlightened Bushi, Jade Avenger, Kitsune Blademaster, Kitsune Dawnblade, Konda, Lord of Eiganjo.
-
-All affected cards (35): Araba Mothrider [d6b54f58-7775-4180-b2e5-1b57da65a409], Battle-Mad Ronin [39a7c52d-0b89-47c1-a376-5004c94c2e0f], Brothers Yamazaki [5c820811-1775-4ea4-b003-721750a4d90f], Cursed Ronin [23e98711-0b3f-446d-abcc-9b0378178feb], Devoted Retainer [54970935-b3d3-4f65-a262-c4975f2787e5], Hand of Cruelty [ddbd4d8c-9763-43d7-882f-6edf8efffb0a], Hand of Honor [feb65f2e-6f71-4f29-bf31-b210c85f3ab3], Iizuka the Ruthless [4f40d66a-1fd8-4b06-b6cb-9cbcf33bc041], Indebted Samurai [fee392d9-a961-4f41-81ba-ab1b87c931fa], Inner-Chamber Guard [ea5e8920-1343-4335-b516-6db43c3bfeb0], Isao, Enlightened Bushi [15ec1bfc-b0a0-4058-87bb-8dbaf17b7f3b], Jade Avenger [177248b7-f3fd-42f8-b325-2625a2bb28ff], Kentaro, the Smiling Cat [bfaf20a7-a11c-4f57-8eb6-b03b5223704d], Kitsune Blademaster [2db73fff-1a89-4006-945d-a244ff2f0bef], Kitsune Dawnblade [cd954a2a-5799-4c65-af8a-47adb1ce5e91], Konda's Hatamoto [6c076776-f497-4abf-ab06-f551768cffae], Konda, Lord of Eiganjo [efea2342-bb24-472a-acfb-1b9e012af91b], Kuro's Taken [8b787ba5-0b87-449f-98cd-9454445e2f48], Mothrider Samurai [38530399-d2c9-4445-92ba-14c5cd438055], Nagao, Bound by Honor [6207ec81-342a-49e4-ae07-426397eef0ec], Nezumi Ronin [0f9672ac-f4fc-46e8-9fe5-93b3e66810a4], Numai Outcast [0319a50f-cbcd-45ab-9630-9e9f1498d23d], Opal-Eye, Konda's Yojimbo [e4acac65-112b-48fc-bea3-44747c1389a3], Ronin Cavekeeper [56551cba-3871-4746-a11f-7ab8aaf46cf6], Ronin Cliffrider [ce8fc1bb-5dd0-41b1-909a-bbfe6b165158], Ronin Houndmaster [69a3de91-bb18-4e37-975e-0f4becafa34f], Samurai Enforcers [9d0d19e4-34f9-4bfa-9c8b-74356d223a18], Samurai of the Pale Curtain [6df6e834-1917-4bf4-b0b7-09834bf90fb2], Sensei Golden-Tail [63305fd4-068f-498b-a01e-0b375c592797], Silverstorm Samurai [3df0a392-bcc1-4456-bd6e-d044bcc83a16], Sokenzan Renegade [63f414ed-01f4-428a-b65f-5c640679d5ef], Sokenzan Spellblade [26e47cc5-9dc7-4d54-80a6-1eb77587df36], Takeno's Cavalry [c5577514-d2af-4904-9f94-b472228c6e3d], Takeno, Samurai General [f995e0cc-b2bd-41c3-8c08-c8873312cebe], Toshiro Umezawa [11838086-db2f-4588-ae18-4129c9e2b67d]
-
-### 10. `-buyback-cost` — finishes 20 cards
+### 8. `-buyback-cost` — finishes 20 cards
 
 - Template: `buyback {cost}`
 - Family: keyword-ability
 - Appears in 32 unfinished cards; it is the last blocker for 20.
-- One-line review candidates: **19**.
+- One-line review candidates: **20**.
 
 Printed examples:
 
@@ -240,12 +204,12 @@ Cards finished (first 12): Allay, Capsize, Disturbed Burial, Elvish Fury, Evinca
 
 All affected cards (32): Allay [664d982a-5cd8-4289-afb8-fa2e083042c9], Anoint [fcb03c54-5b9a-428d-bbf6-ef8977770c8d], Brush with Death [d87e580f-eca1-4f91-962b-82d684cba5e7], Capsize [77637eff-2963-4402-88f3-ca346f762fc8], Change of Heart [a8c0b41b-916c-4da9-9c39-a058c91a78f4], Clockspinning [3e1b32a9-27a4-4550-a644-ebe254e1f512], Corpse Dance [59b02ca7-e7bd-4820-ac32-87ea1a8c64c0], Disturbed Burial [cdbaa21d-5896-4b8b-9a08-f0839ccfddfc], Elvish Fury [557d2af0-04c5-461d-826b-7208c4535dc2], Evangelize [23a60803-6b0f-48ee-aa3b-12a3c5fc62cf], Evincar's Justice [c0d3dfc0-1ff2-4ac3-98eb-32eaa5b84c05], Fanning the Flames [1d5f0a1c-88e0-4603-97af-8ed47766812e], Haze of Rage [f17d0fb8-c157-43b8-be26-f5ba4c6aed14], Imps' Taunt [7ebec169-d941-460e-9e3c-ba54b5066b05], Innocuous Insect [78b676ce-4d6e-41eb-acb1-f1f8e9aad85b], Invulnerability [2c964157-d414-4d4e-822b-12ce61e882ff], Lab Rats [c53d6d3e-64e3-48b9-afab-3bde3164888f], Mind Games [ea43372f-b0a7-4d1b-be3e-a4a738b06d59], Mind Peel [4f424d94-1544-4086-a57d-2add17332094], Mystic Speculation [a58adf82-d9e2-4b47-933e-68180f280ba2], Recruit the Worthy [e25e2a3f-4add-4744-b1f8-2e880998a51f], Reiterate [38394ee3-6726-4f91-bc25-36bce0c6aab9], Searing Touch [1cd9a3ba-a115-4e59-983d-605e4435f3a8], Seething Anger [2effcd1c-5833-4e0e-bb67-2d2ffb22a014], Shattering Pulse [77953b7a-813e-45f5-ad7f-ab72a79a0112], Spell Burst [141d9b88-5326-4e3d-8f16-5293246fab88], Sprout Swarm [8b33d890-7d67-44a8-a253-e2b171d7ca9d], Verdant Touch [68845200-5346-473d-becd-27315879443d], Whim of Volrath [51a20c9f-68d2-471b-8622-67d481b53b92], Whispers of the Muse [a4a8af4e-8686-45ba-94fd-ccf6cc8adaae], Worthy Cause [b24063f7-157f-47c0-919a-33856d53b902], Wurmcalling [8dd0f86d-6f9e-47e3-97dd-3a3fc075ea93]
 
-### 11. `-cost-prevent-the-next` — finishes 18 cards
+### 9. `-cost-prevent-the-next` — finishes 19 cards
 
 - Template: `{cost}: prevent the next <n> damage that would be dealt to any target this turn`
 - Family: activated
-- Appears in 25 unfinished cards; it is the last blocker for 18.
-- One-line review candidates: **17**.
+- Appears in 25 unfinished cards; it is the last blocker for 19.
+- One-line review candidates: **18**.
 
 Printed examples:
 
@@ -254,11 +218,29 @@ Printed examples:
 - **Combat Medic** — {1}{W}: Prevent the next 1 damage that would be dealt to any target this turn.
 - **Samite Healer** — {T}: Prevent the next 1 damage that would be dealt to any target this turn.
 
-Cards finished (first 12): Alabaster Wall, Aven Redeemer, Benevolent Ancestor, Clergy en-Vec, Combat Medic, D'Avenant Healer, Daru Healer, Femeref Healer, Kithkin Healer, Loxodon Anchorite, Master Healer, Militant Monk.
+Cards finished (first 12): Alabaster Wall, Aven Redeemer, Benevolent Ancestor, Clergy en-Vec, Combat Medic, D'Avenant Healer, Daru Healer, Femeref Healer, Jhessian Balmgiver, Kithkin Healer, Loxodon Anchorite, Master Healer.
 
 All affected cards (25): Abuna Acolyte [cf082161-47ff-46b9-926d-3fa5e5727861], Alabaster Wall [f9f52651-cc64-48c5-bc18-cd5f646dfb1f], Aven Redeemer [faac29f5-10ad-4800-a9d3-2259c4800352], Barrenton Medic [17661062-928c-4e33-a4f3-92ddc9d8c817], Benevolent Ancestor [ee414d20-b18e-4bed-97fc-3c7535089ec1], Clergy en-Vec [a5a1b4c9-474a-42b7-b412-c2d43a3353db], Combat Medic [541b7b2f-7bb0-4858-8dc5-6e50de443c33], D'Avenant Healer [91770dc7-3de3-458f-a240-6540455fe05f], Daru Healer [630b1685-d0c9-4d94-97dc-70058fb52e5d], Elvish Healer [ea46835c-9dac-4e1e-8338-ad99136f511a], Femeref Healer [e2117373-6f0a-41c8-ab6a-9014b9628e64], Hallowed Healer [b92f6adb-64c6-4692-af9d-af4241203722], Jhessian Balmgiver [2be283da-6d5a-442b-bd07-d06c16cb1214], Kithkin Healer [e3bd74f3-1f38-4162-a0be-c76ad63e2d9b], Kitsune Healer [9c6bd752-e3c8-408c-96f4-16405a653161], Loxodon Anchorite [c70dded8-658b-4250-8057-54894350455c], Master Healer [7695b61a-8d44-44b1-9783-ea3114111c3e], Militant Monk [29c0a904-43e3-44c3-8e00-deea523de8eb], Orim, Samite Healer [9d405e5b-0cee-4c8f-b3ef-65765853b8a4], Rakalite [193c1671-328e-4f9c-836e-055f46c3aab0], Samite Archer [5322a218-6a0c-4d86-835a-c87eb52aaf6a], Samite Healer [95a0ca48-d924-47f4-86ed-42c673ee778c], Sanctum Custodian [4d979fbf-5009-47a1-8d77-b1ce80bbe90d], Serra Paladin [2fdbbca7-d1d0-4834-84df-2c2d9953f83a], The Protector [9048bb17-46ad-44a3-a828-deaafd4c5f21]
 
-### 12. `-all-slivers-have-name` — finishes 18 cards
+### 10. `-foretell-cost` — finishes 18 cards
+
+- Template: `foretell {cost}`
+- Family: other
+- Appears in 54 unfinished cards; it is the last blocker for 18.
+- One-line review candidates: **18**.
+
+Printed examples:
+
+- **Saw It Coming** — Foretell {1}{U}
+- **Alrund's Epiphany** — Foretell {4}{U}{U}
+- **Mystic Reflection** — Foretell {U}
+- **Quakebringer** — Foretell {2}{R}{R}
+
+Cards finished (first 12): Alrund's Epiphany, Augury Raven, Behold the Multiverse, Crush the Weak, Depart the Realm, Doomskar, Doomskar Titan, Dwarven Reinforcements, Gods' Hall Guardian, Kaya's Onslaught, Mammoth Growth, Sarulf's Packmate.
+
+All affected cards (54): A-Cosmos Charger [0d3a47b8-8831-48be-9c92-b8d6e096c0e1], A-Return Upon the Tide [0e688e1a-e034-4bcb-af00-74555c553d94], Alrund's Epiphany [bc842838-1993-4480-b8fe-f9d9f2dee7a4], Augury Raven [ee05fc58-1356-4b2f-b9ce-bda8cc716aee], Battle Mammoth [7a6db509-7ef4-483c-b8a0-62a4f3e16ef9], Behold the Multiverse [d7d2f701-77df-4169-bf98-0d51d6886e9b], Cosmic Intervention [cddccc2a-a76e-48b3-b4dd-dfeab89e1619], Cosmos Charger [603e518c-8f12-432c-ae03-790db5be77bf], Crush the Weak [4aa119f7-d411-4188-956e-547f7d14e789], Delayed Blast Fireball [99915b5a-5092-4900-8824-6de2aab1b2c1], Demon Bolt [6e786f0b-e2cb-40ee-96bc-81945a0b35a3], Depart the Realm [ae069ba4-8ca6-4eda-8f5d-fc82072d7d40], Doomskar [38ece0fa-2c94-4eae-b6ab-74b783862f3e], Doomskar Oracle [c1d8e97b-f34b-4e52-9795-a4433f26725a], Doomskar Titan [86692047-813f-47b1-9f4e-c8b9d5b17b1c], Dual Strike [a498ca5f-7743-47b7-a57a-471efa1a99e8], Dwarven Reinforcements [b38c567e-fd79-4a74-ab5f-df4a6a8f7e00], Frost Fair Lure Fish [51e0a61d-69f0-475d-b40b-50d69252800d], Glorious Protector [6bdc4996-f7d9-4dc4-b70a-aa63f6816b1d], Gods' Hall Guardian [7d22e071-4af4-4182-b387-ecca873d00cc], Green Slime [0ec5a688-a884-410c-adee-ab784789d6e8], Haunting Voyage [334c284e-7bc3-4c18-9f8d-4d846f80008e], Impending Flux [7089512e-f9b6-4d8e-bccc-29e6785cc041], Iron Verdict [70528ca9-195c-49a5-9d83-d51df3b0591f], Jarl of the Forsaken [294c1fed-9473-4fbe-b10e-71a7a432b98d], Kaya's Onslaught [230811bf-52e7-451e-96ec-9d57c864ac5d], Lifestream's Blessing [7cbdba72-ed33-40c6-a9c0-4d65c280a4d0], Lupine Harbingers [a0494d84-06c8-4a79-a9bc-ff4e16bbc68e], Mammoth Growth [bd433a27-1f3f-4d69-8b7e-97239fdf165b], Mystic Reflection [491dc110-b459-412e-8a0b-45e5744ee8d1], Poison the Cup [58020778-554c-4af6-8484-0b90f64bc5d9], Quakebringer [bbe41a21-f8ad-4e5c-88d8-2a41dfd32d13], Ravenform [d3d61a6a-7870-44df-92e5-513dac2c2c3e], Return Upon the Tide [b0bd6135-4257-4f71-bdfe-71fb3f7a36a5], Rise of the Dread Marn [0998768a-1632-4da1-8310-352582501c4b], Sage of the Beyond [fc74f6a6-9064-4e1b-8dc1-446192bbc448], Sarulf's Packmate [f32caf11-abc1-4cae-a311-10210176ea3a], Saw It Coming [90edaf33-d0ab-47e0-8f6a-6fba38286e6e], Scorn Effigy [9ef2a604-4053-4ce0-bc08-43d9cc0b15cc], Shepherd of the Cosmos [2c5aa155-646c-47f6-ba5c-6e1b41fd4bb2], Skull Raid [7d22c7ed-2f45-42af-b999-b921f4f4db25], Sozin's Comet [bc0da02c-2b85-4ddc-9ce0-63934dd14164], Spectral Deluge [bb9bb65e-504f-4edd-8d47-d0efa03e7d17], Starnheim Unleashed [495ebe60-f0e5-4f0f-9d99-b2c64c95dbf4], Stoic Farmer [42820e09-f817-4485-a96a-ac2b0b798269], Struggle for Skemfar [a3bdb026-e09d-443f-ba02-fe0d5412fc97], Surge of Brilliance [4d720849-56cd-4b78-b9a7-7b9484702f0f], Tales of the Ancestors [49e3c192-862f-483e-abd1-e22863ea88dd], Tergrid's Shadow [692260bb-e01c-4550-832a-9611856a6ff0], The Foretold Soldier [02a45719-ee4a-49c4-96ec-a140cd6e1547], Ultimate Magic: Holy [1eae48aa-f01d-4398-a68e-3b5af0542ab1], Ultimate Magic: Meteor [31cc5d9d-9384-4a9b-ba7f-6a4edbcb7a35], Vengeful Reaper [5d776be0-cece-4496-a3b0-b7424eca77fd], Warhorn Blast [8106606c-9a1c-44b2-a9bf-3f189ce050ef]
+
+### 11. `-all-slivers-have-name` — finishes 18 cards
 
 - Template: `all slivers have <name>`
 - Family: other
@@ -276,25 +258,7 @@ Cards finished (first 12): Acidic Sliver, Basal Sliver, Clot Sliver, Crypt Slive
 
 All affected cards (22): Acidic Sliver [a149eeb1-007c-435d-9d55-34af205090e0], Basal Sliver [18e7ba0d-88a5-466b-9228-d3f5aae8f83e], Cautery Sliver [93a9423c-2b1b-41ce-80f4-157140c684ad], Clot Sliver [2a885729-0618-4a25-b18d-b0587f14718d], Crypt Sliver [b0bc2d60-20d0-4ca2-be86-65b297226ac7], Darkheart Sliver [88e5b905-fe52-4fd6-8cdf-b7ede5166ebc], Dormant Sliver [2bc3d5b2-076f-4e01-87be-28d7eb70a2db], Firewake Sliver [b5a3c09d-e822-4e26-b569-7f5830a39e6a], Gemhide Sliver [2c09ca09-8e62-4fe3-9b3d-61573dd2ffbc], Harmonic Sliver [1c06c093-18ab-49e6-a82d-38e826d25016], Hibernation Sliver [edb8a6d6-9e25-4048-a842-e854eece42c2], Mesmeric Sliver [21c82044-6e16-4e41-a6d0-e4d7cb42f37c], Mindlash Sliver [7a08b371-1353-476d-ae72-379594f801da], Mnemonic Sliver [101a5c2d-b0b4-45a7-b236-df474ac47356], Necrotic Sliver [9655569d-bfa5-4665-9371-9f275b8d223e], Plague Sliver [ee10dc06-26e1-4f50-a0a6-6d039e71b75f], Poultice Sliver [6be3cf35-f774-4afb-8c1f-5c9b616a2b3f], Quilled Sliver [beb39342-5272-41a4-a470-9f2bf0cd0f92], Screeching Sliver [88485575-e491-4ab7-a020-e52dd92ae085], Sedge Sliver [027b0223-173f-4f8b-a38c-59bab391f472], Telekinetic Sliver [31ec6a73-f742-4dc6-809d-28d3c461c2a0], Victual Sliver [bd803b1c-1370-40db-a6c6-abad4b3d1602]
 
-### 13. `-foretell-cost` — finishes 17 cards
-
-- Template: `foretell {cost}`
-- Family: other
-- Appears in 54 unfinished cards; it is the last blocker for 17.
-- One-line review candidates: **17**.
-
-Printed examples:
-
-- **Saw It Coming** — Foretell {1}{U}
-- **Alrund's Epiphany** — Foretell {4}{U}{U}
-- **Mystic Reflection** — Foretell {U}
-- **Quakebringer** — Foretell {2}{R}{R}
-
-Cards finished (first 12): Alrund's Epiphany, Augury Raven, Behold the Multiverse, Depart the Realm, Doomskar, Doomskar Titan, Dwarven Reinforcements, Gods' Hall Guardian, Kaya's Onslaught, Mammoth Growth, Sarulf's Packmate, Saw It Coming.
-
-All affected cards (54): A-Cosmos Charger [0d3a47b8-8831-48be-9c92-b8d6e096c0e1], A-Return Upon the Tide [0e688e1a-e034-4bcb-af00-74555c553d94], Alrund's Epiphany [bc842838-1993-4480-b8fe-f9d9f2dee7a4], Augury Raven [ee05fc58-1356-4b2f-b9ce-bda8cc716aee], Battle Mammoth [7a6db509-7ef4-483c-b8a0-62a4f3e16ef9], Behold the Multiverse [d7d2f701-77df-4169-bf98-0d51d6886e9b], Cosmic Intervention [cddccc2a-a76e-48b3-b4dd-dfeab89e1619], Cosmos Charger [603e518c-8f12-432c-ae03-790db5be77bf], Crush the Weak [4aa119f7-d411-4188-956e-547f7d14e789], Delayed Blast Fireball [99915b5a-5092-4900-8824-6de2aab1b2c1], Demon Bolt [6e786f0b-e2cb-40ee-96bc-81945a0b35a3], Depart the Realm [ae069ba4-8ca6-4eda-8f5d-fc82072d7d40], Doomskar [38ece0fa-2c94-4eae-b6ab-74b783862f3e], Doomskar Oracle [c1d8e97b-f34b-4e52-9795-a4433f26725a], Doomskar Titan [86692047-813f-47b1-9f4e-c8b9d5b17b1c], Dual Strike [a498ca5f-7743-47b7-a57a-471efa1a99e8], Dwarven Reinforcements [b38c567e-fd79-4a74-ab5f-df4a6a8f7e00], Frost Fair Lure Fish [51e0a61d-69f0-475d-b40b-50d69252800d], Glorious Protector [6bdc4996-f7d9-4dc4-b70a-aa63f6816b1d], Gods' Hall Guardian [7d22e071-4af4-4182-b387-ecca873d00cc], Green Slime [0ec5a688-a884-410c-adee-ab784789d6e8], Haunting Voyage [334c284e-7bc3-4c18-9f8d-4d846f80008e], Impending Flux [7089512e-f9b6-4d8e-bccc-29e6785cc041], Iron Verdict [70528ca9-195c-49a5-9d83-d51df3b0591f], Jarl of the Forsaken [294c1fed-9473-4fbe-b10e-71a7a432b98d], Kaya's Onslaught [230811bf-52e7-451e-96ec-9d57c864ac5d], Lifestream's Blessing [7cbdba72-ed33-40c6-a9c0-4d65c280a4d0], Lupine Harbingers [a0494d84-06c8-4a79-a9bc-ff4e16bbc68e], Mammoth Growth [bd433a27-1f3f-4d69-8b7e-97239fdf165b], Mystic Reflection [491dc110-b459-412e-8a0b-45e5744ee8d1], Poison the Cup [58020778-554c-4af6-8484-0b90f64bc5d9], Quakebringer [bbe41a21-f8ad-4e5c-88d8-2a41dfd32d13], Ravenform [d3d61a6a-7870-44df-92e5-513dac2c2c3e], Return Upon the Tide [b0bd6135-4257-4f71-bdfe-71fb3f7a36a5], Rise of the Dread Marn [0998768a-1632-4da1-8310-352582501c4b], Sage of the Beyond [fc74f6a6-9064-4e1b-8dc1-446192bbc448], Sarulf's Packmate [f32caf11-abc1-4cae-a311-10210176ea3a], Saw It Coming [90edaf33-d0ab-47e0-8f6a-6fba38286e6e], Scorn Effigy [9ef2a604-4053-4ce0-bc08-43d9cc0b15cc], Shepherd of the Cosmos [2c5aa155-646c-47f6-ba5c-6e1b41fd4bb2], Skull Raid [7d22c7ed-2f45-42af-b999-b921f4f4db25], Sozin's Comet [bc0da02c-2b85-4ddc-9ce0-63934dd14164], Spectral Deluge [bb9bb65e-504f-4edd-8d47-d0efa03e7d17], Starnheim Unleashed [495ebe60-f0e5-4f0f-9d99-b2c64c95dbf4], Stoic Farmer [42820e09-f817-4485-a96a-ac2b0b798269], Struggle for Skemfar [a3bdb026-e09d-443f-ba02-fe0d5412fc97], Surge of Brilliance [4d720849-56cd-4b78-b9a7-7b9484702f0f], Tales of the Ancestors [49e3c192-862f-483e-abd1-e22863ea88dd], Tergrid's Shadow [692260bb-e01c-4550-832a-9611856a6ff0], The Foretold Soldier [02a45719-ee4a-49c4-96ec-a140cd6e1547], Ultimate Magic: Holy [1eae48aa-f01d-4398-a68e-3b5af0542ab1], Ultimate Magic: Meteor [31cc5d9d-9384-4a9b-ba7f-6a4edbcb7a35], Vengeful Reaper [5d776be0-cece-4496-a3b0-b7424eca77fd], Warhorn Blast [8106606c-9a1c-44b2-a9bf-3f189ce050ef]
-
-### 14. `-soulshift` — finishes 17 cards
+### 12. `-soulshift` — finishes 17 cards
 
 - Template: `soulshift <n>`
 - Family: keyword-ability
@@ -312,7 +276,7 @@ Cards finished (first 12): Body of Jukai, Burr Grafter, Crawling Filth, Gibberin
 
 All affected cards (25): Body of Jukai [90d33e75-17bd-4fc9-82f5-eff254135df5], Burr Grafter [eb527a7d-8957-4667-b50d-ed4398418664], Crawling Filth [d76522e0-324f-4ec9-b36e-0fe7448aae69], Deathknell Kami [4d324f8c-2139-4910-b3c3-731a2e820d6b], Elder Pine of Jukai [1658528b-df40-44fd-b3f6-eb042706c522], Gibbering Kami [8a5610bd-5f04-43f3-9e2e-d6c728ee899b], Harbinger of Spring [11c2e14c-cee5-480d-b1be-a6b7e245332a], He Who Hungers [5449bf36-e26c-4f76-bcae-944c70d184f8], Hundred-Talon Kami [100b4440-c588-423e-93d2-23c9b595614d], Kami of Empty Graves [bff92baa-fc0e-4da4-8bd5-e57e4963d642], Kami of Lunacy [5c848e4a-f0f7-4659-b7b1-f468efba9563], Kami of the Honored Dead [be6d78c7-b7fb-46a9-99ea-f10d21c3da58], Kami of the Palace Fields [e8d44867-9519-41f2-aa0f-4079444aeef9], Kami of the Tended Garden [e2770ebf-24e3-4787-956b-ca01aaa50a6f], Moonlit Strider [8524a6a9-4d4c-4796-aad3-0f08f825a239], Nightsoil Kami [2efd1c86-41ba-4b86-bf63-e60e3263cb06], Promised Kannushi [b92bd85f-20c4-410e-af19-77d987d7dc02], Pus Kami [9b2471d4-2821-4220-becc-94bebfdc456f], Rootrunner [9c83c32e-798e-40aa-9bb6-6ef5500d273b], Scuttling Death [f9927216-edf2-4ef7-90eb-447b9e08f7b3], Thief of Hope [d3fa1320-9e95-437a-aa36-102a2722fc42], Thousand-legged Kami [2f3bd1fc-387e-41b7-b19b-62dd9fbe2d10], Torii Watchward [8b52c2ed-c1a1-4abc-a33b-223c3d0e229d], Venerable Kumo [3910a155-89dc-45fe-98ec-762e8e42f052], Vine Kami [e77923b9-7c72-4cc3-96dd-084908593a98]
 
-### 15. `-enchanted-creature-has-name` — finishes 17 cards
+### 13. `-enchanted-creature-has-name` — finishes 17 cards
 
 - Template: `enchanted creature has <name>`
 - Family: other
@@ -330,7 +294,7 @@ Cards finished (first 12): Commander's Authority, Ghostly Touch, Inevitable End,
 
 All affected cards (23): Combat Research [fbfd7f38-be9a-49bf-8769-79e1e7e8dfdc], Commander's Authority [57bc1106-81a0-4d91-94db-25e3a5f989cb], Coral Net [20b8911e-6701-485c-ac62-2b3cc79ec288], Decomposition [62817ef5-9b8d-4bca-bdd4-ab3bc4e063d0], Ghostly Touch [02d25219-888d-4032-9e9e-8c6f879a9084], Inevitable End [e1a5c389-6a56-4da7-b7c4-e26fdec224e5], Instill Furor [5726c4b1-0613-4724-b1fc-2e7f398bf1af], Karametra's Favor [fc3e48c9-e303-435c-bdb1-7dc7881a9858], Light of Promise [64c54c9f-0550-41e2-a44a-5892a199f670], Mana Chains [340d27c6-2e8e-472a-85f5-9b36d9cc3e42], Multani's Harmony [81c223a5-5ff2-43e5-bd0b-25c4f72b2150], Necrosynthesis [661618a2-54c7-4136-beff-fff5ff7d84cb], Necrotic Plague [9d637892-26d7-46f1-bd7d-89bda523f649], Nurturing Presence [3f03c834-2cb3-4c54-bee6-c64f3a5fce47], Pendrell Flux [fe902db2-3b1d-4266-88eb-307f878fc317], Pillory of the Sleepless [74776491-29c3-46e6-989b-cf9a00bbfcef], Security Bypass [cb660c6d-dc8b-4779-8613-6acf19418baa], Sinking Feeling [8a5e925f-320d-4bb7-9374-0384e7ac41e7], Sinstriker's Will [98e7b75b-f24d-4317-8b45-9397a4742081], Sisay's Ingenuity [3a487f20-6b1d-4be3-b51f-0c8f0a611601], Sixth Sense [25d35e3e-ece8-4c94-9dbc-d076a52fca0d], Sunbond [163ece8a-0479-4bb2-b559-581985d1898b], Utopia Vow [917652c7-ac12-4cd7-ab2d-f2260a620d02]
 
-### 16. `-disturb-cost` — finishes 15 cards
+### 14. `-disturb-cost` — finishes 15 cards
 
 - Template: `disturb {cost}`
 - Family: other
@@ -348,84 +312,12 @@ Cards finished (first 12): A-Lantern Bearer // A-Lanterns' Lift, Baithook Angler
 
 All affected cards (32): A-Binding Geist // A-Spectral Binding [ee12e2e0-7eda-4f5e-9373-d4c029995adb], A-Brine Comber // A-Brinebound Gift [55717e47-c1ab-4218-bc1c-10e58e91fa87], A-Devoted Grafkeeper // A-Departed Soulkeeper [35f53871-203a-41da-930e-76540c62d3da], A-Dorothea, Vengeful Victim // A-Dorothea's Retribution [9ef53bd8-9999-4ea3-a43a-4084a9f208db], A-Gutter Skulker // A-Gutter Shortcut [5228730a-cebc-472e-ab9a-f424e0c893fd], A-Lantern Bearer // A-Lanterns' Lift [ba790609-7b48-4a96-a21f-5a0cfcf316a3], A-Mischievous Catgeist // A-Catlike Curiosity [3e155876-6086-4499-9963-6efc97cfa5a6], Baithook Angler // Hook-Haunt Drifter [c6bb4b41-8dae-429a-b928-ae9d39c74711], Beloved Beggar // Generous Soul [74c9cc13-c03f-4322-82af-b7bce1f2a0d8], Binding Geist // Spectral Binding [5e1bd17d-3825-45c0-9e7c-6887b7e2cb5c], Brine Comber // Brinebound Gift [8845ba0d-c2f4-49e4-b06e-54a06a8297e0], Chaplain of Alms // Chapel Shieldgeist [c21d1ca3-3d19-4b4d-bbfa-07b5b7bcea4b], Covert Cutpurse // Covetous Geist [5d0b8dc6-f4b6-4650-805d-4240d4a4ab82], Covetous Castaway // Ghostly Castigator [8f3e6554-eb8a-4096-81a3-2411186d9cb4], Dennick, Pious Apprentice // Dennick, Pious Apparition [45802eb2-6848-416c-95e0-c1c1ea0620d0], Devoted Grafkeeper // Departed Soulkeeper [0a154fb2-9f23-4c22-baee-728492385d6d], Distracting Geist // Clever Distraction [2fcd5779-7234-49e3-b3c5-ebc07db74462], Dorothea, Vengeful Victim // Dorothea's Retribution [2cef4171-8151-4ee9-83a7-bcb5116451bf], Drogskol Infantry // Drogskol Armaments [389bcb9f-4e66-4704-9968-a1c1574ec2c8], Faithbound Judge // Sinner's Judgment [830e3e37-a80c-4b0e-b9af-393ad4ca01d7], Galedrifter // Waildrifter [ba88575a-4b9a-40cd-abbc-4539912c9455], Gutter Skulker // Gutter Shortcut [d2d753d4-3bb7-4503-8cc0-8f948b7a461e], Katilda, Dawnhart Martyr // Katilda's Rising Dawn [493b2820-c250-48bd-9f3c-e1b5639ee101], Kindly Ancestor // Ancestor's Embrace [ee049bf3-b31c-4dcc-996f-bb076848432b], Lantern Bearer // Lanterns' Lift [67a025eb-6e65-435c-becb-b51085175292], Lunarch Veteran // Luminous Phantom [0761a0e7-d443-4bab-bb15-307c83d4a6a1], Malevolent Hermit // Benevolent Geist [51233ade-70cd-4539-9f41-5ffab761da54], Mirrorhall Mimic // Ghastly Mimicry [5768fe50-a134-492c-a725-5ed02610c39f], Mischievous Catgeist // Catlike Curiosity [4d0a0027-53b3-45a1-8736-f0ac86b19342], Mourning Patrol // Morning Apparition [600db821-4210-4996-a3f7-e05a143e50c2], Overwhelmed Archivist // Archive Haunt [13c90d78-cfb1-4d40-a35e-1fd170450b45], Twinblade Geist // Twinblade Invocation [4db96d32-b4c2-44e9-a73f-aca7dad279b6]
 
-### 17. `-when-enters-attach-target` — finishes 15 cards
-
-- Template: `when ~ enters, attach it to target creature you control`
-- Family: triggered
-- Appears in 28 unfinished cards; it is the last blocker for 15.
-- One-line review candidates: **15**.
-
-Printed examples:
-
-- **Skyclave Pick-Axe** — When ~ enters, attach it to target creature you control.
-- **Maul of the Skyclaves** — When ~ enters, attach it to target creature you control.
-- **Dueling Rapier** — When ~ enters, attach it to target creature you control.
-- **Biorganic Carapace** — When ~ enters, attach it to target creature you control.
-
-Cards finished (first 12): Biorganic Carapace, Bramble Armor, Cliffhaven Kitesail, Dueling Rapier, Falcon's Wing Harness, Infinity Formula, Malamet Scythe, Maul of the Skyclaves, Mechanical Glider, Meltstrider's Gear, Mirran Banesplitter, Paladin's Shield.
-
-All affected cards (28): Baseball Bat [9b5a3765-943b-4925-b008-fc734b2934f7], Biorganic Carapace [7d27c583-469c-42d7-a547-8c65654e9d95], Bramble Armor [25328cab-c7c0-4c55-99bb-a4149f6c511a], Cliffhaven Kitesail [68fb8f21-4403-4829-8826-f2418664197e], Dueling Rapier [7ceec1fd-4af5-40d4-9d17-424e21889d64], Embercleave [4d6120d6-fcce-40bc-9fc6-e1f5beb6c728], Falcon's Wing Harness [e69db5f0-beed-48e8-bc25-768b1e8be5ea], Hookblade [8df6c4e2-8b62-4c64-a1d2-f17ae9d02bac], Infinity Formula [83669321-46cd-4805-b4ce-441c5db0f338], Inventor's Axe [364fc1a7-b91d-470b-80fe-275828f36cfc], Iron Man Armor [958d81c2-ca09-4275-890e-3bb595317325], Javelin of Lightning [3f244320-3e74-4eff-ba4e-a345700c40c9], Malamet Scythe [99c5630e-cc04-4203-9006-3bc6a6807762], Maul of the Skyclaves [088a1f56-198c-41a1-b244-ec1c7a771041], Mechanical Glider [d53d1805-c4ec-4b42-a226-3cd78cd2be84], Meltstrider's Gear [1d6742a3-592b-4e67-8cc6-56e2962ad7c7], Mind Carver [65d6eae4-4318-4dbe-af7a-9f57bb587605], Mirran Banesplitter [aeaf3ce8-6bdf-4a90-8b81-cdbce0f3bb12], Paladin's Shield [dc548b03-ef5f-40df-8311-35d4cf26f3c5], Piston Sledge [ba5d8c0d-3e4e-4652-86d2-80ce2f48dc0f], Ravager's Mace [f3e0aaa1-f624-4dc7-a425-7dbf27cba1ce], Relic Axe [d851312f-8b4e-4d8e-bfee-c470853be930], Scavenged Blade [2e7b4df3-7c36-469f-8db8-b3081a2c5691], Shredder's Armor [bda5d0aa-3ed0-4f8c-80ae-f9cb8ed0ac82], Skyclave Pick-Axe [6d2cf8b4-1468-4e00-94ca-65ef0c564b09], Thunder Lasso [d98cc18b-6ebb-4f55-9d0d-b8fbe9a92bc1], Utility Knife [b546c78c-5180-46c3-8594-b9d5ad9c3988], Vibranium Strike Gauntlets [4a9d36eb-db72-459a-8de9-6d04a1d7563c]
-
-### 18. `-when-enters-explores` — finishes 15 cards
-
-- Template: `when ~ enters, it explores`
-- Family: triggered
-- Appears in 15 unfinished cards; it is the last blocker for 15.
-- One-line review candidates: **15**.
-
-Printed examples:
-
-- **Cenote Scout** — When ~ enters, it explores.
-- **Emissary of Sunrise** — When ~ enters, it explores.
-- **Sunrise Seeker** — When ~ enters, it explores.
-- **Brazen Buccaneers** — When ~ enters, it explores.
-
-Cards finished (first 12): Brazen Buccaneers, Cenote Scout, Dire Fleet Interloper, Emissary of Sunrise, Ixalli's Diviner, Kinjalli's Dawnrunner, Merfolk Branchwalker, Pathfinding Axejaw, Queen's Agent, River Herald Guide, River Herald Scout, Seekers' Squire.
-
-All affected cards (15): Brazen Buccaneers [c8afa4b5-01be-400a-836f-aa27e1ae1346], Cenote Scout [ec3911c0-686f-4c78-838d-a683eed6c01c], Dire Fleet Interloper [7ae7cfde-8f2a-4e66-abe2-c15477e9fac3], Emissary of Sunrise [e2155e61-f389-4b1d-9598-9a79cbccaaa2], Ixalli's Diviner [56c930c4-77e8-4547-8d55-663dc68ccf13], Kinjalli's Dawnrunner [b6565da9-773c-49b1-85f5-e34f07ba84cb], Merfolk Branchwalker [24b5dbe3-578a-4897-8215-e723f00a8f1a], Pathfinding Axejaw [54452df0-560c-4561-9dd2-3903ae49c91b], Queen's Agent [59104038-28c0-4ebd-9201-d7ae60d79c1c], River Herald Guide [b9687fef-4cb2-4bf1-91ad-49dada07f4d6], River Herald Scout [021428b1-005c-40ed-9d47-fb5aa970598b], Seekers' Squire [a494cbe7-a4a5-4657-9f68-3811fe56a17e], Siren Lookout [9f0d82ae-38bf-45d8-8cda-982b6ead1d72], Sunrise Seeker [db05f30f-2866-48ed-8a7d-264d94c0257a], Tishana's Wayfinder [86468528-833d-48f9-b299-cdf54dd47d77]
-
-### 19. `-untap` — finishes 14 cards
-
-- Template: `untap it`
-- Family: other
-- Appears in 47 unfinished cards; it is the last blocker for 14.
-- One-line review candidates: **14**.
-
-Printed examples:
-
-- **Nissa, Who Shakes the World** — Untap it.
-- **Invoke the Winds** — Untap it.
-- **Tyvar Kell** — Untap it.
-- **Coveted Jewel** — Untap it.
-
-Cards finished (first 12): Acrobatic Leap, Arachnoid Adaptation, Bull's Strength, Escape from Orthanc, High Stride, Leaping Ambush, Pillar Launch, Refuse to Yield, Riverguard's Reflexes, Soldier On, Vault Skyward, Vines of the Recluse.
-
-All affected cards (47): A-Tyvar Kell [dedcb109-2f39-4059-b67b-75ea61296c8d], Acrobatic Leap [1347224f-421e-4270-8e50-cf25c875909c], Angrath, the Flame-Chained [092ceffb-1ee4-452c-b15e-5b79267d42a6], Arachnoid Adaptation [042cc9d9-ad13-401f-b2f5-c2f1558d7e44], Biosynthic Burst [3abd2342-f783-4871-ac78-1a54b35722c2], Boon of Boseiju [44e1946d-01b5-45db-abdc-2f6d6480cf60], Bull's Strength [a5f10b54-10db-4c92-a596-8afea4e470f5], Catch // Release [a7df5dc0-2564-4288-bc53-59affd896f79], Coveted Jewel [98492d7d-3b9e-4ae1-ac45-1b508d6d2670], Crypsis [6077e650-32f9-4954-8286-9c8a3f3227ae], Escape from Orthanc [f2025f2e-c931-48dd-af21-8f0a591befb4], Firbolg Flutist [5bf88cac-5997-4254-8349-2473de854c50], Gift of the Viper [7b1a59db-0ffc-490b-a881-c8192f3747db], Haunted Hellride [47944bf1-b954-4143-b479-45c10071e35a], High Stride [ab0aea13-1dbc-424a-ab7e-cdb303036a56], Hijack [fd5651f7-52f8-4845-8a1b-32e5d2e9b00e], I'm a Doctor, Not a . . . [ad1d8eca-e3bf-479f-a442-bcd8c31bfe7f], Invoke the Winds [721c3255-953c-49cd-a5dd-852c3d09eae4], Joven and Chandler [11db8545-eca6-43f5-b9e8-f302acef53a5], Kari Zev's Expertise [e0de0121-6185-45c5-9d88-a415b07347e0], Kiora Bests the Sea God [84d0c616-2fce-47f4-bfdd-783741a63fd2], Leaping Ambush [e920c955-66f5-4c6e-a2a8-8b282f9e456e], Living Brain, Mechanical Marvel [b255e13d-01b2-4348-80bd-8d9a8f29be91], Magic Damper [ada82f93-dc93-4a95-a13f-42b5942b3413], Momo's Heist [b8f05217-1f61-4d6d-be17-7fb15f1d1e32], Nav Squad Commandos [affdf41e-c851-4f5d-bd3a-7ca7ada4416a], Nissa, Who Shakes the World [5aa3abf1-d56b-4f42-8c84-7e5a2c15ee0f], Octopus Form [6fec368d-374d-4318-861b-ff478ba51a3c], Panther Pounce [ead0820e-fc6b-4ab2-9110-048d6d53985d], Pillar Launch [a39c758d-82be-4d8c-bb3e-8ee8a6c6788b], Refuse to Yield [d05aeada-2a9f-464d-8a66-b6e90f43bae3], Riverguard's Reflexes [0bdebad7-a05e-439a-b5a9-241a2d09f943], Shore Up [c9d8c983-2845-42e6-b6b8-bf7cf2729b23], Sibling Rivalry [7fa1430f-cd2e-4071-a161-e32a61e33714], Soldier On [f522e161-f249-4add-8326-b6ab0de8ba57], Sudden Spinnerets [5b83fede-851c-4e9d-98ba-d88f6caffc1b], Tactical Officer [1397e7d5-4aa4-4c8d-8957-845579b775f7], The Nipton Lottery [8af798a9-2198-4f39-aa6d-5420a0f1203c], The Shattered States Era // Nameless Conqueror [99473461-3c6f-4f7f-8ba2-d6c090ddb567], Traitorous Blood [7f1a9248-8e7b-46a8-942b-ca18c7da8c4a], Tyvar Kell [14c8a590-88ec-4982-ad7b-36a219ff6de7], Vault Skyward [e2a32a0f-bf06-4cb3-a704-ff0f783f19e4], Vengeful Possession [1afb9ce6-658e-40e4-a4a2-9a68182a1e73], Vines of the Recluse [5372445b-5f67-435e-a736-61c6cb4f9c6e], Wings of the Cosmos [afa9cf24-cd02-41f5-9141-f6ff6f27d528], Witch's Web [6ec9a14a-0a62-4f8a-9147-3cab01411a65], X, Mystery Racer [a097ca92-c032-481c-8447-582c4ad50d02]
-
-### 20. `-improvise` — finishes 14 cards
-
-- Template: `improvise`
-- Family: keyword-ability
-- Appears in 24 unfinished cards; it is the last blocker for 14.
-- One-line review candidates: **14**.
-
-Printed examples:
-
-- **Reverse Engineer** — Improvise
-- **Universal Surveillance** — Improvise
-- **Organic Extinction** — Improvise
-- **Kappa Cannoneer** — Improvise
-
-Cards finished (first 12): Arc Reactor, Barricade Breaker, Bastion Inventor, Enraged Giant, Foundry Assembler, Freejam Regent, Herald of Anguish, Maverick Thopterist, Metallic Rebuke, Reverse Engineer, Sweatworks Brawler, Universal Surveillance.
-
-All affected cards (24): Arc Reactor [55f7b005-31ea-4865-a8f3-460d15bed795], Barricade Breaker [93491d5c-8579-42ed-a700-e5c6f4238dea], Bastion Inventor [900ae045-0160-4e85-b283-e35399c2acec], Battle at the Bridge [3d63ad3a-4e9f-4968-a576-4be063f4ecbf], Bottle-Cap Blast [e9c78601-4bec-4d16-8fd9-88c6053bd9c4], Enraged Giant [dbf4e56e-57dd-4f41-95a9-8b9b096274ec], Fen Hauler [0f909cfd-c643-48d2-983a-da2e38cd2bff], Foundry Assembler [8242f4f5-c51d-42dc-a6ae-67060368fed9], Freejam Regent [87a72c3d-e787-4dd8-b934-4fff4573af6c], Herald of Anguish [97b559fe-b09d-4883-9509-c45ace2d8487], Ironheart, Clever Champion [df3d5b86-7b75-4df9-8985-7159cde12261], Kappa Cannoneer [7fffbe7f-ad78-4bb6-a611-c37e495c6ee0], Maverick Thopterist [71ba6f1b-2fa6-4d4c-8778-f0765b1a5d8e], Metallic Rebuke [c4920e95-a6fc-4373-a0d6-244f51851364], Motivated Muralist [15db62f0-c955-4c04-bc76-47300da198d6], Organic Extinction [d9e24d7c-0907-45c1-b5d3-9fb16a929868], Reverse Engineer [f56596be-e12f-4ab6-af61-3ef8dc87134c], Saheeli's Directive [1aee3a93-d064-4d10-9fe6-879a1f342c1f], Sly Requisitioner [15ea4698-86b4-47c5-a9a7-60af16063a61], Sweatworks Brawler [9bb1de3f-b6af-4ee2-b896-a05aae50e238], Synth Infiltrator [3d3553df-0036-47d9-b0e3-4a3261a0f73c], Universal Surveillance [c5a5c17d-d1e4-4d23-9d2b-1c2febdcb0e7], Whir of Invention [152b91c9-cc07-4ca8-944f-9bc2242a2283], Wind-Kin Raiders [74dcff4f-c126-4bbb-b6f0-3f3315bc95fe]
-
-### 21. `-bloodthirst` — finishes 14 cards
+### 15. `-bloodthirst` — finishes 15 cards
 
 - Template: `bloodthirst <n>`
 - Family: keyword-ability
-- Appears in 23 unfinished cards; it is the last blocker for 14.
-- One-line review candidates: **14**.
+- Appears in 23 unfinished cards; it is the last blocker for 15.
+- One-line review candidates: **15**.
 
 Printed examples:
 
@@ -434,15 +326,33 @@ Printed examples:
 - **Scab-Clan Mauler** — Bloodthirst 2
 - **Burning-Tree Bloodscale** — Bloodthirst 1
 
-Cards finished (first 12): Blood Ogre, Bloodrage Vampire, Bloodscale Prowler, Carnage Wurm, Duskhunter Bat, Furyborn Hellkite, Ghor-Clan Savage, Gorehorn Minotaurs, Lurking Crocodile, Scab-Clan Mauler, Skarrgan Firebird, Skarrgan Skybreaker.
+Cards finished (first 12): Blood Ogre, Bloodrage Vampire, Bloodscale Prowler, Carnage Wurm, Duskhunter Bat, Furyborn Hellkite, Ghor-Clan Savage, Gorehorn Minotaurs, Lurking Crocodile, Petrified Wood-Kin, Scab-Clan Mauler, Skarrgan Firebird.
 
 All affected cards (23): Battering Wurm [fdcfa49a-70ed-48a4-b424-527a1698fd85], Blood Ogre [8bbe3f0d-41d0-4c58-ad65-6675a234cad3], Bloodlord of Vaasgoth [d8560ee9-8cbb-440b-a132-e102a1eb3e89], Bloodrage Vampire [b1b6a840-2dc6-4af3-869a-b3bfe64ff7c0], Bloodscale Prowler [655a584c-5280-4317-b707-101b7e31dcb1], Bogardan Lancer [67953edb-9681-4339-a5d2-917082925c24], Burning-Tree Bloodscale [a9be4be0-71fe-41d9-8f30-351385753fc9], Carnage Wurm [007161cb-a44b-4443-a53a-dfaacc6cfb86], Duskhunter Bat [6082f84a-3af2-4007-ab88-7b4b59b5c154], Furyborn Hellkite [8c4aba38-7fbd-463e-8454-21037090c71e], Ghor-Clan Savage [28f35fa1-befa-40b4-95ab-30bb53d339ab], Gorehorn Minotaurs [be8ad29c-2232-426d-bda9-a289dcc6c265], Gristleback [36f4d359-f46c-4da4-a8c2-1fe1799ac3f7], Indoraptor, the Perfect Hybrid [0dd4bc7b-2ddf-4ca4-912c-59685c41c3b5], Lurking Crocodile [b0df3389-5959-4ee2-a921-9324732f7ce8], Petrified Wood-Kin [3bc9649c-4350-4c6a-8441-dc76a5f833af], Rabble-Rouser [1d591c00-7086-4337-bdb8-a5f35568f04e], Scab-Clan Mauler [db0b6e35-d7f2-435a-87d7-9e8c36426f4d], Skarrgan Firebird [42a96276-fddc-435e-bd47-04f9c6001ec7], Skarrgan Pit-Skulk [e2ce99b9-7098-4de1-95bf-609bd448848d], Skarrgan Skybreaker [0a45d8d4-2a5e-4b5b-b430-fc2fd5fd82c0], Stormblood Berserker [84e56125-3fbb-4229-8aa0-8f8acff27038], Vampire Outcasts [25ad4e88-b5ee-4853-a4fc-0a0420c746f6]
 
-### 22. `-dash-cost` — finishes 14 cards
+### 16. `-backup` — finishes 14 cards
+
+- Template: `backup <n>`
+- Family: other
+- Appears in 25 unfinished cards; it is the last blocker for 14.
+- One-line review candidates: **14**.
+
+Printed examples:
+
+- **Doomskar Warrior** — Backup 1
+- **Archpriest of Shadows** — Backup 1
+- **Voldaren Thrillseeker** — Backup 2
+- **Boon-Bringer Valkyrie** — Backup 1
+
+Cards finished (first 12): Boon-Bringer Valkyrie, Chomping Kavu, Consuming Aetherborn, Cragsmasher Yeti, Fearless Skald, Gloomfang Mauler, Golden-Scale Aeronaut, Hangar Scrounger, Redcap Heelslasher, Saiba Cryptomancer, Scorn-Blade Berserker, Serpent-Blade Assailant.
+
+All affected cards (25): Archpriest of Shadows [7b03910a-2ca7-40cb-9c71-1c2cc856a287], Bola Slinger [6ff995f9-080d-4316-8fbe-39bf195db91b], Boon-Bringer Valkyrie [8652d88f-edca-4235-b942-6e7467608de8], Bright-Palm, Soul Awakener [f74888ee-5086-49a6-ae74-fd9894f46332], Chomping Kavu [20a362c3-d278-437f-881c-e7d9fe78fc2d], Consuming Aetherborn [4d472308-5bc7-4a3c-81b5-0a757f00d9e2], Cragsmasher Yeti [57120486-0316-4591-abca-438ab8283d3f], Death-Greeter's Champion [81abb451-5ee0-4f90-bacc-a8ff69726a27], Doomskar Warrior [7ac00312-8963-4fee-8561-1a54e533adbb], Emergent Woodwurm [a74e41b4-6284-453c-a586-d575735dca65], Enduring Bondwarden [c17d4818-5825-4bff-8fc5-5fd740cc0c70], Fearless Skald [f055a941-8b83-464e-a57f-8f188dc69aaa], Gloomfang Mauler [5437f560-7f61-4326-be8e-15d74bf4e6ec], Golden-Scale Aeronaut [d388080d-5ad4-4e27-b361-340f410423a7], Guardian Scalelord [d6c7d7a6-2d38-4c06-ab83-bee9cc18de52], Hangar Scrounger [d1b74fb9-8ef3-40be-bc79-45ffb4c597eb], Joven and Chandler [86b47725-1764-4716-993d-e4dfcea2346c], Mirror-Style Master [6a871d70-a46d-4357-8c7d-876f7a004eb7], Redcap Heelslasher [d2134b68-d73f-4090-aaec-b2ee5c9f9f04], Saiba Cryptomancer [15f89b06-5025-4c9f-bf51-e25bc5c2dd6b], Scorn-Blade Berserker [93107139-b743-4d62-b0ac-9997202e0562], Serpent-Blade Assailant [66a131ae-dbb2-4e7b-b6ce-7695f47c8f87], Sigiled Sentinel [79c90a68-1c31-4e16-be53-1304132da80f], Streetwise Negotiator [74b631c5-9420-496e-8845-3b050d3d5340], Voldaren Thrillseeker [b3cc2ed9-1da3-4ad2-a9a7-de7665d800ff]
+
+### 17. `-dash-cost` — finishes 15 cards
 
 - Template: `dash {cost}`
 - Family: keyword-ability
-- Appears in 22 unfinished cards; it is the last blocker for 14.
+- Appears in 22 unfinished cards; it is the last blocker for 15.
 - One-line review candidates: **14**.
 
 Printed examples:
@@ -452,83 +362,11 @@ Printed examples:
 - **Ragavan, Nimble Pilferer** — Dash {1}{R}
 - **Zurgo Bellstriker** — Dash {1}{R}
 
-Cards finished (first 12): Alesha's Vanguard, Goblin Heelcutter, Kolaghan Skirmisher, Kolaghan, the Storm's Fury, Lightning Berserker, Mardu Scout, Mardu Shadowspear, Mardu Strike Leader, Pitiless Horde, Reckless Imp, Riders of Rohan, Screamreach Brawler.
+Cards finished (first 12): Alesha's Vanguard, Death-Greeter's Champion, Goblin Heelcutter, Kolaghan Skirmisher, Kolaghan, the Storm's Fury, Lightning Berserker, Mardu Scout, Mardu Shadowspear, Mardu Strike Leader, Pitiless Horde, Reckless Imp, Riders of Rohan.
 
 All affected cards (22): Alesha's Vanguard [be662217-41c2-4caa-89da-ae7f6f817c34], Ambuscade Shaman [96e1d890-4ebb-4c79-8df9-24e3adaf4d9b], Death-Greeter's Champion [81abb451-5ee0-4f90-bacc-a8ff69726a27], Flamerush Rider [f797a325-ec2a-4142-b0ff-90cac1356da9], Goblin Heelcutter [ab52988f-ffd0-4154-9052-593a9d450d98], Kolaghan Forerunners [07b6fbd3-03f9-4aef-929e-514c799d75b9], Kolaghan Skirmisher [ade4ffa5-6609-44eb-8f1a-45e7203d90e3], Kolaghan, the Storm's Fury [f6e160c1-b29f-4f3d-ab55-43ffe3ab4acf], Lightning Berserker [1e474772-3fe4-46be-8c5f-6e477b9fd74e], Mardu Scout [c18ab011-c5e0-4174-b623-d89e4d745ce6], Mardu Shadowspear [b6e972ae-cc2d-4c7e-9f49-c0616dc82064], Mardu Strike Leader [9be8e04f-f87f-4477-93f3-c546e9b346f0], Pitiless Horde [d5726b60-60f6-4481-bc76-759fbb55bb49], Ragavan, Nimble Pilferer [37108cd4-bbab-4ce3-9ed6-f60e8422e703], Reckless Imp [e8e88e9a-0097-49ac-8b23-482a3190f21b], Riders of Rohan [688a559d-249f-4d03-98e6-581843e7ddc3], Screamreach Brawler [ffc84ff4-22eb-4652-9723-2f40d637a427], Sprinting Warbrute [e680f3e9-5c76-41e6-a4a5-662ee05ac3af], Treetop Ambusher [72949d87-76cd-472c-86b3-2b7d5fce3159], Vaultbreaker [2577860a-663a-4b56-880c-05576522e3b7], Warbringer [0636090b-49e0-45b4-a68d-48b1cdc0c54d], Zurgo Bellstriker [46808926-d95b-4313-89d1-6bdfe13fcb77]
 
-### 23. `-backup` — finishes 14 cards
-
-- Template: `backup <n>`
-- Family: other
-- Appears in 25 unfinished cards; it is the last blocker for 14.
-- One-line review candidates: **13**.
-
-Printed examples:
-
-- **Doomskar Warrior** — Backup 1
-- **Archpriest of Shadows** — Backup 1
-- **Voldaren Thrillseeker** — Backup 2
-- **Boon-Bringer Valkyrie** — Backup 1
-
-Cards finished (first 12): Boon-Bringer Valkyrie, Consuming Aetherborn, Cragsmasher Yeti, Death-Greeter's Champion, Fearless Skald, Gloomfang Mauler, Golden-Scale Aeronaut, Hangar Scrounger, Redcap Heelslasher, Saiba Cryptomancer, Scorn-Blade Berserker, Serpent-Blade Assailant.
-
-All affected cards (25): Archpriest of Shadows [7b03910a-2ca7-40cb-9c71-1c2cc856a287], Bola Slinger [6ff995f9-080d-4316-8fbe-39bf195db91b], Boon-Bringer Valkyrie [8652d88f-edca-4235-b942-6e7467608de8], Bright-Palm, Soul Awakener [f74888ee-5086-49a6-ae74-fd9894f46332], Chomping Kavu [20a362c3-d278-437f-881c-e7d9fe78fc2d], Consuming Aetherborn [4d472308-5bc7-4a3c-81b5-0a757f00d9e2], Cragsmasher Yeti [57120486-0316-4591-abca-438ab8283d3f], Death-Greeter's Champion [81abb451-5ee0-4f90-bacc-a8ff69726a27], Doomskar Warrior [7ac00312-8963-4fee-8561-1a54e533adbb], Emergent Woodwurm [a74e41b4-6284-453c-a586-d575735dca65], Enduring Bondwarden [c17d4818-5825-4bff-8fc5-5fd740cc0c70], Fearless Skald [f055a941-8b83-464e-a57f-8f188dc69aaa], Gloomfang Mauler [5437f560-7f61-4326-be8e-15d74bf4e6ec], Golden-Scale Aeronaut [d388080d-5ad4-4e27-b361-340f410423a7], Guardian Scalelord [d6c7d7a6-2d38-4c06-ab83-bee9cc18de52], Hangar Scrounger [d1b74fb9-8ef3-40be-bc79-45ffb4c597eb], Joven and Chandler [86b47725-1764-4716-993d-e4dfcea2346c], Mirror-Style Master [6a871d70-a46d-4357-8c7d-876f7a004eb7], Redcap Heelslasher [d2134b68-d73f-4090-aaec-b2ee5c9f9f04], Saiba Cryptomancer [15f89b06-5025-4c9f-bf51-e25bc5c2dd6b], Scorn-Blade Berserker [93107139-b743-4d62-b0ac-9997202e0562], Serpent-Blade Assailant [66a131ae-dbb2-4e7b-b6ce-7695f47c8f87], Sigiled Sentinel [79c90a68-1c31-4e16-be53-1304132da80f], Streetwise Negotiator [74b631c5-9420-496e-8845-3b050d3d5340], Voldaren Thrillseeker [b3cc2ed9-1da3-4ad2-a9a7-de7665d800ff]
-
-### 24. `-can-blocked-creatures-with` — finishes 14 cards
-
-- Template: `~ can't be blocked by creatures with power <n> or less`
-- Family: other
-- Appears in 35 unfinished cards; it is the last blocker for 14.
-- One-line review candidates: **13**.
-
-Printed examples:
-
-- **Park Heights Maverick** — ~ can't be blocked by creatures with power 2 or less.
-- **Brushfire Elemental** — ~ can't be blocked by creatures with power 2 or less.
-- **Gate Colossus** — ~ can't be blocked by creatures with power 2 or less.
-- **Steel Leaf Champion** — ~ can't be blocked by creatures with power 2 or less.
-
-Cards finished (first 12): Arlinn's Wolf, Brushfire Elemental, Chomping Kavu, Cold-Blooded Crew, Demolition Stomper, Dread Linnorm // Scale Deflection, Enraged Ceratok, Giltgrove Stalker, Greater Sandwurm, Outland Boar, Paladin of Predation, Rust-Shield Rampager.
-
-All affected cards (35): Antique Collector [f002dd34-a58d-4bd2-a914-39042f7f264a], Arlinn's Wolf [fe4c0f02-c5fd-4cd5-9f80-0936e3875f1c], Bristlebane Outrider [48f7217e-ae11-44bd-ac42-7c8d9dd5dc36], Brushfire Elemental [b33a7ec6-b22b-41cf-9312-65add1529b51], Chomping Kavu [20a362c3-d278-437f-881c-e7d9fe78fc2d], Cold-Blooded Crew [d5e9b04f-4a97-4da1-bf86-3715fc75ab23], Demolition Stomper [282e5e5f-365a-4e11-aeac-ead71d1cf68a], Dread Linnorm // Scale Deflection [1bf04a2a-7f96-412c-9d91-034bef26e1b6], Elegant Edgecrafters [eeb3d282-97df-4df2-8bea-9432e21b6d62], Enraged Ceratok [e1f3f377-c7b1-474c-aed6-78b061d138c1], Fin-Clade Fugitives [dad2965a-ceb4-42ac-bb62-de7eea500011], Foggy Swamp Vinebender [82fefb82-a436-488d-8ecd-594686117e34], Garenbrig Paladin [33fdbff6-0e89-4f02-b429-9b17869134cd], Gate Colossus [386c5895-9713-4c28-9ba8-8ca0caa06c13], Giltgrove Stalker [2be3969b-a427-47be-a49c-47b98e3d6b5f], Glinting Creeper [0e252f94-7731-45e1-bdbb-1bd11441577e], Glissa's Retriever [d099be2e-1879-4bb0-a27d-a386308387c0], Greater Sandwurm [d1dfed64-6e88-44c2-b479-9a2d072e4be7], Legolas Greenleaf [beacbb51-51fe-47f7-a612-02cd93fbffdd], Linebreaker Baloth [c3b395b3-fea0-41d9-a3f2-6c90f89d8bdb], Old Fat Spider [8790f842-e842-4bed-adf4-5b3cc5fd68a9], Outland Boar [fdb109f6-d185-4d1e-92b9-768e77562f55], Paladin of Predation [fb5a02ce-6080-47f9-815a-fef3758d753b], Park Heights Maverick [5dd54b2a-7d6a-44f5-8827-ff3660a4b12b], Prowler, Misguided Mentor [8a56c2a7-7131-4495-aa27-52f48e5f1fb6], Questing Beast [b685757b-521e-4353-a233-97052359723d], Ravenous Slime [4696decb-7bff-4c6b-8a7b-9ec324faefde], Rust-Shield Rampager [93793ab5-3c85-4c78-95c2-c228e39bd930], Rust-Shield Rampager [23878990-dcbd-4a2a-b4f7-ee7edb396c71], Sandman, Shifting Scoundrel [8b205480-b1fb-490c-b1c9-cf5cc3c5acdb], Scuttling Doom Engine [72ccdcef-5c84-45ba-bda3-3dc014e1585c], Shadowheart, Cleric of Twilight [622ac20e-593a-4ef5-80b1-e717ba431b5a], Steel Leaf Champion [666af637-9282-4121-962a-048e528f9221], Stormkeld Vanguard // Bear Down [8a31c49f-5b3f-4f84-a08e-58b30a6bff7c], War-Name Aspirant [448c84f9-712b-4970-8719-2ab9c2a59d20]
-
-### 25. `-enchanted-land-has-name` — finishes 14 cards
-
-- Template: `enchanted land has <name>`
-- Family: other
-- Appears in 18 unfinished cards; it is the last blocker for 14.
-- One-line review candidates: **14**.
-
-Printed examples:
-
-- **A-Find the Path** — Enchanted land has "{T}: Add two mana of any one color."
-- **Weirding Wood** — Enchanted land has "{T}: Add two mana of any one color."
-- **Unbridled Growth** — Enchanted land has "{T}: Add one mana of any color."
-- **Abundant Growth** — Enchanted land has "{T}: Add one mana of any color."
-
-Cards finished (first 12): Abundant Growth, Chamber of Manipulation, Equinox, Flowering Field, Footfall Crater, Gift of Paradise, New Horizons, Security Blockade, Settlement, Sheltered Aerie, Unbridled Growth, Urban Burgeoning.
-
-All affected cards (18): A-Find the Path [2683a744-e217-4861-8dcf-973d65119035], Abundant Growth [947a2665-2f4d-4193-8768-118f85334549], Chamber of Manipulation [010e0d5c-e751-4f67-b305-8a598cc1f0de], Equinox [0fa2cb01-476e-4e82-94e6-9639e53a7743], Find the Path [860eb9eb-c318-4eae-9b54-088f667115ec], Flowering Field [40155cfb-078a-4359-9551-9c71266d8a1c], Footfall Crater [ca4fdf89-a74e-4086-8109-b0f9dd91710e], Gift of Paradise [43a86d36-9653-4498-a533-8b30b919cdbf], Grafted Growth [c4525b1c-5c3d-494e-b660-ba5a5a28f621], Hot Springs [123880ad-7b54-4ab0-82eb-c78b12ab89a7], New Horizons [8834d3c9-cdb5-423b-bc78-94a94add5e74], Security Blockade [b4b397a9-85cb-4bdf-8c2e-a151a02a4208], Settlement [bf4696bc-59dc-4a47-8475-f9677681de63], Sheltered Aerie [f2c408f6-3994-4a90-a9f5-f248eb976017], Unbridled Growth [d749d075-6135-486a-a94a-36c3142960d7], Urban Burgeoning [2772e3cc-10e0-420f-b183-71ebaf3580e1], Urban Utopia [77b73f11-a59a-4f2b-83d3-e6fe5064bc87], Weirding Wood [9ce5cc2f-e223-4c3b-adc1-c0109fd31762]
-
-### 26. `-when-becomes-the-target` — finishes 14 cards
-
-- Template: `when ~ becomes the target of <n> spell or ability, sacrifice it`
-- Family: triggered
-- Appears in 15 unfinished cards; it is the last blocker for 14.
-- One-line review candidates: **13**.
-
-Printed examples:
-
-- **Phantasmal Dragon** — When ~ becomes the target of a spell or ability, sacrifice it.
-- **Frost Walker** — When ~ becomes the target of a spell or ability, sacrifice it.
-- **Treacherous Blessing** — When ~ becomes the target of a spell or ability, sacrifice it.
-- **Phantasmal Dreadmaw** — When ~ becomes the target of a spell or ability, sacrifice it.
-
-Cards finished (first 12): Crystalline Nautilus, Frost Walker, Gossamer Phantasm, Illusionary Servant, Phantasmal Abomination, Phantasmal Bear, Phantasmal Dragon, Phantasmal Dreadmaw, Phantasmal Shieldback, Phantom Beast, Skulking Fugitive, Skulking Ghost.
-
-All affected cards (15): Crystalline Nautilus [77661282-1c98-4f70-b617-c75633ab04c8], Frost Walker [54a22814-c0d5-4637-9aa9-a6bc96401914], Gossamer Phantasm [5ed23ed2-be2f-4958-affe-429f58e9dca5], Illusionary Servant [28e99c5f-a78a-4323-b5e9-1b43303acaf6], Phantasmal Abomination [f4925e05-1332-4466-b2ea-9f6f4ccf7db4], Phantasmal Bear [780da643-8d14-4f1a-a298-5b7454e9c4df], Phantasmal Dragon [7f32c581-4d4a-4873-8e4b-b95e13790481], Phantasmal Dreadmaw [cbde4b9d-1549-4892-b8ca-38256a6ac1ba], Phantasmal Shieldback [8e514bc9-7c8c-4257-9dbc-19a78f61df05], Phantom Beast [13ca7c14-5db2-4d17-912a-fdeabcdcd9f8], Skulking Fugitive [4178ae56-2449-4617-aff8-f59d8fb96c66], Skulking Ghost [cd97f8b4-e751-4b52-987b-a442aef57809], Skulking Knight [11e4c731-4212-4aad-891f-fe066ed0436f], Tar Pit Warrior [05a7ca83-e820-433f-b9e9-151e817d3708], Treacherous Blessing [17f573c4-3ed4-453e-bfbe-4e42d54633e5]
-
-### 27. `-delve` — finishes 13 cards
+### 18. `-delve` — finishes 13 cards
 
 - Template: `delve`
 - Family: other
@@ -546,12 +384,12 @@ Cards finished (first 12): Become Immense, Empty the Pits, Gurmag Angler, Hootin
 
 All affected cards (29): Afterlife from the Loam [151c867f-cc77-42de-9ae5-5fd2233ccdab], Become Immense [40e5b83e-5f53-4b15-8bfd-c0c0b8355a6f], Dead Drop [09f3d60c-34ee-41ec-a047-fe2140b11950], Death Rattle [ae327976-1026-4318-8846-f6b0cac373a7], Delve too Deep [3ace4689-c822-4434-bb6f-64e56b167a44], Dig Through Time [f8b17b89-26ce-4208-874a-9e1d66514640], Empty the Pits [089d91cf-ed7a-4859-8967-cad975a5127e], Ethereal Forager [a3f3a5b5-b931-4961-828c-501a33e5a0a0], Gurmag Angler [315772f2-abd2-4681-b8c8-1db4b0ccbbcd], Hooting Mandrills [70e35385-6129-4bd1-861c-df04469566b7], Literal Delver of Secrets [14fbd5af-5675-4809-8165-af8924a3f0e9], Logic Knot [b2da7acb-d80c-414c-9f7d-753a5d6ccad9], Magmatic Sinkhole [2da7f1b7-316b-4e8e-9fa3-5880b258d601], Murderous Cut [c0ce7d5a-68fd-41f3-b5ba-a1a178cee9ec], Murktide Regent [7f993ac7-c2cd-413c-a106-2c051a77ebf6], Necropolis Fiend [bb714bc6-9f32-42f6-9064-f28a383675b5], Rite of Undoing [9dbfa026-e364-4111-a03a-e9b1693bc7b7], Set Adrift [f27f51e1-b881-4639-9d36-47cdf2a61117], Shambling Attendants [cd17bd00-90b1-4b89-9368-2d8735159e47], Sibsig Muckdraggers [423c1079-bdba-42fc-8732-59cb83ebafc3], Sorcerous Squall [a986d83d-22f1-45c3-bc2d-f5b210c539fb], Soulflayer [d45cf9b1-d916-48bf-8b99-60cd09230a4b], Sultai Scavenger [837f72a9-9522-46e9-a48c-c6ff6d0bbe67], Tasigur's Cruelty [a232daf3-db54-4711-88b0-e5072c05f58e], Tasigur, the Golden Fang [837e3fde-241f-4826-ad04-f146fdcf2278], Temporal Trespass [c216b924-88ac-4853-9e95-0c345c09eeb6], Tombstalker [944735ad-3f17-421a-b8fa-40f3bb8456f2], Treasure Cruise [5b6bdf5a-2742-4851-92cd-a857a3852836], Will of the Naga [520b6637-0a9f-4dc4-846e-f1cd2b868263]
 
-### 28. `-flanking` — finishes 13 cards
+### 19. `-flanking` — finishes 13 cards
 
 - Template: `flanking`
 - Family: keyword-ability
 - Appears in 28 unfinished cards; it is the last blocker for 13.
-- One-line review candidates: **11**.
+- One-line review candidates: **12**.
 
 Printed examples:
 
@@ -564,25 +402,7 @@ Cards finished (first 12): Benalish Cavalry, Bogardan Lancer, Burning Shield Ask
 
 All affected cards (28): Benalish Cavalry [0bf619f9-4b19-404c-995f-f23a4b859dd4], Blazing Blade Askari [a298b2aa-02e3-422a-8804-861fd6bb1068], Bogardan Lancer [67953edb-9681-4339-a5d2-917082925c24], Burning Shield Askari [042fd95a-5e85-4ce5-bb68-066a295c54fb], Cadaverous Knight [250a027f-2b3e-4eaf-899a-a9da8be20070], Cavalry Master [7083dedd-b246-4fe0-b1ca-00c490ed9c6b], Fallen Askari [4956008e-d912-48ba-9b82-176258281060], Femeref Knight [4365521e-996d-4eca-bbc9-b0988fa973ae], Gustcloak Cavalier [2e818d7e-169c-4909-969e-42e9f5d5c08a], Jolrael's Centaur [39b699e1-79c6-4960-97dc-d58574181bbe], Knight [04a7d1d2-a5ad-4fde-a45b-0695c7eb114e], Knight of Valor [f2edb543-de33-4eed-892c-98038eec96e2], Knight of the Holy Nimbus [4e92c705-19c2-42df-ad12-808d272c505e], Knight of the Mists [e9893534-3d05-42c2-93ff-f28ffae89aa3], Mtenda Herder [0edf5bac-36a9-4f35-afd1-73f7e1aab51b], Outrider en-Kor [644b7aba-a7b8-4861-9e83-73329cf85be2], Pentarch Paladin [f27f91fb-009a-4cbd-858e-15db88b65b9f], Searing Spear Askari [d3c68573-95b1-4db5-bbea-363b86f713c1], Shadow Rider [a518b31a-7e9a-460d-839f-39cb1de4f570], Sidar Jabari [cb637dfd-4022-43a4-8632-77e614436f38], Sidar Kondo of Jamuraa [331b6834-6bb4-40fa-b80b-22d67b34734f], Skulking Knight [11e4c731-4212-4aad-891f-fe066ed0436f], Suq'Ata Lancer [f348b326-8a73-4df9-8faf-e271a36ce373], Teferi's Honor Guard [8a3a8a02-b7da-4648-a772-c9efb7c332da], Telim'Tor [b13a723d-80a9-4116-9857-baf3b373f87a], Zhalfirin Commander [1053a778-da6a-4b8e-81fb-537a355d4bfe], Zhalfirin Crusader [9e60c102-412e-4956-a7bb-a2cd737d6692], Zhalfirin Knight [a534f06e-dae4-4d1a-96e9-7693bbb21e12]
 
-### 29. `-when-enters-exile-target` — finishes 13 cards
-
-- Template: `when ~ enters, exile target nonland permanent <n> opponent controls until ~ leaves the battlefield`
-- Family: triggered
-- Appears in 20 unfinished cards; it is the last blocker for 13.
-- One-line review candidates: **12**.
-
-Printed examples:
-
-- **Banishing Light** — When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield.
-- **Leyline Binding** — When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield.
-- **Pull of the Mist Moon** — When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield.
-- **Web Up** — When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield.
-
-Cards finished (first 12): Banish to Another Universe, Banishing Light, Borrowed Time, Cast Out, Conclave Tribunal, Hieromancer's Cage, Lassoed by the Law, Malfunctioning Holodeck, Seal from Existence, Sheltered by Ghosts, Stormplain Detainment, Web Up.
-
-All affected cards (20): Banish to Another Universe [ae6ef097-bd52-4bf8-81a8-2e6c643fc805], Banishing Light [f28b21a6-f7ce-437a-8c5b-0423cb55cefb], Borrowed Time [f1ac4e0e-5633-46e4-9a21-d3924e481d13], Cast Out [f90b00f6-36e0-4988-9409-57297483a952], Chains of Custody [5acff7a3-bc84-4251-bd37-80231396ac38], Conclave Tribunal [e938ee4c-d5df-4d93-bd61-9e518fb1dc30], Hieromancer's Cage [207c7f93-3abf-44c5-ace6-3f86359c9745], Ixalan's Binding [5a2d0df9-950e-4c3d-8a08-275f179e33c7], Journey to Oblivion [31e8c1e1-520a-4e64-a221-203afc819fcf], Lassoed by the Law [9457f3c1-a087-46cd-a8be-cf665466b77c], Leyline Binding [b49642f6-20bd-468d-9dac-e578f9ac3091], Malfunctioning Holodeck [3f04c38b-d6bd-405f-b69c-009df87801dd], Perilous Snare [cff7499a-44b0-4a2a-b96c-ed2cafb1a90d], Pull of the Mist Moon [f640230f-0ccb-46a5-8178-d37baf77f45a], Seal from Existence [72c4c682-df97-4408-997b-e849f54aba39], Sheltered by Ghosts [d13fc657-c6fc-4394-bc70-691050550226], Static Net [3f285781-ee03-4a58-a85e-a33f5efffc9d], Stormplain Detainment [4ad9c550-5605-4ffe-8e27-e9f2d9ada000], Web Up [9b9b086c-d201-4574-a1e9-0d6f8de53d7d], White Auracite [6022608a-6cf2-45bd-adec-63211710a5ed]
-
-### 30. `-living-weapon` — finishes 13 cards
+### 20. `-living-weapon` — finishes 13 cards
 
 - Template: `living weapon`
 - Family: keyword-ability
@@ -600,7 +420,25 @@ Cards finished (first 12): Batterbone, Batterskull, Bitterthorn, Nissa's Animus,
 
 All affected cards (19): Batterbone [389d459d-446a-4b84-82b2-a30fe6ced11f], Batterskull [d12e5ce0-5705-4c35-9a93-b883db52c80c], Bitterthorn, Nissa's Animus [5a57fba3-01e3-4852-8c45-7c910502bd03], Bonehoard [83c69c05-173d-4c1b-9541-1dde474fef5f], Colossal Dreadmask [1244902e-1a4e-4d3c-9a55-9be4602e3d2d], Cranial Ram [e958b3c5-0666-4a99-a933-e5cb8b0da9da], Drossclaw [cda1ac77-3986-4600-9835-b0c0063ecc2f], Flayer Husk [5cfdfcac-57fb-4507-a97a-cccbac2d1327], Kaldra Compleat [7359e82b-db79-488d-a1d4-75a00f12a4cf], Lashwrithe [066ba81e-b32d-4808-97ab-0b5f52d557e4], Mandibular Kite [bca9f65e-ea7a-4b8d-ab0f-c2672fa967f0], Mortarpod [77248a76-373c-48fc-939f-aa378ab57f7c], Necropouncer [9e33b295-fab8-42c7-be43-baf9c17d063f], Nettlecyst [04c7f4fe-2098-4311-866d-6733c08d5178], Scytheclaw [a75ddd9c-2574-46e9-ac85-58082789ff3e], Sickleslicer [7a004a4b-b53b-4b8e-86f5-528c1082e146], Skinwing [100c877d-4cce-4b96-8f21-a4f8a43e7d84], Strandwalker [55a4b186-c6d4-4b08-bf45-481429693948], Tangleweave Armor [b9cec31a-9891-414f-b528-954612168832]
 
-### 31. `-cumulative-upkeep-cost` — finishes 12 cards
+### 21. `-enchanted-land-has-name` — finishes 13 cards
+
+- Template: `enchanted land has <name>`
+- Family: other
+- Appears in 17 unfinished cards; it is the last blocker for 13.
+- One-line review candidates: **13**.
+
+Printed examples:
+
+- **A-Find the Path** — Enchanted land has "{T}: Add two mana of any one color."
+- **Weirding Wood** — Enchanted land has "{T}: Add two mana of any one color."
+- **Unbridled Growth** — Enchanted land has "{T}: Add one mana of any color."
+- **Abundant Growth** — Enchanted land has "{T}: Add one mana of any color."
+
+Cards finished (first 12): Abundant Growth, Equinox, Flowering Field, Footfall Crater, Gift of Paradise, New Horizons, Security Blockade, Settlement, Sheltered Aerie, Unbridled Growth, Urban Burgeoning, Urban Utopia.
+
+All affected cards (17): A-Find the Path [2683a744-e217-4861-8dcf-973d65119035], Abundant Growth [947a2665-2f4d-4193-8768-118f85334549], Equinox [0fa2cb01-476e-4e82-94e6-9639e53a7743], Find the Path [860eb9eb-c318-4eae-9b54-088f667115ec], Flowering Field [40155cfb-078a-4359-9551-9c71266d8a1c], Footfall Crater [ca4fdf89-a74e-4086-8109-b0f9dd91710e], Gift of Paradise [43a86d36-9653-4498-a533-8b30b919cdbf], Grafted Growth [c4525b1c-5c3d-494e-b660-ba5a5a28f621], Hot Springs [123880ad-7b54-4ab0-82eb-c78b12ab89a7], New Horizons [8834d3c9-cdb5-423b-bc78-94a94add5e74], Security Blockade [b4b397a9-85cb-4bdf-8c2e-a151a02a4208], Settlement [bf4696bc-59dc-4a47-8475-f9677681de63], Sheltered Aerie [f2c408f6-3994-4a90-a9f5-f248eb976017], Unbridled Growth [d749d075-6135-486a-a94a-36c3142960d7], Urban Burgeoning [2772e3cc-10e0-420f-b183-71ebaf3580e1], Urban Utopia [77b73f11-a59a-4f2b-83d3-e6fe5064bc87], Weirding Wood [9ce5cc2f-e223-4c3b-adc1-c0109fd31762]
+
+### 22. `-cumulative-upkeep-cost` — finishes 12 cards
 
 - Template: `cumulative upkeep {cost}`
 - Family: keyword-ability
@@ -618,12 +456,12 @@ Cards finished (first 12): Arctic Wolves, Arnjlot's Ascent, Firestorm Hellkite, 
 
 All affected cards (57): Ancestral Knowledge [2786f210-ec64-46ea-9a7f-b03759fb1dae], Arctic Wolves [c9e7218f-07f2-46f3-bc63-eb5c0d32538b], Arnjlot's Ascent [f2cedb38-12b0-4489-a62b-9b6a3776d695], Balduvian Fallen [3f60a7ce-c714-4e87-a2d9-3710f2d610fa], Blizzard [698feaaa-2fff-4809-81d1-4caad44c6c0a], Brand of Ill Omen [947bd180-ee95-4db4-b5d9-432428018eb8], Breath of Dreams [477f5011-aaeb-4a5f-8a65-5fb45cb06389], Cold Snap [3dcbcf5e-bdbe-46b3-881e-5ac4030c6e38], Corrosion [3d3fd8a2-78d4-4f52-8fcd-0c6fa93f0043], Cover of Winter [f85a157f-d7ec-4e61-97df-2ca851b6c666], Elephant Grass [53cc4b93-538d-4193-8bbb-5b73d3ce9d79], Energy Storm [567d3de7-8d56-4b6d-a59a-f8674172f595], Firestorm Hellkite [533e41cc-7cae-47f2-886b-8a3ffb82bf81], Flow of Maggots [2d6a387f-7ad4-419e-951a-9dcd4c9ac823], Freyalise's Radiance [d7f28d00-2ec3-4d4e-b3a6-89d33c66da28], Fyndhorn Pollen [2f18967d-c2cd-449d-a288-df6343672743], Glacial Plating [e9ee4257-5df8-4f4e-b821-b6313ded1802], Halls of Mist [57d7deaf-ee08-49ab-b239-1c77a1f65225], Heart of Bogardan [1e1d8c64-4cea-4c2c-8933-be19d13bf07c], Heat Wave [d8f08699-6210-41c3-bfa0-c4b3bcbbaf1c], Hibernation's End [cf032b80-00d5-42fc-9e1a-16072b5fed55], Illusionary Forces [e17e3bda-75cb-47a1-9f60-f50705a46a1e], Illusionary Presence [8f319b31-efb0-4f48-a2a3-1f308e7b1dda], Illusionary Terrain [17ae63fa-fd63-45e6-81c1-bf30851bf77c], Illusionary Wall [77a8945f-4d52-4445-8913-425007e7948c], Illusions of Grandeur [d7c81b3e-8082-4aaf-8979-2717d118234c], Juju Bubble [9344ae2e-cb2e-400d-9157-e8158ce31813], Kjeldoran Javelineer [95921d1e-0487-4274-b797-8652e94fc4bc], Maddening Wind [c9798915-3f9e-466b-bbd6-f4e126bdb67d], Magmatic Core [b9526bd5-ed83-466f-8819-e9a8487bbe77], Malignant Growth [b3235d21-ce52-4a99-a2fe-99b0fe7cc8bc], Mesmeric Trance [d1cc6979-d786-4035-963b-768ac8cef116], Mind Harness [bba30360-c54a-4906-8b2e-84bb1209c43d], Musician [0d6e9468-adb2-4feb-87cf-9113db8717b1], Mwonvuli Ooze [42b2c6d0-e0da-41b0-8876-f17dbe5db79a], Mystic Might [967eca77-d273-4fc6-97d1-df7d8cc6ff59], Mystic Remora [8a52f3c0-2552-4425-b2e3-5496eb2232a7], Naked Singularity [fb5ec55d-4a35-432a-be6e-c295f1b2e603], Phobian Phantasm [df680ccd-7e76-4a05-9bdf-4f437b4bfbb3], Phyrexian Etchings [cf938a60-23ec-4834-a3cf-391a7b04747e], Prismatic Circle [022dae2e-7fc3-486e-9168-59652d9ab21c], Reality Twist [2c6f9fdb-ee27-4cd8-9d4d-1ea8b2830f73], Revered Unicorn [18a8b50b-2328-459b-979d-04c4c769e569], Ritual of Subdual [e0587218-206e-41ed-af3c-f06b7a668e90], Ronom Hulk [d3fb83af-8fc4-4f26-b2df-be5dd3ac56b2], Royal Decree [fca14cbd-5ffc-441f-bccb-7ec22b03acbb], Snowfall [5ffed544-1656-4753-ac8f-ad8fb4442c7f], Soldevi Simulacrum [227ed0b7-7a9a-41f1-a190-1d1b85a44720], Survivor of the Unseen [ea96c8c6-b77b-4fc0-8b11-6b31e1ed9554], Sustaining Spirit [683c81ae-38cd-4db1-b7e7-a09d34b6431e], Tidal Control [855e200e-5375-4aac-b1f7-5113162e7e14], Tombstone Stairwell [9aaf1149-eccb-434a-a1a7-14b93fa50141], Tornado [dd283473-6423-4a1f-b5a3-77234cdce643], Uktabi Efreet [2fd9a37f-151a-4501-9d8e-bc67cc902592], Volunteer Reserves [a2dabd52-0b75-42d7-a07d-0df7b38646e2], Wave of Terror [2346be19-7344-4f11-be2c-a22750cb7e1d], Yavimaya Ants [3f5bbfaa-cbd7-47af-9aa2-abb49d672734]
 
-### 32. `-encore-cost` — finishes 12 cards
+### 23. `-encore-cost` — finishes 12 cards
 
 - Template: `encore {cost}`
 - Family: other
 - Appears in 26 unfinished cards; it is the last blocker for 12.
-- One-line review candidates: **11**.
+- One-line review candidates: **12**.
 
 Printed examples:
 
@@ -636,7 +474,25 @@ Cards finished (first 12): Angel of Indemnity, Belonging, Briarblade Adept, Broo
 
 All affected cards (26): Amphin Mutineer [8910f79a-66c9-41b3-b55a-e3e651ae6f26], Angel of Indemnity [4f57a320-b6b5-49de-af0a-f2e2649758a7], Belonging [0ec88e35-191b-411b-9eb0-2dfef7ae4174], Briarblade Adept [6680a5f7-3ac1-4550-a29a-9553ad7ae465], Broodmate Tyrant [9b984236-39cf-4552-827b-e81c26cfb388], Coastline Marauders [c93bef6e-b676-43df-9f0f-026aaff25604], Elvish Dreadlord [51b9d8ea-b0df-4a57-804e-6d395e301242], Eumidian Wastewaker [72a570a2-0a22-4680-ac88-a1724faf17de], Exquisite Huntmaster [393ef069-ea6b-4969-b878-d942281cc918], Fathom Fleet Swordjack [77828ebf-58d2-4aca-ae6f-0efa50d5d640], Fin-Clade Fugitives [dad2965a-ceb4-42ac-bb62-de7eea500011], Impulsive Pilferer [7d9fc9e7-d80b-49c3-871c-ed25b3059ae8], Impulsivity [02b6900b-219f-4832-8f93-6ef27ee76c0c], Jubilation [2cf04076-adc4-4831-a3b8-9120d516f204], Kangee's Lieutenant [5a040363-dba5-49d2-9756-e14af61cf818], Kinsbaile Courier [92c0346d-c375-4851-9806-5d3b9b83425f], Kitesail Skirmisher [462269c7-ca16-4aa7-bf52-f7fcda25a05b], Lamentation [88e43e62-8bce-41b3-ac2d-47043fcc7077], Mist Dancer [bf76ba01-e06f-4451-a4b4-cf548b43eafc], Phyrexian Triniform [f8526a36-eb8f-457d-b532-e12b47622cfa], Rakshasa Debaser [db286eef-f0df-4f7c-8e06-957447166950], Sliver Gravemother [0d59f010-9669-4ad2-9ae9-cd88b85f282c], Soul of Eternity [4d211447-9f18-4d23-8f19-cdf6ad3c68ba], Spellbinding Soprano [dffd5f0f-3a7b-47ed-864e-06c752bdcefc], Subterfuge [687cfdf7-8f35-464a-8d6e-9f2d769ed6b4], Trove Tracker [f27972da-ad2f-4df5-82d3-c909cce8cc91]
 
-### 33. `-modular` — finishes 12 cards
+### 24. `-fuse` — finishes 12 cards
+
+- Template: `fuse`
+- Family: other
+- Appears in 22 unfinished cards; it is the last blocker for 12.
+- One-line review candidates: **12**.
+
+Printed examples:
+
+- **Breaking // Entering** — Fuse
+- **Protect // Serve** — Fuse
+- **Far // Away** — Fuse
+- **Alive // Well** — Fuse
+
+Cards finished (first 12): Alive // Well, Armed // Dangerous, Breaking // Entering, Down // Dirty, Far // Away, Fear (split card) // Loathing, Gallifrey Falls // No More, Give // Take, Profit // Loss, Protect // Serve, Toil // Trouble, Wear // Tear.
+
+All affected cards (22): Alive // Well [57ad3c3a-6ac7-4a35-bc07-00f6ea0988c5], Armed // Dangerous [a0593a5b-6f76-4eb3-a1b1-9794d2d36c92], Beck // Call [5b8472c8-a7e7-46f2-aecf-e954082a5ef5], Breaking // Entering [043370fd-9cfe-47ce-8019-e915cee1ae95], Catch // Release [a7df5dc0-2564-4288-bc53-59affd896f79], Chic // Ago [23d8a960-e911-480b-84ae-62e6919ef513], Double Jump // Flying Kick [cb3072c7-393c-43d9-a2c9-f918bd0fd7be], Down // Dirty [eba21e3b-e2b2-4e0b-82e3-f0849943fd89], Far // Away [e4b1ef6a-6f05-472e-aaed-1c24dd6605c7], Fast // Furious [298a6369-1c1f-4d75-aa97-69c56323c122], Fear (split card) // Loathing [9e02cefb-43f2-4c2a-8a26-c56b6cc99ea3], Flesh // Blood [0741151a-fec0-4ed3-9295-0d0f56d24165], Gallifrey Falls // No More [d4424585-9564-4ec2-8267-3f5438e1f29e], Give // Take [67a82d5e-a9dc-4e8c-9d23-c6d6aa1e57d1], Profit // Loss [c41e8a99-e4a8-4323-a59d-265266e29fa9], Protect // Serve [2e0cd5a5-3aee-4b32-873a-e5a40bfba3e9], Ready // Willing [44c7c6bb-2592-4d7c-8485-1815093e70be], Takesies // Backsies [248dce5e-a217-4dde-90b1-c68e4ed09ba7], Toil // Trouble [97759579-b676-46e8-b566-fcad10751920], Turn // Burn [41841bbf-1c51-494b-b299-c997cce88e44], Wear // Tear [9842734c-1eac-4509-a731-4c22017ae586], Yeah Nah // Nah Yeah [f672ea4f-8268-4540-b30e-9307ac6a97bd]
+
+### 25. `-modular` — finishes 12 cards
 
 - Template: `modular <n>`
 - Family: keyword-ability
@@ -654,7 +510,7 @@ Cards finished (first 12): Arcbound Bruiser, Arcbound Condor, Arcbound Hybrid, A
 
 All affected cards (22): Arcbound Bruiser [51577a8b-28d6-4f9e-8d3f-6a1380270fab], Arcbound Condor [d484be42-5dd4-49e0-afcd-2d3c1a2c3037], Arcbound Crusher [ee496b34-d8e0-482a-a2c2-3122ea376da0], Arcbound Fiend [72e6cc74-0574-4421-a6b8-97d180484950], Arcbound Hybrid [4bd7b380-ed4b-46a1-8211-1c4b651a52c6], Arcbound Javelineer [48e3f6dd-68ab-420a-ad4d-fe7ee39486d3], Arcbound Lancer [fd6ffa00-170b-46d2-810a-f255de62b9d7], Arcbound Mouser [5e59199c-facc-46b4-9681-988de0cfaba2], Arcbound Overseer [d57eb294-9707-4f93-82ad-b22d5f68c6c9], Arcbound Prototype [ac1003b4-1f7c-4801-9dd3-5cb7d9881af8], Arcbound Ravager [62e7e7b1-9887-4d15-b0e5-a8ddc711bd88], Arcbound Reclaimer [c6424a3e-dbc7-403f-867f-a81cccd17ab8], Arcbound Shikari [acb8d6a0-4bbd-4a42-bcac-3656367cc051], Arcbound Slasher [bf86376d-474d-4658-8cf3-d0e2a01cdfff], Arcbound Slith [4fa113da-44aa-4c84-8f63-b1cad63da926], Arcbound Stinger [7e6e2c37-3a06-456a-ae0f-37b7dc1a3e2b], Arcbound Tracker [ff86f385-dc3e-4bfe-83e7-9229afab4aa9], Arcbound Whelp [36875030-8094-4e2c-860d-c0820825a24e], Arcbound Worker [6d9af084-cd5d-4242-b0f0-24a36d0a75d4], Power Depot [64687880-03f9-4f38-985b-1027c797e33f], Scrapyard Recombiner [ecf09f2d-a886-4ec8-8ff6-fe15d87b1375], Zabaz, the Glimmerwasp [549dc9f3-1fda-4ad3-87bc-8a990800380b]
 
-### 34. `-splice-onto-arcane-cost` — finishes 12 cards
+### 26. `-splice-onto-arcane-cost` — finishes 12 cards
 
 - Template: `splice onto arcane {cost}`
 - Family: keyword-ability
@@ -672,12 +528,30 @@ Cards finished (first 12): Consuming Vortex, Dampen Thought, Desperate Ritual, E
 
 All affected cards (22): Blessed Breath [e83e1f99-1f9b-49fc-bdc7-5f6335e401e4], Candles' Glow [7509b934-6fbc-42fd-9040-cdf16bbfff42], Consuming Vortex [863bb8d8-4571-4775-87e3-d6f3ec88c835], Dampen Thought [fa0ef984-b4e0-4c48-978c-0648e49d53f5], Desperate Ritual [3620ab8f-b693-4225-bb96-5ca3cb3fa465], Evermind [14e23074-95b8-4477-b981-6231c19bacdc], Glacial Ray [e65a8ab8-84a7-4fe2-b009-ceb87bec6b4e], Goryo's Vengeance [3ea3c681-f0ad-45a2-bc25-2813efd8d560], Hideous Laughter [e9022d1c-2f5c-4a1f-a44e-0e4f9651e729], Into the Fray [3d165dec-1821-4d3f-8407-8ce8bb347f8b], Kodama's Might [c027a8ef-6cdd-4c14-9d4f-b21c63312874], Lifted by Clouds [ef742509-4474-42d0-8bca-71ec2be3d4f1], Overblaze [543599e2-8312-43a6-ab26-0be17e690d4f], Psychic Puppetry [8d3c4e50-6709-42f9-97e7-3165ee501684], Reweave [744d6daa-2f93-43e1-88c0-0d9d5f9d111b], Shifting Borders [b377f717-d0c2-4db5-aba2-fa4bfa35de0f], Soulless Revival [5f00dcc4-38e7-4dde-96d4-f8d4c08b334a], Spiritual Visit [40759025-91e1-4755-a8cf-0b68c8e9220f], Strange Inversion [540f8779-cf29-4582-8b7f-95ebcae92925], Through the Breach [c207aaee-0b67-4520-ad02-2c289228be2a], Vital Surge [e19c0205-67e3-4e44-995b-751e18fdaafd], Wear Away [be7cd599-12b6-43b6-a22a-8a8f7dd1ecd2]
 
-### 35. `-fabricate` — finishes 12 cards
+### 27. `-renown` — finishes 12 cards
+
+- Template: `renown <n>`
+- Family: keyword-ability
+- Appears in 20 unfinished cards; it is the last blocker for 12.
+- One-line review candidates: **12**.
+
+Printed examples:
+
+- **Honored Hierarch** — Renown 1
+- **Relic Seeker** — Renown 1
+- **War Oracle** — Renown 1
+- **Scab-Clan Berserker** — Renown 1
+
+Cards finished (first 12): Akroan Sergeant, Citadel Castellan, Firefiend Elemental, Knight of the Pilgrim's Road, Kytheon's Irregulars, Outland Colossus, Pharika's Disciple, Rhox Maulers, Stalwart Aven, Topan Freeblade, Undercity Troll, War Oracle.
+
+All affected cards (20): Acolyte of the Inferno [35bf67e0-8141-4664-b762-2c613353e1eb], Akroan Sergeant [8a206c6f-4f6f-4c31-9dab-d73a57db989c], Citadel Castellan [b9e93832-93b7-409d-91aa-13757225824d], Constable of the Realm [2a263e61-303f-449d-a431-c26cabdc68e0], Consul's Lieutenant [a38b672f-4739-4b7e-8958-2a455510656e], Firefiend Elemental [59c898d8-14f0-4645-84e7-aeedb2ee6c5e], Goblin Glory Chaser [cad1cd10-4810-495e-9305-0ae812596f6a], Honored Hierarch [ae42fa8a-b0f6-43dc-a4c6-e2531890ca3a], Knight of the Pilgrim's Road [40999aa6-6424-42e4-9d47-33bee6bbb886], Kytheon's Irregulars [ccfddb1a-1b7f-44f9-89c4-1907e27e1c4a], Outland Colossus [5b034e04-70e5-4783-8ac8-04d8e5a9f961], Pharika's Disciple [d7798312-657c-4f4a-9e2d-906284caf50f], Relic Seeker [1f101363-c7d1-405a-b3a9-e93b46928dbf], Rhox Maulers [019461d9-63ae-43d3-a9d4-bd745d0cf46c], Scab-Clan Berserker [d4f659ba-c277-47a2-8b95-ce81ddac34fb], Stalwart Aven [09cc2cda-14d1-424e-a688-1b49b1b4c392], Topan Freeblade [9e2cd0d5-1537-412b-9ecd-989ab4ac2700], Undercity Troll [b7851b17-faa2-4767-9716-86997b882690], Valeron Wardens [d1202573-2105-4d4d-ae7d-7164974b6d89], War Oracle [aa26fb50-1b53-488e-90d1-b0c7af273622]
+
+### 28. `-fabricate` — finishes 12 cards
 
 - Template: `fabricate <n>`
 - Family: other
 - Appears in 16 unfinished cards; it is the last blocker for 12.
-- One-line review candidates: **11**.
+- One-line review candidates: **12**.
 
 Printed examples:
 
@@ -690,7 +564,7 @@ Cards finished (first 12): Accomplished Automaton, Ambitious Aetherborn, Angel o
 
 All affected cards (16): Accomplished Automaton [f5af0d1b-531e-4053-848a-5e0fa1022f9a], Ambitious Aetherborn [31f54f88-85a6-43f4-a6de-fb6ef5f0c38d], Angel of Invention [28c7f2b6-ba67-4ccf-9e1b-99c89a9d1f72], Cayth, Famed Mechanist [d18a014e-16a0-4641-9546-ff3729437eed], Cultivator of Blades [ca4c0945-7035-47dc-aba8-fbda351d9b7b], Elegant Edgecrafters [eeb3d282-97df-4df2-8bea-9432e21b6d62], Glint-Sleeve Artisan [b5f35577-3d94-4835-bfca-3090cb0c63ff], Highspire Artisan [fc8c54c4-a436-43cc-888b-f4ba3e751c16], Iron League Steed [bafeab74-918b-4fcd-8057-55922dbc1784], Marionette Apprentice [726d9d2c-736a-4852-9938-a0f50d8fd89f], Marionette Master [dabbf796-3b88-499e-8839-06fa36fe01ac], Maulfist Squad [2a8ec988-b513-4e66-b7f5-b2196b4bbff2], Peema Outrider [7747e94c-35a7-4e3b-956b-339a16634502], Propeller Pioneer [d17a9750-a89f-4ad1-9c15-7ccffc554ee5], Visionary Augmenter [1782bfd7-7d8f-4ed2-9d45-ba9adb41e996], Weaponcraft Enthusiast [7c27136a-bf9d-4f42-9c37-abe347fad1bb]
 
-### 36. `-megamorph-cost` — finishes 11 cards
+### 29. `-megamorph-cost` — finishes 11 cards
 
 - Template: `megamorph {cost}`
 - Family: other
@@ -708,75 +582,201 @@ Cards finished (first 11): Aerie Bowmasters, Aven Sunstriker, Dirgur Nemesis, Gu
 
 All affected cards (31): Acid-Spewer Dragon [f4378682-359f-48b0-adb7-b996b8d972db], Aerie Bowmasters [43ace4d5-9006-4bad-bd17-3d368c20564d], Ainok Survivalist [7a5dae5f-29ab-4996-b236-c754de8769bc], Atarka Efreet [177c1f2d-abb9-40ea-afe4-141b08fdeabb], Aven Sunstriker [60b0fd7c-a4cc-4a41-8455-debcfeccff81], Belltoll Dragon [d0e529e3-0f77-4a55-ba35-46591f48d960], Deathmist Raptor [a7d4f5aa-26d4-4363-aa5a-a26d6f791b82], Den Protector [59324efc-65b7-4b31-89c5-17aed5c7eeb1], Dirgur Nemesis [c08b444b-6617-4199-b9da-5d4e81cd7597], Guardian Shield-Bearer [2bd8a6a4-d0ac-4da3-be1d-5f404ae4b614], Gudul Lurker [bde976c6-afed-44bb-8e3d-4103289dff5e], Herdchaser Dragon [9c7073e9-c676-4629-814c-a96e7af905cf], Hidden Dragonslayer [862af5c4-cb34-4bfa-a7ff-209e103defd6], Ire Shaman [7f691e0d-dac5-4d7e-8727-dd2cab9a7863], Kadena's Silencer [02095128-82cd-4531-b47e-471307746f81], Kolaghan Stormsinger [0790c8bd-a094-49b5-8843-e8b02cba145b], Marang River Skeleton [0cfbbb26-9e1c-4b79-8b32-dcc05739f5ea], Marsh Hulk [979a581b-22a0-4461-8638-d219587323d7], Misthoof Kirin [678eee7a-549d-4f40-a81c-70d036fc299d], Monastery Loremaster [1c8ef715-3c3c-4d04-9f30-941b870b11d3], Ojutai Interceptor [ecc42076-5cce-4e00-a21b-34846ea41df2], Salt Road Ambushers [2373e035-25f7-473a-9386-2093f77d3f94], Sandstorm Charger [aa7a9689-e79a-4562-a621-eadc45966ce8], Segmented Krotiq [05221ba6-53fd-4f45-b8b4-493724f75963], Shieldhide Dragon [4f5fee21-bf29-4873-baf4-04911c309d81], Shorecrasher Elemental [5eb0d8dc-be4b-4a20-b480-f70514ffb299], Silumgar Assassin [f496e8cb-1d79-4a78-be15-fdb7e3d0de71], Silumgar Spell-Eater [34d90f98-7af5-4c67-8fb3-620237d94d14], Stormcrag Elemental [f28c18a1-13f8-4360-adc7-9d828ab1e933], Stormwing Dragon [10796fe6-edf8-427b-986c-e7666a72ec8d], Stratus Dancer [5b6a821c-51e4-44dc-8353-f4d10eab7fcb]
 
-### 37. `-can-attack-unless-defending` — finishes 11 cards
+### 30. `-retrace` — finishes 11 cards
 
-- Template: `~ can't attack unless defending player controls <n> island`
-- Family: combat-restriction
-- Appears in 26 unfinished cards; it is the last blocker for 11.
-- One-line review candidates: **11**.
-
-Printed examples:
-
-- **Hammerhead Shark** — ~ can't attack unless defending player controls an Island.
-- **Sea Monster** — ~ can't attack unless defending player controls an Island.
-- **Sea Serpent** — ~ can't attack unless defending player controls an Island.
-- **Wu Warship** — ~ can't attack unless defending player controls an Island.
-
-Cards finished (first 11): Armored Galleon, Deep-Sea Serpent, Ethereal Whiskergill, Hammerhead Shark, Red Cliffs Armada, Sea Monster, Slipstream Eel, Steam Frigate, Vodalian Serpent, Wu Warship, Zhou Yu, Chief Commander.
-
-All affected cards (26): Armored Galleon [637a10e8-4384-49a0-ad78-03da8930811e], Dandân [88929373-b2c8-4a81-a809-fed87fd5b0d7], Deep-Sea Serpent [7fbb98cc-585c-4184-97f5-9b3d3ebdb1e5], Dreamwinder [eb70d548-9769-4569-ae79-cddc0e623aef], Ethereal Whiskergill [3d3e6dc0-2aed-4afa-bfa9-59d04ade9bee], Floodchaser [1bf97485-191b-466c-9590-3449466b348c], Giant Shark [44a10a63-be9c-4f1d-aad6-b5337112bda5], Hammerhead Shark [ce176172-6c7b-40b0-a6d0-68e9c32b3402], Island Fish Jasconius [bb217f12-532f-4833-a27a-99e290aa47d0], Kukemssa Serpent [49e3ac82-7c22-4dec-b61a-b581148c0419], Manta Ray [d5129531-e4b6-454e-9c67-dae925c8f2ee], Marjhan [3fdee2ab-7ec6-4fc6-ad99-f04571f94583], Merchant Ship [69556f6c-c05b-4902-bac7-012f0ed81b75], Pirate Ship [c6b3f924-806d-47d3-b044-72b48470196c], Red Cliffs Armada [063884e0-1f5e-4be9-930b-e73895b2fa41], Sea Monster [21b07ce7-b4f9-438c-8c09-e624557d62d2], Sea Serpent [c16495fc-784d-4bac-9a68-ed437008df73], Sealock Monster [351c4f85-8792-4710-8cc9-d3e36657f6db], Serpent of the Endless Sea [3b954d5f-3a93-4dd9-9d60-6097594d449c], Slipstream Eel [74e6dd0f-2866-4d45-a214-8b09b837bc02], Slipstream Serpent [aa1152cb-255f-43fa-81f5-430304ce4d98], Steam Frigate [2e00598c-4f06-45aa-87a7-c63b5e8e92f3], Vodalian Knights [f6daa28f-e5ce-440c-8dc2-b36f59ae0d4f], Vodalian Serpent [c39c1604-3bae-454d-9985-85101e51ec6e], Wu Warship [f184e860-05c3-43cf-a625-ab53427406c5], Zhou Yu, Chief Commander [0b4742b7-e769-4354-beaf-6b4d18768ec1]
-
-### 38. `-fuse` — finishes 11 cards
-
-- Template: `fuse`
-- Family: other
-- Appears in 22 unfinished cards; it is the last blocker for 11.
-- One-line review candidates: **11**.
-
-Printed examples:
-
-- **Breaking // Entering** — Fuse
-- **Protect // Serve** — Fuse
-- **Far // Away** — Fuse
-- **Alive // Well** — Fuse
-
-Cards finished (first 11): Alive // Well, Armed // Dangerous, Breaking // Entering, Down // Dirty, Far // Away, Fear (split card) // Loathing, Give // Take, Profit // Loss, Protect // Serve, Toil // Trouble, Wear // Tear.
-
-All affected cards (22): Alive // Well [57ad3c3a-6ac7-4a35-bc07-00f6ea0988c5], Armed // Dangerous [a0593a5b-6f76-4eb3-a1b1-9794d2d36c92], Beck // Call [5b8472c8-a7e7-46f2-aecf-e954082a5ef5], Breaking // Entering [043370fd-9cfe-47ce-8019-e915cee1ae95], Catch // Release [a7df5dc0-2564-4288-bc53-59affd896f79], Chic // Ago [23d8a960-e911-480b-84ae-62e6919ef513], Double Jump // Flying Kick [cb3072c7-393c-43d9-a2c9-f918bd0fd7be], Down // Dirty [eba21e3b-e2b2-4e0b-82e3-f0849943fd89], Far // Away [e4b1ef6a-6f05-472e-aaed-1c24dd6605c7], Fast // Furious [298a6369-1c1f-4d75-aa97-69c56323c122], Fear (split card) // Loathing [9e02cefb-43f2-4c2a-8a26-c56b6cc99ea3], Flesh // Blood [0741151a-fec0-4ed3-9295-0d0f56d24165], Gallifrey Falls // No More [d4424585-9564-4ec2-8267-3f5438e1f29e], Give // Take [67a82d5e-a9dc-4e8c-9d23-c6d6aa1e57d1], Profit // Loss [c41e8a99-e4a8-4323-a59d-265266e29fa9], Protect // Serve [2e0cd5a5-3aee-4b32-873a-e5a40bfba3e9], Ready // Willing [44c7c6bb-2592-4d7c-8485-1815093e70be], Takesies // Backsies [248dce5e-a217-4dde-90b1-c68e4ed09ba7], Toil // Trouble [97759579-b676-46e8-b566-fcad10751920], Turn // Burn [41841bbf-1c51-494b-b299-c997cce88e44], Wear // Tear [9842734c-1eac-4509-a731-4c22017ae586], Yeah Nah // Nah Yeah [f672ea4f-8268-4540-b30e-9307ac6a97bd]
-
-### 39. `-renown` — finishes 11 cards
-
-- Template: `renown <n>`
+- Template: `retrace`
 - Family: keyword-ability
-- Appears in 20 unfinished cards; it is the last blocker for 11.
-- One-line review candidates: **11**.
-
-Printed examples:
-
-- **Honored Hierarch** — Renown 1
-- **Relic Seeker** — Renown 1
-- **War Oracle** — Renown 1
-- **Scab-Clan Berserker** — Renown 1
-
-Cards finished (first 11): Akroan Sergeant, Citadel Castellan, Firefiend Elemental, Knight of the Pilgrim's Road, Kytheon's Irregulars, Pharika's Disciple, Rhox Maulers, Stalwart Aven, Topan Freeblade, Undercity Troll, War Oracle.
-
-All affected cards (20): Acolyte of the Inferno [35bf67e0-8141-4664-b762-2c613353e1eb], Akroan Sergeant [8a206c6f-4f6f-4c31-9dab-d73a57db989c], Citadel Castellan [b9e93832-93b7-409d-91aa-13757225824d], Constable of the Realm [2a263e61-303f-449d-a431-c26cabdc68e0], Consul's Lieutenant [a38b672f-4739-4b7e-8958-2a455510656e], Firefiend Elemental [59c898d8-14f0-4645-84e7-aeedb2ee6c5e], Goblin Glory Chaser [cad1cd10-4810-495e-9305-0ae812596f6a], Honored Hierarch [ae42fa8a-b0f6-43dc-a4c6-e2531890ca3a], Knight of the Pilgrim's Road [40999aa6-6424-42e4-9d47-33bee6bbb886], Kytheon's Irregulars [ccfddb1a-1b7f-44f9-89c4-1907e27e1c4a], Outland Colossus [5b034e04-70e5-4783-8ac8-04d8e5a9f961], Pharika's Disciple [d7798312-657c-4f4a-9e2d-906284caf50f], Relic Seeker [1f101363-c7d1-405a-b3a9-e93b46928dbf], Rhox Maulers [019461d9-63ae-43d3-a9d4-bd745d0cf46c], Scab-Clan Berserker [d4f659ba-c277-47a2-8b95-ce81ddac34fb], Stalwart Aven [09cc2cda-14d1-424e-a688-1b49b1b4c392], Topan Freeblade [9e2cd0d5-1537-412b-9ecd-989ab4ac2700], Undercity Troll [b7851b17-faa2-4767-9716-86997b882690], Valeron Wardens [d1202573-2105-4d4d-ae7d-7164974b6d89], War Oracle [aa26fb50-1b53-488e-90d1-b0c7af273622]
-
-### 40. `-can-blocked-more-than` — finishes 11 cards
-
-- Template: `~ can't be blocked by more than <n> creature`
-- Family: other
-- Appears in 20 unfinished cards; it is the last blocker for 11.
+- Appears in 18 unfinished cards; it is the last blocker for 11.
 - One-line review candidates: **10**.
 
 Printed examples:
 
-- **Huang Zhong, Shu General** — ~ can't be blocked by more than one creature.
-- **Professional Wrestler** — ~ can't be blocked by more than one creature.
-- **Krosan Vorine** — ~ can't be blocked by more than one creature.
-- **Ironhoof Ox** — ~ can't be blocked by more than one creature.
+- **Reality Scramble** — Retrace
+- **Throes of Chaos** — Retrace
+- **Waves of Aggression** — Retrace
+- **Formless Genesis** — Retrace
 
-Cards finished (first 11): Bristling Boar, Charging Rhino, Foot Enforcer, Huang Zhong, Shu General, Ironhoof Ox, Norwood Riders, Outland Colossus, Professional Wrestler, Stalking Tiger, Tenacious Tosk, The Tiger God.
+Cards finished (first 11): Call the Skybreaker, Cenn's Enlistment, Flame Jab, Formless Genesis, Monstrify, Oona's Grace, Raven's Crime, Savage Conception, Spitting Image, Syphon Life, Throes of Chaos.
 
-All affected cards (20): Battlefront Krushok [6a003988-f126-4309-9166-50f3fbf0f30c], Bristling Boar [f4aed3d2-04f5-49a4-a6be-d3cf097903f8], Charging Rhino [26966ecb-15d3-47e5-ab63-e38510c87ecc], Foot Enforcer [71241776-55ae-4e3c-bf01-3387a9fca88c], Huang Zhong, Shu General [7d6c4290-d46d-4b98-805c-3f537462c4c8], Hungering Hydra [d1dde190-8124-4590-9507-801ea4c8cde3], Ironhoof Ox [1871af55-f7cd-4b8e-affb-5d010df811b1], Krosan Vorine [ddb95c3a-b383-4987-ba24-72e95f8e33bf], Norwood Riders [1816b87c-73ba-4bfc-a51e-c982381c067d], Outland Colossus [5b034e04-70e5-4783-8ac8-04d8e5a9f961], Professional Wrestler [3dd92eea-02ca-4e55-8f69-8c8059dd7ee6], Rocksteady, Crash Courser [f9330a7b-8a65-4e04-a777-bf6512332850], Safewright Cavalry [6e04a375-303e-43ba-bca1-4e959711a7f6], Stalking Tiger [e6af1429-276f-41a8-88d0-062661dc0cd4], Sunder Shaman [38b23fe1-0e76-494a-ad9b-bc22c7d21a5e], Tahngarth, First Mate [1a8a41a1-6fc5-4dc8-bd28-9bf404c777d7], Tenacious Tosk [48c2dc82-7bed-4730-8b8b-1970b743414f], The Foretold Soldier [02a45719-ee4a-49c4-96ec-a140cd6e1547], The Tiger God [26ada256-e5fc-4c1d-966f-eae96c4673b8], Vigorspore Wurm [be843255-7408-45b9-b0ca-c79342daa353]
+All affected cards (18): Call the Skybreaker [a7213bef-0e9c-44e1-97cb-d1da0ef370bf], Cenn's Enlistment [49fe9f5a-5821-4586-b913-7d8aef1f8669], Decaying Time Loop [13e94530-defb-4c9b-9ec7-bb7789ec2630], Embrace the Unknown [9f36dd20-350c-4046-b57f-e6b5cc9aa999], Flame Jab [05eccdee-84f8-42d5-b79c-36d081656915], Formless Genesis [b978bdfe-a73e-4e99-90d7-4f99182c45ee], Glamerdye [570a5e60-ed0f-4c14-8cc3-af819648030b], Jund 'Em Out [e3051f3c-65c1-46cd-b02c-ed89b84d2768], Monstrify [0f58f791-469a-4a22-996e-4906c0914858], Oona's Grace [380e9992-b5d2-4fbe-a8c3-c37220846e0a], Raven's Crime [a21c85f3-482b-47e5-9321-0ca21e110bd8], Reality Scramble [afad2e76-4b53-4884-8f96-ba68b0808990], Savage Conception [494050f4-0a55-415d-9ae9-feb17e61c4e1], Spitting Image [a30dee74-86e3-4888-980e-b22437fbbb66], Syphon Life [c9367dd3-1a50-4eae-993e-c055dc6c4dc5], Throes of Chaos [e3444fcf-70ed-4d6e-aea9-030af15cad56], Waves of Aggression [10991b1a-7dd3-4fbf-a4c8-200dc62fc605], Worm Harvest [b2223f1c-e607-43e0-86dd-5e3225330066]
+
+### 31. `-return-target-creature-cards` — finishes 11 cards
+
+- Template: `return up to <n> target creature cards from your graveyard to your hand`
+- Family: other
+- Appears in 17 unfinished cards; it is the last blocker for 11.
+- One-line review candidates: **11**.
+
+Printed examples:
+
+- **Dutiful Return** — Return up to two target creature cards from your graveyard to your hand.
+- **Wander in Death** — Return up to two target creature cards from your graveyard to your hand.
+- **Urborg Uprising** — Return up to two target creature cards from your graveyard to your hand.
+- **Morbid Plunder** — Return up to two target creature cards from your graveyard to your hand.
+
+Cards finished (first 11): Dutiful Return, Fight On!, Find // Finality, Hazel's Nocturne, March of the Returned, Morbid Plunder, Pull from the Grave, Soul Salvage, Unmake the Graves, Urborg Uprising, Wander in Death.
+
+All affected cards (17): Back for Seconds [ee3d21b9-58b4-480c-bae3-26de50f1a5c6], Dead Revels [4354eb0a-28c5-4f3f-8e78-fd7eec230c7b], Dutiful Return [c8f958da-3a31-4064-9a78-66e9b65b85ab], Fight On! [4ab42daa-8726-4973-947d-1d6c32f0ba61], Find // Finality [212af747-2ac1-4d33-9456-8b3cc8988f5d], Hazel's Nocturne [2a74a055-ff7f-434b-8dfb-d9fb72579cee], Macabre Reconstruction [04633ecd-eac0-426a-83a5-8e88262fca30], March of the Returned [53a40369-0e62-4ad2-a6bd-65a5ff0da65e], Morbid Plunder [1bb7009b-aeb0-4545-be4c-c8c5d723bcf5], Pull from the Grave [c5373026-8b43-42a7-aa69-a1b0f1619795], Questionable Cuisine [d7b96eab-92cf-4208-b27e-253ae5fd5a24], Sanguine Indulgence [010ec11a-0484-486d-b7c0-de65593bf457], Soul Salvage [60b6bd93-3eb3-4b81-bc4d-1e3351ee2e64], Unmake the Graves [d9b99c58-8e2e-496c-8288-eda934f49162], Urborg Uprising [882d3be7-1c0f-4d2b-8f2e-32369488ef82], Wail of War [fc0abdf3-3a88-4cb2-ba79-35fcaebbf7d2], Wander in Death [f25c5451-58fa-4916-8342-ae88c5e406cc]
+
+### 32. `-equipped-creature-has-name` — finishes 11 cards
+
+- Template: `equipped creature has <name>`
+- Family: other
+- Appears in 16 unfinished cards; it is the last blocker for 11.
+- One-line review candidates: **11**.
+
+Printed examples:
+
+- **Leonin Bola** — Equipped creature has "{T}, Unattach ~: Tap target creature."
+- **Blazing Torch** — Equipped creature has "{T}, Sacrifice ~: ~ deals 2 damage to any target."
+- **Bow of the Hunter** — Equipped creature has "{T}: ~ deals 2 damage to any target."
+- **Rock** — Equipped creature has "{1}, {T}, Sacrifice ~: ~ deals 2 damage to any target."
+
+Cards finished (first 11): Arc Spitter, Blinding Powder, Bow of the Hunter, Leonin Bola, Ninja's Kunai, Paradise Mantle, Rock, Siren Song Lyre, Umbral Mantle, Viridian Longbow, Witches' Eye.
+
+All affected cards (16): Arc Spitter [9376ccf6-1b18-44e9-8f9d-c5ad38927e2f], Blazing Torch [cd3d1e5d-db12-4878-92a2-23eb8d23eaf3], Blinding Powder [75e13f7f-aded-405c-97ce-124fa0cb1929], Bow of the Hunter [3bd81f98-a93e-4b35-bdc5-4cc30649130c], Fishing Pole [2c1d3e9e-213e-492a-ad5a-91139d70bc0f], Heavy Arbalest [748fd75b-c61b-4e02-889d-b7dab23319ef], Kusari-Gama [b5585eb5-4df3-4ae2-8c39-a8e7a9706dc2], Leonin Bola [d5f72164-441e-4e04-8b2b-0d6ab618d22e], Mask of Immolation [dd86d11f-0bd8-49a9-936d-e407ea2c1818], Ninja's Kunai [fa5aefaf-432f-41d0-8e54-0e8b7bc7ba98], Paradise Mantle [c1121b83-1ba2-473d-89c9-e3bbd4529072], Rock [300757bc-5dbf-4d1e-a225-fe3b6e0c9ef4], Siren Song Lyre [400da7e6-43f8-4539-8959-ec60a3cc431b], Umbral Mantle [44f3241f-af82-4f2e-b15d-7f279bf6e816], Viridian Longbow [8b9119b0-9948-497f-aa92-2879d07bed1c], Witches' Eye [c8d479b8-b96c-4382-97d3-68d85cf371ba]
+
+### 33. `-unleash` — finishes 11 cards
+
+- Template: `unleash`
+- Family: keyword-ability
+- Appears in 15 unfinished cards; it is the last blocker for 11.
+- One-line review candidates: **11**.
+
+Printed examples:
+
+- **Carnival Hellsteed** — Unleash
+- **Rakdos Cackler** — Unleash
+- **Garbage Elemental** — Unleash
+- **Tesak, Judith's Hellhound** — Unleash
+
+Cards finished (first 11): Bloodfray Giant, Carnival Hellsteed, Dead Reveler, Gore-House Chainwalker, Grim Roustabout, Hellhole Flailer, Rakdos Cackler, Rakdos Drake, Spawn of Rix Maadi, Splatter Thug, Thrill-Kill Assassin.
+
+All affected cards (15): Bloodfray Giant [5f83fd2f-c4cb-4bcf-a4db-0238df251740], Carnival Hellsteed [34ae5b49-f8bf-4aa8-bb62-92d6d3118b26], Chaos Imps [31e99241-592d-4be4-9ef3-6dde522b1885], Dead Reveler [5cee3505-0291-4f1b-9e5f-2909a31acd8e], Exava, Rakdos Blood Witch [524249cd-68d9-472a-89cd-5872641ca6de], Garbage Elemental [adf0b8f0-9ca3-43fc-8028-75cbf2848672], Gore-House Chainwalker [dbe3e317-3c39-4b38-ae06-eae02a910c37], Grim Roustabout [1adcc4a8-b2dd-4d9a-bded-188b81c84a10], Hellhole Flailer [e13c1703-1184-4a8c-9310-f11e4e673597], Rakdos Cackler [763a2d27-52a8-43d9-b649-0f6c0cf87a07], Rakdos Drake [0715167b-00b1-45a4-94a0-60d4097a1428], Spawn of Rix Maadi [39d4373b-35b4-4ceb-b4d5-9ca474365eb0], Splatter Thug [3baee36b-d64f-448c-ae45-c1ec124c92ec], Tesak, Judith's Hellhound [4117e428-0c78-4dea-9019-dd1836fbb03e], Thrill-Kill Assassin [f13f5705-e3e0-4e1e-a5b3-61e04e23a374]
+
+### 34. `-sneak-cost` — finishes 10 cards
+
+- Template: `sneak {cost}`
+- Family: other
+- Appears in 27 unfinished cards; it is the last blocker for 10.
+- One-line review candidates: **10**.
+
+Printed examples:
+
+- **Elektra, Daughter of the Hand** — Sneak {1}{B}{B}
+- **Leonardo, Sewer Samurai** — Sneak {2}{W}{W}
+- **Michelangelo, Improviser** — Sneak {2}{G}{G}
+- **Dark Leo & Shredder** — Sneak {W}{B}
+
+Cards finished (first 10): Donatello's Technique, Foot Ninjas, Jennika's Technique, Karai's Technique, Leonardo, Cutting Edge, New Generation's Technique, Oroku Saki, Shredder Rising, Raphael, the Nightwatcher, Splinter's Technique, Splinter, Hamato Yoshi.
+
+All affected cards (27): Dark Leo & Shredder [c3ea6af5-48b9-45d2-9576-46cacb2db5b0], Donatello's Technique [194284f7-cf92-4d9f-a8ce-e4dc3505ab7a], Donatello, Gadget Master [bb6aef0d-052b-44e6-b4cd-2d2eafd84969], Elektra, Daughter of the Hand [b46647a1-0c91-451b-8c0b-be8fe02faee2], Foot Ninjas [306652a8-9a9c-4b33-96d7-b59234d148e9], Jennika's Technique [90b1226f-4c90-47fd-98f3-ad4edd3b3518], Karai's Technique [e53fb128-bf90-4af6-b998-ef9c250001cb], Karai, Future of the Foot [7246638e-0361-40e3-8019-3c10210a593e], Kitsune's Technique [3e0f8ab3-75a6-49a2-a228-fa720cbde3d8], Leonardo's Technique [e98c2af9-1393-487d-b8e9-f49a67bb7296], Leonardo, Big Brother [6496eea7-38f5-4428-a379-b08b0eeb5239], Leonardo, Cutting Edge [933fe6e5-8d00-4411-aa54-7780382c1ea6], Leonardo, Leader in Blue [348c7e22-2179-41b8-a5d2-8dd488e7e66d], Leonardo, Sewer Samurai [74e3243b-6707-4769-8767-7cf2ef71009a], Michelangelo's Technique [42f12942-9ac1-497e-a8b7-9f66a5afd0ae], Michelangelo, Improviser [1939679b-ea2e-4a75-b3ce-d7af68437484], New Generation's Technique [e7ae3ee7-824f-4dcb-8f28-7de99e4d8c3e], Oroku Saki, Shredder Rising [d14f620c-0fbd-485c-9fe4-34949e742147], Raphael's Technique [f58a5f8b-254c-4206-bdbe-55a23798ed2d], Raphael, the Nightwatcher [8c1e5b25-ee5a-4ea9-a715-08dd1a4f51c4], Shark Shredder, Killer Clone [dabd0867-ee3f-40cb-8314-b4a3966f8b24], Shredder's Technique [d92714c0-4e22-47f9-a4d4-405894e734d0], Shredder, Unrelenting [59d96fc0-6580-43c2-8c6a-dcf983644561], Splinter's Technique [532ee9c3-391c-44db-8ed5-a1d28fd7f876], Splinter, Hamato Yoshi [41fbdaa2-7a7a-44d5-a8f4-77624350eedd], The Last Ronin's Technique [6a51bb21-0c01-4ad8-99d7-17685db90b69], Turncoat Kunoichi [0f35cf85-6783-4d69-b5e6-a81f7c1f21e7]
+
+### 35. `-offspring-cost` — finishes 10 cards
+
+- Template: `offspring {cost}`
+- Family: other
+- Appears in 21 unfinished cards; it is the last blocker for 10.
+- One-line review candidates: **10**.
+
+Printed examples:
+
+- **Fountainport Charmer** — Offspring {2}
+- **Manifold Mouse** — Offspring {2}
+- **Flowerfoot Swordmaster** — Offspring {2}
+- **Darkstar Augur** — Offspring {B}
+
+Cards finished (first 10): Agate Instigator, Coruscation Mage, Iridescent Vinelasher, Prosperous Bandit, Rust-Shield Rampager, Starscape Cleric, Steampath Charger, Steelburr Champion, Tender Wildguide, Thundertrap Trainer.
+
+All affected cards (21): Agate Instigator [e1a2bd31-b800-47cd-8866-1b849a601b09], Bushy Bodyguard [5436bb0d-b5c7-43a9-8b3f-67cdc0dd0381], Coruscation Mage [88bb91b5-2ccd-4ce9-8cd4-e54d63c12abf], Darkstar Augur [67d2a021-a042-4e5f-b6e4-39cb35514794], Finch Formation [76c2e0b4-d4fa-4e98-b363-0a76eb481304], Flowerfoot Swordmaster [523d075d-b577-4f24-8c14-9a76761a2eaf], Fountainport Charmer [d1352515-228e-4cab-8db7-d9e3b2b58054], Intrepid Rabbit [7ed4afc9-959a-4868-8f4a-2221bea1ba32], Iridescent Vinelasher [4f8c4927-46c2-4c18-b5af-c6288dbaff6d], Manifold Mouse [b254ca74-2a96-4590-91bc-650f407daf5d], Pawpatch Recruit [50ab0194-c7dc-4f11-abc0-1a82393cc42e], Prosperous Bandit [2a14670b-2ab6-4e1d-9b33-610a87bdb7ce], Rust-Shield Rampager [23878990-dcbd-4a2a-b4f7-ee7edb396c71], Splash Lasher [0d0c4c91-683a-4563-a0b0-39f3c04f6307], Starscape Cleric [8d72ddb3-ef6e-4847-b6d4-5d85b1dd5802], Steampath Charger [75237b2c-232b-479a-ab3a-e1566c8a9fe7], Steelburr Champion [d1f3d5ca-cb17-400f-8ed9-3b9a4f151b62], Tender Wildguide [74868bc0-6081-4f46-a2c6-9521cd5465aa], Thornplate Intimidator [33b6555e-035d-4241-a341-a9b9139ca6f0], Thundertrap Trainer [d0be5969-0442-4557-a5fc-bee56e1835c2], Warren Warleader [a7e7059e-83f8-4124-9cc0-64ba150b5d96]
+
+### 36. `-myriad` — finishes 10 cards
+
+- Template: `myriad`
+- Family: keyword-ability
+- Appears in 19 unfinished cards; it is the last blocker for 10.
+- One-line review candidates: **10**.
+
+Printed examples:
+
+- **Warchief Giant** — Myriad
+- **Caller of the Pack** — Myriad
+- **Broodbirth Viper** — Myriad
+- **Herald of the Host** — Myriad
+
+Cards finished (first 10): Broodbirth Viper, Caller of the Pack, Chittering Dispatcher, Dalek Squadron, Goldlust Triad, Herald of the Host, Tabaxi Toucaneers, Tiamat's Fanatics, Warchief Giant, Wyrm's Crossing Patrol.
+
+All affected cards (19): Banshee of the Dread Choir [282b4dbf-ec00-48ba-8010-73bee489fa7a], Broodbirth Viper [a8455828-9c61-4ef9-a5f1-1f0cc6fbf446], Caller of the Pack [3b6cbd2a-02ba-4afb-a081-0f25d830a8ee], Chittering Dispatcher [c1b276b7-f1b3-4f6f-b6a2-1315d805e0f2], Conclave Evangelist [13c81fc5-dd35-481d-8e32-4d404fb0e4ac], Dalek Squadron [18ae6be7-cfb6-42e3-a04e-99e9c1471ecd], Genasi Enforcers [b3601821-a0f5-4aac-b24e-25498a82d821], Gnoll War Band [ff8fc718-6218-48f3-981d-c4d2bc468493], Goldlust Triad [86d76078-9af3-45a7-90d6-72946afdc78b], Hammers of Moradin [97e260c9-3e78-402b-8d97-af4b515b278b], Herald of the Host [4371d5bc-1760-477b-822e-6d4999fb0a6b], Scion of Calamity [75fddffb-68f4-4b65-bf3b-4e2ada62a522], Sumala Rumblers [09189f67-b33f-4775-bfd5-862154da7526], Tabaxi Toucaneers [36dd999e-53da-45c7-ae98-90f7aad78680], The Master, Multiplied [0741e5b5-35c8-4f4d-b49f-c53e960240b9], Tiamat's Fanatics [6eef7583-0716-49b5-b70e-8feb0e7c99fb], Warchief Giant [589abb40-04b4-4dbe-9c2a-446b6c3075d1], Wizards of Thay [cda1e3b5-ea80-4e83-b305-88993d307170], Wyrm's Crossing Patrol [fad2d14f-8825-4b08-8804-010d9659f6dc]
+
+### 37. `-creatures-your-opponents-control` — finishes 10 cards
+
+- Template: `creatures your opponents control get -<n>/-<n> until end of turn`
+- Family: pump
+- Appears in 17 unfinished cards; it is the last blocker for 10.
+- One-line review candidates: **10**.
+
+Printed examples:
+
+- **Make Obsolete** — Creatures your opponents control get -1/-1 until end of turn.
+- **Turn the Tide** — Creatures your opponents control get -2/-0 until end of turn.
+- **Bolg, Erebor's Reckoning** — Creatures your opponents control get -1/-1 until end of turn.
+- **The Black Breath** — Creatures your opponents control get -1/-1 until end of turn.
+
+Cards finished (first 10): Bewildering Blizzard, Beyeen Veil // Beyeen Coast, Blinding Spray, Cower in Fear, Hampering Snare, Hysterical Blindness, Make Obsolete, Suffocating Fumes, Turn the Tide, Uncomfortable Chill.
+
+All affected cards (17): Bewildering Blizzard [84469042-d48d-409f-a2c9-047058f13bc5], Beyeen Veil // Beyeen Coast [b03de49d-246f-44e2-9487-9e4e43ec7be4], Blinding Spray [88ce2017-83a6-4b55-afba-371875bf2172], Bolg, Erebor's Reckoning [eab096fd-a7e2-4b96-99ec-1039d3a552f3], Cower in Fear [f1519fe3-af13-4491-9020-4a8d8f474713], Eliminate the Impossible [c78d4cec-6764-4cce-96d2-a2d85a57b218], Festering March [5a1d5b0d-335f-4ae4-94d8-60494fedb570], Gruesome Realization [c24e34e7-0ac6-451a-b73b-31c7f96d123f], Hampering Snare [4fd3dafe-e6a4-49d5-950a-e2fcc77eda98], Hysterical Blindness [705531b3-77cc-4d1f-851b-45e03c029991], Let's Play a Game [dd893746-e8bd-49fa-a1ce-755d5bd4f513], Make Obsolete [3ce755f5-855f-4b88-aa10-22f4ee76b28a], Seeker's Folly [223794f2-67a3-4ab5-81c5-046c63307c6c], Suffocating Fumes [80c7b1b4-4e37-4aef-9432-d629d71b7045], The Black Breath [c0afbb32-dc50-436a-bd24-2990c103a4f8], Turn the Tide [2546db90-1f6e-43f7-a116-2fefe67d489d], Uncomfortable Chill [d6596336-8177-4475-95b9-a21858563276]
+
+### 38. `-umbra-armor` — finishes 10 cards
+
+- Template: `umbra armor`
+- Family: other
+- Appears in 16 unfinished cards; it is the last blocker for 10.
+- One-line review candidates: **10**.
+
+Printed examples:
+
+- **Octopus Umbra** — Umbra armor
+- **Snake Umbra** — Umbra armor
+- **Indrik Umbra** — Umbra armor
+- **Boar Umbra** — Umbra armor
+
+Cards finished (first 10): Bear Umbra, Boar Umbra, Drake Umbra, Eel Umbra, Eland Umbra, Hyena Umbra, Indrik Umbra, Mammoth Umbra, Snake Umbra, Spider Umbra.
+
+All affected cards (16): Bear Umbra [44661108-d72f-4d02-9303-7e4b0ecf7e9c], Boar Umbra [75e4448b-5bd7-4ed4-8db8-820cd6d04c12], Crab Umbra [7d3d1c90-a5fb-44ff-a85b-27c037ca6753], Drake Umbra [2b143ef1-afbb-499c-9189-1009105b406b], Eel Umbra [4be1ecd0-ee41-4ac0-9155-0fcae7a4d337], Eland Umbra [836fdd4b-98f8-4615-ae81-9bf63205c37d], Felidar Umbra [278574f6-e083-461b-8bac-52ed51f0cf63], Hyena Umbra [354affb3-1be7-4a9e-91da-2989eb54f62d], Indrik Umbra [b585c218-1793-49a0-8a16-cb23b6efcc3c], Lion Umbra [95e8e6bb-d83b-46fd-bfdf-fc042d8edd4a], Mammoth Umbra [cd0e6cdb-9b7f-47d6-9478-fb50003165af], Octopus Umbra [6d2ce0ba-f2ff-4c2b-ba85-f6c011ebda6c], Penumbra Umbra [5cce6146-94a6-442e-9890-6f2914cbcebb], Snake Umbra [70ed2052-f03c-461d-b32a-8835c97c559f], Spider Umbra [f32aaa81-96bd-4213-b0b8-8c021f3cea57], Treefolk Umbra [fa321366-9bc1-48c7-873a-0b12a026ce49]
+
+### 39. `-banding` — finishes 10 cards
+
+- Template: `banding`
+- Family: keyword-ability
+- Appears in 14 unfinished cards; it is the last blocker for 10.
+- One-line review candidates: **9**.
+
+Printed examples:
+
+- **Icatian Phalanx** — Banding
+- **Shield Bearer** — Banding
+- **Benalish Hero** — Banding
+- **Ayesha Tanaka** — Banding
+
+Cards finished (first 10): Benalish Hero, Benalish Infantry, Icatian Phalanx, Kjeldoran Escort, Kjeldoran Knight, Kjeldoran Warrior, Shield Bearer, Timber Wolves, Volunteer Reserves, Wall of Shields.
+
+All affected cards (14): Ayesha Tanaka [35e4ed0e-8ce2-4729-a009-0d6be8f47663], Benalish Hero [4c81cfb7-8765-4e28-ae33-4287fa9a86cc], Benalish Infantry [543af1f4-f93f-4c7f-a067-ad2db599a4ae], Camel [d33b3591-c01f-4ac4-8626-7cbfdabaf90d], Chatzuk, Mighty Guitarist [593f3e97-9756-4cd8-895e-aff6b6d25072], Icatian Phalanx [a1160b8d-c4e4-4869-b7a5-c6a826eb1ba4], Kjeldoran Escort [1c6c1604-0724-40b1-9df6-71e57e5063c9], Kjeldoran Knight [5d7747b4-061d-4459-ba80-51361526cbfa], Kjeldoran Warrior [73b70a48-b62c-4fdf-9c2d-c6d6688f9ac8], Mishra's War Machine [18b1f96f-de35-4f0a-8b0e-81576471fd15], Shield Bearer [75decba6-d188-4144-8e74-58285be0fe9f], Timber Wolves [35d07ac9-b184-4b5f-8192-34b1db042f69], Volunteer Reserves [a2dabd52-0b75-42d7-a07d-0df7b38646e2], Wall of Shields [530514d9-7274-4835-a4b5-6dccef4da758]
+
+### 40. `-scavenge-cost` — finishes 10 cards
+
+- Template: `scavenge {cost}`
+- Family: keyword-ability
+- Appears in 14 unfinished cards; it is the last blocker for 10.
+- One-line review candidates: **10**.
+
+Printed examples:
+
+- **Deadbridge Goliath** — Scavenge {4}{G}{G}
+- **Dodgy Jalopy** — Scavenge {2}{G}
+- **Dreg Mangler** — Scavenge {3}{B}{G}
+- **Bannerhide Krushok** — Scavenge {5}{G}{G}
+
+Cards finished (first 10): Deadbridge Goliath, Dreg Mangler, Drudge Beetle, Korozda Monitor, Sewer Shambler, Slitherhead, Sluiceway Scorpion, Terrus Wurm, Thrashing Mossdog, Zanikev Locust.
+
+All affected cards (14): Bannerhide Krushok [e3191093-1aaa-4002-a603-7c8d132b6a31], Boneyard Mycodrax [f852adf6-3e54-4a1d-92e1-7dbc6d2228ce], Deadbridge Goliath [1498f5a1-6df7-4f80-9470-c93528b64a9c], Dodgy Jalopy [469d820d-b7a6-414a-af18-71c1b1e42da5], Dreg Mangler [71358110-4e28-4794-befa-ea6e27e720ef], Drudge Beetle [f5126c01-f765-44f4-9ced-0fc157f8b897], Golgari Decoy [9fb2eb66-d33b-40e8-9d0d-06d73650a9ac], Korozda Monitor [55195474-c7ea-4c0a-b504-af15e64ec7e9], Sewer Shambler [5d111adc-a91a-437d-8aac-3b246e980bd8], Slitherhead [4b6966f6-052f-4d1d-a3bf-1d3cc91c71d4], Sluiceway Scorpion [bb5ea7c7-741a-4edd-9696-b9881b70afe0], Terrus Wurm [0dfbee5a-0dc6-4f5b-abbd-9d8601de7107], Thrashing Mossdog [8778ddbe-9aba-4a45-a22a-5453fefef952], Zanikev Locust [e29012bb-4a1d-409e-8db9-50920fdf68a2]
 

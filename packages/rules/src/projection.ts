@@ -415,13 +415,13 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
         allCards: state.players[viewerSeat]!.library.map(cardView)
       }
     : null;
-  const pendingScry = state.pendingChoice?.type === "scry" && state.pendingChoice.seat === viewerSeat
+  const pendingScry = (state.pendingChoice?.type === "scry" || state.pendingChoice?.type === "explore") && state.pendingChoice.seat === viewerSeat
     ? state.pendingChoice : null;
   const scry: ScryView | null = pendingScry ? {
     sourceId: pendingScry.sourceId,
     sourceName: pendingScry.sourceCard.name,
-    topCards: pendingScry.remainingCards.map(cardView),
-    remaining: pendingScry.remainingCards.length
+    topCards: pendingScry.type === "scry" ? pendingScry.remainingCards.map(cardView) : [cardView(pendingScry.card)],
+    remaining: pendingScry.type === "scry" ? pendingScry.remainingCards.length : 1
   } : null;
   const pendingTopSelection = state.pendingChoice?.type === "look-top-select" && state.pendingChoice.seat === viewerSeat
     ? state.pendingChoice : null;

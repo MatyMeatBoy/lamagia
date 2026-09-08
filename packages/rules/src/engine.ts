@@ -770,6 +770,15 @@ export type PendingChoice =
       readonly exileSourceAfterResolution: boolean;
     }
   | {
+      /** Explore (CR 701.44): the revealed nonland card may be put into its owner's graveyard. */
+      readonly type: "explore";
+      readonly seat: SeatId;
+      readonly sourceId: string;
+      readonly sourceCard: GameCard;
+      readonly sourcePermanentId: string;
+      readonly card: GameCard;
+    }
+  | {
       /** "Look at the top N, then put them back in any order" (Ponder, Sensei's Divining Top): every card stays on top, only the sequence changes. */
       readonly type: "reorder-top";
       readonly seat: SeatId;
@@ -975,6 +984,7 @@ export type GameAction =
   | { readonly type: "choose-hand-card-to-library-top"; readonly sourceId: string; readonly cardId: string }
   | { readonly type: "finish-library-search"; readonly sourceId: string }
   | { readonly type: "choose-scry"; readonly sourceId: string; readonly query: string; readonly bottom: boolean; readonly ordinal?: number }
+  | { readonly type: "choose-explore-graveyard"; readonly sourceId: string; readonly accept: boolean }
   | { readonly type: "choose-look-top"; readonly sourceId: string; readonly ordinal?: number }
   | { readonly type: "finish-look-top"; readonly sourceId: string }
   | { readonly type: "choose-look-top-bottom"; readonly sourceId: string; readonly ordinal?: number }
@@ -6983,6 +6993,33 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
     case "scry":
       // Scry is completed through the private top-card choice below.
       return state;
+    case "explore": {
+      const sourcePermanentId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId ?? object.card.instance_id;
+      const source = findPermanent(state, sourcePermanentId);
+      const top = playerAt(state, controller).library[0];
+      if (!top) return logged(state, controller, `${source?.card.name ?? sourceName} explora, pero no hay cartas en la biblioteca.`);
+      if (isLand(cardProfile(top))) {
+        const next = withPlayer(state, controller, (player) => ({
+          ...player,
+          library: player.library.slice(1),
+          hand: [...player.hand, top]
+        }));
+        return logged(next, controller, `${source?.card.name ?? sourceName} explora y revela ${top.name}; la tierra va a tu mano.`);
+      }
+      const next = {
+        ...state,
+        priorityOpen: false,
+        pendingChoice: {
+          type: "explore" as const,
+          seat: controller,
+          sourceId: object.trigger?.id ?? object.id,
+          sourceCard: object.card,
+          sourcePermanentId,
+          card: top
+        }
+      };
+      return logged(next, controller, `${source?.card.name ?? sourceName} explora y revela ${top.name}; se pone un contador +1/+1 y puedes ponerla en el cementerio.`);
+    }
     case "surveil":
       // Surveil is completed through the private top-card choice below.
       return state;
@@ -7207,6 +7244,7 @@ function resolveTop(state: GameState): GameState {
     if (triggerScry) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerScry.amount, false, false, triggerScry.thenDraw ?? 0);
     const triggerSurveil = object.trigger.definition.effect.kind === "surveil" ? object.trigger.definition.effect : null;
     if (triggerSurveil) return beginScry(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerSurveil.amount, false, false, 0, "graveyard");
+    if (object.trigger.definition.effect.kind === "explore") return applyEffect(next, object, { kind: "explore" });
     const triggerLookTop = object.trigger.definition.effect.kind === "look-top-select" ? object.trigger.definition.effect : null;
     if (triggerLookTop) return beginLookTopSelection(next, object.controller, object.trigger.id, object.trigger.sourceCard, triggerLookTop.amount, triggerLookTop.types, triggerLookTop.destination, triggerLookTop.returnAtEndStep, false, false, triggerLookTop.minPower, triggerLookTop.tapped, triggerLookTop.subtypes);
     // A triggered ability's own search (Pattern of Rebirth's dies-triggered
@@ -9275,6 +9313,21 @@ export function legalActions(state: GameState, seat: SeatId): LegalAction[] {
           label: toGraveyard ? `Poner ${card.name} en el cementerio` : `Poner ${card.name} en el fondo`,
           note: toGraveyard ? `${choice.sourceCard.name}: pon esta carta en el cementerio.` : `${choice.sourceCard.name}: coloca esta carta en el fondo.`
         });
+      });
+      return actions;
+    }
+    if (choice.type === "explore") {
+      actions.push({
+        action: { type: "choose-explore-graveyard", sourceId: choice.sourceId, accept: true },
+        label: `Poner ${choice.card.name} en el cementerio`,
+        cardId: choice.card.instance_id,
+        note: `${choice.sourceCard.name}: pon la carta no tierra revelada en el cementerio.`
+      });
+      actions.push({
+        action: { type: "choose-explore-graveyard", sourceId: choice.sourceId, accept: false },
+        label: `Dejar ${choice.card.name} arriba`,
+        cardId: choice.card.instance_id,
+        note: `${choice.sourceCard.name}: deja la carta no tierra en la parte superior de la biblioteca.`
       });
       return actions;
     }
@@ -12397,6 +12450,26 @@ function applyChooseLookTop(state: GameState, seat: SeatId, action: Extract<Game
   return logged({ ...state, pendingChoice: nextChoice }, seat, `${playerAt(state, seat).name} elige ${selected.name}.`);
 }
 
+function applyChooseExploreGraveyard(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "choose-explore-graveyard" }>): GameState {
+  const choice = state.pendingChoice;
+  if (!choice || choice.type !== "explore" || choice.seat !== seat) throw new Error("No tienes una elección de explorar pendiente.");
+  if (choice.sourceId !== action.sourceId) throw new Error("Esa elección de explorar ya no está pendiente.");
+  const player = playerAt(state, seat);
+  const top = player.library[0];
+  if (!top || top.instance_id !== choice.card.instance_id) throw new Error("La carta revelada ya no está en la parte superior de la biblioteca.");
+  let next = withPlayer({ ...state, pendingChoice: null }, seat, (current) => ({
+    ...current,
+    library: action.accept ? current.library.slice(1) : current.library,
+    graveyard: action.accept ? [...current.graveyard, top] : current.graveyard,
+    battlefield: current.battlefield.map((permanent) => permanent.instance_id === choice.sourcePermanentId
+      ? { ...permanent, counters: { ...permanent.counters, "+1/+1": (permanent.counters["+1/+1"] ?? 0) + 1 } }
+      : permanent)
+  }));
+  return logged(next, seat, action.accept
+    ? `${choice.card.name} va al cementerio; ${choice.sourceCard.name} recibe un contador +1/+1.`
+    : `${choice.card.name} permanece en la parte superior; ${choice.sourceCard.name} recibe un contador +1/+1.`);
+}
+
 function applyFinishLookTop(state: GameState, seat: SeatId, action: Extract<GameAction, { type: "finish-look-top" }>): GameState {
   const choice = state.pendingChoice;
   if (!choice || choice.type !== "look-top-select" || choice.seat !== seat || choice.stage !== "select") {
@@ -13142,6 +13215,7 @@ export function applyAction(state: GameState, seat: SeatId, action: GameAction):
     case "choose-hand-card-to-library-top": next = applyChooseHandCardToLibraryTop(state, seat, action); break;
     case "finish-library-search": next = applyFinishLibrarySearch(state, seat, action); break;
     case "choose-scry": next = applyChooseScry(state, seat, action); break;
+    case "choose-explore-graveyard": next = applyChooseExploreGraveyard(state, seat, action); break;
     case "choose-look-top": next = applyChooseLookTop(state, seat, action); break;
     case "finish-look-top": next = applyFinishLookTop(state, seat, action); break;
     case "choose-look-top-bottom": next = applyChooseLookTopBottom(state, seat, action); break;
