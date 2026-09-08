@@ -38,6 +38,9 @@ SAFE_FAMILIES: dict[str, dict[str, str]] = {
         "primitive": "exile-target-permanent-until-source-leaves", "rules": "CR 400.7, 610"
     },
     "~ can't be blocked by creatures with power 2 or less.": {"primitive": "cannotBeBlockedByPowerAtMost", "rules": "CR 509.1a"},
+    "~ can't attack unless defending player controls an Island.": {
+        "primitive": "cannotAttackUnlessDefenderControlsLandSubtype", "rules": "CR 508.1d",
+    },
     "Gain control of target creature until end of turn.": {
         "primitive": "gain-control-target-until-end-of-turn",
         "rules": "CR 611.2, 701.7",
