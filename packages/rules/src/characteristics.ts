@@ -257,6 +257,8 @@ export interface CombatRules {
   readonly preventsCombatDamageToController: number;
   /** "You may have ~ assign its combat damage as though it weren't blocked" (Tornado Elemental). */
   readonly assignsAsUnblocked: boolean;
+  /** Bushido N: this creature gets +N/+N when it blocks or becomes blocked (CR 702.45). */
+  readonly bushido: number;
 }
 
 export const NO_COMBAT_RULES: CombatRules = {
@@ -274,7 +276,8 @@ export const NO_COMBAT_RULES: CombatRules = {
   preventsAllCombatDamage: false,
   preventsAllCombatDamageToSelf: false,
   preventsCombatDamageToController: 0,
-  assignsAsUnblocked: false
+  assignsAsUnblocked: false,
+  bushido: 0
 };
 
 /** Basic land types landwalk can name, plus the two most common nonbasic ones. */
@@ -306,6 +309,8 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   const controllerPrevention = /^as long as ~ is untapped, if a creature would deal combat damage to you, prevent (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) of that damage$/i.exec(text);
   if (controllerPrevention) return { preventsCombatDamageToController: toNumber(controllerPrevention[1]!) ?? 0 };
   if (/^you may have ~ assign its combat damage as though it weren't blocked$/i.test(text)) return { assignsAsUnblocked: true };
+  const bushido = /^bushido (\d+)$/.exec(text);
+  if (bushido) return { bushido: Number(bushido[1]) };
 
   const attackLimit = /^no more than (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d+) creatures? can attack you each combat$/.exec(text);
   if (attackLimit) return { maxAttackers: toNumber(attackLimit[1]) ?? 0 };

@@ -1473,7 +1473,8 @@ export function powerOf(permanent: Permanent, state?: GameState): number {
     .reduce((total, grant) => total + grant.power, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? auraSetting?.basePower ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + equipmentTeamBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus;
+  const bushidoBonus = state && isBushidoEngaged(state, permanent) ? profile.combatRules.bushido : 0;
+  return (permanent.temporaryBasePowerToughness?.power ?? permanent.temporaryAnimation?.power ?? auraSetting?.basePower ?? imprint?.power ?? level?.power ?? cda ?? profile.power ?? 0) + counterModifier(permanent) + permanent.powerModifier + (permanent.combatPowerModifier ?? 0) + equipmentBonus(state, permanent).power + equipmentTeamBonus(state, permanent).power + auraBonus(state, permanent).power + staticBonus + globalBonus + bushidoBonus;
 }
 export function toughnessOf(permanent: Permanent, state?: GameState): number {
   const profile = cardProfile(permanent.card);
@@ -1489,7 +1490,13 @@ export function toughnessOf(permanent: Permanent, state?: GameState): number {
     .reduce((total, grant) => total + grant.toughness, 0) : 0;
   const imprint = permanent.exiledWith && isCreature(cardProfile(permanent.exiledWith)) ? cardProfile(permanent.exiledWith) : undefined;
   const cda = state ? cdaPowerToughnessValue(state, permanent, profile) : null;
-  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? auraSetting?.baseToughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + equipmentTeamBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus;
+  const bushidoBonus = state && isBushidoEngaged(state, permanent) ? profile.combatRules.bushido : 0;
+  return (permanent.temporaryBasePowerToughness?.toughness ?? permanent.temporaryAnimation?.toughness ?? auraSetting?.baseToughness ?? imprint?.toughness ?? level?.toughness ?? cda ?? profile.toughness ?? 0) + counterModifier(permanent) + permanent.toughnessModifier + equipmentBonus(state, permanent).toughness + equipmentTeamBonus(state, permanent).toughness + auraBonus(state, permanent).toughness + staticBonus + globalBonus + bushidoBonus;
+}
+
+function isBushidoEngaged(state: GameState, permanent: Permanent): boolean {
+  if (cardProfile(permanent.card).combatRules.bushido <= 0) return false;
+  return state.combat.blockers.some((blocker) => blocker.instanceId === permanent.instance_id || blocker.attackerId === permanent.instance_id);
 }
 function keywordOf(state: GameState, permanent: Permanent, keyword: EnforcedKeyword): boolean {
   const auraSetting = auraCharacteristicSetting(state, permanent);

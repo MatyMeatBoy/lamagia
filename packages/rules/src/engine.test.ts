@@ -87,6 +87,20 @@ describe("smart counter response and safe mana undo", () => {
     expect(profile.activatedAbilities[0]).toMatchObject({ targetKind: "creature-power-at-most-2", effect: { kind: "target-cant-be-blocked" } });
   });
 
+  it("parses Bushido as a combat-only bonus", () => {
+    const profile = profileOf(make({ name: "Bushido Test", type_line: "Creature — Human Samurai", power: "2", toughness: "2", oracle_text: "Bushido 1" }));
+    expect(profile.unimplementedText).toEqual([]);
+    expect(profile.combatRules.bushido).toBe(1);
+    let game = twoSeatGame([], []);
+    game = putOnBattlefield(game, 0, [make({ name: "Bushido Creature", type_line: "Creature — Human Samurai", power: "2", toughness: "2", oracle_text: "Bushido 1" })]);
+    game = putOnBattlefield(game, 1, [BEAR()]);
+    const samurai = game.players[0]!.battlefield[0]!;
+    const blocker = game.players[1]!.battlefield[0]!;
+    game = { ...game, combat: { ...game.combat, attackers: [{ instanceId: samurai.instance_id, defender: 1 }], blockers: [{ instanceId: blocker.instance_id, attackerId: samurai.instance_id }] } };
+    expect(powerOf(samurai, game)).toBe(3);
+    expect(toughnessOf(samurai, game)).toBe(3);
+  });
+
   it("offers Derevi's command-zone return ability without treating it as a cast", () => {
     let game = twoSeatGame([], []);
     const derevi = C13_DEREVI();
