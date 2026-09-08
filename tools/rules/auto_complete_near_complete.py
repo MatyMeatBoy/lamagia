@@ -10,8 +10,8 @@ Usage from the repository root::
 
     python tools/rules/auto_complete_near_complete.py --sample-size 5 --max-groups 10
 
-The first safe family is intentionally small. Add a new entry only when the
-corresponding TypeScript primitive and a scenario test already exist.
+The safe-family registry is intentionally conservative. Add a new entry only
+when the corresponding TypeScript primitive and a scenario test already exist.
 """
 
 from __future__ import annotations
@@ -25,19 +25,18 @@ from typing import Any
 
 
 SAFE_FAMILIES: dict[str, dict[str, str]] = {
-    "Draw a card.": {"primitive": "draw", "rules": "CR 121"},
-    "Gain 3 life.": {"primitive": "gain-life", "rules": "CR 119"},
-    "Exile target creature.": {"primitive": "exile-target-permanent", "rules": "CR 701.11"},
-    "Tap target creature.": {"primitive": "tap-target-permanent", "rules": "CR 701.21"},
-    "Untap target creature.": {"primitive": "untap-target-permanent", "rules": "CR 701.22"},
-    "Target creature gets +1/+1 until end of turn.": {"primitive": "modify-target-creature", "rules": "CR 613.4"},
-    "Target creature gets -1/-1 until end of turn.": {"primitive": "modify-target-creature", "rules": "CR 613.4"},
-    "Put a +1/+1 counter on target creature.": {"primitive": "add-counter-target-creature", "rules": "CR 122"},
-    "Scry 1.": {"primitive": "scry", "rules": "CR 701.20"},
-    "Return target creature card from your graveyard to your hand.": {
-        "primitive": "return-target-card-from-graveyard",
-        "rules": "CR 400, 701",
+    "Destroy target attacking creature.": {"primitive": "destroy-target-permanent", "rules": "CR 701.8"},
+    "Destroy target tapped creature.": {"primitive": "tapped-creature", "rules": "CR 701.8"},
+    "Destroy target artifact or land.": {"primitive": "artifact-or-land", "rules": "CR 701.8"},
+    "Destroy target creature or planeswalker.": {"primitive": "destroy-target-permanent", "rules": "CR 701.8"},
+    "Prevent all combat damage that would be dealt this turn.": {"primitive": "prevent-all-combat-damage-this-turn", "rules": "CR 615"},
+    "Destroy all enchantments.": {"primitive": "destroy-all-enchantments", "rules": "CR 701.8"},
+    "Target creature can't be blocked this turn.": {"primitive": "target-cant-be-blocked", "rules": "CR 509.1a"},
+    "When ~ enters, attach it to target creature you control.": {"primitive": "attach-equipment", "rules": "CR 301.5"},
+    "When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield.": {
+        "primitive": "exile-target-permanent-until-source-leaves", "rules": "CR 400.7, 610"
     },
+    "~ can't be blocked by creatures with power 2 or less.": {"primitive": "cannotBeBlockedByPowerAtMost", "rules": "CR 509.1a"},
     "Gain control of target creature until end of turn.": {
         "primitive": "gain-control-target-until-end-of-turn",
         "rules": "CR 611.2, 701.7",
@@ -65,7 +64,7 @@ def unresolved_candidates(payload: dict[str, Any], template: str | None = None) 
 
 def _contains_primitive(value: Any, primitive: str) -> bool:
     if isinstance(value, dict):
-        return any(_contains_primitive(child, primitive) for child in value.values())
+        return any(key == primitive or _contains_primitive(child, primitive) for key, child in value.items())
     if isinstance(value, list):
         return any(_contains_primitive(child, primitive) for child in value)
     return value == primitive
@@ -90,11 +89,8 @@ def _identity(row: dict[str, Any]) -> str:
 
 
 def _candidates_for_family(payload: dict[str, Any], template: str) -> list[dict[str, Any]]:
-    """Prefer unresolved one-line rows, then use fully implemented rows as a regression sample."""
-    rows = unresolved_candidates(payload, template)
-    seen = {_identity(row) for row in rows}
-    rows.extend(row for row in completed_candidates(payload, template) if _identity(row) not in seen)
-    return rows
+    """Return only genuinely pending one-line cards; regressions use separate tests."""
+    return unresolved_candidates(payload, template)
 
 
 def select_batches(
@@ -113,7 +109,10 @@ def select_batches(
             break
         candidates = [row for row in _candidates_for_family(payload, family) if _identity(row) not in selected_ids]
         if len(candidates) < sample_size:
-            raise RuntimeError(f"Only {len(candidates)} verifiable cards found for {family}; need {sample_size}.")
+            raise RuntimeError(
+                f"Only {len(candidates)} unresolved one-line cards found for {family}; need {sample_size}. "
+                "Completed cards are regression samples only and cannot satisfy this gate."
+            )
         cards = candidates[:sample_size]
         selected_ids.update(_identity(row) for row in cards)
         groups.append({
@@ -153,12 +152,11 @@ def complete_sample(
     candidates = unresolved_candidates(before, template)
     unresolved_count = len(candidates)
     if len(candidates) < sample_size:
-        known = {str(row.get("oracle_id") or row.get("scryfall_id")) for row in candidates}
-        candidates.extend(row for row in completed_candidates(before, template)
-                          if str(row.get("oracle_id") or row.get("scryfall_id")) not in known)
-    if len(candidates) < sample_size:
         wanted = template or "any safe family"
-        raise RuntimeError(f"Only {len(candidates)} verifiable cards found for {wanted}; need {sample_size}.")
+        raise RuntimeError(
+            f"Only {len(candidates)} unresolved one-line cards found for {wanted}; need {sample_size}. "
+            "Completed cards are regression samples only and cannot satisfy this gate."
+        )
 
     selected = candidates[:sample_size]
     if refresh:
@@ -210,6 +208,115 @@ def complete_sample(
     return report
 
 
+def plan_batches(
+    profiles_path: Path,
+    *,
+    sample_size: int,
+    max_groups: int,
+    template: str | None = None,
+    output: Path,
+) -> dict[str, Any]:
+    """Persist the pre-change card set so completion is proved against exact IDs."""
+    before = load_profiles(profiles_path)
+    groups = select_batches(before, sample_size=sample_size, max_groups=max_groups, template=template)
+    plan = {
+        "format": "prossh-auto-complete-plan/v1",
+        "sample_size": sample_size,
+        "requested_groups": max_groups,
+        "selection": "unresolved-one-line-only",
+        "groups": [
+            {
+                "template": group["template"],
+                "primitive": group["primitive"],
+                "rules": group["rules"],
+                "cards": [
+                    {
+                        "name": row.get("name"),
+                        "oracle_id": row.get("oracle_id"),
+                        "scryfall_id": row.get("scryfall_id"),
+                        "before_fully_implemented": bool(row.get("fullyImplemented")),
+                        "before_remaining_lines": row.get("unimplementedText") or [],
+                    }
+                    for row in group["cards"]
+                ],
+            }
+            for group in groups
+        ],
+        "engine_export": str(profiles_path),
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return plan
+
+
+def verify_plan(
+    profiles_path: Path,
+    plan_path: Path,
+    *,
+    refresh: bool = True,
+    output: Path | None = None,
+) -> dict[str, Any]:
+    """Verify that every pre-change unresolved card in a saved plan is now complete."""
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    if plan.get("format") != "prossh-auto-complete-plan/v1":
+        raise ValueError(f"Unsupported completion plan: {plan_path}")
+    if refresh:
+        refresh_export(profiles_path.parents[2])
+    after = load_profiles(profiles_path)
+    by_id = {_identity(row): row for row in after["profiles"]}
+    groups: list[dict[str, Any]] = []
+    failures: list[str] = []
+    for group in plan.get("groups", []):
+        cards: list[dict[str, Any]] = []
+        for selected in group.get("cards", []):
+            identity = str(selected.get("oracle_id") or selected.get("scryfall_id"))
+            current = by_id.get(identity)
+            missing = (current or {}).get("unimplementedText") or []
+            baseline_valid = (
+                not bool(selected.get("before_fully_implemented"))
+                and selected.get("before_remaining_lines") == [group["template"]]
+            )
+            passed = baseline_valid and bool(current and current.get("fullyImplemented")) and not missing and _contains_primitive(
+                current, str(group["primitive"])
+            )
+            card = {
+                "name": (current or selected).get("name"),
+                "oracle_id": (current or selected).get("oracle_id"),
+                "scryfall_id": (current or selected).get("scryfall_id"),
+                "template": group["template"],
+                "primitive": group["primitive"],
+                "rules": group["rules"],
+                "fully_implemented": bool(current and current.get("fullyImplemented")),
+                "remaining_lines": missing,
+                "passed": passed,
+            }
+            cards.append(card)
+            if not passed:
+                reason = "invalid pre-change baseline" if not baseline_valid else "not fully implemented"
+                failures.append(f"{card['name']} | {identity} ({reason})")
+        groups.append({key: group[key] for key in ("template", "primitive", "rules")} | {"cards": cards})
+    expected = sum(len(group.get("cards", [])) for group in plan.get("groups", []))
+    actual = sum(len(group["cards"]) for group in groups)
+    report = {
+        "format": "prossh-auto-complete-plan-verification/v1",
+        "sample_size": plan.get("sample_size"),
+        "requested_groups": plan.get("requested_groups"),
+        "verified_groups": len(groups),
+        "selection": plan.get("selection"),
+        "passed": not failures and actual == expected,
+        "groups": groups,
+        "failures": failures,
+        "engine_export": str(profiles_path),
+        "plan": str(plan_path),
+    }
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if not report["passed"]:
+        raise RuntimeError("Completion plan failed: " + "; ".join(failures or ["not all planned cards verified"]))
+    return report
+
+
 def complete_batches(
     profiles_path: Path,
     *,
@@ -219,7 +326,7 @@ def complete_batches(
     refresh: bool = True,
     output: Path | None = None,
 ) -> dict[str, Any]:
-    """Verify up to ``max_groups`` disjoint five-card samples with one export."""
+    """Verify up to ``max_groups`` disjoint groups of new one-line cards."""
     before = load_profiles(profiles_path)
     groups = select_batches(before, sample_size=sample_size, max_groups=max_groups, template=template)
     if refresh:
@@ -266,6 +373,7 @@ def complete_batches(
         "sample_size": sample_size,
         "requested_groups": max_groups,
         "verified_groups": len(reports),
+        "selection": "unresolved-one-line-only",
         "passed": not failures and len(reports) == min(max_groups, len(groups)),
         "groups": reports,
         "failures": failures,
@@ -286,8 +394,29 @@ def main() -> None:
     parser.add_argument("--max-groups", type=int, default=10)
     parser.add_argument("--template", choices=sorted(SAFE_FAMILIES), default=None)
     parser.add_argument("--output", type=Path, default=Path("data/rules/auto-complete-pass.json"))
+    parser.add_argument("--plan", type=Path, help="Save unresolved card IDs before implementation and exit")
+    parser.add_argument("--verify-plan", type=Path, help="Verify a previously saved pre-change plan")
     parser.add_argument("--no-refresh", action="store_true", help="Do not regenerate the engine export before verification")
     args = parser.parse_args()
+    if args.plan and args.verify_plan:
+        parser.error("--plan and --verify-plan are mutually exclusive")
+    if args.plan:
+        report = plan_batches(
+            args.profiles,
+            sample_size=args.sample_size,
+            max_groups=args.max_groups,
+            template=args.template,
+            output=args.plan,
+        )
+        print(f"Plan saved: {sum(len(group['cards']) for group in report['groups'])} unresolved cards")
+        for group in report["groups"]:
+            for card in group["cards"]:
+                print(f"{card['name']} | {card['oracle_id']}")
+        return
+    if args.verify_plan:
+        report = verify_plan(args.profiles, args.verify_plan, refresh=not args.no_refresh, output=args.output)
+        print(f"Plan verification PASS: {sum(len(group['cards']) for group in report['groups'])} cards")
+        return
     report = complete_batches(
         args.profiles,
         sample_size=args.sample_size,

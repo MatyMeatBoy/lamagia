@@ -228,6 +228,12 @@ export interface CombatRules {
   readonly cannotBeBlocked: boolean;
   /** "~ can't be blocked as long as defending player controls the most creatures". */
   readonly cannotBeBlockedWhenDefenderHasMostCreatures: boolean;
+  /** "~ can't be blocked by creatures with power N or less" (CR 509.1a). */
+  readonly cannotBeBlockedByPowerAtMost: number | null;
+  /** "~ can't be blocked by more than one creature" (CR 509.1a). */
+  readonly maxBlockers: number | null;
+  /** "~ can block an additional creature each combat" (CR 509.1a). */
+  readonly additionalBlockerCapacity: number;
   /** "~ attacks each combat if able" (CR 508.1d). */
   readonly mustAttack: boolean;
   /** "No more than N creatures can attack you each combat" (CR 508.1d). */
@@ -258,6 +264,9 @@ export const NO_COMBAT_RULES: CombatRules = {
   cannotBlock: false,
   cannotBeBlocked: false,
   cannotBeBlockedWhenDefenderHasMostCreatures: false,
+  cannotBeBlockedByPowerAtMost: null,
+  maxBlockers: null,
+  additionalBlockerCapacity: 0,
   mustAttack: false,
   maxAttackers: null,
   blocksOnlyWithKeyword: null,
@@ -286,6 +295,10 @@ function parseCombatRuleLine(line: string): Partial<CombatRules> | null {
   if (/^~ can't be blocked as long as defending player controls the most creatures or is tied for the most$/.test(text)) {
     return { cannotBeBlockedWhenDefenderHasMostCreatures: true };
   }
+  const powerCap = /^~ can't be blocked by creatures with power (\d+) or less$/.exec(text);
+  if (powerCap) return { cannotBeBlockedByPowerAtMost: Number(powerCap[1]) };
+  if (/^~ can't be blocked by more than one creature$/.test(text)) return { maxBlockers: 1 };
+  if (/^~ can block an additional creature each combat$/.test(text)) return { additionalBlockerCapacity: 1 };
   if (/^~ can't attack or block$/.test(text)) return { cannotAttack: true, cannotBlock: true };
   if (/^~ attacks each combat if able$/.test(text)) return { mustAttack: true };
   if (/^prevent all combat damage that would be dealt to and dealt by ~$/i.test(text)) return { preventsAllCombatDamage: true };
@@ -908,6 +921,10 @@ export type SpellEffect =
   /** Moves the source commander from the command zone to the battlefield. */
   | { readonly kind: "put-source-from-command-zone" }
   | { readonly kind: "target-cant-block" }
+  | { readonly kind: "target-cant-be-blocked" }
+  | { readonly kind: "prevent-all-combat-damage-this-turn" }
+  | { readonly kind: "destroy-all-enchantments" }
+  | { readonly kind: "exile-target-permanent-until-source-leaves" }
   /** "Your opponents can't cast spells this turn." (Silence, CR 116.3). */
   | { readonly kind: "opponents-cant-cast-spells-this-turn" }
   | { readonly kind: "add-mana"; readonly pool: Readonly<Record<string, number>> }
@@ -1188,10 +1205,10 @@ export type TargetKind =
   | `spell-mana-value-${number}`
   | `artifact-or-creature-mana-value-${number}`
   | "any" | "player" | "opponent" | "creature" | "spell" | "creature-spell" | "noncreature-spell" | "instant-or-sorcery-spell" | "instant-or-sorcery-spell-you-control" | "permanent" | "artifact-or-enchantment" | "artifact-or-creature" | "creature-or-enchantment" | "black-or-red-permanent"
-  | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
+  | "artifact-creature" | "artifact-creature-or-planeswalker" | "creature-or-planeswalker" | "artifact-enchantment-or-land" | "artifact-or-land" | "player-or-planeswalker" | "artifact" | "noncreature-artifact" | "nonland" | "nonartifact-creature"
   | "enchantment" | "land" | "permanent-you-control" | "permanent-opponent"
   | "nonblack-creature" | "nonartifact-nonblack-creature" | "non-demon-creature" | "nonlegendary-creature" | "creature-with-flying" | "creature-you-control" | "creature-opponent" | "nonbasic-land" | "noncreature-permanent" | "land-you-control" | "nonland-you-control" | "nonland-opponent"
-  | "creature-opponent-without-flying"
+  | "creature-opponent-without-flying" | "tapped-creature"
   | "creature-dealt-damage-to-you"
   | "attacking-or-blocking-creature" | "attacking-creature" | "blocked-creature"
   | "creature-power-at-least-5"
@@ -2331,8 +2348,8 @@ function parseManaAbilityGrants(text: string): StaticManaAbilityGrant[] {
 /** "~ has flying during your turn" (Razorkin Needlehead) — self-only, gated on whose turn it is. */
 function parseKeywordDuringYourTurn(line: string): EnforcedKeyword[] {
   const clean = line.trim().replace(/\.$/, "");
-  const match = new RegExp(`^~ has ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*) during your turn$`, "i").exec(clean);
-  return match ? parseKeywordList(match[1]!) : [];
+  const match = new RegExp(`^(?:~ has ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*) during your turn|during your turn,? ~ has ((?:${GRANTABLE_KEYWORDS})(?:(?:,| and )(?:${GRANTABLE_KEYWORDS}))*))$`, "i").exec(clean);
+  return match ? parseKeywordList(match[1] ?? match[2]!) : [];
 }
 
 function parseKeywordsDuringYourTurn(text: string): EnforcedKeyword[] {
@@ -4474,6 +4491,9 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "damage-all-creatures-of-color", amount: "X", color: "chosen" }, target: "none" };
   }
   if (/^Destroy target creature$/i.test(text)) return { effect: { kind: "destroy-target-creature" }, target: "creature" };
+  if (/^Destroy target attacking creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "attacking-creature" };
+  if (/^Destroy target tapped creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "tapped-creature" };
+  if (/^Destroy target artifact or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-or-land" };
   if (/^Destroy target artifact or creature with mana value X\.?$/i.test(text)) {
     return { effect: { kind: "destroy-target-artifact-or-creature-mana-value" }, target: "artifact-or-creature" };
   }
@@ -4568,6 +4588,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "land" };
   if (/^Destroy target nonbasic land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonbasic-land" };
   if (/^Destroy target artifact, creature, or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-creature-or-planeswalker" };
+  if (/^Destroy target creature or planeswalker$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-or-planeswalker" };
   if (/^Exile target creature or planeswalker$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "creature-or-planeswalker" };
   if (/^Exile target black or red permanent$/i.test(text)) return { effect: { kind: "exile-target-permanent" }, target: "black-or-red-permanent" };
   if (/^Destroy target artifact, enchantment, or land$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "artifact-enchantment-or-land" };
@@ -4582,6 +4603,7 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
   if (/^Destroy target non-Demon creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "non-demon-creature" };
   if (/^Destroy target nonlegendary creature$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "nonlegendary-creature" };
   if (/^Destroy all creatures with flying$/i.test(text)) return { effect: { kind: "destroy-all-creatures", flyingOnly: true }, target: "none" };
+  if (/^Destroy all enchantments$/i.test(text)) return { effect: { kind: "destroy-all-enchantments" }, target: "none" };
   if (/^Destroy all creatures with power greater than target creature'?s power$/i.test(text)) return { effect: { kind: "destroy-creatures-power-greater-than-target" }, target: "creature" };
   if (/^Destroy target creature with flying$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-flying" };
   if (/^Destroy target creature with defender$/i.test(text)) return { effect: { kind: "destroy-target-permanent" }, target: "creature-with-defender" };
@@ -4779,6 +4801,12 @@ function recognizeSentence(sentence: string): { effect: SpellEffect; target: Tar
     return { effect: { kind: "put-source-from-command-zone" }, target: "none" };
   }
   if (/^Target creature can'?t block this turn$/i.test(text)) return { effect: { kind: "target-cant-block" }, target: "creature" };
+  if (/^Target creature can'?t be blocked this turn$/i.test(text)) return { effect: { kind: "target-cant-be-blocked" }, target: "creature" };
+  if (/^Prevent all combat damage that would be dealt this turn$/i.test(text)) return { effect: { kind: "prevent-all-combat-damage-this-turn" }, target: "none" };
+  if (/^Attach it to target creature you control$/i.test(text)) return { effect: { kind: "attach-equipment" }, target: "creature-you-control" };
+  if (/^Exile target nonland permanent an opponent controls until ~ (?:leaves the battlefield|is put into a graveyard from the battlefield)$/i.test(text)) {
+    return { effect: { kind: "exile-target-permanent-until-source-leaves" }, target: "nonland-opponent" };
+  }
   if (/^Your opponents can'?t cast spells this turn$/i.test(text)) return { effect: { kind: "opponents-cant-cast-spells-this-turn" }, target: "none" };
   if (/^This turn, creatures can'?t block unless their controller pays \{X\} for each blocking creature they control$/i.test(text)) {
     return { effect: { kind: "set-blocking-tax", amount: "X" }, target: "none" };

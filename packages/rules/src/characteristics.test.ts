@@ -51,6 +51,35 @@ describe("type line parsing", () => {
   });
 });
 
+describe("composable one-line combat and target primitives", () => {
+  it("keeps target restrictions attached to the shared destroy primitive", () => {
+    const attacking = cardProfile(card({ name: "Test", type_line: "Instant", oracle_text: "Destroy target attacking creature." }));
+    const tapped = cardProfile(card({ name: "Test", type_line: "Instant", oracle_text: "Destroy target tapped creature." }));
+    const artifactOrLand = cardProfile(card({ name: "Test", type_line: "Instant", oracle_text: "Destroy target artifact or land." }));
+    expect(attacking).toMatchObject({ fullyImplemented: true, targetKind: "attacking-creature", effects: [{ kind: "destroy-target-permanent" }] });
+    expect(tapped).toMatchObject({ fullyImplemented: true, targetKind: "tapped-creature", effects: [{ kind: "destroy-target-permanent" }] });
+    expect(artifactOrLand).toMatchObject({ fullyImplemented: true, targetKind: "artifact-or-land", effects: [{ kind: "destroy-target-permanent" }] });
+  });
+
+  it("recognises reusable combat and permanent-entry clauses", () => {
+    const prevent = cardProfile(card({ name: "Test", type_line: "Instant", oracle_text: "Prevent all combat damage that would be dealt this turn." }));
+    const attach = cardProfile(card({ name: "Test", type_line: "Artifact — Equipment", oracle_text: "When ~ enters, attach it to target creature you control." }));
+    const exile = cardProfile(card({ name: "Test", type_line: "Enchantment", oracle_text: "When ~ enters, exile target nonland permanent an opponent controls until ~ leaves the battlefield." }));
+    expect(prevent).toMatchObject({ fullyImplemented: true, effects: [{ kind: "prevent-all-combat-damage-this-turn" }] });
+    expect(attach.triggers).toContainEqual(expect.objectContaining({ effect: { kind: "attach-equipment" }, targetKind: "creature-you-control" }));
+    expect(exile.triggers).toContainEqual(expect.objectContaining({ effect: { kind: "exile-target-permanent-until-source-leaves" }, targetKind: "nonland-opponent" }));
+  });
+
+  it("parses static blocker limits without confusing creature and land types", () => {
+    const evasive = cardProfile(card({ name: "Test", type_line: "Creature", oracle_text: "~ can't be blocked by creatures with power 2 or less." }));
+    const firstStrike = cardProfile(card({ name: "Test", type_line: "Creature", oracle_text: "During your turn, ~ has first strike." }));
+    expect(evasive.combatRules).toMatchObject({ cannotBeBlockedByPowerAtMost: 2 });
+    expect(evasive.fullyImplemented).toBe(true);
+    expect(firstStrike.keywordsDuringYourTurn).toContain("first strike");
+    expect(firstStrike.fullyImplemented).toBe(true);
+  });
+});
+
 describe("mana abilities", () => {
   it("derives a basic land ability from produced_mana", () => {
     const profile = cardProfile(card({ name: "Forest", type_line: "Basic Land — Forest", oracle_text: "({T}: Add {G}.)", produced_mana: ["G"] }));

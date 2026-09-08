@@ -129,6 +129,8 @@ export interface Permanent {
   readonly loyaltyUsedThisTurn?: boolean;
   /** "Target creature can't block this turn"; cleared during cleanup. */
   readonly cantBlockThisTurn?: boolean;
+  /** "Target creature can't be blocked this turn"; cleared during cleanup. */
+  readonly cantBeBlockedThisTurn?: boolean;
   /** Layer 7c modifications that expire in the cleanup step. */
   readonly powerModifier: number;
   readonly toughnessModifier: number;
@@ -508,6 +510,8 @@ export interface GameState {
   readonly creatureCardsDiedThisTurn: readonly GameCard[];
   /** War Cadence-style generic mana taxes, one entry per resolved activation, until cleanup. */
   readonly blockingTaxPerCreature?: readonly number[];
+  /** Fog-style one-shot combat-damage prevention until cleanup. */
+  readonly preventAllCombatDamageThisTurn?: boolean;
   /** Last direction chosen by a Mystic Barrier-style effect. */
   readonly attackDirection?: "left" | "right";
   /** An additional combat waiting after the current combat phase (CR 506.6). */
@@ -2284,6 +2288,7 @@ export function createGame(decks: readonly DeckInput[], options: GameOptions = {
     triggerQueue: [],
     delayedDraws: [],
     delayedReturns: [],
+    preventAllCombatDamageThisTurn: false,
     delayedDeathReturns: [],
     activeStateTriggerKeys: [],
     delayedSacrifices: [],
@@ -5643,6 +5648,21 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       const source = sourceId ? findPermanent(next, sourceId) : undefined;
       return source ? changePermanentController(next, source, targetController) : next;
     }
+    case "exile-target-permanent-until-source-leaves": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      const moved = movePermanentToZone(state, permanent, "exile");
+      const sourceId = object.trigger?.sourcePermanentId ?? object.sourcePermanentId;
+      const source = sourceId ? findPermanent(moved, sourceId) : undefined;
+      if (!source || permanent.card.token) return moved;
+      return withPlayer(moved, source.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === source.instance_id
+          ? { ...candidate, exiledWith: permanent.card } : candidate)
+      }));
+    }
     case "exile-target-permanent-delayed-return": {
       const target = object.targets[0];
       if (!target || target.kind !== "permanent") return state;
@@ -6171,6 +6191,13 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
       }
       return logged(next, controller, `${sourceName} destruye artifacts, criaturas y encantamientos.`);
     }
+    case "destroy-all-enchantments": {
+      let next = state;
+      for (const permanent of allPermanents(state)) {
+        if (cardProfile(permanent.card).types.includes("Enchantment")) next = destroyPermanent(next, permanent);
+      }
+      return logged(next, controller, `${sourceName} destruye todos los encantamientos.`);
+    }
     case "destroy-all-artifacts-enchantments-add-counters": {
       const destroyed = allPermanents(state).filter((permanent) => {
         const profile = cardProfile(permanent.card);
@@ -6584,6 +6611,19 @@ function applyEffect(state: GameState, object: StackObject, effect: SpellEffect,
           ? { ...candidate, cantBlockThisTurn: true } : candidate)
       }));
     }
+    case "target-cant-be-blocked": {
+      const target = object.targets[0];
+      if (!target || target.kind !== "permanent") return state;
+      const permanent = findPermanent(state, target.instanceId);
+      if (!permanent) return state;
+      return withPlayer(state, permanent.controller, (player) => ({
+        ...player,
+        battlefield: player.battlefield.map((candidate) => candidate.instance_id === permanent.instance_id
+          ? { ...candidate, cantBeBlockedThisTurn: true } : candidate)
+      }));
+    }
+    case "prevent-all-combat-damage-this-turn":
+      return { ...state, preventAllCombatDamageThisTurn: true };
     case "opponents-cant-cast-spells-this-turn": {
       let next = state;
       for (const opponent of opponentsOf(next, object.controller)) {
@@ -7862,6 +7902,9 @@ export function canBlock(state: GameState, attacker: Permanent, blocker: Permane
   if (auraForbidsCombat(state, blocker, "cannotBlock")) return false;
   const attackerProfile = cardProfile(attacker.card);
   if (attackerProfile.combatRules.cannotBeBlocked) return false;
+  if (attacker.cantBeBlockedThisTurn) return false;
+  if (attackerProfile.combatRules.cannotBeBlockedByPowerAtMost !== null
+    && powerOf(blocker, state) <= attackerProfile.combatRules.cannotBeBlockedByPowerAtMost) return false;
   if (attackerProfile.combatRules.cannotBeBlockedWhenDefenderHasMostCreatures) {
     const defenderCount = playerAt(state, blocker.controller).battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length;
     const most = Math.max(...state.players.map((player) => player.battlefield.filter((permanent) => isCreature(cardProfile(permanent.card))).length));
@@ -7970,6 +8013,7 @@ function computeCombatDamage(state: GameState, firstStrikeStep: boolean): Damage
   const toPlayers: DamageBatch["toPlayers"] = [];
   const toPermanents: DamageBatch["toPermanents"] = [];
   const lifelink: DamageBatch["lifelink"] = [];
+  if (state.preventAllCombatDamageThisTurn) return { toPlayers, toPermanents, lifelink };
 
   for (const entry of state.combat.attackers) {
     const attacker = findPermanent(state, entry.instanceId);
@@ -8359,10 +8403,11 @@ function beginStep(state: GameState, step: TurnStep): GameState {
       next = {
         ...next,
         blockingTaxPerCreature: undefined,
+        preventAllCombatDamageThisTurn: false,
         players: next.players.map((current) => ({
           ...current,
           cantCastSpellsUntilEndOfTurn: false,
-          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryControllerFrom: undefined, temporaryControlWhileSourceTappedId: undefined, temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false }))
+          battlefield: current.battlefield.map((permanent) => ({ ...permanent, damage: 0, deathtouched: false, powerModifier: 0, toughnessModifier: 0, temporaryKeywords: [], temporaryControllerFrom: undefined, temporaryControlWhileSourceTappedId: undefined, temporaryTriggers: [], temporaryAnimation: undefined, temporaryBasePowerToughness: undefined, temporaryAllCreatureTypes: undefined, temporaryNoCreatureTypes: undefined, temporaryAbilitiesRemoved: undefined, regenerationShields: 0, cantRegenerateUntilEndOfTurn: false, exileIfWouldDieUntilEndOfTurn: false, cantBlockThisTurn: false, cantBeBlockedThisTurn: false }))
         }))
       };
       break;
@@ -9913,11 +9958,12 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "permanent-you-control") return profile.isPermanent && permanent.controller === seat;
     if (kind === "permanent-opponent") return profile.isPermanent && permanent.controller !== seat;
     if (kind === "nontoken-creature") return isCreature(profile) && !permanent.card.token;
-    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "creature-opponent-without-flying" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "nonlegendary-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind.startsWith("creature-power-toughness-sum-at-most-") || kind.startsWith("creature-power-at-") || kind.startsWith("creature-toughness-at-") || kind.startsWith("creature-power-or-toughness-")) {
+    if (kind === "creature" || kind === "creature-you-control" || kind === "creature-opponent" || kind === "creature-opponent-without-flying" || kind === "tapped-creature" || kind === "nonartifact-creature" || kind === "nonblack-creature" || kind === "nonartifact-nonblack-creature" || kind === "non-demon-creature" || kind === "nonlegendary-creature" || kind === "creature-with-flying" || kind === "creature-with-defender" || kind === "creature-with-deathtouch" || kind === "creature-with-lifelink" || kind === "creature-with-menace" || kind === "creature-with-haste" || kind === "creature-with-first-strike" || kind === "creature-with-double-strike" || kind === "creature-with-trample" || kind === "creature-with-vigilance" || kind === "creature-with-indestructible" || kind === "creature-with-hexproof" || kind === "creature-with-shroud" || kind === "creature-with-reach" || kind === "creature-power-at-least-5" || kind === "creature-power-at-most-4" || kind === "creature-toughness-at-least-4" || kind === "creature-toughness-at-most-4" || kind.startsWith("creature-power-toughness-sum-at-most-") || kind.startsWith("creature-power-at-") || kind.startsWith("creature-toughness-at-") || kind.startsWith("creature-power-or-toughness-")) {
       if (!isCreature(profile) && !permanent.temporaryAnimation) return false;
       if (kind === "creature-you-control" && permanent.controller !== seat) return false;
       if (kind === "creature-opponent" && permanent.controller === seat) return false;
       if (kind === "creature-opponent-without-flying" && (permanent.controller === seat || keywordOf(state, permanent, "flying"))) return false;
+      if (kind === "tapped-creature" && !permanent.tapped) return false;
       if (kind === "nonartifact-creature" && profile.types.includes("Artifact")) return false;
       if (kind === "nonblack-creature" && profile.colors.some((color) => color.toUpperCase() === "B")) return false;
       if (kind === "nonartifact-nonblack-creature" && (profile.types.includes("Artifact") || profile.colors.some((color) => color.toUpperCase() === "B"))) return false;
@@ -9963,6 +10009,7 @@ export function legalTargets(state: GameState, seat: SeatId, kind: Exclude<Targe
     if (kind === "enchantment") return profile.types.includes("Enchantment");
     if (kind === "land") return isLand(profile);
     if (kind === "artifact-enchantment-or-land") return profile.types.includes("Artifact") || profile.types.includes("Enchantment") || isLand(profile);
+    if (kind === "artifact-or-land") return profile.types.includes("Artifact") || isLand(profile);
     if (kind === "artifact") return profile.types.includes("Artifact");
     if (kind === "noncreature-artifact") return profile.types.includes("Artifact") && !isCreature(profile) && !permanent.temporaryAnimation;
     if (kind.startsWith("subtype:")) {
@@ -12420,8 +12467,29 @@ function applyDeclareBlockers(state: GameState, seat: SeatId, blockers: readonly
     if (!attacker || !blocker || !declaration || declaration.defender !== seat) throw new Error("Esa criatura no te está atacando.");
     if (!canBlock(state, attacker, blocker)) throw new Error(`${blocker.card.name} no puede bloquear a ${attacker.card.name}.`);
   }
-  const unique = new Set(blockers.map((entry) => entry.instanceId));
-  if (unique.size !== blockers.length) throw new Error("Una criatura solo puede bloquear a un atacante.");
+  const assignments = new Map<string, number>();
+  for (const entry of [...state.combat.blockers, ...blockers]) {
+    assignments.set(entry.instanceId, (assignments.get(entry.instanceId) ?? 0) + 1);
+  }
+  for (const [blockerId, count] of assignments) {
+    const blocker = findPermanent(state, blockerId);
+    const capacity = blocker ? 1 + cardProfile(blocker.card).combatRules.additionalBlockerCapacity : 1;
+    if (count > capacity) throw new Error("Una criatura no puede bloquear a tantos atacantes.");
+  }
+  const duplicateAttackers = new Set(blockers.map((entry) => `${entry.instanceId}:${entry.attackerId}`));
+  if (duplicateAttackers.size !== blockers.length) throw new Error("Una criatura no puede bloquear dos veces al mismo atacante.");
+
+  const allBlockersByAttacker = [...state.combat.blockers, ...blockers].reduce((counts, entry) => {
+    counts.set(entry.attackerId, (counts.get(entry.attackerId) ?? 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+  for (const declaration of state.combat.attackers) {
+    const attacker = findPermanent(state, declaration.instanceId);
+    const limit = attacker ? cardProfile(attacker.card).combatRules.maxBlockers : null;
+    if (limit !== null && (allBlockersByAttacker.get(declaration.instanceId) ?? 0) > limit) {
+      throw new Error(`${attacker?.card.name ?? "Esa criatura"} no puede ser bloqueada por más de ${limit} criatura.`);
+    }
+  }
 
   // Menace needs at least two blockers, so a single-blocker assignment is illegal.
   for (const declaration of state.combat.attackers) {
