@@ -1,6 +1,6 @@
 import unittest
 
-from auto_complete_near_complete import completed_candidates, unresolved_candidates
+from auto_complete_near_complete import completed_candidates, select_batches, unresolved_candidates
 
 
 class AutoCompleteNearCompleteTests(unittest.TestCase):
@@ -45,6 +45,27 @@ class AutoCompleteNearCompleteTests(unittest.TestCase):
             ]
         }
         self.assertEqual([row["oracle_id"] for row in completed_candidates(payload)], ["act"])
+
+    def test_batches_are_disjoint_and_keep_five_cards_per_family(self) -> None:
+        payload = {"profiles": []}
+        for template, primitive in list([
+            ("Draw a card.", "draw"),
+            ("Gain 3 life.", "gain-life"),
+        ]):
+            for index in range(5):
+                payload["profiles"].append({
+                    "name": f"{template}-{index}",
+                    "oracle_id": f"{primitive}-{index}",
+                    "oracle_text": template,
+                    "fullyImplemented": True,
+                    "effects": [{"kind": primitive}],
+                    "unimplementedText": [],
+                })
+        groups = select_batches(payload, sample_size=5, max_groups=2)
+        self.assertEqual(len(groups), 2)
+        self.assertTrue(all(len(group["cards"]) == 5 for group in groups))
+        ids = [card["oracle_id"] for group in groups for card in group["cards"]]
+        self.assertEqual(len(ids), len(set(ids)))
 
 
 if __name__ == "__main__":
