@@ -50,7 +50,11 @@ h1, h2, h3 { margin: 0; }
 .shell {
   height: 100dvh;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  /* The game screen has only two direct children: the topbar and the table.
+     The phase/stop rails live inside `.table`; keeping a third shell row makes
+     the table an auto-sized grid item, so its flex bands can collapse to zero
+     height and hide every opponent board. */
+  grid-template-rows: auto minmax(0, 1fr);
   grid-template-columns: minmax(0, 1fr);
   background:
     radial-gradient(ellipse 90% 75% at 50% 42%, #254836 0%, transparent 62%),

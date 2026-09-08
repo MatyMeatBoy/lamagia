@@ -108,24 +108,19 @@ const DEFAULT_STOPS: Record<StopScope, TurnStep[]> = {
 
 function loadStops(): { mine: Set<TurnStep>; opponents: Map<number, Set<TurnStep>> } {
   try {
-    const v2 = window.localStorage.getItem("prossh.stops.v2");
-    if (v2) {
-      const parsed = JSON.parse(v2) as { mine: TurnStep[]; opponents: TurnStep[] | Record<string, TurnStep[]> };
+    const v3 = window.localStorage.getItem("prossh.stops.v3");
+    if (v3) {
+      const parsed = JSON.parse(v3) as { mine: TurnStep[]; opponents: Record<string, TurnStep[]> };
       const raw = parsed.opponents;
-      // v2 stored one shared opponent row. Do not carry that broad setting
-      // into the per-player model; new opponent seats receive the MTGO
-      // defaults independently.
-      const opponentEntries = Array.isArray(raw)
-        ? []
-        : Object.entries(raw ?? {}).map(([seat, steps]) => [Number(seat), steps] as const);
+      const opponentEntries = Object.entries(raw ?? {}).map(([seat, steps]) => [Number(seat), steps] as const);
       return {
         mine: new Set(parsed.mine ?? DEFAULT_STOPS.mine),
         opponents: new Map(opponentEntries.map(([seat, steps]) => [seat, new Set(steps)]))
       };
     }
-    // Migrate the single legacy list into both scopes.
-    const legacy = JSON.parse(window.localStorage.getItem("prossh.stops") ?? "null") as TurnStep[] | null;
-    if (legacy) return { mine: new Set(legacy), opponents: new Map() };
+    // v2/legacy preferences came from the pre-player stopper model and could
+    // silently remove the requested factory stops. Start the v3 model with
+    // the explicit MTGO defaults; later manual changes are persisted per seat.
   } catch { /* fall through to defaults */ }
   return { mine: new Set(DEFAULT_STOPS.mine), opponents: new Map() };
 }
@@ -152,7 +147,7 @@ const ui: UiState = {
 };
 
 function persistStops(): void {
-  window.localStorage.setItem("prossh.stops.v2", JSON.stringify({
+  window.localStorage.setItem("prossh.stops.v3", JSON.stringify({
     mine: [...ui.stops.mine],
     opponents: Object.fromEntries([...ui.stops.opponents].map(([seat, steps]) => [String(seat), [...steps]]))
   }));
