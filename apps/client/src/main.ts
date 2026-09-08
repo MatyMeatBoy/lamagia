@@ -343,14 +343,20 @@ function manaHtml(cost: string | undefined): string {
 }
 
 const MANA_POOL_ORDER = ["W", "U", "B", "R", "G", "C"] as const;
+type ManaPoolDisplay = Partial<Record<typeof MANA_POOL_ORDER[number], number>> & {
+  readonly snow?: Partial<Record<typeof MANA_POOL_ORDER[number], number>>;
+};
 
-function manaReserveHtml(pool: Readonly<Record<string, number>>, restricted: readonly string[] = []): string {
+function manaReserveHtml(pool: ManaPoolDisplay, restricted: readonly string[] = []): string {
   const entries = MANA_POOL_ORDER.filter((symbol) => (pool[symbol] ?? 0) > 0);
+  const snowEntries = MANA_POOL_ORDER
+    .map((symbol) => ({ symbol, count: pool.snow?.[symbol] ?? 0 }))
+    .filter((entry) => entry.count > 0);
   const restrictedEntries = MANA_POOL_ORDER
     .map((symbol) => ({ symbol, count: restricted.filter((candidate) => candidate === symbol).length }))
     .filter((entry) => entry.count > 0);
-  if (!entries.length && !restrictedEntries.length) return `<span class="mana-reserve-empty">—</span>`;
-  return `${entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("")}${restrictedEntries.map(({ symbol, count }) => `<span class="mana-reserve-item restricted" title="Solo para hechizos legendarios">${manaSymbolHtml(symbol)}<b>${count}</b></span>`).join("")}`;
+  if (!entries.length && !snowEntries.length && !restrictedEntries.length) return `<span class="mana-reserve-empty">—</span>`;
+  return `${entries.map((symbol) => `<span class="mana-reserve-item">${manaSymbolHtml(symbol)}<b>${pool[symbol] ?? 0}</b></span>`).join("")}${snowEntries.map(({ symbol, count }) => `<span class="mana-reserve-item snow" title="${count} maná de fuente nevada; puede pagar {S}">❄${manaSymbolHtml(symbol)}<b>${count}</b></span>`).join("")}${restrictedEntries.map(({ symbol, count }) => `<span class="mana-reserve-item restricted" title="Solo para hechizos legendarios">${manaSymbolHtml(symbol)}<b>${count}</b></span>`).join("")}`;
 }
 
 /**

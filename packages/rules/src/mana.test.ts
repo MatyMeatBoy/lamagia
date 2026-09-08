@@ -29,6 +29,17 @@ describe("parseManaCost", () => {
     expect(cost("{2/U}").manaValue).toBe(2);
   });
 
+  it("reads hybrid Phyrexian symbols and keeps both color options", () => {
+    expect(cost("{G/U/P}").symbols[0]).toEqual({ kind: "hybrid-phyrexian", options: ["G", "U"], life: 2 });
+    expect(costColors(cost("{G/U/P}"))).toEqual(["U", "G"]);
+    expect(cost("{G/U/P}").manaValue).toBe(1);
+  });
+
+  it("parses snow as a dedicated payment marker", () => {
+    expect(cost("{S}{1}").symbols[0]).toEqual({ kind: "snow" });
+    expect(cost("{S}{1}").manaValue).toBe(2);
+  });
+
   it("treats an empty cost as free and rejects text that is not a cost", () => {
     expect(parseManaCost("")?.manaValue).toBe(0);
     expect(parseManaCost("Land")).toBeNull();
@@ -70,6 +81,24 @@ describe("payCost", () => {
     expect(canPay(cost("{B/P}"), emptyPool(), { availableLife: 2 })).toBe(true);
     expect(payCost(cost("{B/P}"), emptyPool(), { availableLife: 2 })?.lifePaid).toBe(2);
     expect(payCost(cost("{B/P}"), pool({ B: 1 }), { availableLife: 40 })?.lifePaid).toBe(0);
+  });
+
+  it("requires snow-source mana for {S}, while preserving its color for normal costs", () => {
+    expect(canPay(cost("{S}"), pool({ G: 1 }))).toBe(false);
+    const snow = payCost(cost("{S}"), pool({ G: 1, snow: { G: 1 } }));
+    expect(snow?.spent.G).toBe(1);
+    expect(snow?.spent.snow?.G).toBe(1);
+    expect(snow?.remaining.G).toBe(0);
+
+    const colored = payCost(cost("{G}"), pool({ G: 1, snow: { G: 1 } }));
+    expect(colored?.spent.snow?.G).toBe(1);
+    expect(canPay(cost("{S}"), pool({ C: 1, snow: { C: 1 } }))).toBe(true);
+  });
+
+  it("allows hybrid Phyrexian to use either color or exactly two life", () => {
+    expect(canPay(cost("{G/U/P}"), pool({ U: 1 }), { availableLife: 0 })).toBe(true);
+    expect(payCost(cost("{G/U/P}"), emptyPool(), { availableLife: 2 })?.lifePaid).toBe(2);
+    expect(canPay(cost("{G/U/P}"), emptyPool(), { availableLife: 1 })).toBe(false);
   });
 
   it("charges additional generic such as commander tax", () => {

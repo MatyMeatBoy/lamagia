@@ -2,7 +2,7 @@
 
 Generated from the local Comprehensive Rules snapshot and the normalized catalog. The report distinguishes keyword abilities from keyword actions and ability words; a high catalog count is a prioritization signal, not proof that all variants share one implementation.
 
-**Summary:** 36 implemented · 2 partial · 156 backlog
+**Summary:** 39 implemented · 2 partial · 153 backlog
 
 `catalog occurrences` counts Scryfall keyword metadata and is used to prioritize reusable primitives. Every implementation still requires a scenario test and a Comprehensive Rules citation.
 
@@ -88,9 +88,9 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.77 | Reinforce | backlog | 20 | Needs a dedicated rules primitive and scenario tests |
 | 702.78 | Conspire | backlog | 17 | Needs a dedicated rules primitive and scenario tests |
 | 702.79 | Persist | implemented | 65 | dies trigger with a -1/-1 counter return |
-| 702.80 | Wither | backlog | 46 | Needs a dedicated rules primitive and scenario tests |
+| 702.80 | Wither | implemented | 46 | -1/-1 counter creature damage |
 | 702.81 | Retrace | backlog | 54 | Needs a dedicated rules primitive and scenario tests |
-| 702.82 | Devour | backlog | 62 | Needs a dedicated rules primitive and scenario tests |
+| 702.82 | Devour | implemented | 62 | ETB sacrifice selection and +1/+1 counters |
 | 702.83 | Exalted | implemented | 95 | sole-attacker temporary pump trigger |
 | 702.84 | Unearth | backlog | 157 | Needs a dedicated rules primitive and scenario tests |
 | 702.85 | Cascade | backlog | 169 | Needs a dedicated rules primitive and scenario tests |
@@ -98,7 +98,7 @@ Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) and the c
 | 702.87 | Level Up | implemented | 63 | activated level counters and level layers |
 | 702.88 | Rebound | implemented | 107 | exile-on-resolution and next-upkeep recast |
 | 702.89 | Umbra Armor | backlog | 52 | Needs a dedicated rules primitive and scenario tests |
-| 702.90 | Infect | backlog | 95 | Needs a dedicated rules primitive and scenario tests |
+| 702.90 | Infect | implemented | 95 | poison/player and -1/-1 creature damage |
 | 702.91 | Battle Cry | backlog | 38 | Needs a dedicated rules primitive and scenario tests |
 | 702.92 | Living Weapon | backlog | 68 | Needs a dedicated rules primitive and scenario tests |
 | 702.93 | Undying | implemented | 62 | dies trigger with a +1/+1 counter return |

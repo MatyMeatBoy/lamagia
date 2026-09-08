@@ -52,6 +52,9 @@ IMPLEMENTED = {
     "graft": "ETB counter transfer to the entering creature",
     "persist": "dies trigger with a -1/-1 counter return",
     "undying": "dies trigger with a +1/+1 counter return",
+    "devour": "ETB sacrifice selection and +1/+1 counters",
+    "infect": "poison/player and -1/-1 creature damage",
+    "wither": "-1/-1 counter creature damage",
     "extort": "optional spell-cast drain trigger",
     "level up": "activated level counters and level layers",
     "changeling": "every creature subtype for subtype checks",
@@ -137,7 +140,7 @@ def main() -> None:
         "`catalog occurrences` counts Scryfall keyword metadata and is used to "
         "prioritize reusable primitives. Every implementation still requires a "
         "scenario test and a Comprehensive Rules citation.\n\n"
-        "Source: [Keyword ability](https://mtg.fandom.com/wiki/Keyword_ability) "
+        "Source: the [official Wizards rules](https://magic.wizards.com/en/rules) "
         "and the checked-in [Comprehensive Rules](docs/COMPREHENSIVE_RULES.md).\n\n"
         "| CR | Keyword | Status | Catalog occurrences | Engine contract |\n"
         "|---|---|---|---:|---|\n"

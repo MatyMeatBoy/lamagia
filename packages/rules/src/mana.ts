@@ -26,9 +26,24 @@ export interface ManaRestriction {
 export interface RestrictedMana {
   readonly type: ManaType;
   readonly restriction: ManaRestriction;
+  /** The restricted unit was produced by a snow source. */
+  readonly snow?: boolean;
 }
 
-export type ManaPool = Record<ManaType, number>;
+/**
+ * The snow marker is kept per mana type because snow mana is still colored or
+ * colorless mana.  `{S}` checks the marker, while `{G}`, `{1}`, etc. consume
+ * the ordinary typed balance as usual (CR 107.4h; Kaldheim release notes).
+ */
+export interface ManaPool {
+  readonly W: number;
+  readonly U: number;
+  readonly B: number;
+  readonly R: number;
+  readonly G: number;
+  readonly C: number;
+  readonly snow?: Partial<Record<ManaType, number>>;
+}
 
 export function emptyPool(): ManaPool {
   return { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
@@ -38,8 +53,32 @@ export function poolTotal(pool: ManaPool): number {
   return MANA_TYPES.reduce((total, type) => total + pool[type], 0);
 }
 
-export function addMana(pool: ManaPool, type: ManaType, amount = 1): ManaPool {
-  return { ...pool, [type]: pool[type] + amount };
+export function addMana(pool: ManaPool, type: ManaType, amount = 1, snow = false): ManaPool {
+  const nextSnow = { ...(pool.snow ?? {}) };
+  if (snow && amount > 0) nextSnow[type] = (nextSnow[type] ?? 0) + amount;
+  if (amount < 0 && (nextSnow[type] ?? 0) > 0) {
+    nextSnow[type] = Math.max(0, (nextSnow[type] ?? 0) + amount);
+    if (nextSnow[type] === 0) delete nextSnow[type];
+  }
+  const next = { ...pool, [type]: pool[type] + amount } as { -readonly [K in keyof ManaPool]: ManaPool[K] };
+  if (Object.keys(nextSnow).length) next.snow = nextSnow;
+  else delete next.snow;
+  return next;
+}
+
+function clonePool(pool: ManaPool): ManaPool {
+  return pool.snow ? { ...pool, snow: { ...pool.snow } } : { ...pool };
+}
+
+/** Consume one concrete mana unit and report whether its snow marker was used. */
+function spendOne(pool: ManaPool, spent: ManaPool, type: ManaType, requireSnow = false): boolean {
+  if (pool[type] <= 0 || (requireSnow && (pool.snow?.[type] ?? 0) <= 0)) return false;
+  const snow = (pool.snow?.[type] ?? 0) > 0;
+  const next = addMana(pool, type, -1);
+  Object.assign(pool, next);
+  const nextSpent = addMana(spent, type, 1, snow);
+  Object.assign(spent, nextSpent);
+  return true;
 }
 
 export function poolLabel(pool: ManaPool): string {
@@ -52,6 +91,7 @@ export type ManaSymbol =
   | { readonly kind: "variable" }
   | { readonly kind: "colored"; readonly color: ManaType }
   | { readonly kind: "hybrid"; readonly options: readonly ManaType[] }
+  | { readonly kind: "hybrid-phyrexian"; readonly options: readonly ManaType[]; readonly life: number }
   | { readonly kind: "monohybrid"; readonly color: ManaType; readonly generic: number }
   | { readonly kind: "phyrexian"; readonly color: ManaType; readonly life: number }
   | { readonly kind: "snow" };
@@ -74,6 +114,12 @@ function parseSymbol(token: string): ManaSymbol | null {
   if (PAYMENT_TYPES.has(symbol)) return { kind: "colored", color: symbol as ManaType };
   const phyrexian = /^([WUBRGC])\/P$/.exec(symbol) ?? /^P\/([WUBRGC])$/.exec(symbol);
   if (phyrexian) return { kind: "phyrexian", color: phyrexian[1] as ManaType, life: 2 };
+  const hybridPhyrexian = /^([WUBRGC])\/([WUBRGC])\/P$/.exec(symbol);
+  if (hybridPhyrexian) return {
+    kind: "hybrid-phyrexian",
+    options: [hybridPhyrexian[1] as ManaType, hybridPhyrexian[2] as ManaType],
+    life: 2
+  };
   const monohybrid = /^(\d+)\/([WUBRGC])$/.exec(symbol);
   if (monohybrid) return { kind: "monohybrid", color: monohybrid[2] as ManaType, generic: Number(monohybrid[1]) };
   const hybrid = /^([WUBRGC])\/([WUBRGC])$/.exec(symbol);
@@ -122,12 +168,13 @@ export function costColors(cost: ManaCost): ManaColor[] {
   for (const symbol of cost.symbols) {
     if (symbol.kind === "colored" || symbol.kind === "monohybrid" || symbol.kind === "phyrexian") colors.add(symbol.color);
     if (symbol.kind === "hybrid") for (const option of symbol.options) colors.add(option);
+    if (symbol.kind === "hybrid-phyrexian") for (const option of symbol.options) colors.add(option);
   }
   return MANA_COLORS.filter((color) => colors.has(color));
 }
 
 export interface PaymentResult {
-  /** Mana actually spent, by type. */
+  /** Mana actually spent, by type; `spent.snow` retains snow-source markers. */
   readonly spent: ManaPool;
   /** Life paid through Phyrexian symbols. */
   readonly lifePaid: number;
@@ -147,6 +194,7 @@ export interface PaymentOptions {
 type Choice =
   | { readonly kind: "type"; readonly type: ManaType }
   | { readonly kind: "generic"; readonly amount: number }
+  | { readonly kind: "snow" }
   | { readonly kind: "life"; readonly amount: number };
 
 function requirementsOf(cost: ManaCost, variableValue: number): { choices: Choice[][]; generic: number } {
@@ -156,10 +204,13 @@ function requirementsOf(cost: ManaCost, variableValue: number): { choices: Choic
     switch (symbol.kind) {
       case "generic": generic += symbol.amount; break;
       case "variable": generic += variableValue; break;
-      // Snow sources are not modeled yet; `{S}` is charged as one generic mana.
-      case "snow": generic += 1; break;
+      case "snow": choices.push([{ kind: "snow" }]); break;
       case "colored": choices.push([{ kind: "type", type: symbol.color }]); break;
       case "hybrid": choices.push(symbol.options.map((type) => ({ kind: "type", type }))); break;
+      case "hybrid-phyrexian": choices.push([
+        ...symbol.options.map((type) => ({ kind: "type" as const, type })),
+        { kind: "life", amount: symbol.life }
+      ]); break;
       case "monohybrid": choices.push([{ kind: "type", type: symbol.color }, { kind: "generic", amount: symbol.generic }]); break;
       case "phyrexian": choices.push([{ kind: "type", type: symbol.color }, { kind: "life", amount: symbol.life }]); break;
     }
@@ -174,10 +225,7 @@ function spendGeneric(pool: ManaPool, spent: ManaPool, owed: number): boolean {
   const order = [...MANA_TYPES].sort((left, right) => (left === "C" ? -1 : right === "C" ? 1 : pool[right] - pool[left]));
   for (const type of order) {
     if (!remaining) break;
-    const take = Math.min(remaining, pool[type]);
-    pool[type] -= take;
-    spent[type] += take;
-    remaining -= take;
+    while (remaining > 0 && spendOne(pool, spent, type)) remaining -= 1;
   }
   return remaining === 0;
 }
@@ -203,24 +251,36 @@ export function payCost(cost: ManaCost, pool: ManaPool, options: PaymentOptions 
 
   const solve = (position: number, working: ManaPool, spent: ManaPool, lifePaid: number): PaymentResult | null => {
     if (position === order.length) {
-      const leafPool = { ...working };
-      const leafSpent = { ...spent };
+      const leafPool = clonePool(working);
+      const leafSpent = clonePool(spent);
       if (!spendGeneric(leafPool, leafSpent, owedGeneric)) return null;
       return { spent: leafSpent, lifePaid, remaining: leafPool };
     }
     for (const choice of order[position]!) {
       if (choice.kind === "type") {
         if (working[choice.type] <= 0) continue;
-        const next = { ...working, [choice.type]: working[choice.type] - 1 };
-        const nextSpent = { ...spent, [choice.type]: spent[choice.type] + 1 };
+        const next = clonePool(working);
+        const nextSpent = clonePool(spent);
+        if (!spendOne(next, nextSpent, choice.type)) continue;
         const result = solve(position + 1, next, nextSpent, lifePaid);
         if (result) return result;
       } else if (choice.kind === "generic") {
-        const next = { ...working };
-        const nextSpent = { ...spent };
+        const next = clonePool(working);
+        const nextSpent = clonePool(spent);
         if (!spendGeneric(next, nextSpent, choice.amount)) continue;
         const result = solve(position + 1, next, nextSpent, lifePaid);
         if (result) return result;
+      } else if (choice.kind === "snow") {
+        const next = clonePool(working);
+        const nextSpent = clonePool(spent);
+        const snowTypes = MANA_TYPES.filter((type) => (next.snow?.[type] ?? 0) > 0);
+        for (const type of snowTypes) {
+          const branchPool = clonePool(next);
+          const branchSpent = clonePool(nextSpent);
+          if (!spendOne(branchPool, branchSpent, type, true)) continue;
+          const result = solve(position + 1, branchPool, branchSpent, lifePaid);
+          if (result) return result;
+        }
       } else {
         // A life payment may equal the current life total; only an overpayment
         // is illegal. State-based actions are checked after costs are paid.

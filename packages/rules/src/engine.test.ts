@@ -321,6 +321,21 @@ describe("C13 final current-Oracle profiles", () => {
     ]));
   });
 
+  it("marks mana from a snow permanent and uses it for {S} without treating snow as a mana type", () => {
+    const snowForest = make({
+      name: "Snow-Covered Forest",
+      type_line: "Basic Snow Land — Forest",
+      oracle_text: "{T}: Add {G}.",
+      scryfall_id: "fixture-snow-forest"
+    });
+    const game = putOnBattlefield(twoSeatGame([], []), 0, [snowForest]);
+    const source = manaSources(game.players[0]!, game)[0];
+    expect(source).toMatchObject({ options: ["G"], producesSnow: true });
+    const plan = planManaPayment(parseManaCost("{S}")!, game.players[0]!, { state: game });
+    expect(plan?.taps[0]).toMatchObject({ producesSnow: true });
+    expect(plan?.pool.snow?.G).toBe(1);
+  });
+
   it("recognizes Sword's state-gated team bonuses and Wild Ricochet's copy", () => {
     const sword = cardProfile(C13_SWORD_OF_THE_PARUNS_CURRENT());
     expect(sword.fullyImplemented).toBe(true);

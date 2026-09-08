@@ -16,7 +16,7 @@ import {
   backFace, cardProfile, hasSubtype, isArtifact, isCreature, isEnchantment, isLand, TRIGGER_EVENT_LABELS, type ActivatedAbility, type CardData, type CardProfile, type CardType, type CounterCost, type EnforcedKeyword, type EquipmentModification, type MagicColor, type ManaAbility, type ModalChoice, type SpellEffect, type TargetKind, type TriggerDefinition, type TriggerEvent
 } from "./characteristics.js";
 import {
-  addMana, emptyPool, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaRestrictionKind, type ManaType, type RestrictedMana
+  addMana, emptyPool, MANA_TYPES, parseManaCost, payCost, poolTotal, type ManaCost, type ManaPool, type ManaRestriction, type ManaRestrictionKind, type ManaType, type RestrictedMana
 } from "./mana.js";
 
 /** {W/B} — the extort payment (CR 702.39a), reused when the ability is granted. */
@@ -1510,6 +1510,8 @@ export interface ManaSource {
   readonly name: string;
   readonly options: readonly ManaType[];
   readonly amount: number;
+  /** Every unit from this source carries the snow-source marker. */
+  readonly producesSnow?: boolean;
   readonly fixedProduces?: readonly ManaType[];
   /** Extra type choice from a controlled static mana replacement effect. */
   readonly bonusOptions?: readonly ManaType[];
@@ -1691,6 +1693,7 @@ export function manaSources(player: PlayerState, state?: GameState, sourceOption
         name: permanent.card.name,
         options,
         amount: baseAmount + (bonus ? 1 : 0),
+        ...(profile.supertypes.some((supertype) => supertype.toLowerCase() === "snow") ? { producesSnow: true } : {}),
         ...(ability.fixedProduces ? { fixedProduces: ability.fixedProduces } : {}),
         ...(bonusTypes.length ? { bonusTypes } : {}),
         ...(bonusOptions.length ? { bonusOptions } : {}),
@@ -1726,6 +1729,7 @@ export interface ManaPlan {
     readonly abilityIndex: number;
     readonly type: ManaType;
     readonly amount: number;
+    readonly producesSnow?: boolean;
     readonly lifeCost: number;
     readonly requiresTap: boolean;
     readonly bonusType?: ManaType;
@@ -1753,6 +1757,8 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
   for (const symbol of cost.symbols) {
     if (symbol.kind === "colored") requirements.push([symbol.color]);
     else if (symbol.kind === "hybrid") requirements.push([...symbol.options]);
+    // Hybrid Phyrexian is optional colored mana or life, so final `payCost`
+    // must choose it rather than treating either color as mandatory here.
     else if (symbol.kind === "monohybrid") requirements.push([symbol.color]);
     // Phyrexian symbols are intentionally omitted: paying life is a legal fallback
     // and `payCost` decides between mana and life during final validation.
@@ -1762,7 +1768,7 @@ function coloredRequirements(cost: ManaCost): ManaType[][] {
 
 function sourceSignature(source: ManaSource): string {
   const counters = (source.removeCounters ?? []).map((cost) => `${cost.amount}:${cost.kind}`).join(",");
-  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${[...(source.bonusTypes ?? [])].join("")}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}|${source.restriction?.kind ?? ""}`;
+  return `${[...(source.fixedProduces ?? source.options)].sort().join("")}|${source.amount}|${source.producesSnow ? "snow" : "normal"}|${[...(source.bonusTypes ?? [])].join("")}|${[...(source.bonusOptions ?? [])].join("")}|${source.lifeCost}|${counters}|${source.restriction?.kind ?? ""}`;
 }
 
 function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Tap {
@@ -1771,6 +1777,7 @@ function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Ta
     abilityIndex: source.abilityIndex,
     type,
     amount: source.amount,
+    ...(source.producesSnow ? { producesSnow: true } : {}),
     lifeCost: source.lifeCost,
     requiresTap: source.requiresTap,
     ...(source.removeCounters ? { removeCounters: source.removeCounters } : {}),
@@ -1784,10 +1791,10 @@ function sourceTap(source: ManaSource, type: ManaType, bonusType?: ManaType): Ta
 
 function addSourceOutput(pool: ManaPool, source: ManaSource, chosen: ManaType, bonusType?: ManaType): ManaPool {
   const base = !source.fixedProduces
-    ? addMana(pool, chosen, source.amount)
-    : source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1), pool);
-  const withFixed = (source.bonusTypes ?? []).reduce((current, mana) => addMana(current, mana, 1), base);
-  return bonusType ? addMana(withFixed, bonusType, 1) : withFixed;
+    ? addMana(pool, chosen, source.amount, source.producesSnow)
+    : source.fixedProduces.reduce((current, mana) => addMana(current, mana, 1, source.producesSnow), pool);
+  const withFixed = (source.bonusTypes ?? []).reduce((current, mana) => addMana(current, mana, 1, source.producesSnow), base);
+  return bonusType ? addMana(withFixed, bonusType, 1, source.producesSnow) : withFixed;
 }
 
 function outputTypesForTap(tap: Tap): readonly ManaType[] {
@@ -1806,7 +1813,7 @@ function finalizeManaPlan(
   lifeCost: number
 ): ManaPlan {
   const createdRestricted = taps.flatMap((tap) => tap.restriction
-    ? outputTypesForTap(tap).map((type) => ({ type, restriction: tap.restriction! }))
+    ? outputTypesForTap(tap).map((type) => ({ type, restriction: tap.restriction!, ...(tap.producesSnow ? { snow: true } : {}) }))
     : []);
   const restrictedMana = [...preservedRestricted, ...createdRestricted];
   const normalizedPool = [...existingRestricted, ...createdRestricted]
@@ -1845,7 +1852,7 @@ export function planManaPayment(
   const existingRestricted = options.allowedRestrictions?.length
     ? (player.restrictedMana ?? []).filter((mana) => options.allowedRestrictions!.includes(mana.restriction.kind))
     : [];
-  const startingPool = existingRestricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
+  const startingPool = existingRestricted.reduce((pool, mana) => addMana(pool, mana.type, 1, mana.snow), player.manaPool);
   const sources = manaSources(
     options.excludePermanentId
       ? { ...player, battlefield: player.battlefield.map((permanent) => permanent.instance_id === options.excludePermanentId
@@ -1859,7 +1866,11 @@ export function planManaPayment(
   const additionalGeneric = options.additionalGeneric ?? 0;
   const externalLifeCost = options.lifeCost ?? 0;
   const variableCount = cost.symbols.filter((symbol) => symbol.kind === "variable").length;
-  const needed = Math.max(0, cost.manaValue + variableValue * variableCount + additionalGeneric);
+  // Phyrexian and hybrid-Phyrexian symbols can be paid with life, so they do
+  // not belong in the hard mana-capacity lower bound. `payCost` still enforces
+  // the exact life total and all colored/generic requirements.
+  const lifeFlexibleSymbols = cost.symbols.filter((symbol) => symbol.kind === "phyrexian" || symbol.kind === "hybrid-phyrexian").length;
+  const needed = Math.max(0, cost.manaValue - lifeFlexibleSymbols + variableValue * variableCount + additionalGeneric);
   if (poolTotal(startingPool) + manaSourceCapacity(sources) < needed) return null;
 
   const payOptions = (lifeSpent: number) => ({ variableValue, additionalGeneric, availableLife: player.life - externalLifeCost - lifeSpent });
@@ -2024,7 +2035,7 @@ function manualManaPlan(state: GameState, choice: ManaPaymentChoice): ManaPlan |
   const existingRestricted = choice.allowedRestrictions.length
     ? (player.restrictedMana ?? []).filter((mana) => choice.allowedRestrictions.includes(mana.restriction.kind))
     : [];
-  let pool = existingRestricted.reduce((current, mana) => addMana(current, mana.type, 1), player.manaPool);
+  let pool = existingRestricted.reduce((current, mana) => addMana(current, mana.type, 1, mana.snow), player.manaPool);
   const taps: Tap[] = [];
   const used = new Set<string>();
   let lifeCost = choice.lifeCost;
@@ -2116,26 +2127,38 @@ function payPlayerCost(
   if (normal) return { ...normal, spentRestricted: [], remainingRestricted: player.restrictedMana ?? [] };
   if (!restricted.length) return null;
 
-  const aggregate = restricted.reduce((pool, mana) => addMana(pool, mana.type, 1), player.manaPool);
+  const aggregate = restricted.reduce((pool, mana) => addMana(pool, mana.type, 1, mana.snow), player.manaPool);
   const combined = payCost(cost, aggregate, options);
   if (!combined) return null;
 
   const available = [...restricted];
   const spentRestricted: RestrictedMana[] = [];
-  const spentNormal = { ...combined.spent };
-  for (const type of Object.keys(spentNormal) as ManaType[]) {
+  const spentNormal = {
+    W: combined.spent.W, U: combined.spent.U, B: combined.spent.B,
+    R: combined.spent.R, G: combined.spent.G, C: combined.spent.C,
+    snow: { ...(combined.spent.snow ?? {}) }
+  };
+  for (const type of MANA_TYPES) {
     let needed = spentNormal[type];
     while (needed > 0) {
-      const index = available.findIndex((mana) => mana.type === type);
+      const requiresSnow = (spentNormal.snow?.[type] ?? 0) > 0;
+      const index = available.findIndex((mana) => mana.type === type && (!requiresSnow || mana.snow));
       if (index < 0) break;
       spentRestricted.push(available[index]!);
       available.splice(index, 1);
       spentNormal[type] -= 1;
+      if (requiresSnow) {
+        const remainingSnow = (spentNormal.snow?.[type] ?? 0) - 1;
+        if (remainingSnow > 0) spentNormal.snow[type] = remainingSnow;
+        else delete spentNormal.snow[type];
+      }
       needed -= 1;
     }
   }
-  const remainingNormal = { ...player.manaPool };
-  for (const type of Object.keys(spentNormal) as ManaType[]) remainingNormal[type] -= spentNormal[type];
+  let remainingNormal = player.manaPool;
+  for (const type of MANA_TYPES) {
+    for (let count = 0; count < spentNormal[type]; count += 1) remainingNormal = addMana(remainingNormal, type, -1);
+  }
   return {
     ...combined,
     spent: spentNormal,
@@ -9947,7 +9970,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
       const paid = consumeManaPayment(currentPlayer, payment);
       return {
         ...paid,
-        manaPool: choices.reduce((pool, mana) => addMana(pool, mana, 1), paid.manaPool),
+        manaPool: choices.reduce((pool, mana) => addMana(pool, mana, 1, cardProfile(source.card).supertypes.some((supertype) => supertype.toLowerCase() === "snow")), paid.manaPool),
         battlefield: currentPlayer.battlefield.map((permanent) => permanent.instance_id === source.instance_id
           ? { ...permanent, counters }
           : permanent)
@@ -10014,6 +10037,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     if (!currentSource) throw new Error("Ese permanente ya no está bajo tu control.");
   }
   const sourceProfile = cardProfile(currentSource.card);
+  const producesSnow = sourceProfile.supertypes.some((supertype) => supertype.toLowerCase() === "snow");
   const landBonus = currentPlayer.battlefield.some((permanent) => {
     const grant = cardProfile(permanent.card).staticLandManaBonus;
     return grant && grant.mana === action.mana && sourceProfile.subtypes.some((subtype) => subtype.toLowerCase() === grant.subtype.toLowerCase());
@@ -10038,7 +10062,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     ? [...ability.fixedProduces, ...auraBonusTypes]
     : [...Array.from({ length: amount + landBonus + globalLandBonus }, () => action.mana), ...auraBonusTypes];
   const restrictedOutput = ability.manaRestriction
-    ? outputTypes.map((type) => ({ type, restriction: ability.manaRestriction! }))
+    ? outputTypes.map((type) => ({ type, restriction: ability.manaRestriction!, ...(producesSnow ? { snow: true } : {}) }))
     : [];
   let next = withPlayer(activationState, seat, (current) => ({
     ...current,
@@ -10046,7 +10070,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
     commanderMana: current.commanderMana + (ability.commanderEntryCounters ? ability.amount : 0),
     manaPool: restrictedOutput.length || ability.sacrificesSelf
       ? current.manaPool
-      : outputTypes.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool),
+      : outputTypes.reduce((pool, mana) => addMana(pool, mana, 1, producesSnow), current.manaPool),
     ...(restrictedOutput.length && !ability.sacrificesSelf ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {}),
     battlefield: current.battlefield.map((permanent) => {
       if (permanent.instance_id !== source.instance_id) return permanent;
@@ -10055,7 +10079,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
       return { ...permanent, ...(ability.requiresTap ? { tapped: true } : {}), counters };
     })
   }));
-  const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1) })) : next;
+  const withBonus = manaBonus ? withPlayer(next, seat, (current) => ({ ...current, manaPool: addMana(current.manaPool, manaBonus, 1, producesSnow) })) : next;
   const tapped = ability.requiresTap ? raiseTapEvents(withBonus, activationState, [source.instance_id]) : withBonus;
   const withManaTapEvent = ability.requiresTap
     ? raiseEvent(tapped, { kind: "taps-for-mana", permanentId: source.instance_id, controller: seat, card: source.card })
@@ -10071,7 +10095,7 @@ function applyActivateMana(state: GameState, seat: SeatId, action: Extract<GameA
       ...current,
       manaPool: restrictedOutput.length
         ? current.manaPool
-        : outputTypes.reduce((pool, mana) => addMana(pool, mana, 1), current.manaPool),
+        : outputTypes.reduce((pool, mana) => addMana(pool, mana, 1, producesSnow), current.manaPool),
       ...(restrictedOutput.length ? { restrictedMana: [...(current.restrictedMana ?? []), ...restrictedOutput] } : {})
     }));
     // Keep this explicit rather than relying on the generic mana branch: token
@@ -10854,7 +10878,7 @@ function applyCast(state: GameState, seat: SeatId, action: Extract<GameAction, {
     next = logged(next, seat, `${player.name} devuelve ${returned.card.name} a su mano por ${card.name}.`);
   }
   const paymentSpentTypes = [
-    ...Object.entries(payment.spent).flatMap(([type, amount]) => Array.from({ length: amount }, () => type as ManaType)),
+    ...MANA_TYPES.flatMap((type) => Array.from({ length: payment.spent[type] }, () => type)),
     ...(payment.spentRestricted ?? []).map((mana) => mana.type)
   ];
   const paymentSpentTotal = paymentSpentTypes.length;
@@ -12815,6 +12839,18 @@ function shouldAutoPass(state: GameState, seat: SeatId): boolean {
 }
 
 /**
+ * A semantic snapshot used only while settling. Versions and log entries are
+ * intentionally excluded: both change during normal transitions and would
+ * hide a genuine no-progress cycle. Keeping the complete state here makes a
+ * loop involving a pending choice, combat declaration, or hidden zone
+ * deterministic to diagnose without exposing it in the public projection.
+ */
+function stabilizationFingerprint(state: GameState): string {
+  const { version: _version, log: _log, ...semantic } = state;
+  return JSON.stringify(semantic);
+}
+
+/**
  * Bounded, public-state-only evidence for a stabilization failure.
  *
  * Keep this deterministic and deliberately omit hands, libraries, and hidden
@@ -12855,7 +12891,14 @@ export function settle(state: GameState): GameState {
   // opening-hand action before the human has answered it.
   if (state.opening) return state;
   let next = state;
+  const seen = new Map<string, number>();
   for (let guard = 0; guard < 4096; guard += 1) {
+    const fingerprint = stabilizationFingerprint(next);
+    const firstSeenAt = seen.get(fingerprint);
+    if (firstSeenAt !== undefined) {
+      throw new Error(`El motor repitió el mismo estado durante la estabilización (ciclo ${firstSeenAt}→${guard}). ${stabilizationDiagnostic(next)}`);
+    }
+    seen.set(fingerprint, guard);
     next = applyStateBasedActions(next);
     next = pruneCombat(next);
     next = evaluateStateTriggers(next);
@@ -12940,7 +12983,7 @@ export function settle(state: GameState): GameState {
     }
     return next;
   }
-  throw new Error(`El motor no pudo estabilizar la partida; posible bucle de reglas. ${stabilizationDiagnostic(next)}`);
+  throw new Error(`El motor no pudo estabilizar la partida tras 4096 pasos; posible bucle de reglas. ${stabilizationDiagnostic(next)}`);
 }
 
 /** Seats that currently owe a decision. */
