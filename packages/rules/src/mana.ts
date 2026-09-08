@@ -73,8 +73,13 @@ function clonePool(pool: ManaPool): ManaPool {
 /** Consume one concrete mana unit and report whether its snow marker was used. */
 function spendOne(pool: ManaPool, spent: ManaPool, type: ManaType, requireSnow = false): boolean {
   if (pool[type] <= 0 || (requireSnow && (pool.snow?.[type] ?? 0) <= 0)) return false;
-  const snow = (pool.snow?.[type] ?? 0) > 0;
-  const next = addMana(pool, type, -1);
+  const snowCount = pool.snow?.[type] ?? 0;
+  // Preserve snow for a later `{S}` requirement whenever a normal unit of
+  // the same type is available. This is essential for costs such as `{W}{S}`.
+  const snow = requireSnow || snowCount >= pool[type];
+  const next = snow
+    ? addMana(pool, type, -1)
+    : ({ ...pool, [type]: pool[type] - 1 } as ManaPool);
   Object.assign(pool, next);
   const nextSpent = addMana(spent, type, 1, snow);
   Object.assign(spent, nextSpent);

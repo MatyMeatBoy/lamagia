@@ -93,6 +93,10 @@ describe("payCost", () => {
     const colored = payCost(cost("{G}"), pool({ G: 1, snow: { G: 1 } }));
     expect(colored?.spent.snow?.G).toBe(1);
     expect(canPay(cost("{S}"), pool({ C: 1, snow: { C: 1 } }))).toBe(true);
+
+    const mixed = payCost(cost("{G}{S}"), pool({ G: 2, snow: { G: 1 } }));
+    expect(mixed?.spent.G).toBe(2);
+    expect(mixed?.spent.snow?.G).toBe(1);
   });
 
   it("allows hybrid Phyrexian to use either color or exactly two life", () => {
