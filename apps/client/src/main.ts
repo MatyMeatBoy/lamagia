@@ -88,6 +88,8 @@ interface UiState {
   stackDetail: string | null;
   /** "auto" follows the viewport; "mobile" forces the landscape touch layout on a desktop. */
   layout: "auto" | "mobile";
+  /** Keep the compact commander preview visible in every seat footer. */
+  commandZoneVisible: boolean;
   /** MTGO-style phase stops, kept separately for the local seat's turns and for opponents' turns. */
   stops: { mine: Set<TurnStep>; opponents: Map<number, Set<TurnStep>> };
   /** Opponent whose upper-row stop buttons are currently being edited. */
@@ -142,7 +144,8 @@ const ui: UiState = {
   // Smart priority is the default; manual priority remains an explicit opt-out.
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
   actionsOpen: false,
-  layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto"
+  layout: window.localStorage.getItem("prossh.layout") === "mobile" ? "mobile" : "auto",
+  commandZoneVisible: window.localStorage.getItem("prossh.command-zone") !== "0"
   ,stops: loadStops(),
   stopPlayer: null,
   dismissedDecisionVersion: null
@@ -1467,7 +1470,7 @@ function render(): void {
       : "¿Quieres revelar una Isla o Montaña para que entre enderezada?")
     : (myTurn ? "Las cartas con borde dorado se pueden jugar ahora." : "Esperando a los demás jugadores…");
 
-  root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}" data-layout="${ui.layout}">
+  root!.innerHTML = `<main class="shell${ui.busy ? " busy" : ""}" data-layout="${ui.layout}" data-command-zone="${ui.commandZoneVisible ? "on" : "off"}">
     <header class="topbar">
       <a class="brand" href="#">LAMAGIA</a>
       <span class="topbar-right">
@@ -1478,6 +1481,7 @@ function render(): void {
         <button id="new-precon" class="text-button">Precons</button>
         <button id="search" class="text-button">Catálogo</button>
         <button id="coverage" class="text-button">Cobertura</button>
+        <button id="toggle-command-zone" class="icon-button${ui.commandZoneVisible ? " on" : ""}" type="button" title="${ui.commandZoneVisible ? "Ocultar comandantes" : "Mostrar comandantes"}" aria-label="Alternar comandantes">CMD</button>
         <button id="toggle-layout" class="icon-button${ui.layout === "mobile" ? " on" : ""}" type="button" title="Alternar la disposición táctil de Android" aria-label="Disposición táctil">▭</button>
         <button id="toggle-log" class="icon-button${ui.logOpen ? " on" : ""}" type="button" title="Registro" aria-label="Registro">≡</button>
         <button id="profile" class="profile-avatar" aria-label="Perfil">${selectedAvatar ? `<img src="${escapeHtml(selectedAvatar)}" alt=""/>` : "MP"}</button>
@@ -1617,6 +1621,11 @@ function wireBoard(): void {
   on("#new-precon", () => openPrecons());
   on("#search", () => { dialog("catalog")?.showModal(); document.querySelector<HTMLInputElement>("#card-query")?.focus(); });
   on("#coverage", () => openCoverage());
+  on("#toggle-command-zone", () => {
+    ui.commandZoneVisible = !ui.commandZoneVisible;
+    window.localStorage.setItem("prossh.command-zone", ui.commandZoneVisible ? "1" : "0");
+    render();
+  });
   on("#profile", () => { dialog("profile-dialog")?.showModal(); void loadAvatars(); });
   on("#cancel-target", () => { ui.pendingTarget = null; ui.notice = ""; render(); });
   on("#close-decision-overlay", () => { ui.dismissedDecisionVersion = view?.version ?? null; render(); });

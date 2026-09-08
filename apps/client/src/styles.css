@@ -273,6 +273,9 @@ h1, h2, h3 { margin: 0; }
 .commander-strip .meta { min-width: 0; display: grid; line-height: 1.2; }
 .commander-strip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); font-size: .64rem; }
 .commander-strip span { color: var(--text-faint); font-size: .55rem; }
+.shell[data-command-zone="off"] .commander-strip .commander-toggle,
+.shell[data-command-zone="off"] .commander-strip .meta { display: none; }
+.shell[data-command-zone="off"] .commander-strip .zone-chips { margin-left: 0; }
 .cmd-damage { margin-left: auto; padding: 1px 5px; border: 1px solid #6b3f3f; border-radius: 5px; background: #22100f; color: #f0b5ad; font-size: .55rem; white-space: nowrap; }
 
 /* Card tiles ---------------------------------------------------------- */
