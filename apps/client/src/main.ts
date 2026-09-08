@@ -248,7 +248,10 @@ function priorityBarHtml(): string {
   const opponentButtons = currentView.players.filter((player) => player.seat !== currentView.viewerSeat).map((player) =>
     `<button class="stop-player${selectedOpponent === player.seat ? " selected" : ""}" type="button" data-stop-player-select="${player.seat}" title="Editar paradas de ${escapeHtml(player.name)}">${escapeHtml(player.name)}</button>`).join("");
   const activeStopped = stopSet(activeScope, currentView.activeSeat).has(currentView.step);
+  const activePlayer = seatOf(currentView.activeSeat);
+  const turnReadout = `<span class="phase-turn" title="Turno global ${currentView.turn}"><b>Turno ${activePlayer?.turnsTaken ?? currentView.turn}</b> · <span class="who" style="color: var(--seat-${currentView.activeSeat})">${activePlayer && currentView.activeSeat === currentView.viewerSeat ? "tú" : escapeHtml(activePlayer?.name ?? "Jugador")}</span><small>${escapeHtml(STEP_LABELS[currentView.step])}</small></span>`;
   return `<div class="priority-bar" role="group" aria-label="Paradas de fase">
+    ${turnReadout}
     <label class="priority-autopass"><input id="auto-pass-bar" type="checkbox" ${ui.autoPass ? "checked" : ""}/><span>Auto-pasar</span></label>
     <div class="priority-phases">
       <div class="stop-players" aria-label="Jugador rival para configurar paradas">${opponentButtons}</div>
@@ -1480,8 +1483,6 @@ function render(): void {
         <button id="profile" class="profile-avatar" aria-label="Perfil">${selectedAvatar ? `<img src="${escapeHtml(selectedAvatar)}" alt=""/>` : "MP"}</button>
       </span>
     </header>
-
-    ${phaseRailHtml()}
 
     <div class="table">
       <p class="rotate-hint">Gira el dispositivo: la mesa está pensada para horizontal.</p>

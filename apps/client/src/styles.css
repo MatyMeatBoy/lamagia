@@ -111,6 +111,7 @@ h1, h2, h3 { margin: 0; }
   display: flex; align-items: center; justify-content: center; gap: 16px;
   padding: 2px 12px 3px;
   background: #060f0ae8; border-block: 1px solid var(--line-soft);
+  overflow-x: auto; scrollbar-width: thin;
 }
 .stop-players { display: flex; gap: 3px; justify-content: center; min-height: 18px; }
 .stop-player { padding: 1px 5px; border: 1px solid var(--line-soft); border-radius: 5px; background: transparent; color: var(--text-faint); font: inherit; font-size: .52rem; cursor: pointer; }
