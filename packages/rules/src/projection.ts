@@ -104,6 +104,8 @@ export interface StackView {
   /** Explicit marker for the object that will resolve next (CR 608.2). */
   readonly resolvesNext: boolean;
   readonly controller: SeatId;
+  /** Public source identity for activated abilities, used by smart priority. */
+  readonly sourcePermanentId?: string;
   readonly name: string;
   /** Public category used by the graphical stack: spell, activated ability, or trigger. */
   readonly kind: "spell" | "activated" | "trigger";
@@ -496,6 +498,7 @@ export function projectGame(state: GameState, viewerSeat: SeatId): GameView {
       position: index + 1,
       resolvesNext: index === state.stack.length - 1,
       controller: object.controller,
+      ...(object.sourcePermanentId ? { sourcePermanentId: object.sourcePermanentId } : {}),
       name: object.card.name,
       kind: object.trigger ? "trigger" : object.activated ? "activated" : "spell",
       label: object.label,

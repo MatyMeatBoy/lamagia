@@ -11036,6 +11036,14 @@ describe("activated abilities", () => {
     expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(true);
   });
 
+  it("auto-passes repeated activations after its own ability is on the stack", () => {
+    let game = readyOnBoard([SIGNAL_PEST(), ISLAND(), ISLAND()], { hold: true });
+    const source = permanentNamed(game, 0, "Well of Lore")!;
+    game = applyAction(game, 0, { type: "activate", sourceId: source.instance_id, abilityIndex: 0 });
+    expect(game.stack.at(-1)?.controller).toBe(0);
+    expect(hasRealChoice({ ...game, players: game.players.map((player) => ({ ...player, autoPass: true })) }, 0)).toBe(false);
+  });
+
   it("does not treat a hand fast-mana action as a smart-priority stop", () => {
     let game = twoSeatGame([], []);
     game = stage(game, 0, () => ({
@@ -14526,6 +14534,12 @@ describe("Buried Alive's up-to-three-to-graveyard search", () => {
     game = putOnBattlefield(game, 0, [SWAMP(), SWAMP(), SWAMP()]);
     game = passUntil(game, (state) => state.step === "precombat-main" && state.prioritySeat === 0);
     game = applyAction(game, 0, { type: "cast", cardId: "buried-hand-0" });
+    game = passUntil(game, (state) => state.pendingChoice?.type === "search-library-multi");
+    expect(game.pendingChoice?.type).toBe("search-library-multi");
+    const sourceId = game.pendingChoice!.sourceId;
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId, query: "Grizzly Bears" });
+    game = applyAction(game, 0, { type: "choose-library-card", sourceId, query: "Big Stomper" });
+    game = applyAction(game, 0, { type: "finish-library-search", sourceId });
     game = passUntil(game, (state) => state.stack.length === 0);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Grizzly Bears")).toBe(true);
     expect(game.players[0]!.graveyard.some((card) => card.name === "Big Stomper")).toBe(true);

@@ -7608,16 +7608,30 @@ function resolveTop(state: GameState): GameState {
       if (!object.activated) next = sendSpellToOwnerZone(next, object);
       return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en su mano.`);
     }
-    // Same deterministic policy for "up to N ... cards, put them into your
-    // graveyard, then shuffle" (Buried Alive).
+    // Graveyard searches are player choices too.  In particular, Buried Alive
+    // says "up to three", so silently taking the first matching cards is both
+    // incorrect rules behavior and hides the library-search surface.
     if (search.count && search.count > 1 && search.destination === "graveyard") {
-      const picked = options.slice(0, search.count);
-      const pickedSet = new Set(picked);
-      const fetched = playerAt(next, object.controller).library.filter((card) => pickedSet.has(card.instance_id));
-      next = shuffleLibrary(next, object.controller, playerAt(next, object.controller).library.filter((card) => !pickedSet.has(card.instance_id)));
-      next = withPlayer(next, object.controller, (player) => ({ ...player, graveyard: [...player.graveyard, ...fetched] }));
-      if (!object.activated) next = sendSpellToOwnerZone(next, object);
-      return logged(next, object.controller, `${object.card.name}: busca ${fetched.length} carta(s) y las pone en su cementerio.`);
+      return {
+        ...next,
+        pendingChoice: {
+          type: "search-library-multi",
+          seat: object.controller,
+          sourceId: object.id,
+          optionIds: options,
+          selectedIds: [],
+          sourceCard: object.card,
+          search: {
+            kind: "search-library-multi",
+            types: search.types,
+            ...(search.subtypes ? { subtypes: search.subtypes } : {}),
+            destinations: Array.from({ length: search.count }, () => "graveyard" as const),
+            reveal: search.reveal
+          },
+          returnSourceToGraveyard: !object.activated && !object.fromCopy,
+          exileSourceAfterResolution: Boolean(object.flashback)
+        }
+      };
     }
     return {
       ...next,
@@ -12091,12 +12105,14 @@ function finishMultiLibrarySearch(state: GameState, seat: SeatId, choice: Extrac
   // array every other `search-library-multi` template uses.
   const anyTotal = choice.search.maxTotalManaValue !== undefined || choice.selectionLimit !== undefined;
   const handCards = anyTotal ? [] : selected.filter((_, index) => choice.search.destinations[index] === "hand");
+  const graveyardCards = anyTotal ? [] : selected.filter((_, index) => choice.search.destinations[index] === "graveyard");
   next = withPlayer(next, seat, (current) => ({
     ...current,
     library: shuffledLibrary,
     hand: [...current.hand, ...handCards],
     graveyard: [
       ...current.graveyard,
+      ...graveyardCards,
       ...(choice.returnSourceToGraveyard && !choice.exileSourceAfterResolution ? [choice.sourceCard] : [])
     ],
     exile: choice.exileSourceAfterResolution ? [...current.exile, choice.sourceCard] : current.exile
@@ -13269,6 +13285,11 @@ export function hasRealChoice(state: GameState, seat: SeatId): boolean {
     if (entry.action.type === "activate-mana") return false;
     if (entry.action.type === "toggle-trigger-yield") return false;
     const action = entry.action;
+    // Once our own activated ability is on the stack, activating another
+    // ability is not a response owed by auto-pass.  Keep the window open for
+    // opponents, but do not make the controller click through a self-stack.
+    if (action.type === "activate" && state.stack.at(-1)?.controller === seat
+      && state.stack.at(-1)?.sourcePermanentId === action.sourceId) return false;
     let effects: readonly SpellEffect[] | undefined;
     let sourceProfile: CardProfile | undefined;
     if (action.type === "cast") {

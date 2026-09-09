@@ -81,6 +81,8 @@ interface UiState {
   cardActionMenu: string | null;
   /** Context menu opened from the playmat for reversible actions. */
   contextMenu: { x: number; y: number } | null;
+  /** Scrollable phase menu opened with right-click on a phase stopper. */
+  phaseMenu: { x: number; y: number; scope: StopScope; seat: number; step: TurnStep } | null;
   showFullLibrary: boolean;
   /** The keyword or ability glyph whose help card is open. */
   glyphHelp: AbilityGlyph | null;
@@ -134,7 +136,7 @@ let coverageGroup = "all";
 let coverageSubgroup = "all";
 let coverageQuery = "";
 const ui: UiState = {
-  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, cardActionMenu: null, contextMenu: null, glyphHelp: null, stackDetail: null,
+  pendingTarget: null, attackers: new Map(), blockers: new Map(), selectedBlocker: null, abilityMenu: null, cardActionMenu: null, contextMenu: null, phaseMenu: null, glyphHelp: null, stackDetail: null,
   notice: "", busy: false, logOpen: window.localStorage.getItem("prossh.log") === "1", showFullLibrary: false,
   // Smart priority is the default; manual priority remains an explicit opt-out.
   autoPass: window.localStorage.getItem("prossh.auto-pass") !== "0",
@@ -171,11 +173,40 @@ function toggleStop(scope: StopScope, step: TurnStep, seat?: number): void {
   render();
 }
 
+function jumpStopTo(scope: StopScope, seat: number, target: TurnStep): void {
+  const set = stopSet(scope, seat);
+  const targetIndex = STEP_ORDER.indexOf(target);
+  // Clear only earlier stops: later stops remain useful on the same turn, as
+  // they do in MTGO. This makes the command a quick "skip until here" action
+  // instead of unexpectedly resetting the whole stopper configuration.
+  for (const step of STEP_ORDER.slice(0, targetIndex)) set.delete(step);
+  set.add(target);
+  persistStops();
+  ui.phaseMenu = null;
+  render();
+}
+
+function phaseContextMenuHtml(): string {
+  const menu = ui.phaseMenu;
+  if (!menu || !view) return "";
+  const player = seatOf(menu.seat);
+  const scopeLabel = menu.scope === "mine" ? "tu turno" : `turno de ${player?.name ?? "opponente"}`;
+  return `<div class="context-menu phase-context-menu" style="left:${menu.x}px;top:${menu.y}px" role="menu" aria-label="Elegir parada de fase">
+    <div class="phase-context-heading"><b>Saltar hasta una fase</b><small>${escapeHtml(scopeLabel)} · empieza en ${escapeHtml(STEP_LABELS[menu.step])}</small></div>
+    ${STEP_ORDER.map((step) => `<button type="button" data-phase-jump-step="${step}" data-phase-jump-scope="${menu.scope}" data-phase-jump-seat="${menu.seat}">${escapeHtml(STEP_LABELS[step])}${step === menu.step ? " · actual" : ""}</button>`).join("")}
+  </div>`;
+}
+
 /** Actions that do not justify holding priority by themselves. This mirrors
  * the rules engine: mana production and yield toggles are conveniences, but a
  * castable spell, land, equip or non-mana activation is a real decision. */
-function hasClientDecision(actions: readonly LegalAction[]): boolean {
-  return actions.some(({ action }) => !["pass", "concede", "activate-mana", "toggle-trigger-yield"].includes(action.type));
+function hasClientDecision(actions: readonly LegalAction[], current: GameView | null = view): boolean {
+  return actions.some(({ action }) => {
+    if (["pass", "concede", "activate-mana", "toggle-trigger-yield"].includes(action.type)) return false;
+    if (action.type === "activate" && current?.stack.at(-1)?.controller === current?.viewerSeat
+      && current?.stack.at(-1)?.sourcePermanentId === action.sourceId) return false;
+    return true;
+  });
 }
 
 function autoPassForPhase(): boolean {
@@ -188,7 +219,7 @@ function autoPassForPhase(): boolean {
   const playerDecision = Boolean(
     view.librarySearch || view.scry || view.topSelection || view.reorderTop || view.viewedHand
       || view.combat.awaitingAttackers || view.combat.awaitingBlockersFrom.includes(view.viewerSeat)
-      || hasClientDecision(view.legalActions)
+      || hasClientDecision(view.legalActions, view)
   );
   return !playerDecision;
 }
@@ -200,7 +231,7 @@ function serverAutoPassForView(next: GameView): boolean {
   return !Boolean(
     next.librarySearch || next.scry || next.topSelection || next.reorderTop || next.viewedHand
       || next.combat.awaitingAttackers || next.combat.awaitingBlockersFrom.includes(next.viewerSeat)
-      || hasClientDecision(next.legalActions)
+      || hasClientDecision(next.legalActions, next)
   );
 }
 
@@ -267,7 +298,7 @@ function priorityBarHtml(): string {
     <div class="priority-phases">
       <div class="stop-players" aria-label="Jugador rival para configurar paradas">${opponentButtons}</div>
       <div class="stop-row stop-row-opponents${activeScope === "opponents" ? " live" : ""}" aria-label="Paradas en turnos rivales">${STEP_ORDER.map((step) => cell(step, "opponents")).join("")}</div>
-      <div class="phase-track">${STEP_ORDER.map((step) => `<span class="phase-cell${step === currentView.step ? " current" : ""}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}</div>
+      <div class="phase-track">${STEP_ORDER.map((step) => `<span class="phase-cell${step === currentView.step ? " current" : ""}" data-phase-step="${step}" data-phase-scope="${activeScope}" data-phase-seat="${currentView.activeSeat}">${escapeHtml(STEP_LABELS[step])}</span>`).join("")}</div>
       <div class="stop-row stop-row-mine${activeScope === "mine" ? " live" : ""}" aria-label="Paradas en tu turno">${STEP_ORDER.map((step) => cell(step, "mine")).join("")}</div>
     </div>
     <span class="stop-status${activeStopped ? " active" : ""}">${activeStopped ? `Parada activa · ${escapeHtml(STEP_LABELS[currentView.step])}` : "Sin parada en esta fase"}</span>
@@ -1362,11 +1393,14 @@ function cardActionMenuHtml(): string {
  */
 function decisionOverlayHtml(): string {
   const actions = view?.legalActions ?? [];
-  const respondingToStack = Boolean(view?.stack.length);
-  const choices = actions.filter((entry) =>
-    entry.action.type !== "pass" && entry.action.type !== "concede" && entry.action.type !== "choose-library-card"
-      && !["cycle", "play-land", "activate-mana", "toggle-trigger-yield", "declare-attackers", "declare-blockers"].includes(entry.action.type)
-      && (respondingToStack || !["cast", "activate", "equip"].includes(entry.action.type)));
+  // The graphical stack already communicates ordinary responses. Keep this
+  // overlay only for an explicit pending choice (mana, targets, modes, etc.)
+  // so a normal "cast/activate/pass" window never becomes a giant blocker.
+  const choices = actions.filter((entry) => {
+    const type = entry.action.type;
+    if (["pass", "concede", "choose-library-card", "finish-library-search"].includes(type)) return false;
+    return type.startsWith("choose-") || type === "cancel-mana-payment";
+  });
   if (!choices.length) return "";
   const hasPendingChoice = choices.some((entry) => entry.action.type.startsWith("choose-"));
   const cancelEntry = actions.find((entry) => entry.action.type === "cancel-mana-payment");
@@ -1376,19 +1410,17 @@ function decisionOverlayHtml(): string {
   // prompt can be dismissed until the game state next changes.
   const mandatory = triggerTargetChoice || (hasPendingChoice && !cancelEntry);
   if (!mandatory && ui.dismissedDecisionVersion === view?.version) return "";
-  const title = manaPayment ? "Elegir fuentes de maná" : triggerTargetChoice ? "Elegir objetivo" : hasPendingChoice ? "Acción requerida" : view?.stack.length ? "Responder a la pila" : "Acciones legales";
+  const title = manaPayment ? "Elegir fuentes de maná" : triggerTargetChoice ? "Elegir objetivo" : "Acción requerida";
   const subtitle = triggerTargetChoice
     ? "Selecciona el permanente, jugador o hechizo marcado en la mesa."
     : hasPendingChoice
     ? (manaPayment ? "Elige qué fuentes girar para pagar; puedes cancelar el lanzamiento." : "Elige una opción para continuar la partida.")
-    : view?.stack.length
-      ? "Puedes responder ahora o pasar prioridad."
-      : "Estas son las acciones disponibles en este momento.";
+    : "Elige una opción para continuar la partida.";
   const closeButton = cancelEntry
     ? `<button id="cancel-decision-overlay" data-action-index="${actions.indexOf(cancelEntry)}" class="icon-button" type="button" aria-label="Cancelar el pago y volver">×</button>`
     : mandatory
       ? ""
-      : `<button id="close-decision-overlay" class="icon-button" type="button" aria-label="Ocultar acciones">×</button>`;
+    : `<button id="close-decision-overlay" class="icon-button" type="button" aria-label="Ocultar acciones">×</button>`;
   return `<section class="decision-overlay" role="dialog" aria-modal="false" aria-label="${escapeHtml(title)}">
     <header class="decision-head"><div><b>${escapeHtml(title)}</b><span>${escapeHtml(subtitle)}</span></div>
       ${closeButton}</header>
@@ -1416,6 +1448,8 @@ function librarySearchHtml(): string {
     </form>
     <div class="library-search-cards">${cards.length ? cards.map((card) => `${(() => { const legal = search.candidates.some((candidate) => candidate.instance_id === card.instance_id); return `<button type="button" class="library-card${legal ? " legal" : ""}"${legal ? ` data-library-card="${escapeHtml(card.name)}"` : " disabled"} title="${escapeHtml(card.name)}">`; })()}
       ${card.image_normal ? `<img src="${escapeHtml(card.image_normal)}" data-card-name="${escapeHtml(card.name)}" alt="${escapeHtml(card.name)}" loading="lazy"/>` : ""}<b>${escapeHtml(card.name)}</b><small>${escapeHtml(card.type_line)}</small></button>`).join("") : `<p class="zone-private">No hay cartas que cumplan esta búsqueda.</p>`}</div>
+    ${search.destination === "multiple" && view?.legalActions.some((entry) => entry.action.type === "finish-library-search")
+      ? `<button class="choice-action library-search-finish" type="button" data-action-index="${view.legalActions.findIndex((entry) => entry.action.type === "finish-library-search")}">Terminar búsqueda</button>` : ""}
   </section>`;
 }
 
@@ -1548,6 +1582,7 @@ function render(): void {
   ${ui.contextMenu && view.undoAvailable ? `<div class="context-menu" style="left:${ui.contextMenu.x}px;top:${ui.contextMenu.y}px" role="menu">
     <button id="context-undo" type="button">Deshacer última acción de maná</button>
   </div>` : ""}
+  ${phaseContextMenuHtml()}
   ${glyphHelpHtml()}
   ${logDrawerHtml()}
   <div class="card-preview" id="card-preview"></div>
@@ -1651,9 +1686,35 @@ function wireBoard(): void {
   });
   on("#undo", () => void undoLatestMana());
   on("#context-undo", () => { ui.contextMenu = null; void undoLatestMana(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-phase-jump-step]").forEach((button) =>
+    button.addEventListener("click", () => jumpStopTo(
+      button.dataset.phaseJumpScope as StopScope,
+      Number(button.dataset.phaseJumpSeat),
+      button.dataset.phaseJumpStep as TurnStep
+    )));
   document.querySelectorAll<HTMLButtonElement>("[data-stop-scope]").forEach((button) =>
     button.addEventListener("click", () => toggleStop(button.dataset.stopScope as StopScope, button.dataset.stopStep as TurnStep,
       button.dataset.stopPlayer ? Number(button.dataset.stopPlayer) : undefined)));
+  document.querySelectorAll<HTMLElement>("[data-phase-step]").forEach((element) =>
+    element.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const scope = element.dataset.phaseScope as StopScope;
+      const seat = Number(element.dataset.phaseSeat);
+      ui.contextMenu = null;
+      ui.phaseMenu = { x: Math.min(event.clientX, Math.max(8, window.innerWidth - 244)), y: Math.min(event.clientY, Math.max(8, window.innerHeight - 300)), scope, seat, step: element.dataset.phaseStep as TurnStep };
+      render();
+    }));
+  document.querySelectorAll<HTMLElement>("[data-stop-scope]").forEach((element) =>
+    element.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const scope = element.dataset.stopScope as StopScope;
+      const seat = Number(element.dataset.stopPlayer ?? (scope === "mine" ? view?.viewerSeat : view?.activeSeat));
+      ui.contextMenu = null;
+      ui.phaseMenu = { x: Math.min(event.clientX, Math.max(8, window.innerWidth - 244)), y: Math.min(event.clientY, Math.max(8, window.innerHeight - 300)), scope, seat, step: element.dataset.stopStep as TurnStep };
+      render();
+    }));
   document.querySelectorAll<HTMLButtonElement>("[data-stop-player-select]").forEach((button) =>
     button.addEventListener("click", () => { ui.stopPlayer = Number(button.dataset.stopPlayerSelect); render(); }));
   document.querySelector<HTMLInputElement>("#auto-pass-bar")?.addEventListener("change", (event) =>
@@ -1669,7 +1730,7 @@ function wireBoard(): void {
     render();
   });
   document.querySelector<HTMLElement>(".table")?.addEventListener("click", () => {
-    if (ui.contextMenu) { ui.contextMenu = null; render(); }
+    if (ui.contextMenu || ui.phaseMenu) { ui.contextMenu = null; ui.phaseMenu = null; render(); }
   });
   document.querySelectorAll<HTMLButtonElement>("[data-graveyard-target]").forEach((button) =>
     button.addEventListener("click", () => chooseTarget({ kind: "graveyard-card", seat: Number(button.dataset.graveyardSeat), instanceId: button.dataset.graveyardTarget! })));
@@ -2292,8 +2353,8 @@ document.querySelector<HTMLInputElement>("#card-query")?.addEventListener("input
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   if (event.code === "Space") { event.preventDefault(); document.querySelector<HTMLButtonElement>("#pass")?.click(); }
-  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.glyphHelp || ui.stackDetail)) {
-    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
+  if (event.code === "Escape" && (ui.pendingTarget || ui.abilityMenu || ui.cardActionMenu || ui.contextMenu || ui.phaseMenu || ui.glyphHelp || ui.stackDetail)) {
+    ui.pendingTarget = null; ui.abilityMenu = null; ui.cardActionMenu = null; ui.contextMenu = null; ui.phaseMenu = null; ui.glyphHelp = null; ui.stackDetail = null; ui.notice = ""; render();
   }
   if (event.code === "KeyL") { ui.logOpen = !ui.logOpen; render(); }
 });

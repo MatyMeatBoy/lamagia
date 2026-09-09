@@ -995,7 +995,7 @@ export type SpellEffect =
       readonly kind: "search-library-multi";
       readonly types: readonly CardType[];
       readonly subtypes?: readonly string[];
-      readonly destinations: readonly ("hand" | "battlefield-tapped" | "battlefield")[];
+      readonly destinations: readonly ("hand" | "graveyard" | "battlefield-tapped" | "battlefield")[];
       readonly reveal: boolean;
       /** "any number of ... cards with total mana value N or less" (Protean Hulk): the pick count is open-ended, capped by the running total instead of `destinations.length`. */
       readonly maxTotalManaValue?: number;
